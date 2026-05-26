@@ -65,7 +65,7 @@ export default function ScrapbookTimeline({ items, onImageClick }: TimelineProps
                     onClick={() => onImageClick(item.imageUrl)}
                   />
                   {/* Subtle shadows & paper details on photo */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-linear-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
                 </div>
 
                 {/* Handwritten diary entry description */}

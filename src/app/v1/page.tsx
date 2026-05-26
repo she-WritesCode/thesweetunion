@@ -63,8 +63,8 @@ export default function Home() {
               key={font}
               onClick={() => setActiveFont(font)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${activeFont === font
-                  ? "bg-deep-terracotta text-warm-cream font-medium shadow-sm"
-                  : "hover:bg-amber-gold/10 text-deep-espresso"
+                ? "bg-deep-terracotta text-warm-cream font-medium shadow-sm"
+                : "hover:bg-amber-gold/10 text-deep-espresso"
                 }`}
             >
               {getFontName(font)}
@@ -155,7 +155,7 @@ export default function Home() {
               The Long Game
             </h2>
             <p className="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body">
-              We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged.
+              We took our time, built a friendship that couldn&apos;t be broken, and ended up exactly where we belonged.
             </p>
           </div>
           <Timeline items={siteConfig.story} fontClass={getFontClass(activeFont)} />
@@ -246,8 +246,8 @@ export default function Home() {
                 <button
                   onClick={() => setActiveSchedule("traditional")}
                   className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${activeSchedule === "traditional"
-                      ? "text-deep-terracotta border-b-2 border-deep-terracotta"
-                      : "text-deep-espresso/60 hover:text-deep-espresso"
+                    ? "text-deep-terracotta border-b-2 border-deep-terracotta"
+                    : "text-deep-espresso/60 hover:text-deep-espresso"
                     }`}
                 >
                   Traditional Wedding
@@ -255,8 +255,8 @@ export default function Home() {
                 <button
                   onClick={() => setActiveSchedule("white")}
                   className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${activeSchedule === "white"
-                      ? "text-deep-terracotta border-b-2 border-deep-terracotta"
-                      : "text-deep-espresso/60 hover:text-deep-espresso"
+                    ? "text-deep-terracotta border-b-2 border-deep-terracotta"
+                    : "text-deep-espresso/60 hover:text-deep-espresso"
                     }`}
                 >
                   White Wedding

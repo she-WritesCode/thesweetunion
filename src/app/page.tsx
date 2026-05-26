@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-warm-cream text-deep-espresso flex flex-col relative select-text">
-      
+
       {/* Navigation Bar */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-warm-cream/80 backdrop-blur-md border-b border-amber-gold/10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -83,7 +83,7 @@ export default function Home() {
       <section className="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10">
         <FadeInSection>
           <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            
+
             {/* Left Column: Countdown Details */}
             <div className="text-center lg:text-left space-y-6">
               <span className="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
@@ -93,7 +93,7 @@ export default function Home() {
                 Counting Down the Days
               </h2>
               <p className="text-deep-espresso/70 max-w-md mx-auto lg:mx-0 font-body text-lg">
-                We've known each other for a long time. Now, we are counting down the hours until our traditional engagement and celebration.
+                We&apos;ve known each other for a long time. Now, we are counting down the hours until our traditional engagement and celebration.
               </p>
               <Countdown targetDate={siteConfig.weddingDate} />
             </div>
@@ -101,7 +101,7 @@ export default function Home() {
             {/* Right Column: Scrapbook Photo Collage */}
             <div className="relative h-[320px] sm:h-[400px] w-full flex items-center justify-center select-none">
               {/* Photo 1 */}
-              <div className="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[-6deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in">
+              <div className="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in">
                 <div className="washi-tape washi-tape-terracotta top-[-10px] left-10" />
                 <div className="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm" onClick={() => setLightboxImage("/images/story-2.png")}>
                   <Image src="/images/story-2.png" alt="Road trip memory" fill className="object-cover" />
@@ -129,10 +129,10 @@ export default function Home() {
                 Our Journey
               </span>
               <h2 className="text-4xl sm:text-5xl font-bold text-deep-espresso font-display-cinzel">
-                The Long Game Scrapbook
+                The Friendship that Grew
               </h2>
               <p className="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body text-lg">
-                We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here is our story over the years.
+                We took our time, built a friendship that couldn&apos;t be broken, and ended up exactly where we belonged. Here is our story over the years.
               </p>
             </div>
             <ScrapbookTimeline items={siteConfig.story} onImageClick={setLightboxImage} />
@@ -151,7 +151,7 @@ export default function Home() {
             >
               <FadeInSection>
                 <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                  
+
                   {/* Event text, details, schedule & RSVP */}
                   <div className={`space-y-8 ${isEven ? "order-1" : "order-1 lg:order-2"}`}>
                     <div>
@@ -180,17 +180,28 @@ export default function Home() {
                         </p>
                       </div>
 
-                      <a
-                        href={event.venue.googleMapsDirectionsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none"
-                      >
-                        <span>Directions</span>
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
+                      <div className="border-t border-amber-gold/10 pt-3">
+                        <h4 className="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-0.5">
+                          Dress Code
+                        </h4>
+                        <p className="font-body text-sm font-semibold text-deep-espresso">
+                          {event.dressCode}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <a
+                          href={event.venue.googleMapsDirectionsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none"
+                        >
+                          <span>Directions</span>
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
                     </div>
 
                     {/* Schedule for this specific event */}
@@ -239,8 +250,8 @@ export default function Home() {
 
                   {/* Polaroid couple picture representing this specific event */}
                   <div className={`flex flex-col items-center justify-center select-none relative ${isEven ? "order-2" : "order-2 lg:order-1"}`}>
-                    <div className="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[2deg]" />
-                    <div className="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 rotate-[-2deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in" onClick={() => setLightboxImage(event.imageUrl)}>
+                    <div className="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-2" />
+                    <div className="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 -rotate-2 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in" onClick={() => setLightboxImage(event.imageUrl)}>
                       <div className="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                         <Image
                           src={event.imageUrl}
@@ -282,11 +293,11 @@ export default function Home() {
       <section id="wishlist" className="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10">
         <FadeInSection>
           <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            
+
             {/* Left Column: Polaroid Home Couple Photo */}
             <div className="flex justify-center select-none relative order-2 lg:order-1">
               <div className="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
-              <div className="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[3deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in" onClick={() => setLightboxImage("/images/home_couple.png")}>
+              <div className="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in" onClick={() => setLightboxImage("/images/home_couple.png")}>
                 <div className="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                   <Image src="/images/home_couple.png" alt="Building our home" fill className="object-cover" />
                 </div>
@@ -324,7 +335,7 @@ export default function Home() {
       <section id="faqs" className="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10">
         <FadeInSection>
           <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            
+
             {/* Left Column: Polaroid Playful Couple Photo */}
             <div className="flex justify-center select-none relative order-2 lg:order-1">
               <div className="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[4deg]" />
@@ -365,9 +376,9 @@ export default function Home() {
               {siteConfig.couple.hashtag}
             </p>
             <p className="font-body text-base text-deep-espresso/80">
-              Thank you for being part of our story. We can't wait to celebrate our union with you.
+              Thank you for being part of our story. We can&apos;t wait to celebrate our union with you.
             </p>
-            <div className="relative w-[150px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-[3deg] scale-90 select-none cursor-zoom-in" onClick={() => setLightboxImage("/images/story-4.png")}>
+            <div className="relative w-[150px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-3 scale-90 select-none cursor-zoom-in" onClick={() => setLightboxImage("/images/story-4.png")}>
               <div className="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                 <Image src="/images/story-4.png" alt="Memory" fill className="object-cover" />
               </div>
