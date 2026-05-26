@@ -5,9 +5,10 @@ import Image from "next/image";
 
 interface TimelineProps {
   items: TimelineItem[];
+  onImageClick: (url: string) => void;
 }
 
-export default function ScrapbookTimeline({ items }: TimelineProps) {
+export default function ScrapbookTimeline({ items, onImageClick }: TimelineProps) {
   // Pre-configured scattering offsets and angles for a messy scrapbook collage
   const collageStyles = [
     {
@@ -40,7 +41,7 @@ export default function ScrapbookTimeline({ items }: TimelineProps) {
     <div className="w-full max-w-6xl mx-auto py-12 px-4 select-text">
       {/* Scattered overlapping grid of Polaroid memories */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 relative">
-        
+
         {items.map((item, index) => {
           const style = collageStyles[index % collageStyles.length];
 
@@ -55,17 +56,18 @@ export default function ScrapbookTimeline({ items }: TimelineProps) {
               {/* The Polaroid Card */}
               <div className="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col">
                 {/* Photo frame */}
-                <div className="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10">
+                <div className="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in">
                   <Image
                     src={item.imageUrl}
                     alt={item.title}
                     fill
                     className="object-cover"
+                    onClick={() => onImageClick(item.imageUrl)}
                   />
                   {/* Subtle shadows & paper details on photo */}
                   <div className="absolute inset-0 bg-gradient-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
                 </div>
-                
+
                 {/* Handwritten diary entry description */}
                 <div className="mt-5 space-y-2.5 text-deep-espresso text-left select-text">
                   <div className="flex items-center justify-between border-b border-amber-gold/15 pb-1">
@@ -77,7 +79,7 @@ export default function ScrapbookTimeline({ items }: TimelineProps) {
                     </span>
                   </div>
                   <p className="font-body text-base text-deep-espresso/80 leading-relaxed italic">
-                    "{item.description}"
+                    &quot;{item.description}&quot;
                   </p>
                 </div>
               </div>

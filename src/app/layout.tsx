@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorantUpright.variable} ${cinzelDecorative.variable} ${italiana.variable} ${lora.variable} ${jost.variable} h-full antialiased`}
+      className={`${cormorantUpright.variable} ${cinzelDecorative.variable} ${italiana.variable} ${lora.variable} ${jost.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

@@ -13,6 +13,15 @@ export default function Home() {
   const [activeFont, setActiveFont] = useState<FontType>("cormorant");
   const [activeSchedule, setActiveSchedule] = useState<"traditional" | "white">("traditional");
 
+  // Adapters for updated config schema
+  const venue = siteConfig.events[1].venue;
+  const scheduleTraditional = siteConfig.events[0].schedule;
+  const scheduleWhite = siteConfig.events[1].schedule;
+  const rsvpPrompt = {
+    title: "Will You Celebrate With Us?",
+    description: "Please let us know if you can make it before the deadline so we can finalize our preparations. We would love nothing more than to share this day with you."
+  };
+
   const getFontClass = (font: FontType) => {
     switch (font) {
       case "cinzel":
@@ -178,10 +187,10 @@ export default function Home() {
                   Location
                 </h4>
                 <p className="font-heading text-lg font-bold text-deep-espresso">
-                  {siteConfig.venue.name}
+                  {venue.name}
                 </p>
                 <p className="text-deep-espresso/80 text-sm mt-0.5">
-                  {siteConfig.venue.address}
+                  {venue.address}
                 </p>
               </div>
 
@@ -198,7 +207,7 @@ export default function Home() {
               </div>
 
               <a
-                href={siteConfig.venue.googleMapsDirectionsUrl}
+                href={venue.googleMapsDirectionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg"
@@ -213,7 +222,7 @@ export default function Home() {
             {/* Embedded Google Map */}
             <div className="w-full h-[280px] rounded-2xl overflow-hidden shadow-inner border border-amber-gold/15 relative">
               <iframe
-                src={siteConfig.venue.googleMapsEmbedUrl}
+                src={venue.googleMapsEmbedUrl}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -260,8 +269,8 @@ export default function Home() {
 
             <div className="space-y-6 relative border-l border-amber-gold/20 pl-6 ml-2 transition-opacity duration-300">
               {(activeSchedule === "traditional"
-                ? siteConfig.scheduleTraditional
-                : siteConfig.scheduleWhite
+                ? scheduleTraditional
+                : scheduleWhite
               ).map((item, index) => (
                 <div key={index} className="relative group">
                   {/* Timeline point */}
@@ -317,10 +326,10 @@ export default function Home() {
                 Attendance
               </span>
               <h3 className={`text-3xl font-bold text-deep-espresso mb-4 ${getFontClass(activeFont)}`}>
-                {siteConfig.rsvpPrompt.title}
+                {rsvpPrompt.title}
               </h3>
               <p className="font-body text-deep-espresso/80 text-base leading-relaxed">
-                {siteConfig.rsvpPrompt.description}
+                {rsvpPrompt.description}
               </p>
             </div>
             <button className="px-6 py-3 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none">
