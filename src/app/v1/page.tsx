@@ -39,7 +39,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-warm-cream text-deep-espresso flex flex-col relative select-none">
-
+      
       {/* Real-time Font Switcher Widget (Fixed for interactive preview) */}
       <div className="fixed bottom-6 right-6 z-50 bg-linen-white/95 backdrop-blur-md border border-amber-gold/30 p-4 rounded-2xl shadow-xl max-w-xs transition-all duration-300 hover:shadow-2xl">
         <p className="text-xs font-semibold text-amber-gold uppercase tracking-wider mb-2">
@@ -53,10 +53,11 @@ export default function Home() {
             <button
               key={font}
               onClick={() => setActiveFont(font)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${activeFont === font
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                activeFont === font
                   ? "bg-deep-terracotta text-warm-cream font-medium shadow-sm"
                   : "hover:bg-amber-gold/10 text-deep-espresso"
-                }`}
+              }`}
             >
               {getFontName(font)}
             </button>
@@ -146,7 +147,7 @@ export default function Home() {
               The Long Game
             </h2>
             <p className="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body">
-              We took our time, built a friendship that couldn&apos;t be broken, and ended up exactly where we belonged.
+              We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged.
             </p>
           </div>
           <Timeline items={siteConfig.story} fontClass={getFontClass(activeFont)} />
@@ -156,7 +157,7 @@ export default function Home() {
       {/* Event Details & Schedule */}
       <section id="details" className="paper-texture py-24 px-6 border-b border-amber-gold/10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-
+          
           {/* Details & Map */}
           <div className="space-y-8">
             <div>
@@ -236,19 +237,21 @@ export default function Home() {
               <div className="flex gap-4 mt-6 border-b border-amber-gold/20 pb-3">
                 <button
                   onClick={() => setActiveSchedule("traditional")}
-                  className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${activeSchedule === "traditional"
+                  className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${
+                    activeSchedule === "traditional"
                       ? "text-deep-terracotta border-b-2 border-deep-terracotta"
                       : "text-deep-espresso/60 hover:text-deep-espresso"
-                    }`}
+                  }`}
                 >
                   Traditional Wedding
                 </button>
                 <button
                   onClick={() => setActiveSchedule("white")}
-                  className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${activeSchedule === "white"
+                  className={`pb-2 text-base font-semibold uppercase tracking-wider transition-all duration-300 focus:outline-none cursor-pointer ${
+                    activeSchedule === "white"
                       ? "text-deep-terracotta border-b-2 border-deep-terracotta"
                       : "text-deep-espresso/60 hover:text-deep-espresso"
-                    }`}
+                  }`}
                 >
                   White Wedding
                 </button>
@@ -265,7 +268,7 @@ export default function Home() {
                   <div className="absolute left-[-31px] top-1.5 w-4 h-4 rounded-full border border-amber-gold bg-warm-cream flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                     <div className="w-1.5 h-1.5 rounded-full bg-amber-gold" />
                   </div>
-
+                  
                   <div>
                     <span className="font-heading text-sm font-semibold text-amber-gold tracking-wide">
                       {item.time}
@@ -288,7 +291,7 @@ export default function Home() {
       {/* Wishlist & RSVP Teaser Section */}
       <section className="paper-texture py-24 px-6 border-b border-amber-gold/10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-
+          
           {/* Wishlist Card */}
           <div id="wishlist" className="linen-card p-8 sm:p-10 rounded-2xl flex flex-col justify-between items-start border border-amber-gold/15 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <div className="mb-8">

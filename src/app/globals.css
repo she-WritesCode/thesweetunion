@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
+@theme {
+  --color-amber-gold: #C8852A;
+  --color-deep-terracotta: #8B3A2A;
+  --color-burnt-sienna: #A0522D;
+  --color-warm-cream: #FAF3E0;
+  --color-linen-white: #F0E6D3;
+  --color-deep-espresso: #2C1A0E;
+
+  --font-display-cormorant: var(--font-cormorant-upright), serif;
+  --font-display-cinzel: var(--font-cinzel-decorative), serif;
+  --font-display-italiana: var(--font-italiana), serif;
+  --font-heading: var(--font-lora), serif;
+  --font-body: var(--font-crimson-pro), serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #FAF3E0;
+  --foreground: #2C1A0E;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-warm-cream);
+  color: var(--color-deep-espresso);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Elegant tactile linen texture */
+.paper-texture {
+  background-color: #FAF3E0;
+  position: relative;
+}
+
+.paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: 
+    linear-gradient(90deg, rgba(44, 26, 14, 0.5) 50%, transparent 50%),
+    linear-gradient(rgba(44, 26, 14, 0.5) 50%, transparent 50%);
+  background-size: 4px 4px;
+}
+
+.paper-texture > * {
+  position: relative;
+  z-index: 10;
+}
+
+/* Elegant Linen Card */
+.linen-card {
+  background-color: #F0E6D3;
+  border: 1px solid rgba(200, 133, 42, 0.15);
+  box-shadow: 0 10px 30px -5px rgba(44, 26, 14, 0.06);
+}
+
+/* Custom scrollbar matching theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF3E0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8852A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8B3A2A;
 }
