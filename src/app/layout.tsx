@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   description: "A custom wedding website and wishlist for Adun & Uche's celebration. Celebrate our sweet union with us.",
 };
 
+import PressedStampCursor from "@/components/PressedStampCursor";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,7 +47,10 @@ export default function RootLayout({
       lang="en"
       className={`${cormorantUpright.variable} ${cinzelDecorative.variable} ${italiana.variable} ${lora.variable} ${jost.variable} h-full antialiased scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PressedStampCursor />
+        {children}
+      </body>
     </html>
   );
 }

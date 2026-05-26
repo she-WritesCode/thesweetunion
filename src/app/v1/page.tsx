@@ -11,12 +11,12 @@ type FontType = "cormorant" | "cinzel" | "italiana";
 
 export default function Home() {
   const [activeFont, setActiveFont] = useState<FontType>("cinzel");
-  const [activeSchedule, setActiveSchedule] = useState<"traditional" | "white">("traditional");
+  const [activeSchedule, setActiveSchedule] = useState<"traditional" | "white">("white");
 
   // Adapters for updated config schema
-  const venue = siteConfig.events[1].venue;
-  const scheduleTraditional = siteConfig.events[0].schedule;
-  const scheduleWhite = siteConfig.events[1].schedule;
+  const venue = siteConfig.events[0]?.venue;
+  const scheduleTraditional: any[] = [];
+  const scheduleWhite = siteConfig.events[0]?.schedule || [];
   const rsvpPrompt = {
     title: "Will You Celebrate With Us?",
     description: "Please let us know if you can make it before the deadline so we can finalize our preparations. We would love nothing more than to share this day with you."
@@ -179,58 +179,63 @@ export default function Home() {
                 We are gathering at the beautiful Oakwood Barn in the Oxfordshire Cotswolds. The wedding features both our Traditional Ceremony and White Wedding celebration.
               </p>
             </div>
+            {venue && (
+              <div className="linen-card p-6 rounded-2xl border border-amber-gold/15 space-y-4">
+                <div>
+                  <h4 className="font-heading text-sm font-semibold uppercase tracking-wider text-amber-gold mb-1">
+                    Location
+                  </h4>
+                  <p className="font-heading text-lg font-bold text-deep-espresso">
+                    {venue.name}
+                  </p>
+                  <p className="text-deep-espresso/80 text-sm mt-0.5">
+                    {venue.address}
+                  </p>
+                </div>
 
-            <div className="linen-card p-6 rounded-2xl border border-amber-gold/15 space-y-4">
-              <div>
-                <h4 className="font-heading text-sm font-semibold uppercase tracking-wider text-amber-gold mb-1">
-                  Location
-                </h4>
-                <p className="font-heading text-lg font-bold text-deep-espresso">
-                  {venue.name}
-                </p>
-                <p className="text-deep-espresso/80 text-sm mt-0.5">
-                  {venue.address}
-                </p>
+                <div>
+                  <h4 className="font-heading text-sm font-semibold uppercase tracking-wider text-amber-gold mb-1">
+                    Timing
+                  </h4>
+                  <p className="font-heading text-lg font-bold text-deep-espresso">
+                    Thursday, October 15, 2026
+                  </p>
+                  <p className="text-deep-espresso/80 text-sm mt-0.5">
+                    Traditional details & white wedding schedule shown on the right.
+                  </p>
+                </div>
+
+                {venue.googleMapsDirectionsUrl && (
+                  <a
+                    href={venue.googleMapsDirectionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    <span>Get Directions</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
               </div>
-
-              <div>
-                <h4 className="font-heading text-sm font-semibold uppercase tracking-wider text-amber-gold mb-1">
-                  Timing
-                </h4>
-                <p className="font-heading text-lg font-bold text-deep-espresso">
-                  Thursday, October 15, 2026
-                </p>
-                <p className="text-deep-espresso/80 text-sm mt-0.5">
-                  Traditional details & white wedding schedule shown on the right.
-                </p>
-              </div>
-
-              <a
-                href={venue.googleMapsDirectionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <span>Get Directions</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
+            )}
 
             {/* Embedded Google Map */}
-            <div className="w-full h-[280px] rounded-2xl overflow-hidden shadow-inner border border-amber-gold/15 relative">
-              <iframe
-                src={venue.googleMapsEmbedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="brightness-95 contrast-[1.02]"
-              />
-            </div>
+            {venue?.googleMapsEmbedUrl && (
+              <div className="w-full h-[280px] rounded-2xl overflow-hidden shadow-inner border border-amber-gold/15 relative">
+                <iframe
+                  src={venue.googleMapsEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="brightness-95 contrast-[1.02]"
+                />
+              </div>
+            )}
           </div>
 
           {/* Schedule */}

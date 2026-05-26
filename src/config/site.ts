@@ -21,23 +21,23 @@ export interface FAQItem {
 export interface VenueConfig {
   name: string;
   address: string;
-  googleMapsEmbedUrl: string;
-  googleMapsDirectionsUrl: string;
+  googleMapsEmbedUrl?: string;
+  googleMapsDirectionsUrl?: string;
 }
 
 export interface EventConfig {
   key: string;
   name: string;
   date: string;
-  venue: VenueConfig;
+  venue?: VenueConfig;
   dressCode: string;
   schedule: ScheduleItem[];
   imageUrl: string;
-  rsvpTeaser: {
+  rsvpTeaser?: {
     title: string;
     description: string;
   };
-  rsvpLink: string;
+  rsvpLink?: string;
 }
 
 export interface SiteConfig {
@@ -63,7 +63,7 @@ export const siteConfig: SiteConfig = {
     person2: "Uche",
     hashtag: "#TheSweetUnion",
   },
-  weddingDate: "2026-10-14T10:00:00", // Traditional day start
+  weddingDate: "2026-10-15T13:00:00", // White Wedding day start
   rsvpCutoffDate: "2026-09-15T23:59:59",
   story: [
     {
@@ -97,52 +97,12 @@ export const siteConfig: SiteConfig = {
   ],
   events: [
     {
-      key: "traditional",
-      name: "The Traditional Engagement",
-      date: "Wednesday, October 14, 2026 at 10:00 AM",
-      venue: {
-        name: "Lagos, Nigeria",
-        address: "Exact location details will be sent privately with your invitation card.",
-        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da9c4a01!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1716682000000!5m2!1sen!2sng",
-        googleMapsDirectionsUrl: "https://maps.google.com/?q=Lagos+Nigeria",
-      },
-      dressCode: "Traditional Attire (Colors: Sage Green & Champagne Gold)",
-      schedule: [
-        {
-          time: "10:00 AM",
-          title: "Welcome & Family Introductions",
-          description: "Formal arrival of the groom's family (the Igbo delegation) greeted warmly by the bride's Yoruba family.",
-        },
-        {
-          time: "11:30 AM",
-          title: "The Entrance & Respects (Idobale)",
-          description: "Uche and his friends pay their respects by prostrating before Adun's parents. The presentation of the proposal letter (Leta Igbeyawo).",
-        },
-        {
-          time: "1:00 PM",
-          title: "Bride's Entrance & Igbo Wine Carrying",
-          description: "Adun enters in her traditional attire, identifies Uche as her husband, and carries the palm wine to him for his blessing.",
-        },
-        {
-          time: "2:30 PM",
-          title: "Banquet & Spraying Ceremony",
-          description: "Authentic Jollof, Pounded Yam with Egusi, and Ofe Nsala. Live band performance and the traditional spraying of the couple.",
-        },
-      ],
-      imageUrl: "/images/traditional_couple.png",
-      rsvpTeaser: {
-        title: "Traditional RSVP & Aso Ebi",
-        description: "Please RSVP for our Traditional Engagement. Details for Aso Ebi packaging and head ties (Gele) can be found in the RSVP details.",
-      },
-      rsvpLink: "#rsvp-traditional",
-    },
-    {
-      key: "white",
-      name: "The White Wedding Celebration",
+      key: "white-ceremony",
+      name: "The Holy Matrimony Ceremony",
       date: "Thursday, October 15, 2026 at 1:00 PM",
       venue: {
-        name: "Lagos, Nigeria",
-        address: "Exact church and reception hall details will be shared privately upon RSVP confirmation.",
+        name: "Sanctuary Cathedral",
+        address: "Exact church details will be shared privately upon RSVP confirmation.",
         googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da9c4a01!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1716682000000!5m2!1sen!2sng",
         googleMapsDirectionsUrl: "https://maps.google.com/?q=Lagos+Nigeria",
       },
@@ -153,6 +113,26 @@ export const siteConfig: SiteConfig = {
           title: "Church Vows & Matrimony",
           description: "Join us at the sanctuary for the solemnization of holy matrimony. Please arrive early to beat the Lagos traffic.",
         },
+      ],
+      imageUrl: "/images/white_couple.png",
+      rsvpTeaser: {
+        title: "Ceremony RSVP",
+        description: "Please let us know if you will be attending our Holy Matrimony ceremony in the sanctuary.",
+      },
+      rsvpLink: "#rsvp-ceremony",
+    },
+    {
+      key: "white-reception",
+      name: "The Wedding Reception",
+      date: "Thursday, October 15, 2026 at 3:30 PM",
+      venue: {
+        name: "Grand Ballroom",
+        address: "Exact reception hall details will be shared privately upon RSVP confirmation.",
+        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da9c4a01!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1716682000000!5m2!1sen!2sng",
+        googleMapsDirectionsUrl: "https://maps.google.com/?q=Lagos+Nigeria",
+      },
+      dressCode: "Strictly Formal / African Regal",
+      schedule: [
         {
           time: "3:30 PM",
           title: "Grand Reception Entrance",
@@ -167,16 +147,16 @@ export const siteConfig: SiteConfig = {
       imageUrl: "/images/white_couple.png",
       rsvpTeaser: {
         title: "Reception RSVP & Seating Details",
-        description: "Verify your attendance for the church and reception hall banquet. Access cards will be issued to confirmed RSVP groups only.",
+        description: "Verify your attendance for the reception hall banquet. Access cards will be issued to confirmed RSVP groups only.",
       },
-      rsvpLink: "#rsvp-white",
+      rsvpLink: "#rsvp-reception",
     },
   ],
   faqs: [
     {
       key: "aso-ebi",
-      question: "Is there Aso Ebi / Dress Code?",
-      answer: "Yes! For the Traditional Engagement, our color codes are Sage Green & Champagne Gold. For the White Wedding, the dress code is Strictly Formal/African Regal. Aso Ebi packages can be ordered by contacting the mother of the bride.",
+      question: "Is there a Dress Code?",
+      answer: "Yes! For the White Wedding, the dress code is Strictly Formal / African Regal.",
     },
     {
       key: "kids",
@@ -186,12 +166,12 @@ export const siteConfig: SiteConfig = {
     {
       key: "traffic",
       question: "What about Lagos traffic & security?",
-      answer: "Both venues have secure, armed security details and gated parking yards. We highly recommend leaving early to avoid toll gate and bridge delays, especially on Thursday afternoon.",
+      answer: "The venue has secure, armed security details and a gated parking yard. We highly recommend leaving early to avoid toll gate and bridge delays, especially on Thursday afternoon.",
     },
     {
       key: "accommodation",
       question: "Where can out-of-town guests stay?",
-      answer: "We have partnered with hotels near the venues to offer discounted rates for our guests. Please check your invitation or contact our wedding planner for booking codes.",
+      answer: "We have partnered with hotels near the venue to offer discounted rates for our guests. Please check your invitation or contact our wedding planner for booking codes.",
     },
   ],
   wishlistTeaser: {

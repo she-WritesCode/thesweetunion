@@ -14,9 +14,9 @@
 
 A custom wedding website for a couple that allows guests to:
 
-- Learn about the couple and the event (Home)
+- Learn about the couple and the events (Home)
 - Browse and reserve gift items from a wishlist (without duplication)
-- RSVP as part of a named group, subject to a per-group attendance cap
+- RSVP for the White Wedding Ceremony and the Reception as two separate events (the Traditional Wedding is not shown on the site)
 
 The site must be elegant, mobile-first, and easy for non-technical guests to use.
 
@@ -442,12 +442,12 @@ Wedding hashtag: **#TheSweetUnion**. This phrase should inform every design deci
 
 | Role                        | Name            | Hex       |
 | --------------------------- | --------------- | --------- |
-| Primary accent              | Amber gold      | `#C8852A` |
-| Strong accent / CTA buttons | Deep terracotta | `#8B3A2A` |
-| Supporting warmth           | Burnt sienna    | `#A0522D` |
-| Page background             | Warm cream      | `#FAF3E0` |
-| Card surfaces               | Off-white linen | `#F0E6D3` |
-| Body text                   | Deep espresso   | `#2C1A0E` |
+| Primary accent              | Muted Mauve     | `#9A7B8E` |
+| Strong accent / CTA buttons | Burnt Orange    | `#B54E24` |
+| Supporting warmth           | Terracotta Peach| `#E09F8C` |
+| Page background             | Warm Alabaster  | `#FAF7F5` |
+| Card surfaces               | Soft Pearl      | `#F3EDEB` |
+| Body text                   | Deep Plum Slate | `#30222A` |
 
 Avoid pure black (`#000000`) and pure white (`#FFFFFF`) — everything should feel warm, never clinical.
 
@@ -534,6 +534,7 @@ All open questions from v1.0 have been answered by the couple. Recorded here for
 | 6   | Multiple RSVPs from same email         | Blocked site-wide. One email = one RSVP, regardless of group. Guest is shown a friendly message pointing them to their confirmation email.                        |
 | 7   | Custom domain                          | Yes. The couple will purchase a custom domain. Developer to handle DNS setup and SSL configuration as part of Phase 9.                                            |
 | 8   | Admin accounts                         | One shared admin account for the couple. No separate logins needed.                                                                                               |
+| 9   | Event RSVP scope                       | The website displays and supports RSVP for the White Wedding Ceremony and the Reception as two separate events. The Traditional Wedding is not shown.            |
 
 ---
 

@@ -1,12 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-amber-gold: #C8852A;
-  --color-deep-terracotta: #8B3A2A;
-  --color-burnt-sienna: #A0522D;
-  --color-warm-cream: #FAF3E0;
-  --color-linen-white: #F0E6D3;
-  --color-deep-espresso: #2C1A0E;
+  --color-muted-mauve: #8A627C;
+  --color-burnt-orange: #B54E24;
+  --color-terracotta-peach: #E09F8C;
+  --color-warm-alabaster: #FAF5F8;
+  --color-soft-pearl: #F5EDF1;
+  --color-deep-plum-slate: #30222A;
+
+  /* Legacy name mappings for compatibility with existing classes */
+  --color-amber-gold: var(--color-muted-mauve);
+  --color-deep-terracotta: var(--color-burnt-orange);
+  --color-burnt-sienna: var(--color-terracotta-peach);
+  --color-warm-cream: var(--color-warm-alabaster);
+  --color-linen-white: var(--color-soft-pearl);
+  --color-deep-espresso: var(--color-deep-plum-slate);
 
   --font-display-cormorant: var(--font-cormorant-upright), serif;
   --font-display-cinzel: var(--font-cinzel-decorative), serif;
@@ -16,8 +24,8 @@
 }
 
 :root {
-  --background: #FAF3E0;
-  --foreground: #2C1A0E;
+  --background: #FAF5F8;
+  --foreground: #30222A;
 }
 
 body {
@@ -31,7 +39,7 @@ body {
 
 /* Elegant tactile linen texture */
 .paper-texture {
-  background-color: #FAF3E0;
+  background-color: #FAF5F8;
   position: relative;
 }
 
@@ -43,8 +51,8 @@ body {
   pointer-events: none;
   opacity: 0.025;
   background-image: 
-    linear-gradient(90deg, rgba(44, 26, 14, 0.5) 50%, transparent 50%),
-    linear-gradient(rgba(44, 26, 14, 0.5) 50%, transparent 50%);
+    linear-gradient(90deg, rgba(48, 34, 42, 0.5) 50%, transparent 50%),
+    linear-gradient(rgba(48, 34, 42, 0.5) 50%, transparent 50%);
   background-size: 2px 2px;
 }
 
@@ -55,9 +63,9 @@ body {
 
 /* Elegant Linen Card */
 .linen-card {
-  background-color: #F0E6D3;
-  border: 1px solid rgba(200, 133, 42, 0.15);
-  box-shadow: 0 10px 30px -5px rgba(44, 26, 14, 0.06);
+  background-color: #F5EDF1;
+  border: 1px solid rgba(138, 98, 124, 0.35);
+  box-shadow: 0 10px 30px -5px rgba(48, 34, 42, 0.06);
 }
 
 /* Custom scrollbar matching theme */
@@ -66,16 +74,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FAF3E0;
+  background: var(--color-warm-cream);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C8852A;
+  background: var(--color-amber-gold);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8B3A2A;
+  background: var(--color-deep-terracotta);
 }
 
 /* Washi tape decoration */
@@ -83,23 +91,49 @@ body {
   position: absolute;
   width: 110px;
   height: 28px;
-  background-color: rgba(240, 230, 211, 0.5);
+  background-color: rgba(243, 237, 235, 0.5);
   backdrop-filter: blur(1px);
-  border-left: 2px dashed rgba(44, 26, 14, 0.15);
-  border-right: 2px dashed rgba(44, 26, 14, 0.15);
-  box-shadow: 0 1px 4px rgba(44, 26, 14, 0.04);
+  border-left: 2px dashed rgba(48, 34, 42, 0.15);
+  border-right: 2px dashed rgba(48, 34, 42, 0.15);
+  box-shadow: 0 1px 4px rgba(48, 34, 42, 0.04);
   z-index: 30;
 }
 
 .washi-tape-terracotta {
-  background-color: rgba(139, 58, 42, 0.35);
-  border-left-color: rgba(240, 230, 211, 0.3);
-  border-right-color: rgba(240, 230, 211, 0.3);
+  background-color: rgba(181, 78, 36, 0.35);
+  border-left-color: rgba(243, 237, 235, 0.3);
+  border-right-color: rgba(243, 237, 235, 0.3);
 }
 
 .washi-tape-gold {
-  background-color: rgba(200, 133, 42, 0.35);
-  border-left-color: rgba(240, 230, 211, 0.3);
-  border-right-color: rgba(240, 230, 211, 0.3);
+  background-color: rgba(154, 123, 142, 0.35);
+  border-left-color: rgba(243, 237, 235, 0.3);
+  border-right-color: rgba(243, 237, 235, 0.3);
+}
+
+/* Custom Cursor Pressed Stamp Animations & Overrides */
+@keyframes stampFade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+  30% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+.animate-stamp-fade {
+  animation: stampFade 0.7s forwards cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+
+@media (pointer: fine) {
+  body, a, button, [role="button"], input, select, textarea, .cursor-pointer, [onClick] {
+    cursor: none !important;
+  }
 }
 
