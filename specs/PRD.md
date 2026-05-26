@@ -154,7 +154,15 @@ Each wishlist item has an optional `purchase_link` field. Behaviour:
 
 The `link` field in the data model may also carry a note (e.g. "Pay via bank transfer — details will be shared after you reserve") — the admin can add this as part of the item description.
 
-#### 3.2.6 Guest Cancellation
+#### 3.2.7 Cash Funds & Bank Transfers
+
+For registry items that are cash contributions (e.g., "Honeymoon Fund" or "Nest Egg Fund"), the item can be configured as a **Cash Fund**:
+- **CTA Button:** Shows "Contribute Cash" instead of "Reserve This Gift".
+- **Display Badge:** Shows "Cash Fund / Contribution" and can support open-ended quantities.
+- **Direct Bank Transfer Details:** When the guest clicks "Contribute Cash", the modal presents the couple's bank account details (Bank Name, Account Number, and Account Name) along with a form to notify the couple of their transfer.
+- **Terminology:** Uses modern giving terms like *Newlywed Fund*, *Nest Egg*, *Honeymoon Experience Contribution*, and *Bless our Home*.
+
+#### 3.2.8 Guest Cancellation
 
 A guest who reserved a gift can cancel their reservation using their confirmation email. The email contains a unique cancellation link. On cancellation:
 
@@ -535,6 +543,7 @@ All open questions from v1.0 have been answered by the couple. Recorded here for
 | 7   | Custom domain                          | Yes. The couple will purchase a custom domain. Developer to handle DNS setup and SSL configuration as part of Phase 9.                                            |
 | 8   | Admin accounts                         | One shared admin account for the couple. No separate logins needed.                                                                                               |
 | 9   | Event RSVP scope                       | The website displays and supports RSVP for the White Wedding Ceremony and the Reception as two separate events. The Traditional Wedding is not shown.            |
+| 10  | Cash funds & bank transfers            | The website supports direct cash contributions for experiences or registry items by showing bank account details inside the reservation modal.                   |
 
 ---
 

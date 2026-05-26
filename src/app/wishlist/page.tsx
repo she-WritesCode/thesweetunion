@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { siteConfig } from "@/config/site";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -15,6 +14,13 @@ interface WishlistItem {
   maxQuantity: number;
   reservedCount: number;
   category: string;
+  isCashFund?: boolean;
+  bankDetails?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    note?: string;
+  };
 }
 
 // Initial mock registry list matching Lagos setup theme
@@ -24,7 +30,7 @@ const initialItems: WishlistItem[] = [
     name: "KitchenAid Artisan Stand Mixer",
     description: "For baking delicious desserts and preparing family meals in our kitchen.",
     imageUrl: "/images/mixer.png",
-    price: 450,
+    price: 650000,
     maxQuantity: 1,
     reservedCount: 0,
     category: "Kitchen",
@@ -35,7 +41,7 @@ const initialItems: WishlistItem[] = [
     name: "Le Creuset Enameled Cast Iron Dutch Oven",
     description: "An essential piece of cookware that will last us a lifetime.",
     imageUrl: "/images/dutch_oven.png",
-    price: 380,
+    price: 500000,
     maxQuantity: 1,
     reservedCount: 1,
     category: "Kitchen",
@@ -46,17 +52,24 @@ const initialItems: WishlistItem[] = [
     name: "Honeymoon Excursion Fund",
     description: "Contribute to our couple hikes, boat cruises, and street food tours.",
     imageUrl: "/images/honeymoon.png",
-    price: 150,
+    price: 250000,
     maxQuantity: 10,
     reservedCount: 4,
     category: "Travel",
+    isCashFund: true,
+    bankDetails: {
+      bankName: "Guaranty Trust Bank (GTBank)",
+      accountNumber: "0123456789",
+      accountName: "Uche & Adun Wedding Account",
+      note: "Please transfer your contribution directly using your banking app, then confirm details below."
+    }
   },
   {
     id: "4",
     name: "Roborock Q7 Max Robot Vacuum",
     description: "Help us keep our new apartment clean with minimal effort.",
     imageUrl: "/images/vacuum.png",
-    price: 520,
+    price: 750000,
     maxQuantity: 1,
     reservedCount: 0,
     category: "Home Essentials",
@@ -66,7 +79,7 @@ const initialItems: WishlistItem[] = [
     name: "Barista Express Espresso Machine",
     description: "To fuel Uche's daily coffee routine and host morning tea times.",
     imageUrl: "/images/espresso.png",
-    price: 699,
+    price: 950000,
     maxQuantity: 1,
     reservedCount: 0,
     category: "Kitchen",
@@ -77,11 +90,28 @@ const initialItems: WishlistItem[] = [
     name: "Premium Linen Sheet Set",
     description: "Breathable French flax linen sheets in warm clay/alabaster tone.",
     imageUrl: "/images/sheets.png",
-    price: 240,
+    price: 300000,
     maxQuantity: 2,
     reservedCount: 1,
     category: "Home Essentials",
   },
+  {
+    id: "7",
+    name: "Bless Our Home Fund",
+    description: "Help us set up our new apartment in Lagos as we start this beautiful journey.",
+    imageUrl: "/images/home_fund.png",
+    price: 150000,
+    maxQuantity: 100,
+    reservedCount: 12,
+    category: "Home Essentials",
+    isCashFund: true,
+    bankDetails: {
+      bankName: "Zenith Bank",
+      accountNumber: "9876543210",
+      accountName: "Uche & Adun Wedding Account",
+      note: "Please transfer your contribution directly using your banking app, then confirm details below."
+    }
+  }
 ];
 
 export default function Wishlist() {
@@ -219,7 +249,11 @@ export default function Wishlist() {
                     </div>
                     {/* Badge Indicator */}
                     <div className="absolute top-4 right-4 z-10">
-                      {!isAvailable ? (
+                      {item.isCashFund ? (
+                        <span className="bg-purple-950/80 border border-purple-500/30 text-purple-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs">
+                          Cash Fund
+                        </span>
+                      ) : !isAvailable ? (
                         <span className="bg-red-950/80 border border-red-500/30 text-red-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs">
                           Fully Claimed
                         </span>
@@ -243,7 +277,7 @@ export default function Wishlist() {
                           {item.category}
                         </span>
                         <span className="text-sm font-bold text-deep-espresso font-body">
-                          ${item.price}
+                          ₦{item.price.toLocaleString("en-US")}
                         </span>
                       </div>
                       <h3 className="font-heading text-lg font-bold text-deep-espresso leading-snug group-hover:text-deep-terracotta transition-colors">
@@ -256,7 +290,14 @@ export default function Wishlist() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-3 pt-2">
-                      {isAvailable ? (
+                      {item.isCashFund ? (
+                        <button
+                          onClick={() => handleReserveClick(item)}
+                          className="flex-1 px-4 py-2 rounded-xl bg-burnt-orange text-warm-cream font-semibold text-xs uppercase tracking-wider hover:bg-deep-terracotta transition-all duration-300 shadow-sm hover:shadow focus:outline-none text-center cursor-pointer"
+                        >
+                          Contribute Cash
+                        </button>
+                      ) : isAvailable ? (
                         <button
                           onClick={() => handleReserveClick(item)}
                           className="flex-1 px-4 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-sm hover:shadow focus:outline-none text-center cursor-pointer"
@@ -305,22 +346,46 @@ export default function Wishlist() {
               ✕
             </button>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[85vh] overflow-y-auto pr-1">
               <div>
                 <span className="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
-                  Commit to Gift
+                  {activeItem.isCashFund ? "Cash Contribution" : "Commit to Gift"}
                 </span>
                 <h3 className="font-heading text-xl font-bold text-deep-espresso leading-snug">
                   {activeItem.name}
                 </h3>
                 <p className="font-body text-xs text-deep-espresso/60">
-                  Approximate Value: ${activeItem.price} · Category: {activeItem.category}
+                  {activeItem.isCashFund ? "Suggested Contribution:" : "Approximate Value:"} ₦{activeItem.price.toLocaleString("en-US")} · Category: {activeItem.category}
                 </p>
               </div>
 
               <div className="border-t border-amber-gold/10 my-4" />
 
-              <form onSubmit={handleConfirmReservation} className="space-y-4">
+              {/* Direct Bank Transfer Section */}
+              {activeItem.isCashFund && activeItem.bankDetails && (
+                <div className="bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2.5 text-xs text-deep-espresso/90">
+                  <p className="font-semibold text-deep-terracotta uppercase tracking-wide">
+                    Bank Transfer Details
+                  </p>
+                  <div className="grid grid-cols-3 gap-y-1 font-body">
+                    <span className="text-deep-espresso/60">Bank:</span>
+                    <span className="col-span-2 font-semibold">{activeItem.bankDetails.bankName}</span>
+                    
+                    <span className="text-deep-espresso/60">Account #:</span>
+                    <span className="col-span-2 font-mono font-bold text-sm text-deep-terracotta select-all">{activeItem.bankDetails.accountNumber}</span>
+                    
+                    <span className="text-deep-espresso/60">Name:</span>
+                    <span className="col-span-2 font-semibold">{activeItem.bankDetails.accountName}</span>
+                  </div>
+                  {activeItem.bankDetails.note && (
+                    <p className="text-[10px] text-deep-espresso/70 italic pt-1 border-t border-amber-gold/5">
+                      {activeItem.bankDetails.note}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmReservation} className="space-y-4 pt-2">
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">
                     Your Name (Required)
@@ -366,7 +431,7 @@ export default function Wishlist() {
                   type="submit"
                   className="w-full px-5 py-3 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none text-center cursor-pointer mt-2"
                 >
-                  Confirm Reservation
+                  {activeItem.isCashFund ? "Confirm Contribution" : "Confirm Reservation"}
                 </button>
               </form>
             </div>
@@ -383,7 +448,15 @@ export default function Wishlist() {
               Thank You So Much!
             </h3>
             <p className="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
-              You have successfully reserved the <strong>{successItem.name}</strong> registry gift item. We have sent a confirmation details card to your email.
+              {successItem.isCashFund ? (
+                <>
+                  You have successfully initiated a contribution to the <strong>{successItem.name}</strong>. Please ensure you complete the bank transfer using the details provided, and we will send a confirmation details card to your email.
+                </>
+              ) : (
+                <>
+                  You have successfully reserved the <strong>{successItem.name}</strong> registry gift item. We have sent a confirmation details card to your email.
+                </>
+              )}
             </p>
             <button
               onClick={() => setSuccessItem(null)}
