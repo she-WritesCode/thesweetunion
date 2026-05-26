@@ -18,29 +18,39 @@ export interface FAQItem {
   answer: string;
 }
 
+export interface VenueConfig {
+  name: string;
+  address: string;
+  googleMapsEmbedUrl: string;
+  googleMapsDirectionsUrl: string;
+}
+
+export interface EventConfig {
+  key: string;
+  name: string;
+  date: string;
+  venue: VenueConfig;
+  schedule: ScheduleItem[];
+  imageUrl: string;
+  rsvpTeaser: {
+    title: string;
+    description: string;
+  };
+  rsvpLink: string;
+}
+
 export interface SiteConfig {
   couple: {
     person1: string;
     person2: string;
     hashtag: string;
   };
-  weddingDate: string; // ISO format or parsing-friendly format
+  weddingDate: string; // Master target date for countdown (typically the first event)
   rsvpCutoffDate: string;
-  venue: {
-    name: string;
-    address: string;
-    googleMapsEmbedUrl: string;
-    googleMapsDirectionsUrl: string;
-  };
   story: TimelineItem[];
-  scheduleTraditional: ScheduleItem[];
-  scheduleWhite: ScheduleItem[];
+  events: EventConfig[];
   faqs: FAQItem[];
   wishlistTeaser: {
-    title: string;
-    description: string;
-  };
-  rsvpPrompt: {
     title: string;
     description: string;
   };
@@ -52,15 +62,8 @@ export const siteConfig: SiteConfig = {
     person2: "Uche",
     hashtag: "#TheSweetUnion",
   },
-  weddingDate: "2026-10-15T13:00:00", // October 15, 2026, 1:00 PM
-  rsvpCutoffDate: "2026-09-15T23:59:59", // September 15, 2026
-  venue: {
-    name: "The Oakwood Barn",
-    address: "12 Meadow Lane, Oxfordshire, OX7 5UT, United Kingdom",
-    // Standard secure Google Maps Embed URL
-    googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2472.074474735234!2d-1.4646736233486307!3d51.89613147190899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487127e4db7cc9e3%3A0xe54d6faee63b4f65!2sOxfordshire%20Cotswolds!5e0!3m2!1sen!2suk!4v1716682000000!5m2!1sen!2suk",
-    googleMapsDirectionsUrl: "https://maps.google.com/?q=The+Oakwood+Barn+Oxfordshire+Cotswolds",
-  },
+  weddingDate: "2026-10-14T11:00:00", // Start countdown to the first event (Traditional)
+  rsvpCutoffDate: "2026-09-15T23:59:59",
   story: [
     {
       key: "met",
@@ -91,38 +94,74 @@ export const siteConfig: SiteConfig = {
       imageUrl: "/images/story-4.png",
     },
   ],
-  scheduleTraditional: [
+  events: [
     {
-      time: "11:00 AM",
-      title: "Traditional Welcome & Introduction",
-      description: "Formal welcome of the groom's family by the bride's family, paying respect to cultural heritage and traditions.",
+      key: "traditional",
+      name: "The Traditional Engagement",
+      date: "Wednesday, October 14, 2026 at 11:00 AM",
+      venue: {
+        name: "The Oakwood Barn (Lawn)",
+        address: "12 Meadow Lane, Oxfordshire, OX7 5UT, United Kingdom",
+        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2472.074474735234!2d-1.4646736233486307!3d51.89613147190899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487127e4db7cc9e3%3A0xe54d6faee63b4f65!2sOxfordshire%20Cotswolds!5e0!3m2!1sen!2suk!4v1716682000000!5m2!1sen!2suk",
+        googleMapsDirectionsUrl: "https://maps.google.com/?q=The+Oakwood+Barn+Oxfordshire+Cotswolds",
+      },
+      schedule: [
+        {
+          time: "11:00 AM",
+          title: "Formal Welcome & Introductions",
+          description: "Greeting and welcome ceremonies between the bride's and groom's families, paying cultural respect.",
+        },
+        {
+          time: "12:30 PM",
+          title: "The Dowry & Presentation",
+          description: "Formal introduction of the groom, reading of the proposal letter, and symbolic presentation of gifts.",
+        },
+        {
+          time: "2:00 PM",
+          title: "Traditional Banquet & Celebration",
+          description: "A rich feast of authentic cuisine followed by drumming, dancing, and spraying of the couple.",
+        },
+      ],
+      imageUrl: "/images/traditional_couple.png",
+      rsvpTeaser: {
+        title: "Attend the Traditional Ceremony",
+        description: "Please RSVP for the Traditional Engagement Ceremony before September 15 so we can prepare our catering and arrangements accordingly.",
+      },
+      rsvpLink: "#rsvp-traditional",
     },
     {
-      time: "12:30 PM",
-      title: "The Presentation & Dowry",
-      description: "Formal introduction and symbolic presentation of gift items between both families.",
-    },
-    {
-      time: "2:00 PM",
-      title: "Traditional Feast & Dance",
-      description: "A rich feast of authentic traditional cuisine, accompanied by cultural drumming, dancing, and celebrations.",
-    },
-  ],
-  scheduleWhite: [
-    {
-      time: "1:00 PM",
-      title: "The White Wedding Ceremony",
-      description: "Join us as we exchange vows under the oak trees. Please arrive 15 minutes early.",
-    },
-    {
-      time: "2:30 PM",
-      title: "Cocktails & Cake Cutting",
-      description: "Toast to the newly weds on the lawn with warm acoustic music and fresh-cut cakes.",
-    },
-    {
-      time: "5:00 PM",
-      title: "Dinner & Dancing Reception",
-      description: "A cozy family-style dinner in the barn, followed by dancing, laughter, and celebrations late into the night.",
+      key: "white",
+      name: "The White Wedding Celebration",
+      date: "Thursday, October 15, 2026 at 1:00 PM",
+      venue: {
+        name: "St. Mary's Cotswold Church & The Oakwood Barn",
+        address: "Church Street, Oxfordshire, OX7 5UT, United Kingdom",
+        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2472.074474735234!2d-1.4646736233486307!3d51.89613147190899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487127e4db7cc9e3%3A0xe54d6faee63b4f65!2sOxfordshire%20Cotswolds!5e0!3m2!1sen!2suk!4v1716682000000!5m2!1sen!2suk",
+        googleMapsDirectionsUrl: "https://maps.google.com/?q=The+Oakwood+Barn+Oxfordshire+Cotswolds",
+      },
+      schedule: [
+        {
+          time: "1:00 PM",
+          title: "Holy Matrimony Ceremony",
+          description: "The exchange of vows and rings in the chapel under the oak vaults. Please arrive early.",
+        },
+        {
+          time: "2:30 PM",
+          title: "Cocktails & Toast on the Lawn",
+          description: "Champagne, small bites, acoustic music, and photo sessions with friends and families.",
+        },
+        {
+          time: "5:00 PM",
+          title: "Reception Banquet & Dance",
+          description: "Formal dinner, couple's first dance, cake cutting, and celebrating late into the night.",
+        },
+      ],
+      imageUrl: "/images/white_couple.png",
+      rsvpTeaser: {
+        title: "Attend the White Wedding",
+        description: "Please RSVP for the White Wedding Ceremony and Banquet Reception. Individual seat reservations will be locked at cutoff.",
+      },
+      rsvpLink: "#rsvp-white",
     },
   ],
   faqs: [
@@ -150,9 +189,5 @@ export const siteConfig: SiteConfig = {
   wishlistTeaser: {
     title: "A Small Note on Gifts",
     description: "Your presence at our wedding is the greatest gift of all. If you would like to honour us with a gift, we have created a curated wishlist of items that will help us build our new home together.",
-  },
-  rsvpPrompt: {
-    title: "Will You Celebrate With Us?",
-    description: "Please let us know if you can make it before the deadline so we can finalize our preparations. We would love nothing more than to share this day with you.",
   },
 };

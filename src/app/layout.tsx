@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Upright, Cinzel_Decorative, Italiana, Lora, Crimson_Pro } from "next/font/google";
+import { Cormorant_Upright, Cinzel_Decorative, Italiana, Lora, Jost } from "next/font/google";
 import "./globals.css";
 
 const cormorantUpright = Cormorant_Upright({
@@ -25,14 +25,14 @@ const lora = Lora({
   subsets: ["latin"],
 });
 
-const crimsonPro = Crimson_Pro({
-  variable: "--font-crimson-pro",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Damilola & Yinka — #TheSweetUnion",
-  description: "A custom wedding website and wishlist for Damilola & Yinka's celebration. Celebrate our sweet union with us.",
+  title: "Adun & Uche — #TheSweetUnion",
+  description: "A custom wedding website and wishlist for Adun & Uche's celebration. Celebrate our sweet union with us.",
 };
 
 export default function RootLayout({
@@ -43,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorantUpright.variable} ${cinzelDecorative.variable} ${italiana.variable} ${lora.variable} ${crimsonPro.variable} h-full antialiased`}
+      className={`${cormorantUpright.variable} ${cinzelDecorative.variable} ${italiana.variable} ${lora.variable} ${jost.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
