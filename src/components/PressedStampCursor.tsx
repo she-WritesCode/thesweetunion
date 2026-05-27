@@ -102,7 +102,7 @@ export default function PressedStampCursor() {
       {stamps.map((stamp) => (
         <div
           key={stamp.id}
-          className="pointer-events-none fixed z-50 text-burnt-orange/70 mix-blend-multiply animate-stamp-fade"
+          className="pointer-events-none fixed z-[9999] text-burnt-orange/70 mix-blend-multiply animate-stamp-fade"
           style={{
             left: stamp.x,
             top: stamp.y,
@@ -125,7 +125,7 @@ export default function PressedStampCursor() {
       {/* Main Cursor Element */}
       <div
         ref={cursorRef}
-        className={`pointer-events-none fixed top-0 left-0 w-8 h-8 z-50 transition-colors duration-200 select-none mix-blend-normal hidden md:block ${
+        className={`pointer-events-none fixed top-0 left-0 w-8 h-8 z-[9999] transition-colors duration-200 select-none mix-blend-normal hidden md:block ${
           isHovering ? "text-burnt-orange" : "text-muted-mauve"
         }`}
         style={{

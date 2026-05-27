@@ -33,6 +33,9 @@ export default function Navigation() {
             <Link href="/wishlist" className="hover:text-deep-terracotta transition-colors cursor-pointer">
               Wishlist
             </Link>
+            <Link href="/rsvp" className="hover:text-deep-terracotta transition-colors cursor-pointer">
+              RSVP
+            </Link>
           </nav>
 
           {/* Mobile Menu Button (Hamburger) */}
@@ -83,6 +86,13 @@ export default function Navigation() {
               className="hover:text-deep-terracotta transition-colors cursor-pointer"
             >
               Wishlist
+            </Link>
+            <Link
+              href="/rsvp"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="hover:text-deep-terracotta transition-colors cursor-pointer"
+            >
+              RSVP
             </Link>
           </nav>
         </div>

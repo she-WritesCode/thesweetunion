@@ -119,7 +119,7 @@ export const siteConfig: SiteConfig = {
         title: "Ceremony RSVP",
         description: "Please let us know if you will be attending our Holy Matrimony ceremony in the sanctuary.",
       },
-      rsvpLink: "#rsvp-ceremony",
+      rsvpLink: "/rsvp",
     },
     {
       key: "white-reception",
@@ -149,7 +149,7 @@ export const siteConfig: SiteConfig = {
         title: "Reception RSVP & Seating Details",
         description: "Verify your attendance for the reception hall banquet. Access cards will be issued to confirmed RSVP groups only.",
       },
-      rsvpLink: "#rsvp-reception",
+      rsvpLink: "/rsvp",
     },
   ],
   faqs: [
