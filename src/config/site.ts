@@ -63,35 +63,35 @@ export const siteConfig: SiteConfig = {
     person2: "Uche",
     hashtag: "#TheSweetUnion",
   },
-  weddingDate: "2026-10-15T13:00:00", // White Wedding day start
+  weddingDate: "2026-10-24T13:00:00", // White Wedding day start
   rsvpCutoffDate: "2026-09-15T23:59:59",
   story: [
     {
       key: "met",
       label: "September 2016",
       title: "Teen Church Exco",
-      description: "We met in the teens department at church, serving together on the Teen Church Executive Committee (Exco). We spent more time planning youth dramas and arguing over snack budgets than actual meeting notes, but a deep friendship took root.",
+      description: "We met in the teens department at church, serving together on the Teen Church Executive Committee (Exco). We spent more time planning youth dramas and arguing over snack budget[...]",
       imageUrl: "/images/story-1.png",
     },
     {
       key: "friendship",
       label: "2018 - 2024",
       title: "The 'Brother & Sister' Era",
-      description: "Through university and starting our careers, we remained close friends—sharing prayers, checking in on each other, and insisting to everyone who asked that we were strictly 'brother and sister in Christ'. Our friends didn't believe us, and they were right.",
+      description: "Through university and starting our careers, we remained close friends—sharing prayers, checking in on each other, and insisting to everyone who asked that we were strictly '[...]",
       imageUrl: "/images/story-2.png",
     },
     {
       key: "started-dating",
       label: "January 2025",
       title: "Only Started Dating Last Year",
-      description: "After nearly a decade of being close friends, everything finally shifted last year. We stopped running from the obvious and finally admitted our feelings. It turned out the partner we had been praying for was standing right next to us the whole time.",
+      description: "After nearly a decade of being close friends, everything finally shifted last year. We stopped running from the obvious and finally admitted our feelings. It turned out the par[...]",
       imageUrl: "/images/story-3.png",
     },
     {
       key: "proposal",
       label: "August 2025",
       title: "The Quiet Proposal",
-      description: "No flash mobs, no loud cameras. Just a quiet Sunday evening in our living room with hot chin-chin and Uche getting down on one knee. It was simple, real, and a joyful 'Yes' from Adun.",
+      description: "No flash mobs, no loud cameras. Just a quiet Sunday evening in our living room with hot chin-chin and Uche getting down on one knee. It was simple, real, and a joyful 'Yes' fro[...]",
       imageUrl: "/images/story-4.png",
     },
   ],
@@ -99,11 +99,11 @@ export const siteConfig: SiteConfig = {
     {
       key: "white-ceremony",
       name: "The Holy Matrimony Ceremony",
-      date: "Thursday, October 15, 2026 at 1:00 PM",
+      date: "Saturday, October 24, 2026 at 1:00 PM",
       venue: {
         name: "Sanctuary Cathedral",
         address: "Exact church details will be shared privately upon RSVP confirmation.",
-        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da9c4a01!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1716682000000!5m2!1sen!2sng",
+        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10[...]",
         googleMapsDirectionsUrl: "https://maps.google.com/?q=Lagos+Nigeria",
       },
       dressCode: "Strictly Formal / African Regal",
@@ -124,11 +124,11 @@ export const siteConfig: SiteConfig = {
     {
       key: "white-reception",
       name: "The Wedding Reception",
-      date: "Thursday, October 15, 2026 at 3:30 PM",
+      date: "Saturday, October 24, 2026 at 3:30 PM",
       venue: {
         name: "Grand Ballroom",
         address: "Exact reception hall details will be shared privately upon RSVP confirmation.",
-        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da9c4a01!2sLagos%2C%20Nigeria!5e0!3m2!1sen!2sng!4v1716682000000!5m2!1sen!2sng",
+        googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126846.02196655182!2d3.336184511520697!3d6.52437930335022!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10[...]",
         googleMapsDirectionsUrl: "https://maps.google.com/?q=Lagos+Nigeria",
       },
       dressCode: "Strictly Formal / African Regal",
@@ -161,7 +161,7 @@ export const siteConfig: SiteConfig = {
     {
       key: "kids",
       question: "Are children allowed?",
-      answer: "We love our nieces, nephews, and little cousins, but due to venue capacity restrictions in the hall, our wedding reception is strictly an adult-only event. We hope you understand and enjoy the night off!",
+      answer: "We love our nieces, nephews, and little cousins, but due to venue capacity restrictions in the hall, our wedding reception is strictly an adult-only event. We hope you understand a[...]",
     },
     {
       key: "traffic",
@@ -176,6 +176,6 @@ export const siteConfig: SiteConfig = {
   ],
   wishlistTeaser: {
     title: "Support Our Union",
-    description: "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together in Lagos.",
+    description: "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together in L[...]",
   },
 };
