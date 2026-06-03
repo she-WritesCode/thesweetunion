@@ -30,9 +30,9 @@ const config = computed(() => {
       db.storyPhotos && db.storyPhotos.length > 0
         ? db.storyPhotos.map((p: any, i: number) => ({
             key: p.id || `story-${i}`,
-            label: p.caption || `Chapter ${i + 1}`,
-            title: p.caption || `Memory ${i + 1}`,
-            description: p.caption || "",
+            label: p.label || `Chapter ${i + 1}`,
+            title: p.title || `Memory ${i + 1}`,
+            description: p.description || "",
             imageUrl: p.photo?.url || fallbackConfig.story[i % fallbackConfig.story.length].imageUrl,
           }))
         : fallbackConfig.story,
@@ -125,7 +125,7 @@ onUnmounted(() => {
           {{ config.couple.person1 }} & {{ config.couple.person2 }}
         </h1>
         <p class="text-base sm:text-lg md:text-xl font-light tracking-widest text-warm-cream/90 drop-shadow-sm">
-          October 14-15, 2026 · Oxfordshire
+          {{ config.weddingDate }}
         </p>
       </div>
     </section>
@@ -141,7 +141,7 @@ onUnmounted(() => {
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
               Saving the Date
             </span>
-            <h2 class="text-4xl sm:text-5xl font-bold text-deep-espresso leading-tight font-display-cinzel">
+            <h2 class="heading2-big font-bold text-deep-espresso leading-tight font-display-cinzel">
               Counting Down the Days
             </h2>
             <p class="text-deep-espresso/70 max-w-md mx-auto lg:mx-0 font-body text-lg">
@@ -189,9 +189,7 @@ onUnmounted(() => {
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
               Our Journey
             </span>
-            <h2 class="text-4xl sm:text-5xl font-bold text-deep-espresso font-display-cinzel">
-              The Friendship that Grew
-            </h2>
+            <h2 class="heading2-big font-bold text-deep-espresso font-display-cinzel">The Friendship that Grew</h2>
             <p class="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body text-lg">
               We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here
               is our story over the years.
@@ -217,7 +215,7 @@ onUnmounted(() => {
                 <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
                   Wedding Event {{ index + 1 }}
                 </span>
-                <h2 class="text-3xl sm:text-4xl font-bold text-deep-espresso mb-2 font-display-cinzel">
+                <h2 class="heading2-small font-bold text-deep-espresso mb-2 font-display-cinzel">
                   {{ event.name }}
                 </h2>
                 <p class="font-body text-deep-espresso/60 text-sm sm:text-base font-semibold">
@@ -439,7 +437,7 @@ onUnmounted(() => {
               <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
                 Help & Info
               </span>
-              <h2 class="text-3xl sm:text-4xl font-bold text-deep-espresso font-display-cinzel">Frequently Asked</h2>
+              <h2 class="heading2-small font-bold text-deep-espresso font-display-cinzel">Frequently Asked</h2>
             </div>
             <Accordion :items="config.faqs" />
           </div>

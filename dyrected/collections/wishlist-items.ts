@@ -33,10 +33,10 @@ export const wishlistItems: CollectionConfig = {
     { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
   ],
   access: {
-    read: ({ user }) => (user ? true : { isHidden: { not_equals: true } }),
-    create: ({ user }) => !!user,
-    update: ({ user }) => !!user,
-    delete: ({ user }) => !!user,
+    read: "true",
+    create: "user != null",
+    update: "user != null",
+    delete: "user != null",
   },
   hooks: {
     beforeChange: [

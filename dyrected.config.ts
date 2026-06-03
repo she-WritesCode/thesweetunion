@@ -1,6 +1,30 @@
 import { defineConfig } from "@dyrected/core";
 import { SqliteAdapter } from "@dyrected/db-sqlite";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
+import fs from "node:fs";
+import path from "node:path";
+
+// Dynamically load .env.local into process.env for hot-reloading support in dev mode
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    for (const line of envContent.split("\n")) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let val = match[2] || "";
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        process.env[key] = val;
+      }
+    }
+  }
+} catch (e) {
+  // Silent fail
+}
+
 
 // Collections
 import { admins } from "./dyrected/collections/admins.ts";

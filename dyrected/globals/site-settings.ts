@@ -101,11 +101,13 @@ export const siteSettings: GlobalConfig = {
     {
       name: "storyPhotos",
       type: "array",
-      label: "Story Photos",
+      label: "Story Items",
       admin: { tab: "Our Story" },
       fields: [
+        { name: "label", type: "text", label: "Timeframe/Date (e.g. September 2016)", required: true },
+        { name: "title", type: "text", label: "Title (e.g. Teen Church Exco)", required: true },
+        { name: "description", type: "textarea", label: "Story Detail", required: true },
         { name: "photo", type: "relationship", label: "Photo", relationTo: "media" },
-        { name: "caption", type: "text", label: "Caption" },
       ],
     },
 

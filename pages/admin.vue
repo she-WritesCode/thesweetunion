@@ -2,6 +2,11 @@
 definePageMeta({
   layout: false
 })
+useHead({
+  bodyAttrs: {
+    class: 'cms-admin-page'
+  }
+})
 </script>
 
 <template>

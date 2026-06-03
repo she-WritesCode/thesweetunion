@@ -17,10 +17,10 @@ export const reservations: CollectionConfig = {
     { name: "reservedAt", type: "date", label: "Reserved At", admin: { readOnly: true } },
   ],
   access: {
-    read: ({ user }) => !!user,
-    create: () => true,
-    update: () => false,
-    delete: ({ user }) => !!user,
+    read: "user != null",
+    create: "true",
+    update: "false",
+    delete: "user != null",
   },
   hooks: {
     beforeChange: [reserveItem],

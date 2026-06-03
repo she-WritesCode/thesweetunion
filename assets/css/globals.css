@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@source "../../pages/**/*.vue";
+@source "../../components/**/*.vue";
+@source "../../layouts/**/*.vue";
+
+
 @theme {
   --color-muted-mauve: #8A627C;
   --color-burnt-orange: #B54E24;
@@ -16,11 +21,11 @@
   --color-linen-white: var(--color-soft-pearl);
   --color-deep-espresso: var(--color-deep-plum-slate);
 
-  --font-display-cormorant: var(--font-cormorant-upright), serif;
-  --font-display-cinzel: var(--font-cinzel-decorative), serif;
-  --font-display-italiana: var(--font-italiana), serif;
-  --font-heading: var(--font-lora), serif;
-  --font-body: var(--font-jost), sans-serif;
+  --font-display-cormorant: "Cormorant Upright", serif;
+  --font-display-cinzel: "Cinzel Decorative", serif;
+  --font-display-italiana: "Italiana", serif;
+  --font-heading: "Lora", serif;
+  --font-body: "Jost", sans-serif;
 }
 
 :root {
@@ -137,7 +142,30 @@ body {
 }
 
 @media (pointer: fine) {
-  body, a, button, [role="button"], input, select, textarea, .cursor-pointer, [onClick] {
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)),
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) a,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) button,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) [role="button"],
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) input,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) select,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) textarea,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) .cursor-pointer,
+  body:not(.cms-admin-page):not(:has(.dyrected-admin)) [onClick] {
     cursor: none !important;
   }
+}
+
+/* Explicitly restore browser cursor for CMS Admin page */
+.cms-admin-page,
+.cms-admin-page *,
+.dyrected-admin,
+.dyrected-admin * {
+  cursor: auto !important;
+}
+
+.heading2-big {
+  @apply text-4xl sm:text-5xl;
+}
+.heading2-small {
+  @apply text-3xl sm:text-4xl;
 }

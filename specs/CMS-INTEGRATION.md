@@ -86,38 +86,71 @@ NUXT_PUBLIC_APP_URL=http://localhost:3000
 
 Each collection and global is defined in its own file under `dyrected/collections/` or `dyrected/globals/`. The root `dyrected.config.ts` imports and assembles them.
 
+> [!IMPORTANT]
+> SQLite table naming rules do not support hyphens (`-`). To prevent SQLite database query syntax crashes, all collection slugs must use underscores (`_`) instead of hyphens (e.g. `rsvp_groups` instead of `rsvp-groups`).
+
 ### Root Config (Assembly Only)
 
 ```typescript
 // dyrected.config.ts
 import { defineConfig } from "@dyrected/core";
-import { PostgresAdapter } from "@dyrected/db-postgres";
+import { SqliteAdapter } from "@dyrected/db-sqlite";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
+import fs from "node:fs";
+import path from "node:path";
+
+// Dynamically load .env.local into process.env for hot-reloading support in dev mode
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    for (const line of envContent.split("\n")) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let val = match[2] || "";
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        process.env[key] = val;
+      }
+    }
+  }
+} catch (e) {
+  // Silent fail
+}
 
 // Collections
-import { admins } from "./dyrected/collections/__admins";
-import { media } from "./dyrected/collections/media";
-import { wishlistItems } from "./dyrected/collections/wishlist-items";
-import { reservations } from "./dyrected/collections/reservations";
-import { rsvpGroups } from "./dyrected/collections/rsvp-groups";
-import { rsvpRecords } from "./dyrected/collections/rsvp-records";
+import { admins } from "./dyrected/collections/admins.ts";
+import { media } from "./dyrected/collections/media.ts";
+import { wishlistItems } from "./dyrected/collections/wishlist-items.ts";
+import { reservations } from "./dyrected/collections/reservations.ts";
+import { rsvpGroups } from "./dyrected/collections/rsvp-groups.ts";
+import { rsvpRecords } from "./dyrected/collections/rsvp-records.ts";
 
 // Globals
-import { siteSettings } from "./dyrected/globals/site-settings";
+import { siteSettings } from "./dyrected/globals/site-settings.ts";
 
 export default defineConfig({
-  db: new PostgresAdapter({ url: process.env.DATABASE_URL! }),
+  db: new SqliteAdapter({
+    filename: process.env.DYRECTED_DATABASE_FILE || "./data/sweetunion.db",
+  }),
   storage: new CloudinaryStorageAdapter({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-    api_key: process.env.CLOUDINARY_API_KEY!,
-    api_secret: process.env.CLOUDINARY_API_SECRET!,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || "mock_name",
+    apiKey: process.env.CLOUDINARY_API_KEY || "mock_key",
+    apiSecret: process.env.CLOUDINARY_API_SECRET || "mock_secret",
   }),
   email: {
     from: process.env.EMAIL_FROM || "TheSweetUnion <noreply@thesweetunion.com>",
     send: async ({ to, subject, html }) => {
       const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({ from: process.env.EMAIL_FROM!, to, subject, html });
+      const resend = new Resend(process.env.RESEND_API_KEY || "re_mock");
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || "TheSweetUnion <noreply@thesweetunion.com>",
+        to,
+        subject,
+        html,
+      });
     },
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords],
@@ -130,13 +163,12 @@ export default defineConfig({
 ```typescript
 // dyrected/collections/media.ts
 import type { CollectionConfig } from "@dyrected/core";
-import { publicRead } from "../access/public";
-import { adminOnly } from "../access/admin";
+import { publicRead } from "../access/public.ts";
+import { adminOnly } from "../access/admin.ts";
 
 export const media: CollectionConfig = {
   slug: "media",
   upload: {
-    // Cloudinary adapter configured in defineConfig({ storage: ... })
     allowedMimeTypes: ["image/*"],
     maxFileSize: 10_000_000, // 10MB
     imageSizes: [
@@ -163,11 +195,11 @@ export const media: CollectionConfig = {
 ```typescript
 // dyrected/globals/site-settings.ts
 import type { GlobalConfig } from "@dyrected/core";
-import { publicRead } from "../access/public";
-import { adminOnly } from "../access/admin";
+import { publicRead } from "../access/public.ts";
+import { adminOnly } from "../access/admin.ts";
 
 export const siteSettings: GlobalConfig = {
-  slug: "site-settings",
+  slug: "site_settings",
   label: "Site Settings",
   fields: [
     // ─── Couple Tab ──────────────────────────────────────────────
@@ -353,10 +385,9 @@ export const siteSettings: GlobalConfig = {
 ```typescript
 // dyrected/collections/wishlist-items.ts
 import type { CollectionConfig } from "@dyrected/core";
-import { adminOnly } from "../access/admin";
 
 export const wishlistItems: CollectionConfig = {
-  slug: "wishlist-items",
+  slug: "wishlist_items",
   labels: { singular: "Wishlist Item", plural: "Wishlist Items" },
   admin: {
     useAsTitle: "name",
@@ -388,10 +419,10 @@ export const wishlistItems: CollectionConfig = {
     { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
   ],
   access: {
-    read: ({ user }) => (user ? true : { isHidden: { not_equals: true } }),
-    create: ({ user }) => !!user,
-    update: ({ user }) => !!user,
-    delete: ({ user }) => !!user,
+    read: "true",
+    create: "user != null",
+    update: "user != null",
+    delete: "user != null",
   },
   hooks: {
     beforeChange: [
@@ -424,7 +455,7 @@ export const reserveItem: CollectionBeforeChangeHook = async ({ data, operation,
 
     const itemId = typeof data.item === "object" ? data.item.id : data.item;
     const result = await req.db.update({
-      collection: "wishlist-items",
+      collection: "wishlist_items",
       id: itemId,
       data: { reservedCount: { $increment: 1 } },
       where: { reservedCount: { $lt: "{maxQuantity}" } },
@@ -439,7 +470,7 @@ export const reserveItem: CollectionBeforeChangeHook = async ({ data, operation,
 
 export const releaseReservation: CollectionAfterDeleteHook = async ({ doc, req }) => {
   await req.db.update({
-    collection: "wishlist-items",
+    collection: "wishlist_items",
     id: doc.item.id || doc.item,
     data: { reservedCount: { $decrement: 1 } },
   });
@@ -462,7 +493,7 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
 
   // Duplicate email check
   const existing = await req.db.find({
-    collection: "rsvp-records",
+    collection: "rsvp_records",
     where: { leadEmail: { equals: data.leadEmail } },
     limit: 1,
   });
@@ -475,7 +506,7 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
   if (data.attending) {
     const seats = data.hasSpouse ? 2 : 1;
     const result = await req.db.update({
-      collection: "rsvp-groups",
+      collection: "rsvp_groups",
       id: groupId,
       data: { confirmedCount: { $increment: seats } },
       where: {
@@ -490,7 +521,7 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
     }
   } else {
     await req.db.update({
-      collection: "rsvp-groups",
+      collection: "rsvp_groups",
       id: groupId,
       data: { declinedCount: { $increment: 1 } },
     });
@@ -504,16 +535,16 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
 
 ## 5. Access Control
 
-### 5.1 Guest Access (Public)
+### 5.1 Guest Access (Public Jexl Rules)
 
-| Collection       | Read               | Create | Update | Delete |
-| ---------------- | ------------------ | ------ | ------ | ------ |
-| `media`          | Yes                | No     | No     | No     |
-| `site-settings`  | Yes                | —      | No     | —      |
-| `wishlist-items` | Yes (visible only) | No     | No     | No     |
-| `reservations`   | No                 | Yes    | No     | No     |
-| `rsvp-groups`    | No                 | No     | No     | No     |
-| `rsvp-records`   | No                 | Yes    | No     | No     |
+| Collection       | Read                 | Create  | Update  | Delete        |
+| ---------------- | -------------------- | ------- | ------- | ------------- |
+| `media`          | `true` (Public)      | Admins  | Admins  | Admins        |
+| `site_settings`  | `true` (Public)      | —       | Admins  | —             |
+| `wishlist_items` | `true` (Public)      | Admins  | Admins  | Admins        |
+| `reservations`   | Admins               | `true`  | `false` | Admins        |
+| `rsvp_groups`    | Admins               | Admins  | Admins  | Admins        |
+| `rsvp_records`   | Admins               | `true`  | `false` | Admins        |
 
 ---
 
@@ -576,7 +607,7 @@ const client = createClient({
 })
 
 const { data: items } = await useAsyncData('wishlist-items', () => 
-  client.collection('wishlist-items').find({
+  client.collection('wishlist_items').find({
     where: { isHidden: { not_equals: true } },
     sort: 'createdAt',
     depth: 1,
@@ -602,12 +633,12 @@ const handleSubmit = async (formData: RSVPFormData) => {
     const res = await $fetch("/api/rsvp/submit", {
       method: "POST",
       body: { ...formData, groupSlug },
-    })
+    });
     // Handle success
   } catch (error) {
     // Handle error
   }
-}
+};
 </script>
 ```
 
@@ -626,11 +657,20 @@ Mount the Dyrected Admin interface within your Nuxt pages directory:
 ```vue
 <!-- pages/admin.vue -->
 <script setup lang="ts">
-import { DyrectedAdmin } from '@dyrected/nuxt/admin'
+definePageMeta({
+  layout: false
+})
+useHead({
+  bodyAttrs: {
+    class: 'cms-admin-page'
+  }
+})
 </script>
 
 <template>
-  <DyrectedAdmin api-path="/api/dyrected" />
+  <ClientOnly>
+    <DyrectedAdmin api-path="/api/dyrected" />
+  </ClientOnly>
 </template>
 ```
 
@@ -653,14 +693,14 @@ thesweetunion/
 │   ├── admin.vue                 # Dyrected Admin UI
 │   ├── rsvp.vue                  # RSVP form (reads group from URL)
 │   ├── wishlist.vue              # Wishlist grid
-│   └── index.vue                 # Home page (reads site-settings)
+│   └── index.vue                 # Home page (reads site_settings)
 ├── components/
 │   ├── Accordion.vue
 │   ├── Countdown.vue
 │   └── ...
 ├── dyrected/                     # Dyrected schema definition config
 │   ├── collections/
-│   │   ├── __admins.ts
+│   │   ├── admins.ts
 │   │   ├── media.ts
 │   │   ├── wishlist-items.ts
 │   │   ├── reservations.ts
@@ -711,3 +751,4 @@ thesweetunion/
 3. Hook up wishlist reservation flow
 4. Add email notifications via collection hooks
 5. Test concurrency safety with simultaneous mock form submissions
+

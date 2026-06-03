@@ -243,9 +243,7 @@ const filteredAndSortedItems = computed(() => {
         <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
           Gift Registry
         </span>
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-deep-espresso font-display-cinzel">
-          Support Our Union
-        </h1>
+        <h1 class="heading2-big md:text-6xl font-bold text-deep-espresso font-display-cinzel">Support Our Union</h1>
         <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
           Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our life
           together in Lagos, here is our registry.

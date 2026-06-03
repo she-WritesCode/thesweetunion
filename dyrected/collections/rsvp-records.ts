@@ -43,8 +43,8 @@ export const rsvpRecords: CollectionConfig = {
   ],
   access: {
     read: adminOnly,
-    create: () => true,
-    update: () => false,
+    create: "true",
+    update: "false",
     delete: adminOnly,
   },
   hooks: {
