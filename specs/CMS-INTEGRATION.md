@@ -8,11 +8,11 @@
 
 ## 1. Overview
 
-This document outlines the integration of **Dyrected CMS** as the backend for TheSweetUnion wedding website. Dyrected runs inside the existing Next.js app as a route handler — no separate server required.
+This document outlines the integration of **Dyrected CMS** as the backend for TheSweetUnion wedding website. Dyrected runs inside the existing Nuxt 3 app as a Nitro server API route — no separate server required.
 
 ### 1.1 Why Dyrected
 
-- **In-app architecture** — mounts at `/dyrected` in the existing Next.js app
+- **In-app architecture** — mounts at `/api/dyrected` in the existing Nuxt 3 app
 - **Auto-generated Admin UI** — the couple gets a dashboard at `/admin` for free
 - **TypeScript config-as-code** — content model lives in `dyrected.config.ts`
 - **Hooks** — custom logic for concurrency, email triggers, slug generation
@@ -38,22 +38,21 @@ This document outlines the integration of **Dyrected CMS** as the backend for Th
 npx @dyrected/cli init
 ```
 
-This auto-detects the Next.js App Router project and:
+This auto-detects the Nuxt 3 project and:
 
-- Installs `@dyrected/core`, `@dyrected/next`, `@dyrected/db-sqlite` (dev)
+- Installs `@dyrected/core`, `@dyrected/nuxt`, `@dyrected/db-sqlite` (dev)
 - Creates `dyrected.config.ts` at project root
-- Mounts API route at `app/dyrected/[...route]/route.ts`
-- Mounts Admin UI at `app/admin/page.tsx`
-- Generates `instrumentation.ts` for dev URL logging
+- Mounts API route at `server/api/dyrected/[...].ts`
+- Mounts Admin UI at `pages/admin.vue`
 - Generates `.env.example`
 
 ### 2.2 Dependencies to Add
 
 ```bash
-pnpm add @dyrected/core @dyrected/next @dyrected/sdk @dyrected/db-sqlite
-pnpm add @dyrected/storage-cloudinary resend
+npm install @dyrected/core @dyrected/nuxt @dyrected/sdk @dyrected/db-sqlite
+npm install @dyrected/storage-cloudinary resend
 # For production:
-# pnpm add @dyrected/db-postgres
+# npm install @dyrected/db-postgres
 ```
 
 ### 2.3 Environment Variables
@@ -64,9 +63,9 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/sweetunion  # production
 DYRECTED_DATABASE_FILE=./data/sweetunion.db                    # dev (SQLite)
 
 # Dyrected API
-NEXT_PUBLIC_DYRECTED_URL=http://localhost:3000/dyrected
+NUXT_PUBLIC_DYRECTED_URL=http://localhost:3000/api/dyrected
 DYRECTED_API_KEY=sk_live_...
-NEXT_PUBLIC_DYRECTED_API_KEY=pk_live_...
+NUXT_PUBLIC_DYRECTED_API_KEY=pk_live_...
 
 # Cloudinary (image storage)
 CLOUDINARY_CLOUD_NAME=your-cloud-name
@@ -78,7 +77,7 @@ RESEND_API_KEY=re_...
 EMAIL_FROM=TheSweetUnion <noreply@thesweetunion.com>
 
 # App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NUXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ---
@@ -407,160 +406,6 @@ export const wishlistItems: CollectionConfig = {
 };
 ```
 
-### Reservations Collection
-
-```typescript
-// dyrected/collections/reservations.ts
-import type { CollectionConfig } from "@dyrected/core";
-import { reserveItem, releaseReservation } from "../hooks/reservation-hooks";
-import { adminOnly } from "../access/admin";
-
-export const reservations: CollectionConfig = {
-  slug: "reservations",
-  labels: { singular: "Reservation", plural: "Reservations" },
-  admin: {
-    useAsTitle: "guestName",
-    defaultColumns: ["guestName", "item", "reservedAt"],
-    group: "Wishlist",
-  },
-  fields: [
-    { name: "item", type: "relationship", label: "Wishlist Item", relationTo: "wishlist-items", required: true },
-    { name: "guestName", type: "text", label: "Guest Name", required: true },
-    { name: "guestEmail", type: "email", label: "Guest Email", required: true },
-    { name: "message", type: "textarea", label: "Message", admin: { placeholder: "Message to the couple (optional)" } },
-    { name: "reservedAt", type: "date", label: "Reserved At", admin: { readOnly: true } },
-  ],
-  access: {
-    read: ({ user }) => !!user,
-    create: () => true,
-    update: () => false,
-    delete: ({ user }) => !!user,
-  },
-  hooks: {
-    beforeChange: [reserveItem],
-    afterDelete: [releaseReservation],
-  },
-};
-```
-
-### RSVP Groups Collection
-
-```typescript
-// dyrected/collections/rsvp-groups.ts
-import type { CollectionConfig } from "@dyrected/core";
-import { generateGroupSlug } from "../hooks/group-hooks";
-import { adminOnly } from "../access/admin";
-
-export const rsvpGroups: CollectionConfig = {
-  slug: "rsvp-groups",
-  labels: { singular: "RSVP Group", plural: "RSVP Groups" },
-  admin: {
-    useAsTitle: "name",
-    defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "isActive"],
-    group: "RSVP",
-  },
-  fields: [
-    { name: "name", type: "text", label: "Group Name", required: true },
-    { name: "slug", type: "text", label: "URL Slug", required: true, unique: true },
-    {
-      name: "description",
-      type: "textarea",
-      label: "Internal Notes",
-      admin: { description: "Internal notes for the couple" },
-    },
-    { name: "maxCapacity", type: "number", label: "Max Capacity", required: true },
-    { name: "confirmedCount", type: "number", label: "Confirmed Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "declinedCount", type: "number", label: "Declined Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "isActive", type: "boolean", label: "Active", defaultValue: true },
-    { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
-  ],
-  access: {
-    read: adminOnly,
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
-  },
-  hooks: {
-    beforeChange: [generateGroupSlug],
-  },
-};
-```
-
-### RSVP Records Collection
-
-```typescript
-// dyrected/collections/rsvp-records.ts
-import type { CollectionConfig } from "@dyrected/core";
-import { enforceRsvpCapacity } from "../hooks/rsvp-hooks";
-import { adminOnly } from "../access/admin";
-
-export const rsvpRecords: CollectionConfig = {
-  slug: "rsvp-records",
-  labels: { singular: "RSVP Record", plural: "RSVP Records" },
-  admin: {
-    useAsTitle: "leadName",
-    defaultColumns: ["leadName", "leadEmail", "group", "attending", "hasSpouse", "submittedAt"],
-    group: "RSVP",
-  },
-  fields: [
-    { name: "group", type: "relationship", label: "RSVP Group", relationTo: "rsvp-groups", required: true },
-    { name: "leadName", type: "text", label: "Full Name", required: true },
-    { name: "leadEmail", type: "email", label: "Email", required: true, unique: true },
-    { name: "leadPhone", type: "text", label: "Phone Number" },
-    { name: "hasSpouse", type: "boolean", label: "Attending with Spouse", defaultValue: false },
-    {
-      name: "spouseName",
-      type: "text",
-      label: "Spouse Name",
-      admin: {
-        condition: (data) => data.hasSpouse === true,
-        description: "Required if attending with spouse",
-      },
-    },
-    { name: "attending", type: "boolean", label: "Attending", required: true },
-    {
-      name: "dietaryNotes",
-      type: "textarea",
-      label: "Dietary Notes",
-      admin: { placeholder: "Any dietary requirements?" },
-    },
-    {
-      name: "message",
-      type: "textarea",
-      label: "Message to Couple",
-      admin: { placeholder: "Message to the couple (optional)" },
-    },
-    { name: "submittedAt", type: "date", label: "Submitted At", admin: { readOnly: true } },
-    { name: "editToken", type: "text", label: "Edit Token", admin: { readOnly: true, hidden: true } },
-  ],
-  access: {
-    read: adminOnly,
-    create: () => true,
-    update: () => false,
-    delete: adminOnly,
-  },
-  hooks: {
-    beforeChange: [enforceRsvpCapacity],
-  },
-};
-```
-
-### Admin Collection
-
-```typescript
-// dyrected/collections/__admins.ts
-import type { CollectionConfig } from "@dyrected/core";
-
-export const admins: CollectionConfig = {
-  slug: "__admins",
-  auth: true,
-  fields: [
-    { name: "name", type: "text", label: "Name" },
-    { name: "role", type: "select", label: "Role", options: ["admin"], defaultValue: "admin" },
-  ],
-};
-```
-
 ---
 
 ## 4. Hooks & Concurrency Safety
@@ -598,21 +443,6 @@ export const releaseReservation: CollectionAfterDeleteHook = async ({ doc, req }
     id: doc.item.id || doc.item,
     data: { reservedCount: { $decrement: 1 } },
   });
-};
-```
-
-Then import into `reservations` collection:
-
-```typescript
-// dyrected/collections/reservations.ts
-import { reserveItem, releaseReservation } from "../hooks/reservation-hooks";
-
-export const reservations: CollectionConfig = {
-  // ...
-  hooks: {
-    beforeChange: [reserveItem],
-    afterDelete: [releaseReservation],
-  },
 };
 ```
 
@@ -670,26 +500,6 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
 };
 ```
 
-### 4.3 RSVP Group — Auto-Generate Slug
-
-```typescript
-// dyrected/hooks/group-hooks.ts
-import type { CollectionBeforeChangeHook } from "@dyrected/core";
-
-export const generateGroupSlug: CollectionBeforeChangeHook = async ({ data, operation }) => {
-  if (operation === "create") {
-    data.createdAt = new Date().toISOString();
-    if (!data.slug && data.name) {
-      data.slug = data.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-    }
-  }
-  return data;
-};
-```
-
 ---
 
 ## 5. Access Control
@@ -704,47 +514,6 @@ export const generateGroupSlug: CollectionBeforeChangeHook = async ({ data, oper
 | `reservations`   | No                 | Yes    | No     | No     |
 | `rsvp-groups`    | No                 | No     | No     | No     |
 | `rsvp-records`   | No                 | Yes    | No     | No     |
-
-### 5.2 Admin Access (Couple via `__admins`)
-
-| Collection       | Read | Create | Update | Delete |
-| ---------------- | ---- | ------ | ------ | ------ |
-| `media`          | Yes  | Yes    | Yes    | Yes    |
-| `site-settings`  | Yes  | —      | Yes    | —      |
-| `wishlist-items` | Yes  | Yes    | Yes    | Yes    |
-| `reservations`   | Yes  | No     | No     | Yes    |
-| `rsvp-groups`    | Yes  | Yes    | Yes    | Yes    |
-| `rsvp-records`   | Yes  | No     | Yes    | Yes    |
-
-### 5.3 Implementation
-
-Shared access helpers in `dyrected/access/`:
-
-```typescript
-// dyrected/access/public.ts
-export const publicRead = () => true;
-
-// dyrected/access/admin.ts
-export const adminOnly = ({ user }: { user: any }) => !!user;
-export const adminReadWrite = ({ user }: { user: any }) => !!user;
-```
-
-Then import into collections:
-
-```typescript
-import { publicRead } from "../access/public";
-import { adminOnly } from "../access/admin";
-
-export const media: CollectionConfig = {
-  // ...
-  access: {
-    read: publicRead,
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
-  },
-};
-```
 
 ---
 
@@ -770,22 +539,10 @@ export default defineConfig({
       });
     },
   },
-  // ... collections
 });
 ```
 
-### 6.2 Email Triggers via Hooks
-
-| Trigger                 | Collection     | Hook                   | Email Template                   |
-| ----------------------- | -------------- | ---------------------- | -------------------------------- |
-| Gift reserved           | `reservations` | `afterChange` (create) | Confirmation + cancellation link |
-| Gift cancelled          | `reservations` | `afterDelete`          | Cancellation confirmation        |
-| RSVP submitted          | `rsvp-records` | `afterChange` (create) | Summary + edit link              |
-| RSVP updated            | `rsvp-records` | `afterChange` (update) | Updated summary                  |
-| New RSVP (admin)        | `rsvp-records` | `afterChange` (create) | Admin digest                     |
-| New reservation (admin) | `reservations` | `afterChange` (create) | Admin digest                     |
-
-### 6.3 Cancellation Links
+### 6.2 Cancellation / Edit Links
 
 Each reservation gets a unique cancellation URL:
 
@@ -803,65 +560,55 @@ https://thesweetunion.com/rsvp/edit?token={editToken}
 
 ## 7. Frontend Integration
 
-### 7.1 Server Component Data Fetching
+In Nuxt 3, page data fetching is performed during Server-Side Rendering (SSR) using standard composables like `useAsyncData`.
 
-```typescript
-// app/wishlist/page.tsx
+### 7.1 Server-Side Data Fetching
+
+```vue
+<!-- pages/wishlist.vue -->
+<script setup lang="ts">
 import { createClient } from '@dyrected/sdk'
 
+const config = useRuntimeConfig()
 const client = createClient({
-  baseUrl: process.env.NEXT_PUBLIC_DYRECTED_URL!,
-  apiKey: process.env.DYRECTED_API_KEY!,
+  baseUrl: config.public.dyrectedUrl,
+  apiKey: config.public.dyrectedApiKey,
 })
 
-export default async function WishlistPage() {
-  const { docs: items } = await client.collection('wishlist-items').find({
+const { data: items } = await useAsyncData('wishlist-items', () => 
+  client.collection('wishlist-items').find({
     where: { isHidden: { not_equals: true } },
     sort: 'createdAt',
     depth: 1,
   })
+)
+</script>
 
-  return <WishlistGrid items={items} />
-}
+<template>
+  <WishlistGrid :items="items?.docs || []" />
+</template>
 ```
 
 ### 7.2 RSVP Form Submission
 
-```typescript
-// Client component — app/rsvp/page.tsx
-"use client";
+```vue
+<!-- pages/rsvp.vue -->
+<script setup lang="ts">
+const route = useRoute()
+const groupSlug = route.query.group as string
 
-export default function RSVPForm({ groupSlug }: { groupSlug: string }) {
-  const handleSubmit = async (data: RSVPFormData) => {
-    const res = await fetch("/api/rsvp/submit", {
+const handleSubmit = async (formData: RSVPFormData) => {
+  try {
+    const res = await $fetch("/api/rsvp/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, groupSlug }),
-    });
-    // Handle success/error
-  };
-  // ...
+      body: { ...formData, groupSlug },
+    })
+    // Handle success
+  } catch (error) {
+    // Handle error
+  }
 }
-```
-
-### 7.3 ISR Revalidation
-
-When content changes in the admin, revalidate affected pages:
-
-```typescript
-// dyrected.config.ts hooks
-hooks: {
-  afterChange: [
-    async ({ doc, operation }) => {
-      if (doc.isHidden !== undefined) {
-        revalidatePath('/wishlist')
-      }
-      if (doc.name && doc.slug) {
-        revalidatePath('/')
-      }
-    },
-  ],
-},
+</script>
 ```
 
 ---
@@ -874,61 +621,44 @@ hooks: {
 https://thesweetunion.com/admin
 ```
 
-The auto-generated Dyrected Admin UI provides:
+Mount the Dyrected Admin interface within your Nuxt pages directory:
 
-- **Site Settings** — tabbed editor with sections:
-  - Couple (names, date, time, hashtag)
-  - Venue (name, address, map link)
-  - Hero (photo, subtitle)
-  - Our Story (format, content, photos)
-  - Schedule & FAQs (event timeline, common questions)
-  - RSVP Config (cutoff date/time)
-  - Payments (bank details for cash funds)
-  - Admin (notification email)
-- **Wishlist Items** — add/edit/hide/delete gift items
-- **Reservations** — view all gift reservations, export CSV
-- **RSVP Groups** — create groups, copy invitation links, view capacity
-- **RSVP Records** — view all RSVPs, filter by group/status, export CSV
-- **Media** — upload and manage images
+```vue
+<!-- pages/admin.vue -->
+<script setup lang="ts">
+import { DyrectedAdmin } from '@dyrected/nuxt/admin'
+</script>
 
-### 8.2 Custom Admin Routes (Optional)
-
-Add a custom dashboard page for quick overview:
-
-```typescript
-// app/admin/dashboard/page.tsx
-import { DyrectedAdmin } from '@dyrected/next/admin'
-
-export default function AdminDashboard() {
-  return <DyrectedAdmin apiPath="/dyrected" />
-}
+<template>
+  <DyrectedAdmin api-path="/api/dyrected" />
+</template>
 ```
 
 ---
 
 ## 9. File Structure After Integration
 
-Config files are split into individual files per collection/global. The root `dyrected.config.ts` is an assembly file only.
-
 ```
 thesweetunion/
-├── app/
-│   ├── admin/
-│   │   └── page.tsx              # Dyrected Admin UI
-│   ├── dyrected/
-│   │   └── [...route]/
-│   │       └── route.ts          # Dyrected API routes
+├── server/
 │   ├── api/
+│   │   ├── dyrected/
+│   │   │   └── [...].ts          # Dyrected API routes handler
 │   │   └── rsvp/
-│   │       ├── submit/route.ts   # Guest RSVP submission
-│   │       ├── edit/[token]/route.ts  # Edit RSVP via link
-│   │       └── cancel/[token]/route.ts  # Cancel reservation
-│   ├── rsvp/
-│   │   └── page.tsx              # RSVP form (reads group from URL)
-│   ├── wishlist/
-│   │   └── page.tsx              # Wishlist grid
-│   └── page.tsx                  # Home page (reads site-settings)
-├── dyrected/                     # Dyrected config (split)
+│   │       ├── submit.post.ts    # Guest RSVP submission
+│   │       ├── edit.patch.ts     # Edit RSVP via link
+│   │       └── cancel.delete.ts  # Cancel reservation
+│   └── tsconfig.json
+├── pages/
+│   ├── admin.vue                 # Dyrected Admin UI
+│   ├── rsvp.vue                  # RSVP form (reads group from URL)
+│   ├── wishlist.vue              # Wishlist grid
+│   └── index.vue                 # Home page (reads site-settings)
+├── components/
+│   ├── Accordion.vue
+│   ├── Countdown.vue
+│   └── ...
+├── dyrected/                     # Dyrected schema definition config
 │   ├── collections/
 │   │   ├── __admins.ts
 │   │   ├── media.ts
@@ -943,66 +673,41 @@ thesweetunion/
 │   │   ├── rsvp-hooks.ts         # RSVP concurrency + email
 │   │   └── group-hooks.ts        # RSVP group slug generation
 │   └── access/
-│       ├── public.ts             # read: () => true helpers
-│       └── admin.ts              # ({ user }) => !!user helpers
-├── dyrected.config.ts            # Assembly file — imports only
-├── instrumentation.ts            # Dev URL logging
-├── src/
-│   └── config/
-│       └── site.ts               # Kept as fallback during migration
-└── .env.local                    # Environment variables
+│       ├── public.ts
+│       └── admin.ts
+├── assets/
+│   └── css/
+│       └── globals.css
+├── dyrected.config.ts            # Core Dyrected config and DB adapters
+├── nuxt.config.ts                # Nuxt configuration
+├── package.json
+└── .env.local
 ```
 
 ---
 
 ## 10. Migration Steps
 
-### Phase 1: Setup (Day 1)
+### Phase 1: Setup
 
 1. Run `npx @dyrected/cli init`
-2. Configure `.env.local` with database URL
-3. Define all collections in `dyrected.config.ts`
-4. Start dev server — schema auto-syncs
+2. Configure `.env.local` with database URL variables using the `NUXT_` prefix where appropriate.
+3. Define all collection schemas in `dyrected.config.ts`
+4. Start dev server — schema auto-syncs database definitions
 5. Create admin account via `/admin`
 
-### Phase 2: Content Population (Day 2-3)
+### Phase 2: Content Population
 
-1. Upload hero photo and story photos via Media
+1. Upload hero photo and story photos via Media uploads
 2. Fill in Site Settings (names, date, venue, schedule, FAQs)
 3. Add wishlist items with images
 4. Create RSVP groups with capacities
 5. Generate and test invitation links
 
-### Phase 3: Frontend Integration (Day 4-6)
+### Phase 3: Frontend Integration
 
-1. Replace static data with Dyrected SDK fetches
-2. Build RSVP form with group validation
-3. Build wishlist reservation flow
-4. Add email notifications via hooks
-5. Test concurrency with simultaneous submissions
-
-### Phase 4: Polish (Day 7-8)
-
-1. Add ISR revalidation hooks
-2. Mobile QA on all forms
-3. Performance audit (Lighthouse ≥ 90)
-4. Security review (rate limiting, token validation)
-
----
-
-## 11. Resolved Decisions
-
-| #   | Question                                  | Decision                                                                    |
-| --- | ----------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | Dyrected Cloud vs self-hosted?            | **Self-hosted** — bring own Postgres, free under BSL                        |
-| 2   | RSVP edit — Dyrected hooks or custom API? | **Custom API route** — complex conditional logic (seat delta, cutoff check) |
-| 3   | Email provider?                           | **Resend** — simple, generous free tier                                     |
-| 4   | Storage adapter?                          | **Cloudinary** — easy image transforms, free tier, CDN                      |
-| 5   | Rate limiting?                            | **Next.js middleware + IP-based throttling**                                |
-| 6   | Database for production?                  | **PostgreSQL** (self-hosted)                                                |
-| 7   | Replace src/config/site.ts?               | **Keep as fallback** — migrate to Dyrected globals gradually                |
-| 8   | Implementation scope?                     | **Same PR** — Dyrected setup + page refactoring together                    |
-
----
-
-_This plan is a living document. Updates should be versioned before implementation begins._
+1. Replace static data configurations with Dyrected SDK fetches
+2. Bind RSVP form steps with group validation endpoints
+3. Hook up wishlist reservation flow
+4. Add email notifications via collection hooks
+5. Test concurrency safety with simultaneous mock form submissions
