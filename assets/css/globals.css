@@ -24,6 +24,11 @@
 }
 
 :root {
+  --font-cormorant-upright: 'Cormorant Upright', serif;
+  --font-cinzel-decorative: 'Cinzel Decorative', serif;
+  --font-italiana: 'Italiana', serif;
+  --font-lora: 'Lora', serif;
+  --font-jost: 'Jost', sans-serif;
   --background: #FAF5F8;
   --foreground: #30222A;
 }
@@ -136,4 +141,3 @@ body {
     cursor: none !important;
   }
 }
-
