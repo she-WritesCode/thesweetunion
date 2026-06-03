@@ -290,3 +290,8 @@ body {
 .bank-details-card {
   @apply bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2.5 text-xs text-deep-espresso/90;
 }
+
+/* Event Detail Vertical Schedule Timeline */
+.schedule-timeline {
+  @apply space-y-5 relative border-l border-amber-gold/20 pl-6 ml-2;
+}

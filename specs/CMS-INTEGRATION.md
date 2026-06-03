@@ -182,10 +182,10 @@ export const media: CollectionConfig = {
     { name: "caption", type: "textarea", label: "Caption" },
   ],
   access: {
-    read: publicRead,
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
+    read: "true",
+    create: "user != null",
+    update: "user != null",
+    delete: "user != null",
   },
 };
 ```
@@ -299,23 +299,12 @@ export const siteSettings: GlobalConfig = {
       ],
     },
 
-    // ─── Schedule & FAQs Tab ─────────────────────────────────────
-    {
-      name: "schedule",
-      type: "array",
-      label: "Event Schedule",
-      admin: { tab: "Schedule & FAQs" },
-      fields: [
-        { name: "time", type: "text", label: "Time", required: true },
-        { name: "event", type: "text", label: "Event", required: true },
-        { name: "description", type: "textarea", label: "Description" },
-      ],
-    },
+    // ─── FAQs Tab ────────────────────────────────────────────────
     {
       name: "faqs",
       type: "array",
       label: "Frequently Asked Questions",
-      admin: { tab: "Schedule & FAQs" },
+      admin: { tab: "FAQs" },
       fields: [
         { name: "question", type: "text", label: "Question", required: true },
         { name: "answer", type: "textarea", label: "Answer", required: true },
@@ -368,8 +357,8 @@ export const siteSettings: GlobalConfig = {
     },
   ],
   access: {
-    read: publicRead,
-    update: adminOnly,
+    read: "true",
+    update: "user != null",
   },
 };
 ```
@@ -531,14 +520,14 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = async ({ data, op
 
 ### 5.1 Guest Access (Public Jexl Rules)
 
-| Collection       | Read                 | Create  | Update  | Delete        |
-| ---------------- | -------------------- | ------- | ------- | ------------- |
-| `media`          | `true` (Public)      | Admins  | Admins  | Admins        |
-| `site_settings`  | `true` (Public)      | —       | Admins  | —             |
-| `wishlist_items` | `true` (Public)      | Admins  | Admins  | Admins        |
-| `reservations`   | Admins               | `true`  | `false` | Admins        |
-| `rsvp_groups`    | Admins               | Admins  | Admins  | Admins        |
-| `rsvp_records`   | Admins               | `true`  | `false` | Admins        |
+| Collection       | Read                 | Create          | Update          | Delete          |
+| ---------------- | -------------------- | --------------- | --------------- | --------------- |
+| `media`          | `"true"` (Public)    | `"user != null"`| `"user != null"`| `"user != null"`|
+| `site_settings`  | `"true"` (Public)    | —               | `"user != null"`| —               |
+| `wishlist_items` | `"true"` (Public)    | `"user != null"`| `"user != null"`| `"user != null"`|
+| `reservations`   | `"user != null"`     | `"true"`        | `"false"`       | `"user != null"`|
+| `rsvp_groups`    | `"user != null"`     | `"user != null"`| `"user != null"`| `"user != null"`|
+| `rsvp_records`   | `"user != null"`     | `"true"`        | `"false"`       | `"user != null"`|
 
 ---
 

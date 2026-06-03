@@ -270,7 +270,7 @@ onUnmounted(() => {
                 <h4 class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-4">
                   The Schedule
                 </h4>
-                <div class="space-y-5 relative border-l border-amber-gold/20 pl-6 ml-2">
+                <div class="schedule-timeline">
                   <div v-for="(item, scheduleIdx) in event.schedule" :key="scheduleIdx" class="relative group">
                     <div
                       class="absolute left-[-31px] top-1.5 w-3.5 h-3.5 rounded-full border border-amber-gold bg-warm-cream flex items-center justify-center transition-all duration-300"
