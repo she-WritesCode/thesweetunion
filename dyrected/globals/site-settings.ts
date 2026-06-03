@@ -35,6 +35,20 @@ export const siteSettings: GlobalConfig = {
       admin: { tab: "Couple", placeholder: "e.g. 3:00 PM" },
     },
     {
+      name: "weddingDateText",
+      type: "text",
+      label: "Wedding Date Display Text (e.g. October 22 & 24, 2026)",
+      defaultValue: "October 22 & 24, 2026",
+      admin: { tab: "Couple" },
+    },
+    {
+      name: "weddingLocation",
+      type: "text",
+      label: "Location (e.g. Lagos, Nigeria)",
+      defaultValue: "Lagos, Nigeria",
+      admin: { tab: "Couple" },
+    },
+    {
       name: "hashtag",
       type: "text",
       label: "Wedding Hashtag",
@@ -57,13 +71,6 @@ export const siteSettings: GlobalConfig = {
       required: true,
       admin: { tab: "Venue" },
     },
-    {
-      name: "venueMapUrl",
-      type: "url",
-      label: "Google Maps Link",
-      admin: { tab: "Venue", placeholder: "https://maps.google.com/..." },
-    },
-
     // ─── Hero Tab ────────────────────────────────────────────────
     {
       name: "heroImage",
@@ -86,16 +93,32 @@ export const siteSettings: GlobalConfig = {
       label: "Story Format",
       options: [
         { label: "Timeline", value: "timeline" },
-        { label: "Confessions", value: "confessions" },
-        { label: "Blend", value: "blend" },
+        // { label: "Confessions", value: "confessions" },
+        // { label: "Blend", value: "blend" },
       ],
       defaultValue: "timeline",
       admin: { tab: "Our Story" },
     },
     {
-      name: "storyContent",
-      type: "richText",
-      label: "Story Content",
+      name: "storySubtitle",
+      type: "text",
+      label: "Story Subtitle",
+      defaultValue: "Our Journey",
+      admin: { tab: "Our Story" },
+    },
+    {
+      name: "storyTitle",
+      type: "text",
+      label: "Story Title",
+      defaultValue: "The Friendship that Grew",
+      admin: { tab: "Our Story" },
+    },
+    {
+      name: "storyDescription",
+      type: "textarea",
+      label: "Story Description",
+      defaultValue:
+        "We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here is our story over the years.",
       admin: { tab: "Our Story" },
     },
     {
@@ -118,7 +141,7 @@ export const siteSettings: GlobalConfig = {
       label: "Event Schedule",
       admin: { tab: "Schedule & FAQs" },
       fields: [
-        { name: "time", type: "text", label: "Time", required: true },
+        { name: "time", type: "datetime", label: "Time (e.g. 1:00 PM)", required: true },
         { name: "event", type: "text", label: "Event", required: true },
         { name: "description", type: "textarea", label: "Description" },
       ],

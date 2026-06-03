@@ -11,6 +11,10 @@ const client = createClient({
 });
 
 const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
+const { data: eventsResult } = await useAsyncData<any>(
+  "events-list",
+  () => client.collection("events").find({ limit: 100 }) as any,
+);
 
 const config = computed(() => {
   const db = siteSettings.value as any;
@@ -22,10 +26,17 @@ const config = computed(() => {
       person2: db.partnerTwoName || fallbackConfig.couple.person2,
       hashtag: db.hashtag || fallbackConfig.couple.hashtag,
     },
-    weddingDate: db.weddingDate ? `${db.weddingDate}T${db.weddingTime || "13:00:00"}` : fallbackConfig.weddingDate,
+    weddingDate: db.weddingDate ? db.weddingDate : fallbackConfig.weddingDate,
+    weddingDateText: db.weddingDateText || "October 22 & 24, 2026",
+    weddingLocation: db.weddingLocation || "Lagos, Nigeria",
     rsvpCutoffDate: db.rsvpCutoffDate
       ? `${db.rsvpCutoffDate}T${db.rsvpCutoffTime || "23:59:59"}`
       : fallbackConfig.rsvpCutoffDate,
+    storySubtitle: db.storySubtitle || "Our Journey",
+    storyTitle: db.storyTitle || "The Friendship that Grew",
+    storyDescription:
+      db.storyDescription ||
+      "We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here is our story over the years.",
     story:
       db.storyPhotos && db.storyPhotos.length > 0
         ? db.storyPhotos.map((p: any, i: number) => ({
@@ -36,38 +47,36 @@ const config = computed(() => {
             imageUrl: p.photo?.url || fallbackConfig.story[i % fallbackConfig.story.length].imageUrl,
           }))
         : fallbackConfig.story,
-    events:
-      db.schedule && db.schedule.length > 0
-        ? [
-            {
-              key: "white-ceremony",
-              name: db.venueName || fallbackConfig.events[0].name,
-              date: db.weddingDate
-                ? new Date(db.weddingDate).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : fallbackConfig.events[0].date,
-              venue: {
-                name: db.venueName || fallbackConfig.events[0].venue?.name,
-                address: db.venueAddress || fallbackConfig.events[0].venue?.address,
-                googleMapsDirectionsUrl: db.venueMapUrl || fallbackConfig.events[0].venue?.googleMapsDirectionsUrl,
-                googleMapsEmbedUrl: db.venueMapUrl || fallbackConfig.events[0].venue?.googleMapsEmbedUrl,
-              },
-              dressCode: "Strictly Formal",
-              schedule: db.schedule.map((s: any) => ({
-                time: s.time,
-                title: s.event,
-                description: s.description,
-              })),
-              imageUrl: db.heroImage?.url || fallbackConfig.events[0].imageUrl,
-              rsvpTeaser: fallbackConfig.events[0].rsvpTeaser,
-              rsvpLink: fallbackConfig.events[0].rsvpLink,
-            },
-          ]
-        : fallbackConfig.events,
+    events: ((eventsResult.value as any)?.docs && (eventsResult.value as any).docs.length > 0
+      ? (eventsResult.value as any).docs.map((e: any) => ({
+          key: e.id,
+          name: e.name,
+          date: e.date
+            ? new Date(e.date).toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })
+            : "",
+          venue: {
+            name: e.venueName,
+            address: e.venueAddress,
+          },
+          dressCode: e.dressCode || "Strictly Formal",
+          schedule: (e.schedule || []).map((s: any) => ({
+            time: s.time,
+            title: s.title,
+            description: s.description,
+          })),
+          imageUrl: e.photo?.url || fallbackConfig.events[0].imageUrl,
+          rsvpTeaser: fallbackConfig.events[0].rsvpTeaser,
+          rsvpLink: "/rsvp",
+        }))
+      : fallbackConfig.events) as any[],
     faqs:
       db.faqs && db.faqs.length > 0
         ? db.faqs.map((f: any, i: number) => ({
@@ -116,16 +125,14 @@ onUnmounted(() => {
 
       <!-- Text Overlay -->
       <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream">
-        <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-amber-gold mb-3 drop-shadow">
+        <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-white mb-3 drop-shadow">
           Celebrate Our Sweet Union
         </p>
-        <h1
-          class="text-5xl sm:text-6xl md:text-8xl font-bold leading-none tracking-wide mb-5 drop-shadow-md font-display-cinzel"
-        >
+        <h1 class="heading1 mb-5 drop-shadow-md font-display-cinzel">
           {{ config.couple.person1 }} & {{ config.couple.person2 }}
         </h1>
         <p class="text-base sm:text-lg md:text-xl font-light tracking-widest text-warm-cream/90 drop-shadow-sm">
-          {{ config.weddingDate }}
+          {{ config.weddingDateText }} · {{ config.weddingLocation }}
         </p>
       </div>
     </section>
@@ -187,13 +194,14 @@ onUnmounted(() => {
         <FadeInSection>
           <div class="text-center mb-16">
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
-              Our Journey
+              {{ config.storySubtitle }}
             </span>
-            <h2 class="heading2-big font-bold text-deep-espresso font-display-cinzel">The Friendship that Grew</h2>
-            <p class="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body text-lg">
-              We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here
-              is our story over the years.
-            </p>
+            <h2 class="heading2-big font-bold text-deep-espresso font-display-cinzel">{{ config.storyTitle }}</h2>
+            <div class="flex flex-col justify-center items-center">
+              <p class="text-deep-espresso/70 max-w-lg mx-auto mt-4 font-body text-lg">
+                {{ config.storyDescription }}
+              </p>
+            </div>
           </div>
           <ScrapbookTimeline :items="config.story" @image-click="setLightboxImage" />
         </FadeInSection>
@@ -245,25 +253,6 @@ onUnmounted(() => {
                     {{ event.dressCode }}
                   </p>
                 </div>
-
-                <div v-if="event.venue.googleMapsDirectionsUrl" class="flex gap-4">
-                  <a
-                    :href="event.venue.googleMapsDirectionsUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none"
-                  >
-                    <span>Directions</span>
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
-                  </a>
-                </div>
               </div>
 
               <!-- Schedule for this specific event -->
@@ -306,7 +295,7 @@ onUnmounted(() => {
                 </p>
                 <NuxtLink
                   :to="event.rsvpLink"
-                  class="inline-block px-5 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg text-center"
+                  class="inline-block px-5 py-2.5 rounded-xl bg-deep-terracotta text-white font-semibold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg text-center"
                 >
                   RSVP For This Event
                 </NuxtLink>
@@ -331,23 +320,6 @@ onUnmounted(() => {
                     {{ event.name }}
                   </span>
                 </div>
-              </div>
-
-              <!-- Small Google map iframe helper -->
-              <div
-                v-if="event.venue?.googleMapsEmbedUrl"
-                class="w-full max-w-sm sm:max-w-md h-[180px] rounded-2xl overflow-hidden shadow-inner border border-amber-gold/15 mt-8 relative"
-              >
-                <iframe
-                  :src="event.venue.googleMapsEmbedUrl"
-                  width="100%"
-                  height="100%"
-                  style="border: 0"
-                  allowfullscreen="true"
-                  loading="lazy"
-                  referrerpolicy="no-referrer-when-downgrade"
-                  class="brightness-95 contrast-[1.02]"
-                />
               </div>
             </div>
           </div>
@@ -397,7 +369,7 @@ onUnmounted(() => {
             </div>
             <NuxtLink
               to="/wishlist"
-              class="px-5 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer"
+              class="px-5 py-2.5 rounded-xl bg-deep-terracotta text-white font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer"
             >
               Browse Wishlist
             </NuxtLink>

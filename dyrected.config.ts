@@ -33,6 +33,7 @@ import { wishlistItems } from "./dyrected/collections/wishlist-items.ts";
 import { reservations } from "./dyrected/collections/reservations.ts";
 import { rsvpGroups } from "./dyrected/collections/rsvp-groups.ts";
 import { rsvpRecords } from "./dyrected/collections/rsvp-records.ts";
+import { events } from "./dyrected/collections/events.ts";
 
 // Globals
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
@@ -59,6 +60,6 @@ export default defineConfig({
       });
     },
   },
-  collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords],
+  collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events],
   globals: [siteSettings],
 });

@@ -253,12 +253,6 @@ export const siteSettings: GlobalConfig = {
       required: true,
       admin: { tab: "Venue" },
     },
-    {
-      name: "venueMapUrl",
-      type: "url",
-      label: "Google Maps Link",
-      admin: { tab: "Venue", placeholder: "https://maps.google.com/..." },
-    },
 
     // ─── Hero Tab ────────────────────────────────────────────────
     {
