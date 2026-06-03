@@ -262,12 +262,8 @@ const filteredAndSortedItems = computed(() => {
               v-for="cat in categories"
               :key="cat"
               @click="selectedCategory = cat"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all duration-200 border cursor-pointer uppercase"
-              :class="
-                selectedCategory === cat
-                  ? 'bg-deep-terracotta border-deep-terracotta text-white shadow-sm'
-                  : 'bg-soft-pearl/50 border-amber-gold/20 text-deep-espresso/80 hover:bg-soft-pearl'
-              "
+              class="filter-badge"
+              :class="selectedCategory === cat ? 'filter-badge--active' : 'filter-badge--inactive'"
             >
               {{ cat }}
             </button>
@@ -437,7 +433,7 @@ const filteredAndSortedItems = computed(() => {
           <!-- Direct Bank Transfer Section -->
           <div
             v-if="activeItem.isCashFund && activeItem.bankDetails"
-            class="bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2.5 text-xs text-deep-espresso/90"
+            class="bank-details-card"
           >
             <p class="font-semibold text-deep-terracotta uppercase tracking-wide">Bank Transfer Details</p>
             <div class="grid grid-cols-3 gap-y-1 font-body">

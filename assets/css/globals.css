@@ -272,3 +272,21 @@ body {
 .select-dropdown {
   @apply bg-soft-pearl/80 border border-amber-gold/20 rounded-xl px-3 py-1.5 text-xs text-deep-espresso font-semibold focus:outline-none focus:border-deep-terracotta cursor-pointer transition-colors duration-200;
 }
+
+/* Category Filter Badges */
+.filter-badge {
+  @apply px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all duration-200 border cursor-pointer uppercase select-none;
+}
+
+.filter-badge--active {
+  @apply bg-deep-terracotta border-deep-terracotta text-white shadow-sm;
+}
+
+.filter-badge--inactive {
+  @apply bg-soft-pearl/50 border-amber-gold/20 text-deep-espresso/80 hover:bg-soft-pearl;
+}
+
+/* Direct Bank Transfer Details Card */
+.bank-details-card {
+  @apply bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2.5 text-xs text-deep-espresso/90;
+}

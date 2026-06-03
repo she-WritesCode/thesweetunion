@@ -72,12 +72,18 @@ const config = computed(() => {
             title: s.title,
             description: s.description,
           })),
-          imageUrl: e.photo?.url || (fallbackConfig.events.find((fe: any) => fe.key === e.id || fe.name === e.name)?.imageUrl || fallbackConfig.events[0].imageUrl),
+          imageUrl:
+            e.photo?.url ||
+            fallbackConfig.events.find((fe: any) => fe.key === e.id || fe.name === e.name)?.imageUrl ||
+            fallbackConfig.events[0].imageUrl,
           collectsRsvp: e.collectsRsvp !== false,
-          rsvpTeaser: e.collectsRsvp !== false ? (fallbackConfig.events.find((fe: any) => fe.name === e.name)?.rsvpTeaser || {
-            title: e.name + " RSVP",
-            description: "Please confirm your attendance for the " + e.name + ".",
-          }) : undefined,
+          rsvpTeaser:
+            e.collectsRsvp !== false
+              ? fallbackConfig.events.find((fe: any) => fe.name === e.name)?.rsvpTeaser || {
+                  title: e.name + " RSVP",
+                  description: "Please confirm your attendance for the " + e.name + ".",
+                }
+              : undefined,
           rsvpLink: e.collectsRsvp !== false ? "/rsvp" : undefined,
         }))
       : fallbackConfig.events) as any[],
@@ -128,7 +134,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Text Overlay -->
-      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream">
+      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream space-y-6!">
         <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-white mb-3 drop-shadow">
           Celebrate Our Sweet Union
         </p>
@@ -148,7 +154,7 @@ onUnmounted(() => {
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <!-- Left Column: Countdown Details -->
-          <div class="text-center lg:text-left space-y-6">
+          <div class="text-center lg:text-left space-y-6!">
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
               Saving the Date
             </span>
@@ -196,7 +202,7 @@ onUnmounted(() => {
     >
       <div class="w-full max-w-6xl mx-auto flex flex-col justify-center">
         <FadeInSection>
-          <div class="text-center mb-16">
+          <div class="text-center mb-16 space-y-6!">
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
               {{ config.storySubtitle }}
             </span>
@@ -220,9 +226,9 @@ onUnmounted(() => {
         class="min-h-screen paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
       >
         <FadeInSection>
-          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-16! items-center">
             <!-- Event text, details, schedule & RSVP -->
-            <div class="space-y-8" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
+            <div class="space-y-8!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
               <div>
                 <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
                   Wedding Event {{ index + 1 }}
@@ -297,12 +303,7 @@ onUnmounted(() => {
                 <p class="font-body text-sm text-deep-espresso/80">
                   {{ event.rsvpTeaser.description }}
                 </p>
-                <NuxtLink
-                  :to="event.rsvpLink"
-                  class="btn-primary"
-                >
-                  RSVP For This Event
-                </NuxtLink>
+                <NuxtLink :to="event.rsvpLink" class="btn-primary"> RSVP For This Event </NuxtLink>
               </div>
             </div>
 
@@ -350,7 +351,7 @@ onUnmounted(() => {
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
-                  Setting up our kitchen · 2026
+                  {{ config.couple.hashtag }}
                 </span>
               </div>
             </div>
@@ -371,12 +372,7 @@ onUnmounted(() => {
                 {{ config.wishlistTeaser.description }}
               </p>
             </div>
-            <NuxtLink
-              to="/wishlist"
-              class="btn-primary"
-            >
-              Browse Wishlist
-            </NuxtLink>
+            <NuxtLink to="/wishlist" class="btn-primary"> Browse Wishlist </NuxtLink>
           </div>
         </div>
       </FadeInSection>
@@ -401,7 +397,7 @@ onUnmounted(() => {
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
-                  No serious questions allowed! · Oxfordshire 2026
+                  {{ config.couple.hashtag }}
                 </span>
               </div>
             </div>
