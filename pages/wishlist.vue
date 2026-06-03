@@ -265,7 +265,7 @@ const filteredAndSortedItems = computed(() => {
               class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all duration-200 border cursor-pointer uppercase"
               :class="
                 selectedCategory === cat
-                  ? 'bg-deep-terracotta border-deep-terracotta text-warm-cream shadow-sm'
+                  ? 'bg-deep-terracotta border-deep-terracotta text-white shadow-sm'
                   : 'bg-soft-pearl/50 border-amber-gold/20 text-deep-espresso/80 hover:bg-soft-pearl'
               "
             >
@@ -363,14 +363,14 @@ const filteredAndSortedItems = computed(() => {
                 <button
                   v-if="item.isCashFund"
                   @click="handleReserveClick(item)"
-                  class="flex-1 px-4 py-2 rounded-xl bg-burnt-orange text-warm-cream font-semibold text-xs uppercase tracking-wider hover:bg-deep-terracotta transition-all duration-300 shadow-sm hover:shadow focus:outline-none text-center cursor-pointer"
+                  class="flex-1 btn-secondary"
                 >
                   Contribute Cash
                 </button>
                 <button
                   v-else-if="item.maxQuantity - item.reservedCount > 0"
                   @click="handleReserveClick(item)"
-                  class="flex-1 px-4 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-semibold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-sm hover:shadow focus:outline-none text-center cursor-pointer"
+                  class="flex-1 btn-primary"
                 >
                   Reserve Gift
                 </button>
@@ -501,7 +501,7 @@ const filteredAndSortedItems = computed(() => {
 
             <button
               type="submit"
-              class="w-full px-5 py-3 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none text-center cursor-pointer mt-2"
+              class="w-full btn-primary mt-2"
             >
               {{ activeItem.isCashFund ? "Confirm Contribution" : "Confirm Reservation" }}
             </button>
@@ -533,7 +533,7 @@ const filteredAndSortedItems = computed(() => {
         </p>
         <button
           @click="successItem = null"
-          class="px-6 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow focus:outline-none cursor-pointer"
+          class="btn-primary"
         >
           Back to Registry
         </button>

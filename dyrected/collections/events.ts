@@ -17,6 +17,7 @@ export const events: CollectionConfig = {
     { name: "venueAddress", type: "textarea", label: "Venue Address", required: true },
     { name: "dressCode", type: "text", label: "Dress Code", defaultValue: "Strictly Formal" },
     { name: "photo", type: "relationship", label: "Event Photo", relationTo: "media" },
+    { name: "collectsRsvp", type: "boolean", label: "Collect RSVPs", defaultValue: true },
     {
       name: "schedule",
       type: "array",

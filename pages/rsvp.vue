@@ -452,7 +452,7 @@ const isFormActive = computed(() => {
                 isEditing = false;
                 populateStates(existingRSVP);
               "
-              class="px-6 py-2 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow cursor-pointer"
+              class="btn-primary"
             >
               View My Current Confirmation
             </button>
@@ -549,7 +549,7 @@ const isFormActive = computed(() => {
             <div class="border-t border-amber-gold/10 pt-6 flex flex-wrap gap-4 items-center justify-between">
               <button
                 @click="isEditing = true"
-                class="px-6 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer"
+                class="btn-primary"
               >
                 Edit My RSVP
               </button>
@@ -759,7 +759,7 @@ const isFormActive = computed(() => {
                     (hasSpouse && !spouseName.trim()) ||
                     (!events.ceremony && !events.reception)
                       ? 'bg-deep-espresso/10 text-deep-espresso/45 cursor-not-allowed shadow-none'
-                      : 'bg-deep-terracotta text-warm-cream hover:bg-burnt-sienna hover:shadow-md'
+                      : 'btn-primary'
                   "
                 >
                   Continue
@@ -793,7 +793,7 @@ const isFormActive = computed(() => {
               <div class="pt-4 flex items-center justify-end">
                 <button
                   type="submit"
-                  class="px-8 py-3.5 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-widest hover:bg-burnt-sienna hover:shadow-lg transition-all duration-300 shadow cursor-pointer"
+                  class="btn-primary px-8 py-3.5"
                 >
                   {{ isEditing ? "Save RSVP Changes" : "Submit My RSVP" }}
                 </button>
@@ -874,7 +874,7 @@ const isFormActive = computed(() => {
 
         <button
           @click="successModal = null"
-          class="px-6 py-2.5 rounded-xl bg-deep-terracotta text-warm-cream font-bold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow focus:outline-none cursor-pointer"
+          class="btn-primary"
         >
           Close
         </button>

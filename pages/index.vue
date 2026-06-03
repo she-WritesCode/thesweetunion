@@ -72,9 +72,13 @@ const config = computed(() => {
             title: s.title,
             description: s.description,
           })),
-          imageUrl: e.photo?.url || fallbackConfig.events[0].imageUrl,
-          rsvpTeaser: fallbackConfig.events[0].rsvpTeaser,
-          rsvpLink: "/rsvp",
+          imageUrl: e.photo?.url || (fallbackConfig.events.find((fe: any) => fe.key === e.id || fe.name === e.name)?.imageUrl || fallbackConfig.events[0].imageUrl),
+          collectsRsvp: e.collectsRsvp !== false,
+          rsvpTeaser: e.collectsRsvp !== false ? (fallbackConfig.events.find((fe: any) => fe.name === e.name)?.rsvpTeaser || {
+            title: e.name + " RSVP",
+            description: "Please confirm your attendance for the " + e.name + ".",
+          }) : undefined,
+          rsvpLink: e.collectsRsvp !== false ? "/rsvp" : undefined,
         }))
       : fallbackConfig.events) as any[],
     faqs:
@@ -284,7 +288,7 @@ onUnmounted(() => {
 
               <!-- Integrated RSVP Call to Action -->
               <div
-                v-if="event.rsvpTeaser && event.rsvpLink"
+                v-if="event.collectsRsvp !== false && event.rsvpTeaser && event.rsvpLink"
                 class="linen-card p-6 rounded-2xl border border-amber-gold/15 bg-linen-white/40 space-y-3"
               >
                 <h4 class="font-heading text-base font-bold text-deep-espresso">
@@ -295,7 +299,7 @@ onUnmounted(() => {
                 </p>
                 <NuxtLink
                   :to="event.rsvpLink"
-                  class="inline-block px-5 py-2.5 rounded-xl bg-deep-terracotta text-white font-semibold text-xs uppercase tracking-wider hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg text-center"
+                  class="btn-primary"
                 >
                   RSVP For This Event
                 </NuxtLink>
@@ -369,7 +373,7 @@ onUnmounted(() => {
             </div>
             <NuxtLink
               to="/wishlist"
-              class="px-5 py-2.5 rounded-xl bg-deep-terracotta text-white font-semibold text-sm hover:bg-burnt-sienna transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer"
+              class="btn-primary"
             >
               Browse Wishlist
             </NuxtLink>

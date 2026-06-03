@@ -31,6 +31,7 @@ export interface EventConfig {
   dressCode: string;
   schedule: ScheduleItem[];
   imageUrl: string;
+  collectsRsvp?: boolean;
   rsvpTeaser?: {
     title: string;
     description: string;
@@ -131,6 +132,7 @@ export const siteConfig: SiteConfig = {
         },
       ],
       imageUrl: "/images/traditional_couple.png",
+      collectsRsvp: false,
       rsvpTeaser: {
         title: "Traditional Wedding RSVP",
         description: "Please confirm your attendance for the Traditional Engagement ceremony.",
