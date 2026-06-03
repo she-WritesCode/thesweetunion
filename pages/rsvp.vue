@@ -3,7 +3,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from '#app'
 
 interface RSVPData {
-  group: string;
+  id?: string;
+  group?: any;
   leadName: string;
   leadEmail: string;
   leadPhone: string;
@@ -40,12 +41,14 @@ const route = useRoute()
 const router = useRouter()
 
 const mounted = ref(false)
-const existingRSVP = ref<RSVPData | null>(null)
+const existingRSVP = ref<any>(null)
 const isEditing = ref(false)
+const editToken = ref("")
 
 // Flow State
 const currentStep = ref(2)
 const groupCounts = ref<Record<string, number>>({})
+const groupInfo = ref<any>(null)
 
 // Form State
 const group = ref("")
@@ -65,7 +68,7 @@ const groupFullError = ref<string | null>(null)
 const invalidLinkError = ref(false)
 
 const populateStates = (data: RSVPData) => {
-  group.value = data.group
+  group.value = typeof data.group === 'object' ? data.group?.name : data.group
   leadName.value = data.leadName
   leadEmail.value = data.leadEmail
   leadPhone.value = data.leadPhone || ""
@@ -77,68 +80,103 @@ const populateStates = (data: RSVPData) => {
   message.value = data.message || ""
 }
 
-const loadData = () => {
-  // 1. Read existing RSVP
+const loadData = async () => {
+  invalidLinkError.value = false
+  groupFullError.value = null
+  existingRSVP.value = null
+  groupInfo.value = null
+  editToken.value = ""
+
+  // 1. Check for token to edit/view existing RSVP
+  const tokenQuery = route.query.token as string
+  if (tokenQuery) {
+    try {
+      const record = await $fetch(`/api/rsvp/record?token=${tokenQuery}`) as any
+      if (record) {
+        existingRSVP.value = record
+        editToken.value = tokenQuery
+        populateStates(record)
+        currentStep.value = 2
+        return
+      }
+    } catch (err) {
+      console.error("Failed to load RSVP by token:", err)
+    }
+  }
+
+  // 2. Fallback to Local Storage for offline/unintegrated tests
   const saved = localStorage.getItem("thesweetunion_rsvp")
-  let parsed: RSVPData | null = null
   if (saved) {
     try {
-      parsed = JSON.parse(saved) as RSVPData
+      const parsed = JSON.parse(saved) as RSVPData
       existingRSVP.value = parsed
       populateStates(parsed)
+      return
     } catch (e) {
       console.error("Failed to parse saved RSVP", e)
     }
   }
 
-  // 2. Load group seat counts
-  const savedCounts = localStorage.getItem("thesweetunion_group_counts")
-  let counts: Record<string, number> = {}
-  if (savedCounts) {
-    try {
-      counts = JSON.parse(savedCounts)
-    } catch (e) {
-      console.error(e)
-    }
-  } else {
-    // Mock counts setup: RCF is close to full to test error limits
-    GROUPS.forEach(g => {
-      if (g.slug === "rcf-unilag") {
-        counts[g.slug] = 29 // 1 spot left
-      } else if (g.slug === "victory-teens") {
-        counts[g.slug] = 15 // completely full!
-      } else {
-        counts[g.slug] = Math.floor(Math.random() * 8) + 5
-      }
-    })
-    localStorage.setItem("thesweetunion_group_counts", JSON.stringify(counts))
-  }
-  groupCounts.value = counts
-
   // 3. Validate Group parameter from link URL
   const groupQuery = route.query.group as string
   if (groupQuery) {
+    // Try database fetch
+    try {
+      const dbGroup = await $fetch(`/api/rsvp/group?slug=${groupQuery}`) as any
+      if (dbGroup) {
+        groupInfo.value = dbGroup
+        group.value = dbGroup.name
+        
+        if ((dbGroup.confirmedCount || 0) >= dbGroup.maxCapacity) {
+          groupFullError.value = dbGroup.name
+        } else {
+          groupFullError.value = null
+          currentStep.value = 2
+        }
+        return
+      }
+    } catch (err) {
+      console.warn("Failed to find group in DB, trying fallback GROUPS", err)
+    }
+
+    // Static fallback
     const selected = GROUPS.find(g => g.slug === groupQuery)
     if (selected) {
       group.value = selected.name
       
-      // Capacity check immediately
-      const currentCount = counts[selected.slug] || 0
-      let previousSeats = 0
-      if (parsed && parsed.group === selected.name && parsed.attending) {
-        previousSeats = 1 + (parsed.hasSpouse ? 1 : 0)
+      const savedCounts = localStorage.getItem("thesweetunion_group_counts")
+      let counts: Record<string, number> = {}
+      if (savedCounts) {
+        try {
+          counts = JSON.parse(savedCounts)
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        GROUPS.forEach(g => {
+          if (g.slug === "rcf-unilag") {
+            counts[g.slug] = 29
+          } else if (g.slug === "victory-teens") {
+            counts[g.slug] = 15
+          } else {
+            counts[g.slug] = Math.floor(Math.random() * 8) + 5
+          }
+        })
+        localStorage.setItem("thesweetunion_group_counts", JSON.stringify(counts))
       }
+      groupCounts.value = counts
 
-      if (currentCount - previousSeats >= selected.capacity) {
+      const currentCount = counts[selected.slug] || 0
+      if (currentCount >= selected.capacity) {
         groupFullError.value = selected.name
       } else {
         groupFullError.value = null
-        currentStep.value = 2 // start on step 2
+        currentStep.value = 2
       }
     } else {
       invalidLinkError.value = true
     }
-  } else if (!parsed) {
+  } else {
     invalidLinkError.value = true
   }
 }
@@ -151,6 +189,10 @@ onMounted(() => {
 })
 
 watch(() => route.query.group, () => {
+  loadData()
+})
+
+watch(() => route.query.token, () => {
   loadData()
 })
 
@@ -176,29 +218,42 @@ const handleStep3Submit = () => {
   if (hasSpouse.value && !spouseName.value.trim()) return
   if (!events.value.ceremony && !events.value.reception) return
 
-  const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
-  if (selectedGroupConfig) {
-    const currentCount = groupCounts.value[selectedGroupConfig.slug] || 0
+  if (groupInfo.value) {
+    const currentCount = groupInfo.value.confirmedCount || 0
     let previousSeats = 0
-    if (existingRSVP.value && existingRSVP.value.group === group.value && existingRSVP.value.attending) {
+    if (existingRSVP.value && existingRSVP.value.attending) {
       previousSeats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
     }
     const newSeats = 1 + (hasSpouse.value ? 1 : 0)
 
-    if (currentCount - previousSeats + newSeats > selectedGroupConfig.capacity) {
-      groupFullError.value = selectedGroupConfig.name
+    if (currentCount - previousSeats + newSeats > groupInfo.value.maxCapacity) {
+      groupFullError.value = groupInfo.value.name
       return
+    }
+  } else {
+    const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
+    if (selectedGroupConfig) {
+      const currentCount = groupCounts.value[selectedGroupConfig.slug] || 0
+      let previousSeats = 0
+      if (existingRSVP.value && existingRSVP.value.attending) {
+        previousSeats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
+      }
+      const newSeats = 1 + (hasSpouse.value ? 1 : 0)
+
+      if (currentCount - previousSeats + newSeats > selectedGroupConfig.capacity) {
+        groupFullError.value = selectedGroupConfig.name
+        return
+      }
     }
   }
 
   currentStep.value = 4
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (attending.value === null) return
 
-  const payload: RSVPData = {
-    group: group.value,
+  const payload = {
     leadName: leadName.value,
     leadEmail: leadEmail.value,
     leadPhone: leadPhone.value,
@@ -208,46 +263,103 @@ const handleSubmit = () => {
     spouseName: (attending.value && hasSpouse.value) ? spouseName.value : "",
     dietaryNotes: attending.value ? dietaryNotes.value : "",
     message: message.value,
-    submittedAt: new Date().toISOString()
   }
 
-  const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
-  if (selectedGroupConfig) {
-    const updatedCounts = { ...groupCounts.value }
-    
-    if (existingRSVP.value && existingRSVP.value.group === group.value && existingRSVP.value.attending) {
-      const oldSeats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
-      updatedCounts[selectedGroupConfig.slug] = Math.max(0, (updatedCounts[selectedGroupConfig.slug] || 0) - oldSeats)
-    }
+  try {
+    if (editToken.value) {
+      // Edit record
+      const res = await $fetch("/api/rsvp/edit", {
+        method: "PATCH",
+        body: {
+          editToken: editToken.value,
+          ...payload
+        }
+      }) as any
+      if (res.success) {
+        existingRSVP.value = res.record
+        successModal.value = "edit"
+        isEditing.value = false
+        populateStates(res.record)
+      }
+    } else if (groupInfo.value && route.query.group) {
+      // Submit new record to DB
+      const res = await $fetch("/api/rsvp/submit", {
+        method: "POST",
+        body: {
+          groupSlug: route.query.group as string,
+          ...payload
+        }
+      }) as any
+      if (res.success) {
+        existingRSVP.value = res.record
+        if (res.record?.editToken) {
+          editToken.value = res.record.editToken
+        }
+        successModal.value = "submit"
+        isEditing.value = false
+        populateStates(res.record)
+      }
+    } else {
+      // Local Mock fallback
+      const mockPayload: RSVPData = {
+        group: group.value,
+        submittedAt: new Date().toISOString(),
+        ...payload
+      }
 
-    if (attending.value) {
-      const newSeats = 1 + (hasSpouse.value ? 1 : 0)
-      updatedCounts[selectedGroupConfig.slug] = (updatedCounts[selectedGroupConfig.slug] || 0) + newSeats
-    }
+      const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
+      if (selectedGroupConfig) {
+        const updatedCounts = { ...groupCounts.value }
+        
+        if (existingRSVP.value && existingRSVP.value.attending) {
+          const oldSeats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
+          updatedCounts[selectedGroupConfig.slug] = Math.max(0, (updatedCounts[selectedGroupConfig.slug] || 0) - oldSeats)
+        }
 
-    localStorage.setItem("thesweetunion_group_counts", JSON.stringify(updatedCounts))
-    groupCounts.value = updatedCounts
+        if (attending.value) {
+          const newSeats = 1 + (hasSpouse.value ? 1 : 0)
+          updatedCounts[selectedGroupConfig.slug] = (updatedCounts[selectedGroupConfig.slug] || 0) + newSeats
+        }
+
+        localStorage.setItem("thesweetunion_group_counts", JSON.stringify(updatedCounts))
+        groupCounts.value = updatedCounts
+      }
+
+      localStorage.setItem("thesweetunion_rsvp", JSON.stringify(mockPayload))
+      successModal.value = existingRSVP.value ? "edit" : "submit"
+      existingRSVP.value = mockPayload
+      isEditing.value = false
+    }
+  } catch (err: any) {
+    alert(err.data?.message || err.message || "An error occurred while submitting your RSVP.")
   }
-
-  localStorage.setItem("thesweetunion_rsvp", JSON.stringify(payload))
-  successModal.value = existingRSVP.value ? "edit" : "submit"
-  existingRSVP.value = payload
-  isEditing.value = false
 }
 
-const handleCancelRSVP = () => {
+const handleCancelRSVP = async () => {
   if (confirm("Are you sure you want to cancel your RSVP? This will release your spots for others.")) {
-    const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
-    if (selectedGroupConfig && existingRSVP.value && existingRSVP.value.attending) {
-      const updatedCounts = { ...groupCounts.value }
-      const seats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
-      updatedCounts[selectedGroupConfig.slug] = Math.max(0, (updatedCounts[selectedGroupConfig.slug] || 0) - seats)
-      localStorage.setItem("thesweetunion_group_counts", JSON.stringify(updatedCounts))
-      groupCounts.value = updatedCounts
+    try {
+      if (editToken.value) {
+        await $fetch(`/api/rsvp/delete-record?token=${editToken.value}`, {
+          method: "DELETE"
+        })
+      } else {
+        // Fallback local counts release
+        const selectedGroupConfig = GROUPS.find(g => g.name === group.value)
+        if (selectedGroupConfig && existingRSVP.value && existingRSVP.value.attending) {
+          const updatedCounts = { ...groupCounts.value }
+          const seats = 1 + (existingRSVP.value.hasSpouse ? 1 : 0)
+          updatedCounts[selectedGroupConfig.slug] = Math.max(0, (updatedCounts[selectedGroupConfig.slug] || 0) - seats)
+          localStorage.setItem("thesweetunion_group_counts", JSON.stringify(updatedCounts))
+          groupCounts.value = updatedCounts
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to cancel RSVP in DB:", err)
     }
 
     localStorage.removeItem("thesweetunion_rsvp")
     existingRSVP.value = null
+    editToken.value = ""
     
     // Reset Form
     group.value = ""

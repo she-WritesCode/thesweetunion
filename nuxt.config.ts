@@ -3,6 +3,24 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
+  modules: [
+    '@dyrected/nuxt'
+  ],
+
+  dyrected: {
+    apiBase: '/api/dyrected',
+    adminPath: 'admin'
+  },
+
+  runtimeConfig: {
+    dyrectedApiKey: process.env.DYRECTED_API_KEY || 'sk_test_dev_key',
+    public: {
+      dyrectedUrl: process.env.NUXT_PUBLIC_DYRECTED_URL || 'http://localhost:3000/api/dyrected',
+      dyrectedApiKey: process.env.NUXT_PUBLIC_DYRECTED_API_KEY || 'pk_test_dev_key',
+      appUrl: process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    }
+  },
+
   app: {
     head: {
       title: 'Adun & Uche — #TheSweetUnion',
