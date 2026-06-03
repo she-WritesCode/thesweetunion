@@ -18,9 +18,9 @@ export const media: CollectionConfig = {
     { name: "caption", type: "textarea", label: "Caption" },
   ],
   access: {
-    read: publicRead,
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
+    read: "true",
+    create: "user != null",
+    update: "user != null",
+    delete: "user != null",
   },
 };

@@ -134,23 +134,12 @@ export const siteSettings: GlobalConfig = {
       ],
     },
 
-    // ─── Schedule & FAQs Tab ─────────────────────────────────────
-    {
-      name: "schedule",
-      type: "array",
-      label: "Event Schedule",
-      admin: { tab: "Schedule & FAQs" },
-      fields: [
-        { name: "time", type: "datetime", label: "Time (e.g. 1:00 PM)", required: true },
-        { name: "event", type: "text", label: "Event", required: true },
-        { name: "description", type: "textarea", label: "Description" },
-      ],
-    },
+    // ─── FAQs Tab ────────────────────────────────────────────────
     {
       name: "faqs",
       type: "array",
       label: "Frequently Asked Questions",
-      admin: { tab: "Schedule & FAQs" },
+      admin: { tab: "FAQs" },
       fields: [
         { name: "question", type: "text", label: "Question", required: true },
         { name: "answer", type: "textarea", label: "Answer", required: true },
@@ -203,7 +192,7 @@ export const siteSettings: GlobalConfig = {
     },
   ],
   access: {
-    read: publicRead,
-    update: adminOnly,
+    read: "true",
+    update: "user != null",
   },
 };

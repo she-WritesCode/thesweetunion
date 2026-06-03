@@ -26,10 +26,10 @@ export const rsvpGroups: CollectionConfig = {
     { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
   ],
   access: {
-    read: adminOnly,
-    create: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
+    read: "user != null",
+    create: "user != null",
+    update: "user != null",
+    delete: "user != null",
   },
   hooks: {
     beforeChange: [generateGroupSlug],

@@ -42,10 +42,10 @@ export const rsvpRecords: CollectionConfig = {
     { name: "editToken", type: "text", label: "Edit Token", admin: { readOnly: true, hidden: true } },
   ],
   access: {
-    read: adminOnly,
+    read: "user != null",
     create: "true",
     update: "false",
-    delete: adminOnly,
+    delete: "user != null",
   },
   hooks: {
     beforeChange: [enforceRsvpCapacity],

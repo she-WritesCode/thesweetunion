@@ -278,7 +278,7 @@ const filteredAndSortedItems = computed(() => {
             <span class="text-xs uppercase tracking-wider font-semibold text-deep-espresso/60"> Sort Price: </span>
             <select
               v-model="priceSort"
-              class="bg-soft-pearl/80 border border-amber-gold/20 rounded-xl px-3 py-1.5 text-xs text-deep-espresso font-semibold focus:outline-none focus:border-deep-terracotta"
+              class="select-dropdown"
             >
               <option value="none">Default</option>
               <option value="low-to-high">Low to High</option>
@@ -403,19 +403,19 @@ const filteredAndSortedItems = computed(() => {
     <!-- Reservation Form Modal -->
     <div
       v-if="activeItem"
-      class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-fade-in animate-duration-200"
+      class="modal-overlay"
     >
       <div
-        class="linen-card w-full max-w-md p-6 sm:p-8 rounded-2xl border border-amber-gold/20 shadow-2xl relative animate-scale-up animate-duration-200"
+        class="modal-content-container linen-card"
       >
         <!-- Close -->
         <button
           @click="activeItem = null"
-          class="absolute top-4 right-4 text-deep-espresso/50 hover:text-deep-espresso text-xl font-sans focus:outline-none cursor-pointer"
+          class="modal-close-btn"
         >
           ✕
         </button>
-
+ 
         <div class="space-y-4 max-h-[85vh] overflow-y-auto pr-1">
           <div>
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
@@ -431,9 +431,9 @@ const filteredAndSortedItems = computed(() => {
               · Category: {{ activeItem.category }}
             </p>
           </div>
-
+ 
           <div class="border-t border-amber-gold/10 my-4" />
-
+ 
           <!-- Direct Bank Transfer Section -->
           <div
             v-if="activeItem.isCashFund && activeItem.bankDetails"
@@ -443,12 +443,12 @@ const filteredAndSortedItems = computed(() => {
             <div class="grid grid-cols-3 gap-y-1 font-body">
               <span class="text-deep-espresso/60">Bank:</span>
               <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.bankName }}</span>
-
+ 
               <span class="text-deep-espresso/60">Account #:</span>
               <span class="col-span-2 font-mono font-bold text-sm text-deep-terracotta select-all">{{
                 activeItem.bankDetails.accountNumber
               }}</span>
-
+ 
               <span class="text-deep-espresso/60">Name:</span>
               <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.accountName }}</span>
             </div>
@@ -459,46 +459,46 @@ const filteredAndSortedItems = computed(() => {
               {{ activeItem.bankDetails.note }}
             </p>
           </div>
-
+ 
           <form @submit.prevent="handleConfirmReservation" class="space-y-4 pt-2">
             <div class="space-y-1">
-              <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">
+              <label class="input-label">
                 Your Name (Required)
               </label>
               <input
                 type="text"
                 required
                 v-model="guestName"
-                class="w-full bg-soft-pearl/50 border border-amber-gold/20 rounded-xl px-4 py-2.5 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
+                class="input-field"
                 placeholder="Enter your name"
               />
             </div>
-
+ 
             <div class="space-y-1">
-              <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">
+              <label class="input-label">
                 Your Email Address (Required)
               </label>
               <input
                 type="email"
                 required
                 v-model="guestEmail"
-                class="w-full bg-soft-pearl/50 border border-amber-gold/20 rounded-xl px-4 py-2.5 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
+                class="input-field"
                 placeholder="name@example.com"
               />
             </div>
-
+ 
             <div class="space-y-1">
-              <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">
+              <label class="input-label">
                 Message to Couple (Optional)
               </label>
               <textarea
                 v-model="guestMessage"
                 rows="3"
-                class="w-full bg-soft-pearl/50 border border-amber-gold/20 rounded-xl px-4 py-2.5 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta resize-none"
+                class="input-field resize-none"
                 placeholder="Leave a lovely note..."
               />
             </div>
-
+ 
             <button
               type="submit"
               class="w-full btn-primary mt-2"
