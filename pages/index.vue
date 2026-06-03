@@ -229,7 +229,7 @@ onUnmounted(() => {
           <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-16! items-center">
             <!-- Event text, details, schedule & RSVP -->
             <div class="space-y-8!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
-              <div>
+              <div class="space-y-4!">
                 <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
                   Wedding Event {{ index + 1 }}
                 </span>
@@ -295,7 +295,7 @@ onUnmounted(() => {
               <!-- Integrated RSVP Call to Action -->
               <div
                 v-if="event.collectsRsvp !== false && event.rsvpTeaser && event.rsvpLink"
-                class="linen-card p-6 rounded-2xl border border-amber-gold/15 bg-linen-white/40 space-y-3"
+                class="linen-card p-6 rounded-2xl border border-amber-gold/15 bg-linen-white/40 space-y-3!"
               >
                 <h4 class="font-heading text-base font-bold text-deep-espresso">
                   {{ event.rsvpTeaser.title }}

@@ -239,15 +239,17 @@ const filteredAndSortedItems = computed(() => {
 
     <!-- Hero Header -->
     <section class="pt-32 pb-16 px-6 paper-texture border-b border-amber-gold/10 text-center relative overflow-hidden">
-      <div class="max-w-3xl mx-auto space-y-4">
+      <div class="max-w-3xl mx-auto space-y-4!">
         <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
           Gift Registry
         </span>
         <h1 class="heading2-big md:text-6xl font-bold text-deep-espresso font-display-cinzel">Support Our Union</h1>
-        <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
-          Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our life
-          together in Lagos, here is our registry.
-        </p>
+        <div class="flex flex-col items-center">
+          <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
+            Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our
+            life together in Lagos, here is our registry.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -272,10 +274,7 @@ const filteredAndSortedItems = computed(() => {
           <!-- Sorting controls -->
           <div class="flex items-center gap-2">
             <span class="text-xs uppercase tracking-wider font-semibold text-deep-espresso/60"> Sort Price: </span>
-            <select
-              v-model="priceSort"
-              class="select-dropdown"
-            >
+            <select v-model="priceSort" class="select-dropdown">
               <option value="none">Default</option>
               <option value="low-to-high">Low to High</option>
               <option value="high-to-low">High to Low</option>
@@ -356,11 +355,7 @@ const filteredAndSortedItems = computed(() => {
 
               <!-- Action Buttons -->
               <div class="flex items-center gap-3 pt-2">
-                <button
-                  v-if="item.isCashFund"
-                  @click="handleReserveClick(item)"
-                  class="flex-1 btn-secondary"
-                >
+                <button v-if="item.isCashFund" @click="handleReserveClick(item)" class="flex-1 btn-secondary">
                   Contribute Cash
                 </button>
                 <button
@@ -397,21 +392,11 @@ const filteredAndSortedItems = computed(() => {
     <Footer />
 
     <!-- Reservation Form Modal -->
-    <div
-      v-if="activeItem"
-      class="modal-overlay"
-    >
-      <div
-        class="modal-content-container linen-card"
-      >
+    <div v-if="activeItem" class="modal-overlay">
+      <div class="modal-content-container linen-card">
         <!-- Close -->
-        <button
-          @click="activeItem = null"
-          class="modal-close-btn"
-        >
-          ✕
-        </button>
- 
+        <button @click="activeItem = null" class="modal-close-btn">✕</button>
+
         <div class="space-y-4 max-h-[85vh] overflow-y-auto pr-1">
           <div>
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
@@ -427,24 +412,21 @@ const filteredAndSortedItems = computed(() => {
               · Category: {{ activeItem.category }}
             </p>
           </div>
- 
+
           <div class="border-t border-amber-gold/10 my-4" />
- 
+
           <!-- Direct Bank Transfer Section -->
-          <div
-            v-if="activeItem.isCashFund && activeItem.bankDetails"
-            class="bank-details-card"
-          >
+          <div v-if="activeItem.isCashFund && activeItem.bankDetails" class="bank-details-card">
             <p class="font-semibold text-deep-terracotta uppercase tracking-wide">Bank Transfer Details</p>
             <div class="grid grid-cols-3 gap-y-1 font-body">
               <span class="text-deep-espresso/60">Bank:</span>
               <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.bankName }}</span>
- 
+
               <span class="text-deep-espresso/60">Account #:</span>
               <span class="col-span-2 font-mono font-bold text-sm text-deep-terracotta select-all">{{
                 activeItem.bankDetails.accountNumber
               }}</span>
- 
+
               <span class="text-deep-espresso/60">Name:</span>
               <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.accountName }}</span>
             </div>
@@ -455,38 +437,20 @@ const filteredAndSortedItems = computed(() => {
               {{ activeItem.bankDetails.note }}
             </p>
           </div>
- 
+
           <form @submit.prevent="handleConfirmReservation" class="space-y-4 pt-2">
             <div class="space-y-1">
-              <label class="input-label">
-                Your Name (Required)
-              </label>
-              <input
-                type="text"
-                required
-                v-model="guestName"
-                class="input-field"
-                placeholder="Enter your name"
-              />
+              <label class="input-label"> Your Name (Required) </label>
+              <input type="text" required v-model="guestName" class="input-field" placeholder="Enter your name" />
             </div>
- 
+
             <div class="space-y-1">
-              <label class="input-label">
-                Your Email Address (Required)
-              </label>
-              <input
-                type="email"
-                required
-                v-model="guestEmail"
-                class="input-field"
-                placeholder="name@example.com"
-              />
+              <label class="input-label"> Your Email Address (Required) </label>
+              <input type="email" required v-model="guestEmail" class="input-field" placeholder="name@example.com" />
             </div>
- 
+
             <div class="space-y-1">
-              <label class="input-label">
-                Message to Couple (Optional)
-              </label>
+              <label class="input-label"> Message to Couple (Optional) </label>
               <textarea
                 v-model="guestMessage"
                 rows="3"
@@ -494,11 +458,8 @@ const filteredAndSortedItems = computed(() => {
                 placeholder="Leave a lovely note..."
               />
             </div>
- 
-            <button
-              type="submit"
-              class="w-full btn-primary mt-2"
-            >
+
+            <button type="submit" class="w-full btn-primary mt-2">
               {{ activeItem.isCashFund ? "Confirm Contribution" : "Confirm Reservation" }}
             </button>
           </form>
@@ -527,12 +488,7 @@ const filteredAndSortedItems = computed(() => {
             a confirmation details card to your email.
           </template>
         </p>
-        <button
-          @click="successItem = null"
-          class="btn-primary"
-        >
-          Back to Registry
-        </button>
+        <button @click="successItem = null" class="btn-primary">Back to Registry</button>
       </div>
     </div>
   </div>

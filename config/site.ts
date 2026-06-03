@@ -144,7 +144,7 @@ export const siteConfig: SiteConfig = {
       name: "The Holy Matrimony Ceremony",
       date: "Saturday, October 24, 2026 at 1:00 PM",
       venue: {
-        name: "Sanctuary Cathedral",
+        name: "Church Cathedral",
         address: "Exact church details will be shared privately upon RSVP confirmation.",
       },
       dressCode: "Strictly Formal / African Regal",
@@ -153,13 +153,13 @@ export const siteConfig: SiteConfig = {
           time: "1:00 PM",
           title: "Church Vows & Matrimony",
           description:
-            "Join us at the sanctuary for the solemnization of holy matrimony. Please arrive early to beat the Lagos traffic.",
+            "Join us at the church for the solemnization of holy matrimony. Please arrive early to beat the Lagos traffic.",
         },
       ],
       imageUrl: "/images/white_couple.png",
       rsvpTeaser: {
         title: "Ceremony RSVP",
-        description: "Please let us know if you will be attending our Holy Matrimony ceremony in the sanctuary.",
+        description: "Please let us know if you will be attending our Holy Matrimony ceremony in the church.",
       },
       rsvpLink: "/rsvp",
     },
