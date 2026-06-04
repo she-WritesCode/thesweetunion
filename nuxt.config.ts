@@ -50,5 +50,12 @@ export default defineNuxtConfig({
     plugins: {
       '@tailwindcss/postcss': {},
     }
+  },
+
+  hooks: {
+    'nitro:config'(nitroConfig) {
+      nitroConfig.plugins = nitroConfig.plugins || []
+      nitroConfig.plugins.unshift(new URL('./config/fix-dyrected.ts', import.meta.url).pathname)
+    }
   }
 })
