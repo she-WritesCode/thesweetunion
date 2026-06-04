@@ -1,5 +1,6 @@
 import { defineConfig } from "@dyrected/core";
 import { SqliteAdapter } from "@dyrected/db-sqlite";
+import { PostgresAdapter } from "@dyrected/db-postgres";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
 import fs from "node:fs";
 import path from "node:path";
@@ -38,10 +39,12 @@ import { events } from "./dyrected/collections/events.ts";
 // Globals
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
 
+const dbAdapter = process.env.DATABASE_URL
+  ? new PostgresAdapter({ connectionString: process.env.DATABASE_URL })
+  : new SqliteAdapter({ filename: process.env.DYRECTED_DATABASE_FILE || "./data/sweetunion.db" });
+
 export default defineConfig({
-  db: new SqliteAdapter({
-    filename: process.env.DYRECTED_DATABASE_FILE || "./data/sweetunion.db",
-  }),
+  db: dbAdapter,
   storage: new CloudinaryStorageAdapter({
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || "mock_name",
     apiKey: process.env.CLOUDINARY_API_KEY || "mock_key",
