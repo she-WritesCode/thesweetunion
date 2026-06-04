@@ -53,9 +53,17 @@ export default defineNuxtConfig({
   },
 
   hooks: {
-    'nitro:config'(nitroConfig) {
-      nitroConfig.plugins = nitroConfig.plugins || []
-      nitroConfig.plugins.unshift(new URL('./config/fix-dyrected.ts', import.meta.url).pathname)
+    'modules:done'() {
+      // @ts-ignore
+      const nuxt = this as any
+      const dyrected = nuxt?.options?.runtimeConfig?.dyrected as any
+      if (dyrected) {
+        const isVercel = process.env.VERCEL === '1' || process.env.NOW_BUILDER === '1'
+        if (isVercel) {
+          dyrected.configPath = '/var/task/dyrected.config.ts'
+          dyrected.loadConfigPath = '/var/task/node_modules/@dyrected/nuxt/dist/runtime/server/plugins/loadConfig.mjs'
+        }
+      }
     }
   }
 })
