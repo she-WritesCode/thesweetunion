@@ -58,7 +58,7 @@ export default defineNuxtConfig({
       const nuxt = this as any
       const dyrected = nuxt?.options?.runtimeConfig?.dyrected as any
       if (dyrected) {
-        const isVercel = process.env.VERCEL === '1' || process.env.NOW_BUILDER === '1'
+        const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined || process.env.NOW_BUILDER === '1'
         if (isVercel) {
           dyrected.configPath = '/var/task/dyrected.config.ts'
           dyrected.loadConfigPath = '/var/task/node_modules/@dyrected/nuxt/dist/runtime/server/plugins/loadConfig.mjs'
