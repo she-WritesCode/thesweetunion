@@ -26,7 +26,6 @@ try {
   // Silent fail
 }
 
-
 // Collections
 import { admins } from "./dyrected/collections/admins.ts";
 import { media } from "./dyrected/collections/media.ts";
@@ -40,7 +39,7 @@ import { events } from "./dyrected/collections/events.ts";
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
 
 const dbAdapter = process.env.DATABASE_URL
-  ? new PostgresAdapter({ connectionString: process.env.DATABASE_URL })
+  ? new PostgresAdapter({ url: process.env.DATABASE_URL })
   : new SqliteAdapter({ filename: process.env.DYRECTED_DATABASE_FILE || "./data/sweetunion.db" });
 
 export default defineConfig({
