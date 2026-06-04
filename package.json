@@ -10,12 +10,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@dyrected/core": "^2.5.17",
+    "@dyrected/core": "^2.5.18",
     "@dyrected/db-postgres": "^2.5.18",
-    "@dyrected/db-sqlite": "^2.5.17",
-    "@dyrected/nuxt": "^2.5.17",
-    "@dyrected/sdk": "^2.5.17",
-    "@dyrected/storage-cloudinary": "^2.5.17",
+    "@dyrected/db-sqlite": "^2.5.18",
+    "@dyrected/nuxt": "^2.5.18",
+    "@dyrected/sdk": "^2.5.18",
+    "@dyrected/storage-cloudinary": "^2.5.18",
     "nuxt": "^3.21.6",
     "resend": "^6.12.4",
     "vue": "^3.5.34",
