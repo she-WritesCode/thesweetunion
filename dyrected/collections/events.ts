@@ -3,7 +3,7 @@ import { publicRead } from "../access/public.ts";
 import { adminOnly } from "../access/admin.ts";
 
 export const events: CollectionConfig = {
-  slug: "event",
+  slug: "events",
   labels: { singular: "Event", plural: "Events" },
   admin: {
     useAsTitle: "name",
