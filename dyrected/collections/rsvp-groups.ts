@@ -24,6 +24,16 @@ export const rsvpGroups: CollectionConfig = {
     { name: "declinedCount", type: "number", label: "Declined Count", defaultValue: 0, admin: { readOnly: true } },
     { name: "isActive", type: "boolean", label: "Active", defaultValue: true },
     { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
+    {
+      name: "rsvpLink",
+      type: "text",
+      label: "RSVP Link",
+      admin: {
+        readOnly: true,
+        description: "Share this link with the guest group so they can RSVP.",
+        component: "rsvp_groups.rsvpLink",
+      },
+    },
   ],
   access: {
     read: "user != null",
