@@ -137,8 +137,8 @@ onUnmounted(() => {
     <section id="hero" class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16">
       <!-- Full-bleed Photo -->
       <div class="absolute inset-0 z-0">
-        <img :src="config.heroImage" alt="Adun & Uche" class="w-full h-full object-cover object-center scale-[1.01]" />
-        <div class="absolute inset-0 bg-linear-to-t from-deep-espresso/80 via-deep-espresso/40 to-deep-espresso/25" />
+        <img :src="config.heroImage" alt="Adun & Uche" class="w-full h-full object-cover object-bottom scale-[1.01]" />
+        <div class="absolute inset-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
       </div>
 
       <!-- Text Overlay -->
@@ -325,7 +325,7 @@ onUnmounted(() => {
                 class="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 -rotate-2 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
                 @click="setLightboxImage(event.imageUrl)"
               >
-                <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+                <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                   <img :src="event.imageUrl" alt="Event Photo" class="w-full h-full object-cover" />
                 </div>
                 <div class="mt-4 text-center">
@@ -401,7 +401,11 @@ onUnmounted(() => {
               @click="setLightboxImage(config.rsvpTeaser?.imageUrl || '/images/playful_couple.png')"
             >
               <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.rsvpTeaser?.imageUrl || '/images/playful_couple.png'" alt="Adun and Uche" class="w-full h-full object-cover" />
+                <img
+                  :src="config.rsvpTeaser?.imageUrl || '/images/playful_couple.png'"
+                  alt="Adun and Uche"
+                  class="w-full h-full object-cover"
+                />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
