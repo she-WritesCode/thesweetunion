@@ -298,7 +298,14 @@ const filteredAndSortedItems = computed(() => {
             <div
               class="relative aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden select-none"
             >
+              <img
+                v-if="item.imageUrl && item.imageUrl !== '/images/placeholder.png'"
+                :src="item.imageUrl"
+                :alt="item.name"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
               <div
+                v-else
                 class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
               >
                 No Image Placeholder

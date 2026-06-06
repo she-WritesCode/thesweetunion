@@ -58,7 +58,12 @@ export interface SiteConfig {
   wishlistTeaser: {
     title: string;
     description: string;
+    imageUrl?: string;
   };
+  rsvpTeaser?: {
+    imageUrl?: string;
+  };
+  heroImage?: string;
 }
 
 export const siteConfig: SiteConfig = {
@@ -222,5 +227,10 @@ export const siteConfig: SiteConfig = {
     title: "Support Our Union",
     description:
       "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together in Lagos.",
+    imageUrl: "/images/home_couple.png",
   },
+  rsvpTeaser: {
+    imageUrl: "/images/playful_couple.png",
+  },
+  heroImage: "/images/hero.png",
 };
