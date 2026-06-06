@@ -86,7 +86,7 @@ async function seed() {
 
   // 1. Seed Admin User
   console.log("Seeding default admin...");
-  const adminPassword = "TheSweetUnion@2026";
+  const adminPassword = process.env.ADMIN_PASSWORD || "TheSweetUnion@2026";
   const hashed = await hashPassword(adminPassword);
   const adminUser = await db.create({
     collection: "admins",
