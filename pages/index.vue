@@ -134,12 +134,24 @@ onUnmounted(() => {
     <Navigation />
 
     <!-- Hero Section -->
-    <section id="hero" class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16">
-      <!-- Full-bleed Photo -->
-      <div class="absolute inset-0 z-0">
-        <img :src="config.heroImage" alt="Adun & Uche" class="w-full h-full object-cover object-bottom scale-[1.01]" />
-        <div class="absolute inset-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
-      </div>
+    <!--
+      TODO: Replace background-image with a proper <img fetchpriority="high"> for LCP
+      optimisation (better Core Web Vitals, alt text, srcset support). The current
+      background-image approach is used as a quick fix for landscape images on portrait
+      mobile viewports where h-full on <img> was not resolving correctly.
+    -->
+    <section
+      id="hero"
+      class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16"
+      :style="{
+        backgroundImage: `url('${config.heroImage}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }"
+    >
+      <!-- Gradient overlay -->
+      <div class="absolute inset-0 z-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
 
       <!-- Text Overlay -->
       <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream space-y-6!">
