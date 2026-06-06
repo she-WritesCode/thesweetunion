@@ -64,4 +64,5 @@ export default defineConfig({
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events],
   globals: [siteSettings],
+  admin: { branding: { logoText: "Adun&Uche CMS" } },
 });
