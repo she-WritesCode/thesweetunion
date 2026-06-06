@@ -22,8 +22,31 @@ export const rsvpGroups: CollectionConfig = {
         component: "rsvp_groups.rsvpLink",
       },
     },
-    { name: "name", type: "text", label: "Group Name", required: true },
-    { name: "slug", type: "text", label: "URL Slug", required: true, unique: true },
+    {
+      name: "name",
+      type: "text",
+      label: "Group Name",
+      required: true,
+    },
+    {
+      name: "slug",
+      type: "text",
+      label: "URL Slug",
+      required: true,
+      unique: true,
+      hooks: {
+        beforeChange: [({ value }) => value?.toLowerCase()],
+      },
+      admin: {
+        hooks: {
+          onChange: ({ value, siblingData }) => {
+            const titleSlug = ((siblingData?.title as string) || "").toLowerCase().replace(/\s/g, "-");
+            if (titleSlug.includes(value)) return titleSlug;
+            return value;
+          },
+        },
+      },
+    },
 
     { name: "maxCapacity", type: "number", label: "Max Capacity", required: true },
     { name: "confirmedCount", type: "number", label: "Confirmed Count", defaultValue: 0, admin: { readOnly: true } },

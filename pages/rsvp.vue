@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter, useAsyncData } from "#app";
+import { createClient } from "@dyrected/sdk";
 
 interface RSVPData {
   id?: string;
@@ -40,6 +41,14 @@ const GROUPS: GroupConfig[] = [
 const route = useRoute();
 const router = useRouter();
 
+const runtimeConfig = useRuntimeConfig();
+// Use the server-side URL during SSR (resolves to Vercel URL, not localhost)
+// Falls back to public URL on the client
+const client = createClient({
+  baseUrl: (runtimeConfig as any).dyrectedUrl ?? runtimeConfig.public.dyrectedUrl,
+  apiKey: runtimeConfig.public.dyrectedApiKey,
+});
+
 // ─── SSR: resolve group / token from URL before first render ─────────────────
 const { data: initData } = await useAsyncData(
   "rsvp-init",
@@ -50,9 +59,9 @@ const { data: initData } = await useAsyncData(
     // Priority 1: edit token
     if (tokenQuery) {
       try {
-        const record = await $fetch<any>(`/api/rsvp/record?token=${tokenQuery}`);
-        if (record) {
-          return { type: "existing" as const, record, editToken: tokenQuery };
+        const record = await client.collection("rsvp_records").find({ where: { token: { equals: tokenQuery } } });
+        if (record.docs.length > 0) {
+          return { type: "existing" as const, record: record.docs[0], editToken: tokenQuery };
         }
       } catch {
         // token invalid — fall through
@@ -62,10 +71,10 @@ const { data: initData } = await useAsyncData(
     // Priority 2: group slug
     if (groupQuery) {
       try {
-        const dbGroup = await $fetch<any>(`/api/rsvp/group?slug=${groupQuery}`);
-        if (dbGroup) {
-          const isFull = (dbGroup.confirmedCount || 0) >= dbGroup.maxCapacity;
-          return { type: "group" as const, groupInfo: dbGroup, isFull };
+        const dbGroup = await client.collection("rsvp_groups").find({ where: { slug: { equals: groupQuery } } });
+        if (dbGroup.docs.length > 0) {
+          const isFull = (dbGroup.docs[0].confirmedCount || 0) >= dbGroup.docs[0].maxCapacity;
+          return { type: "group" as const, groupInfo: dbGroup.docs[0], isFull };
         }
       } catch {
         // group not found in DB — invalid link
@@ -497,12 +506,7 @@ const isFormActive = computed(() => {
             </div>
 
             <div class="border-t border-amber-gold/10 pt-6 flex flex-wrap gap-4 items-center justify-between">
-              <button
-                @click="isEditing = true"
-                class="btn-primary"
-              >
-                Edit My RSVP
-              </button>
+              <button @click="isEditing = true" class="btn-primary">Edit My RSVP</button>
               <button
                 @click="handleCancelRSVP"
                 class="px-6 py-2.5 rounded-xl border border-red-500/30 text-red-700 font-bold text-xs uppercase tracking-wider hover:bg-red-50 transition-all duration-300 focus:outline-none cursor-pointer"
@@ -741,10 +745,7 @@ const isFormActive = computed(() => {
               </div>
 
               <div class="pt-4 flex items-center justify-end">
-                <button
-                  type="submit"
-                  class="btn-primary px-8 py-3.5"
-                >
+                <button type="submit" class="btn-primary px-8 py-3.5">
                   {{ isEditing ? "Save RSVP Changes" : "Submit My RSVP" }}
                 </button>
               </div>
@@ -822,12 +823,7 @@ const isFormActive = computed(() => {
           </template>
         </p>
 
-        <button
-          @click="successModal = null"
-          class="btn-primary"
-        >
-          Close
-        </button>
+        <button @click="successModal = null" class="btn-primary">Close</button>
       </div>
     </div>
   </div>
