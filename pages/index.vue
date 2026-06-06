@@ -10,7 +10,9 @@ const client = createClient({
   apiKey: runtimeConfig.public.dyrectedApiKey,
 });
 
-const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
+const { data: siteSettings } = await useAsyncData("site-settings", () =>
+  client.global("site_settings").get({ depth: 2 }),
+);
 const { data: eventsResult } = await useAsyncData<any>(
   "events-list",
   () => client.collection("events").find({ limit: 100 }) as any,
