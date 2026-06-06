@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "@dyrected/core";
 import { generateGroupSlug } from "../hooks/group-hooks.ts";
 import { adminOnly } from "../access/admin.ts";
+import { publicRead } from "../access/public.ts";
 
 export const rsvpGroups: CollectionConfig = {
   slug: "rsvp_groups",
