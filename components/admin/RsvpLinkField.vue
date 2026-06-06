@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 const config = useRuntimeConfig();
-const appUrl = computed(() => config.public.appUrl || "http://localhost:3000");
+const appUrl = computed(() => config.public.appUrl || window?.location.origin);
 
 /** The RSVP URL is: <appUrl>/rsvp?group=<slug> */
 const slug = computed(() => props.context?.siblingData?.slug as string | undefined);
