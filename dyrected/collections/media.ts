@@ -6,7 +6,7 @@ export const media: CollectionConfig = {
   slug: "media",
   upload: {
     allowedMimeTypes: ["image/*"],
-    maxFileSize: 10_000_000,
+    maxFileSize: 30_000_000,
     imageSizes: [
       { name: "thumbnail", width: 300, height: 300, crop: "center" },
       { name: "card", width: 800, height: 450, crop: "center" },
