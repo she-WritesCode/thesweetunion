@@ -28,12 +28,15 @@ const client = createClient({
   apiKey: runtimeConfig.public.dyrectedApiKey,
 });
 
-const { data: wishlistData, refresh } = await useAsyncData("wishlist-items", () =>
-  client.collection("wishlist_items").find({
-    where: { isHidden: { not_equals: true } },
-    limit: 100,
-  }),
-);
+const { data: wishlistData, refresh } = await useAsyncData("wishlist-items", async () => {
+  return client
+    .collection("wishlist_items")
+    .find({
+      where: { isHidden: { not_equals: true } },
+      limit: 100,
+    })
+    .exec();
+});
 
 const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
 
