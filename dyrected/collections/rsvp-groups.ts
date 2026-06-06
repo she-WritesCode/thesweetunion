@@ -12,19 +12,6 @@ export const rsvpGroups: CollectionConfig = {
     group: "RSVP",
   },
   fields: [
-    { name: "name", type: "text", label: "Group Name", required: true },
-    { name: "slug", type: "text", label: "URL Slug", required: true, unique: true },
-    {
-      name: "description",
-      type: "textarea",
-      label: "Internal Notes",
-      admin: { description: "Internal notes for the couple" },
-    },
-    { name: "maxCapacity", type: "number", label: "Max Capacity", required: true },
-    { name: "confirmedCount", type: "number", label: "Confirmed Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "declinedCount", type: "number", label: "Declined Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "isActive", type: "boolean", label: "Active", defaultValue: true },
-    { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
     {
       name: "rsvpLink",
       type: "text",
@@ -34,6 +21,20 @@ export const rsvpGroups: CollectionConfig = {
         description: "Share this link with the guest group so they can RSVP.",
         component: "rsvp_groups.rsvpLink",
       },
+    },
+    { name: "name", type: "text", label: "Group Name", required: true },
+    { name: "slug", type: "text", label: "URL Slug", required: true, unique: true },
+
+    { name: "maxCapacity", type: "number", label: "Max Capacity", required: true },
+    { name: "confirmedCount", type: "number", label: "Confirmed Count", defaultValue: 0, admin: { readOnly: true } },
+    { name: "declinedCount", type: "number", label: "Declined Count", defaultValue: 0, admin: { readOnly: true } },
+    { name: "isActive", type: "boolean", label: "Active", defaultValue: true },
+    { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
+    {
+      name: "description",
+      type: "textarea",
+      label: "Internal Notes",
+      admin: { description: "Internal notes for the couple" },
     },
   ],
   access: {
