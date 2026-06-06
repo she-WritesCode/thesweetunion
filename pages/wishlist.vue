@@ -29,11 +29,15 @@ const client = createClient({
   apiKey: runtimeConfig.public.dyrectedApiKey,
 });
 
-const { data: wishlistData, refresh } = await useAsyncData("wishlist-items", () =>
-  (client.collection("wishlist_items").find({
-    where: { isHidden: { not_equals: true } },
-    limit: 100,
-  }) as any).exec() as Promise<any>,
+const { data: wishlistData, refresh } = await useAsyncData(
+  "wishlist-items",
+  () =>
+    (
+      client.collection("wishlist_items").find({
+        where: { isHidden: { not_equals: true } },
+        limit: 100,
+      }) as any
+    ).exec() as Promise<any>,
 );
 
 const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
@@ -88,7 +92,7 @@ const guestMessage = ref("");
 const successItem = ref<WishlistItem | null>(null);
 
 const categories = computed(() => {
-  return ["All", ...Array.from(new Set(items.value.map((item) => item.category)))];
+  return ["All", ...Array.from(new Set(items.value.map((item: WishlistItem) => item.category)))];
 });
 
 const handleReserveClick = (item: WishlistItem) => {
