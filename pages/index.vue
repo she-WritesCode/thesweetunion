@@ -5,8 +5,10 @@ import { createClient } from "@dyrected/sdk";
 import { useAsyncData, useRuntimeConfig } from "#app";
 
 const runtimeConfig = useRuntimeConfig();
+// Use the server-side URL during SSR (resolves to Vercel URL, not localhost)
+// Falls back to public URL on the client
 const client = createClient({
-  baseUrl: runtimeConfig.public.dyrectedUrl,
+  baseUrl: (runtimeConfig as any).dyrectedUrl ?? runtimeConfig.public.dyrectedUrl,
   apiKey: runtimeConfig.public.dyrectedApiKey,
 });
 

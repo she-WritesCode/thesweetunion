@@ -14,6 +14,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     dyrectedApiKey: process.env.DYRECTED_API_KEY || 'sk_test_dev_key',
+    // Server-side URL — uses the internal Vercel URL so SSR fetches don't go through localhost
+    dyrectedUrl: process.env.NUXT_PUBLIC_DYRECTED_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/dyrected` : 'http://localhost:3000/api/dyrected'),
     public: {
       dyrectedUrl: process.env.NUXT_PUBLIC_DYRECTED_URL || 'http://localhost:3000/api/dyrected',
       dyrectedApiKey: process.env.NUXT_PUBLIC_DYRECTED_API_KEY || 'pk_test_dev_key',
