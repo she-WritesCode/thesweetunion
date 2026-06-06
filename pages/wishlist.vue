@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { createClient } from "@dyrected/sdk";
 import { useAsyncData, useRuntimeConfig } from "#app";
 
@@ -28,107 +28,14 @@ const client = createClient({
   apiKey: runtimeConfig.public.dyrectedApiKey,
 });
 
-const { data: wishlistData, refresh } = await useAsyncData("wishlist-items", async () => {
-  return client
-    .collection("wishlist_items")
-    .find({
-      where: { isHidden: { not_equals: true } },
-      limit: 100,
-    })
-    .exec();
-});
+const { data: wishlistData, refresh } = await useAsyncData("wishlist-items", () =>
+  (client.collection("wishlist_items").find({
+    where: { isHidden: { not_equals: true } },
+    limit: 100,
+  }) as any).exec() as Promise<any>,
+);
 
 const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
-
-const initialItems: WishlistItem[] = [
-  {
-    id: "1",
-    name: "KitchenAid Artisan Stand Mixer",
-    description: "For baking delicious desserts and preparing family meals in our kitchen.",
-    imageUrl: "/images/mixer.png",
-    price: 650000,
-    maxQuantity: 1,
-    reservedCount: 0,
-    category: "Kitchen",
-    link: "https://www.kitchenaid.com",
-  },
-  {
-    id: "2",
-    name: "Le Creuset Enameled Cast Iron Dutch Oven",
-    description: "An essential piece of cookware that will last us a lifetime.",
-    imageUrl: "/images/dutch_oven.png",
-    price: 500000,
-    maxQuantity: 1,
-    reservedCount: 1,
-    category: "Kitchen",
-    link: "https://www.lecreuset.com",
-  },
-  {
-    id: "3",
-    name: "Honeymoon Excursion Fund",
-    description: "Contribute to our couple hikes, boat cruises, and street food tours.",
-    imageUrl: "/images/honeymoon.png",
-    price: 250000,
-    maxQuantity: 10,
-    reservedCount: 4,
-    category: "Travel",
-    isCashFund: true,
-    bankDetails: {
-      bankName: "Guaranty Trust Bank (GTBank)",
-      accountNumber: "0123456789",
-      accountName: "Uche & Adun Wedding Account",
-      note: "Please transfer your contribution directly using your banking app, then confirm details below.",
-    },
-  },
-  {
-    id: "4",
-    name: "Roborock Q7 Max Robot Vacuum",
-    description: "Help us keep our new apartment clean with minimal effort.",
-    imageUrl: "/images/vacuum.png",
-    price: 750000,
-    maxQuantity: 1,
-    reservedCount: 0,
-    category: "Home Essentials",
-  },
-  {
-    id: "5",
-    name: "Barista Express Espresso Machine",
-    description: "To fuel Uche's daily coffee routine and host morning tea times.",
-    imageUrl: "/images/espresso.png",
-    price: 950000,
-    maxQuantity: 1,
-    reservedCount: 0,
-    category: "Kitchen",
-    link: "https://www.breville.com",
-  },
-  {
-    id: "6",
-    name: "Premium Linen Sheet Set",
-    description: "Breathable French flax linen sheets in warm clay/alabaster tone.",
-    imageUrl: "/images/sheets.png",
-    price: 300000,
-    maxQuantity: 2,
-    reservedCount: 1,
-    category: "Home Essentials",
-  },
-  {
-    id: "7",
-    name: "Bless Our Home Fund",
-    description: "Help us set up our new apartment in Lagos as we start this beautiful journey.",
-    imageUrl: "/images/home_fund.png",
-    price: 150000,
-    maxQuantity: 100,
-    reservedCount: 12,
-    category: "Home Essentials",
-    isCashFund: true,
-    bankDetails: {
-      bankName: "Zenith Bank",
-      accountNumber: "9876543210",
-      accountName: "Uche & Adun Wedding Account",
-      note: "Please transfer your contribution directly using your banking app, then confirm details below.",
-    },
-  },
-];
 
 const mapCategory = (cat: string) => {
   if (!cat) return "Other";
@@ -139,10 +46,9 @@ const mapCategory = (cat: string) => {
   return cat.charAt(0).toUpperCase() + cat.slice(1);
 };
 
+// Static fallback items — initialized as a ref so the mock confirmation path can mutate them.
+// Defined inline (not in onMounted) so SSR can use them as an initial value.
 const localItems = ref<WishlistItem[]>([]);
-onMounted(() => {
-  localItems.value = [...initialItems];
-});
 
 const items = computed(() => {
   if (wishlistData.value?.docs && wishlistData.value.docs.length > 0) {
@@ -283,6 +189,18 @@ const filteredAndSortedItems = computed(() => {
               <option value="high-to-low">High to Low</option>
             </select>
           </div>
+        </div>
+
+        <!-- Empty state — shown when no items are in the DB yet -->
+        <div
+          v-if="filteredAndSortedItems.length === 0"
+          class="linen-card col-span-full py-24 px-8 rounded-2xl border border-amber-gold/15 text-center space-y-4"
+        >
+          <div class="text-5xl mb-2">🎁</div>
+          <h3 class="text-xl font-bold text-deep-espresso font-display-cinzel">Registry Coming Soon</h3>
+          <p class="font-body text-deep-espresso/60 text-sm max-w-sm mx-auto leading-relaxed">
+            Our gift registry is being curated with love. Check back soon — we can't wait to share it with you!
+          </p>
         </div>
 
         <!-- Registry Item Cards Grid -->

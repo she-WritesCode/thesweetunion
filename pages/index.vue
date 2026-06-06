@@ -20,35 +20,33 @@ const { data: eventsResult } = await useAsyncData<any>(
 
 const config = computed(() => {
   const db = siteSettings.value as any;
-  if (!db) return fallbackConfig;
 
   return {
     couple: {
-      person1: db.partnerOneName || fallbackConfig.couple.person1,
-      person2: db.partnerTwoName || fallbackConfig.couple.person2,
-      hashtag: db.hashtag || fallbackConfig.couple.hashtag,
+      person1: db?.partnerOneName || fallbackConfig.couple.person1,
+      person2: db?.partnerTwoName || fallbackConfig.couple.person2,
+      hashtag: db?.hashtag || fallbackConfig.couple.hashtag,
     },
-    weddingDate: db.weddingDate ? db.weddingDate : fallbackConfig.weddingDate,
-    weddingDateText: db.weddingDateText || "October 22 & 24, 2026",
-    weddingLocation: db.weddingLocation || "Lagos, Nigeria",
-    rsvpCutoffDate: db.rsvpCutoffDate
+    weddingDate: db?.weddingDate || fallbackConfig.weddingDate,
+    weddingDateText: db?.weddingDateText || fallbackConfig.weddingDateText,
+    weddingLocation: db?.weddingLocation || fallbackConfig.weddingLocation,
+    rsvpCutoffDate: db?.rsvpCutoffDate
       ? `${db.rsvpCutoffDate}T${db.rsvpCutoffTime || "23:59:59"}`
       : fallbackConfig.rsvpCutoffDate,
-    storySubtitle: db.storySubtitle || "Our Journey",
-    storyTitle: db.storyTitle || "The Friendship that Grew",
-    storyDescription:
-      db.storyDescription ||
-      "We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here is our story over the years.",
+    storySubtitle: db?.storySubtitle || fallbackConfig.storySubtitle,
+    storyTitle: db?.storyTitle || fallbackConfig.storyTitle,
+    storyDescription: db?.storyDescription || fallbackConfig.storyDescription,
     story:
-      db.storyPhotos && db.storyPhotos.length > 0
+      db?.storyPhotos && db.storyPhotos.length > 0
         ? db.storyPhotos.map((p: any, i: number) => ({
             key: p.id || `story-${i}`,
             label: p.label || `Chapter ${i + 1}`,
             title: p.title || `Memory ${i + 1}`,
             description: p.description || "",
-            imageUrl: p.photo?.url || fallbackConfig.story[i % fallbackConfig.story.length].imageUrl,
+            // Only use the DB image — no local fallback
+            imageUrl: p.photo?.url || null,
           }))
-        : fallbackConfig.story,
+        : fallbackConfig.story.map((s) => ({ ...s, imageUrl: null })),
     events: ((eventsResult.value as any)?.docs && (eventsResult.value as any).docs.length > 0
       ? (eventsResult.value as any).docs.map((e: any) => ({
           key: e.id,
@@ -74,10 +72,8 @@ const config = computed(() => {
             title: s.title,
             description: s.description,
           })),
-          imageUrl:
-            e.photo?.url ||
-            fallbackConfig.events.find((fe: any) => fe.key === e.id || fe.name === e.name)?.imageUrl ||
-            fallbackConfig.events[0].imageUrl,
+          // Only use the DB image — no local fallback
+          imageUrl: e.photo?.url || null,
           collectsRsvp: e.collectsRsvp !== false,
           rsvpTeaser:
             e.collectsRsvp !== false
@@ -88,9 +84,9 @@ const config = computed(() => {
               : undefined,
           rsvpLink: e.collectsRsvp !== false ? "/rsvp" : undefined,
         }))
-      : fallbackConfig.events) as any[],
+      : fallbackConfig.events.map((e) => ({ ...e, imageUrl: null }))) as any[],
     faqs:
-      db.faqs && db.faqs.length > 0
+      db?.faqs && db.faqs.length > 0
         ? db.faqs.map((f: any, i: number) => ({
             key: `faq-${i}`,
             question: f.question,
@@ -98,14 +94,17 @@ const config = computed(() => {
           }))
         : fallbackConfig.faqs,
     wishlistTeaser: {
-      title: db.wishlistTeaserTitle || fallbackConfig.wishlistTeaser.title,
-      description: db.wishlistTeaserDescription || fallbackConfig.wishlistTeaser.description,
-      imageUrl: db.wishlistTeaserImage?.url || fallbackConfig.wishlistTeaser.imageUrl,
+      title: db?.wishlistTeaserTitle || fallbackConfig.wishlistTeaser.title,
+      description: db?.wishlistTeaserDescription || fallbackConfig.wishlistTeaser.description,
+      // Only use the DB image — no local fallback
+      imageUrl: db?.wishlistTeaserImage?.url || null,
     },
     rsvpTeaser: {
-      imageUrl: db.rsvpTeaserImage?.url || fallbackConfig.rsvpTeaser?.imageUrl,
+      // Only use the DB image — no local fallback
+      imageUrl: db?.rsvpTeaserImage?.url || null,
     },
-    heroImage: db.heroImage?.url || "/images/hero.png",
+    // Only use the DB hero image — no local fallback
+    heroImage: db?.heroImage?.url || null,
   };
 });
 
@@ -145,12 +144,12 @@ onUnmounted(() => {
     <section
       id="hero"
       class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16"
-      :style="{
+      :style="config.heroImage ? {
         backgroundImage: `url('${config.heroImage}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-      }"
+      } : {}"
     >
       <!-- Gradient overlay -->
       <div class="absolute inset-0 z-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
@@ -194,22 +193,24 @@ onUnmounted(() => {
           <div class="relative h-[320px] sm:h-[400px] w-full flex items-center justify-center select-none">
             <!-- Photo 1 -->
             <div
+              v-if="config.story[0]?.imageUrl"
               class="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
-              @click="setLightboxImage('/images/story-2.png')"
+              @click="setLightboxImage(config.story[0].imageUrl)"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img src="/images/story-2.png" alt="Road trip memory" class="w-full h-full object-cover" />
+                <img :src="config.story[0].imageUrl" alt="Our story photo" class="w-full h-full object-cover" />
               </div>
             </div>
             <!-- Photo 2 -->
             <div
+              v-if="config.story[1]?.imageUrl"
               class="absolute right-[10%] bottom-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
-              @click="setLightboxImage('/images/story-3.png')"
+              @click="setLightboxImage(config.story[1].imageUrl)"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img src="/images/story-3.png" alt="Evening walk memory" class="w-full h-full object-cover" />
+                <img :src="config.story[1].imageUrl" alt="Our story photo" class="w-full h-full object-cover" />
               </div>
             </div>
           </div>
@@ -329,8 +330,9 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Polaroid couple picture representing this specific event -->
+            <!-- Polaroid couple picture — only shown when an image is available -->
             <div
+              v-if="event.imageUrl"
               class="flex flex-col items-center justify-center select-none relative"
               :class="index % 2 === 0 ? 'order-2' : 'order-2 lg:order-1'"
             >
@@ -361,8 +363,8 @@ onUnmounted(() => {
     >
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Left Column: Polaroid Home Couple Photo -->
-          <div class="flex justify-center select-none relative order-2 lg:order-1">
+          <!-- Left Column: Polaroid Home Couple Photo — only shown when image is available -->
+          <div v-if="config.wishlistTeaser.imageUrl" class="flex justify-center select-none relative order-2 lg:order-1">
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
             <div
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
@@ -407,16 +409,16 @@ onUnmounted(() => {
     >
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <!-- Left Column: Polaroid Playful Couple Photo -->
-          <div class="flex justify-center select-none relative order-2 lg:order-1">
+          <!-- Left Column: Polaroid Playful Couple Photo — only shown when image is available -->
+          <div v-if="config.rsvpTeaser?.imageUrl" class="flex justify-center select-none relative order-2 lg:order-1">
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[4deg]" />
             <div
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[-4deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
-              @click="setLightboxImage(config.rsvpTeaser?.imageUrl || '/images/playful_couple.png')"
+              @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
               <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                 <img
-                  :src="config.rsvpTeaser?.imageUrl || '/images/playful_couple.png'"
+                  :src="config.rsvpTeaser.imageUrl"
                   alt="Adun and Uche"
                   class="w-full h-full object-cover"
                 />

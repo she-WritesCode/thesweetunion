@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
-import { useRoute, useRouter } from "#app";
+import { ref, computed, watch } from "vue";
+import { useRoute, useRouter, useAsyncData } from "#app";
 
 interface RSVPData {
   id?: string;
@@ -40,18 +40,63 @@ const GROUPS: GroupConfig[] = [
 const route = useRoute();
 const router = useRouter();
 
-const mounted = ref(false);
-const existingRSVP = ref<any>(null);
+// ─── SSR: resolve group / token from URL before first render ─────────────────
+const { data: initData } = await useAsyncData(
+  "rsvp-init",
+  async () => {
+    const tokenQuery = route.query.token as string | undefined;
+    const groupQuery = route.query.group as string | undefined;
+
+    // Priority 1: edit token
+    if (tokenQuery) {
+      try {
+        const record = await $fetch<any>(`/api/rsvp/record?token=${tokenQuery}`);
+        if (record) {
+          return { type: "existing" as const, record, editToken: tokenQuery };
+        }
+      } catch {
+        // token invalid — fall through
+      }
+    }
+
+    // Priority 2: group slug
+    if (groupQuery) {
+      try {
+        const dbGroup = await $fetch<any>(`/api/rsvp/group?slug=${groupQuery}`);
+        if (dbGroup) {
+          const isFull = (dbGroup.confirmedCount || 0) >= dbGroup.maxCapacity;
+          return { type: "group" as const, groupInfo: dbGroup, isFull };
+        }
+      } catch {
+        // group not found in DB — invalid link
+      }
+      // Group slug present but not found → invalid
+      return { type: "invalid" as const };
+    }
+
+    // No token, no group → invalid
+    return { type: "invalid" as const };
+  },
+  { watch: [() => route.query.token, () => route.query.group] },
+);
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Derive reactive state from SSR-resolved initData
+const existingRSVP = ref<any>(initData.value?.type === "existing" ? initData.value.record : null);
+const groupInfo = ref<any>(initData.value?.type === "group" ? initData.value.groupInfo : null);
+const editToken = ref<string>(initData.value?.type === "existing" ? initData.value.editToken : "");
+const invalidLinkError = ref<boolean>(initData.value?.type === "invalid");
+const groupFullError = ref<string | null>(
+  initData.value?.type === "group" && initData.value.isFull ? initData.value.groupInfo.name : null,
+);
 const isEditing = ref(false);
-const editToken = ref("");
 
 // Flow State
 const currentStep = ref(2);
 const groupCounts = ref<Record<string, number>>({});
-const groupInfo = ref<any>(null);
 
 // Form State
-const group = ref("");
+const group = ref<string>(initData.value?.type === "group" ? initData.value.groupInfo.name : "");
 const leadName = ref("");
 const leadEmail = ref("");
 const leadPhone = ref("");
@@ -64,8 +109,6 @@ const message = ref("");
 
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
-const groupFullError = ref<string | null>(null);
-const invalidLinkError = ref(false);
 
 const populateStates = (data: RSVPData) => {
   group.value = typeof data.group === "object" ? data.group?.name : data.group;
@@ -80,127 +123,40 @@ const populateStates = (data: RSVPData) => {
   message.value = data.message || "";
 };
 
-const loadData = async () => {
-  invalidLinkError.value = false;
-  groupFullError.value = null;
-  existingRSVP.value = null;
-  groupInfo.value = null;
-  editToken.value = "";
+// Pre-populate form if SSR resolved an existing RSVP
+if (initData.value?.type === "existing") {
+  populateStates(initData.value.record);
+}
 
-  // 1. Check for token to edit/view existing RSVP
-  const tokenQuery = route.query.token as string;
-  if (tokenQuery) {
-    try {
-      const record = (await $fetch(`/api/rsvp/record?token=${tokenQuery}`)) as any;
-      if (record) {
-        existingRSVP.value = record;
-        editToken.value = tokenQuery;
-        populateStates(record);
-        currentStep.value = 2;
-        return;
-      }
-    } catch (err) {
-      console.error("Failed to load RSVP by token:", err);
-    }
-  }
-
-  // 2. Fallback to Local Storage for offline/unintegrated tests
-  const saved = localStorage.getItem("thesweetunion_rsvp");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved) as RSVPData;
-      existingRSVP.value = parsed;
-      populateStates(parsed);
-      return;
-    } catch (e) {
-      console.error("Failed to parse saved RSVP", e);
-    }
-  }
-
-  // 3. Validate Group parameter from link URL
-  const groupQuery = route.query.group as string;
-  if (groupQuery) {
-    // Try database fetch
-    try {
-      const dbGroup = (await $fetch(`/api/rsvp/group?slug=${groupQuery}`)) as any;
-      if (dbGroup) {
-        groupInfo.value = dbGroup;
-        group.value = dbGroup.name;
-
-        if ((dbGroup.confirmedCount || 0) >= dbGroup.maxCapacity) {
-          groupFullError.value = dbGroup.name;
-        } else {
-          groupFullError.value = null;
-          currentStep.value = 2;
-        }
-        return;
-      }
-    } catch (err) {
-      console.warn("Failed to find group in DB, trying fallback GROUPS", err);
-    }
-
-    // Static fallback
-    const selected = GROUPS.find((g) => g.slug === groupQuery);
-    if (selected) {
-      group.value = selected.name;
-
-      const savedCounts = localStorage.getItem("thesweetunion_group_counts");
-      let counts: Record<string, number> = {};
-      if (savedCounts) {
-        try {
-          counts = JSON.parse(savedCounts);
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        GROUPS.forEach((g) => {
-          if (g.slug === "rcf-unilag") {
-            counts[g.slug] = 29;
-          } else if (g.slug === "victory-teens") {
-            counts[g.slug] = 15;
-          } else {
-            counts[g.slug] = Math.floor(Math.random() * 8) + 5;
-          }
-        });
-        localStorage.setItem("thesweetunion_group_counts", JSON.stringify(counts));
-      }
-      groupCounts.value = counts;
-
-      const currentCount = counts[selected.slug] || 0;
-      if (currentCount >= selected.capacity) {
-        groupFullError.value = selected.name;
-      } else {
-        groupFullError.value = null;
-        currentStep.value = 2;
-      }
-    } else {
-      invalidLinkError.value = true;
-    }
+// Sync reactive state whenever initData re-resolves (client-side navigation)
+watch(initData, (val) => {
+  if (!val) return;
+  if (val.type === "existing") {
+    existingRSVP.value = val.record;
+    editToken.value = val.editToken;
+    groupInfo.value = null;
+    invalidLinkError.value = false;
+    groupFullError.value = null;
+    populateStates(val.record);
+    currentStep.value = 2;
+  } else if (val.type === "group") {
+    groupInfo.value = val.groupInfo;
+    group.value = val.groupInfo.name;
+    existingRSVP.value = null;
+    editToken.value = "";
+    invalidLinkError.value = false;
+    groupFullError.value = val.isFull ? val.groupInfo.name : null;
+    if (!val.isFull) currentStep.value = 2;
   } else {
+    existingRSVP.value = null;
+    groupInfo.value = null;
+    editToken.value = "";
     invalidLinkError.value = true;
+    groupFullError.value = null;
   }
-};
-
-onMounted(() => {
-  loadData();
-  setTimeout(() => {
-    mounted.value = true;
-  }, 0);
 });
 
-watch(
-  () => route.query.group,
-  () => {
-    loadData();
-  },
-);
-
-watch(
-  () => route.query.token,
-  () => {
-    loadData();
-  },
-);
+// Re-run on query param changes is handled via useAsyncData's watch option above.
 
 const handleAttendanceSelect = (isAttending: boolean) => {
   attending.value = isAttending;
@@ -408,13 +364,7 @@ const isFormActive = computed(() => {
     <!-- Main Content -->
     <main class="flex-1 flex items-center justify-center p-6" :class="isFormActive ? 'pt-6 pb-6' : 'pt-32 pb-16'">
       <div class="w-full max-w-2xl">
-        <div v-if="!mounted" class="min-h-[300px] flex items-center justify-center">
-          <div class="text-sm font-semibold tracking-wider uppercase font-display-cinzel animate-pulse">
-            Loading RSVP details...
-          </div>
-        </div>
-
-        <template v-else>
+        <template>
           <!-- 1. INVALID DIRECT LINK BLOCKER -->
           <div
             v-if="invalidLinkError && !existingRSVP"
@@ -541,7 +491,7 @@ const isFormActive = computed(() => {
                 <p
                   class="text-deep-espresso/80 whitespace-pre-line bg-soft-pearl/50 p-4 rounded-xl border border-amber-gold/10"
                 >
-                  &ldquo;{{ heading2 - smalle }}&rdquo;
+                  &ldquo;{{ existingRSVP.message }}&rdquo;
                 </p>
               </div>
             </div>
@@ -581,7 +531,7 @@ const isFormActive = computed(() => {
               class="flex justify-between items-center mb-10 text-xs font-bold uppercase tracking-widest text-deep-espresso/45"
             >
               <span>#TheSweetUnion</span>
-              <span v-if="iheading2 - smallt - deep - terracotta">Editing Mode</span>
+              <span v-if="isEditing">Editing Mode</span>
               <span v-else>RSVP Form</span>
             </div>
 
