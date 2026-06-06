@@ -398,10 +398,10 @@ onUnmounted(() => {
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[4deg]" />
             <div
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[-4deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
-              @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
+              @click="setLightboxImage(config.rsvpTeaser?.imageUrl || '/images/playful_couple.png')"
             >
               <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="w-full h-full object-cover" />
+                <img :src="config.rsvpTeaser?.imageUrl || '/images/playful_couple.png'" alt="Adun and Uche" class="w-full h-full object-cover" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -426,7 +426,7 @@ onUnmounted(() => {
     </section>
 
     <!-- Footer Slide -->
-    <Footer :on-image-click="setLightboxImage" />
+    <Footer :on-image-click="setLightboxImage" :couples-photo="config.rsvpTeaser?.imageUrl" />
 
     <!-- Lightbox Modal -->
     <div

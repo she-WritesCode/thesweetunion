@@ -3,9 +3,10 @@ import { siteConfig } from '~/config/site'
 
 interface FooterProps {
   onImageClick?: (src: string) => void;
+  couplesPhoto?: string;
 }
 
-defineProps<FooterProps>()
+const props = defineProps<FooterProps>()
 </script>
 
 <template>
@@ -21,10 +22,10 @@ defineProps<FooterProps>()
         <div 
           class="relative w-[150px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-3 scale-90 select-none"
           :class="onImageClick ? 'cursor-zoom-in' : ''" 
-          @click="onImageClick?.('/images/story-4.png')"
+          @click="onImageClick?.(couplesPhoto || '/images/story-4.png')"
         >
           <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-            <img src="/images/story-4.png" alt="Memory" class="w-full h-full object-cover" />
+            <img :src="couplesPhoto || '/images/story-4.png'" alt="Memory" class="w-full h-full object-cover" />
           </div>
         </div>
         <p class="font-body text-xs text-deep-espresso/60 pt-4">
