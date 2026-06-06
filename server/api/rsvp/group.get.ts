@@ -16,12 +16,16 @@ export default defineEventHandler(async (event) => {
   });
 
   const result = await client.collection("rsvp_groups").find({
-    where: { slug: { equals: slug }, isActive: { equals: true } },
+    where: { slug: { equals: slug } },
     limit: 1,
   });
 
   if (result.total === 0) {
-    throw createError({ statusCode: 404, message: "Group not found or inactive" });
+    throw createError({ statusCode: 404, message: "Group not found" });
+  }
+
+  if (!result.docs[0].isActive) {
+    throw createError({ statusCode: 404, message: "This RSVP group is no longer active" });
   }
 
   const group = result.docs[0];
