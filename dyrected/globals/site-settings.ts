@@ -86,6 +86,21 @@ export const siteSettings: GlobalConfig = {
       admin: { tab: "Hero", placeholder: "e.g. Together with their families" },
     },
 
+    // ─── Call To Actions Tab ─────────────────────────────────────
+    {
+      name: "wishlistTeaserImage",
+      type: "relationship",
+      label: "Wishlist Teaser Photo",
+      relationTo: "media",
+      admin: { tab: "Call To Actions", description: "Image shown next to the wishlist introduction card." },
+    },
+    {
+      name: "rsvpTeaserImage",
+      type: "relationship",
+      label: "RSVP Teaser Photo",
+      relationTo: "media",
+      admin: { tab: "Call To Actions", description: "Image shown next to the RSVP prompt card." },
+    },
     // ─── Our Story Tab ───────────────────────────────────────────
     {
       name: "storyFormat",

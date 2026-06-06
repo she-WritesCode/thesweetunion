@@ -4,6 +4,7 @@ import { promisify } from "node:util";
 import { scrypt, randomBytes } from "node:crypto";
 import { SqliteAdapter } from "@dyrected/db-sqlite";
 import { PostgresAdapter } from "@dyrected/db-postgres";
+import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
 
 // Load environment variables from .env.local
 const envPath = path.resolve(process.cwd(), ".env.local");
@@ -54,13 +55,10 @@ async function seed() {
   console.log("Synchronizing schema...");
   await db.sync(collections);
 
-  console.log("Clearing existing tables (except media)...");
-  // Execute direct SQL truncates/deletes or delete records
-  // For SQLite or Postgres, we can run queries using adapter.execute if Postgres, or clean up individually.
-  // To keep it adapter-agnostic, we can fetch all records and delete them, or run execute for known tables.
+  console.log("Clearing existing tables (including media)...");
   const isPostgres = !!process.env.DATABASE_URL;
 
-  const tablesToClear = ["reservations", "rsvp_records", "rsvp_groups", "wishlist_items", "events", "admins"];
+  const tablesToClear = ["reservations", "rsvp_records", "rsvp_groups", "wishlist_items", "events", "admins", "media"];
   for (const table of tablesToClear) {
     const tableName = `collection_${table}`;
     try {
@@ -83,6 +81,73 @@ async function seed() {
       }
     }
   }
+
+  // Initialize Cloudinary Storage Adapter for uploads
+  console.log("Initializing Cloudinary storage adapter...");
+  const storage = new CloudinaryStorageAdapter({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+    apiKey: process.env.CLOUDINARY_API_KEY || "",
+    apiSecret: process.env.CLOUDINARY_API_SECRET || "",
+    folder: "thesweetunion",
+  });
+
+  const uploadedMediaMap: Record<string, string> = {};
+
+  async function uploadToCloudinary(filename: string, altText: string): Promise<string> {
+    const filePath = path.resolve(process.cwd(), "public/image", filename);
+    if (!fs.existsSync(filePath)) {
+      console.warn(`Local file ${filename} not found at ${filePath}. Skipping upload.`);
+      return "";
+    }
+
+    console.log(`Uploading ${filename} to Cloudinary...`);
+    try {
+      const fileBuffer = fs.readFileSync(filePath);
+      const mimeType = "image/jpeg";
+      const uploadedFile = await storage.upload({
+        filename,
+        buffer: new Uint8Array(fileBuffer),
+        mimeType,
+      });
+
+      // Save record in CMS media collection
+      const mediaRecord = await db.create({
+        collection: "media",
+        data: {
+          filename: uploadedFile.filename,
+          filesize: uploadedFile.filesize,
+          mimeType: uploadedFile.mimeType,
+          url: uploadedFile.url,
+          width: uploadedFile.width,
+          height: uploadedFile.height,
+          alt: altText,
+          provider_metadata: uploadedFile.provider_metadata,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      });
+
+      console.log(`Successfully uploaded ${filename} and created media record ${mediaRecord.id}`);
+      return mediaRecord.id;
+    } catch (err) {
+      console.error(`Failed to upload ${filename} to Cloudinary:`, (err as Error).message);
+      return "";
+    }
+  }
+
+  // Upload all renamed local photos
+  uploadedMediaMap["bride_sitting_coral"] = await uploadToCloudinary("bride_sitting_coral.jpg", "Bride sitting in coral outfit");
+  uploadedMediaMap["bride_close_up_coral"] = await uploadToCloudinary("bride_close_up_coral.jpg", "Bride close up portrait in coral outfit");
+  uploadedMediaMap["groom_close_up_bw"] = await uploadToCloudinary("groom_close_up_bw.jpg", "Groom black and white portrait");
+  uploadedMediaMap["groom_portrait_navy"] = await uploadToCloudinary("groom_portrait_navy.jpg", "Groom in navy suit");
+  uploadedMediaMap["groom_sitting_navy"] = await uploadToCloudinary("groom_sitting_navy.jpg", "Groom sitting in navy suit");
+  uploadedMediaMap["couple_sitting_coral_navy"] = await uploadToCloudinary("couple_sitting_coral_navy.jpg", "Adun and Uche together in traditional wear");
+  uploadedMediaMap["bride_portrait_brown"] = await uploadToCloudinary("bride_portrait_brown.jpg", "Bride portrait in brown dress");
+  uploadedMediaMap["groom_standing_sage"] = await uploadToCloudinary("groom_standing_sage.jpg", "Groom in sage green shirt");
+  uploadedMediaMap["couple_sitting_sage_brown"] = await uploadToCloudinary("couple_sitting_sage_brown.jpg", "Adun and Uche sitting together in smart casuals");
+  uploadedMediaMap["couple_laughing_sage_brown"] = await uploadToCloudinary("couple_laughing_sage_brown.jpg", "Adun and Uche laughing in smart casuals");
+  uploadedMediaMap["bride_close_up_brown"] = await uploadToCloudinary("bride_close_up_brown.jpg", "Bride close up in brown dress");
+  uploadedMediaMap["bride_close_up_bw"] = await uploadToCloudinary("bride_close_up_bw.jpg", "Bride black and white close up portrait");
 
   // 1. Seed Admin User
   console.log("Seeding default admin...");
@@ -112,6 +177,7 @@ async function seed() {
       venueAddress: "To Be Announced",
       dressCode: "Strictly Formal (Muted Mauve & Soft Peach)",
       collectsRsvp: true,
+      photo: uploadedMediaMap["bride_close_up_coral"] || null,
       schedule: [
         { time: "09:30 AM", title: "Guest Arrival", description: "Soft prelude music and guest seating." },
         { time: "10:00 AM", title: "Processional & Vows", description: "The exchange of vows and rings." },
@@ -131,6 +197,7 @@ async function seed() {
       venueAddress: "To Be Announced",
       dressCode: "Elegant & Vibrant",
       collectsRsvp: true,
+      photo: uploadedMediaMap["groom_portrait_navy"] || null,
       schedule: [
         { time: "02:00 PM", title: "Cocktail Hour", description: "Welcome drinks and light finger foods." },
         { time: "03:00 PM", title: "Grand Entrance", description: "Welcoming the newlyweds!" },
@@ -242,7 +309,7 @@ async function seed() {
   ];
 
   for (const item of wishlistData) {
-    const createdItem = await db.create({
+    await db.create({
       collection: "wishlist_items",
       data: {
         ...item,
@@ -251,7 +318,7 @@ async function seed() {
         updatedAt: new Date().toISOString(),
       },
     });
-    console.log(`Created Wishlist Item: ${createdItem.name}`);
+    console.log(`Created Wishlist Item: ${item.name}`);
   }
 
   // 5. Seed Site Settings Global
@@ -268,20 +335,34 @@ async function seed() {
       hashtag: "#TheSweetUnion",
       venueName: "The Alabaster Garden",
       venueAddress: "12 Botanical Avenue, Lekki Phase 1, Lagos",
+      heroImage: uploadedMediaMap["couple_sitting_coral_navy"] || null,
       heroSubtitle: "Together with their families, invite you to celebrate their wedding",
+      wishlistTeaserImage: uploadedMediaMap["couple_sitting_sage_brown"] || null,
+      rsvpTeaserImage: uploadedMediaMap["couple_laughing_sage_brown"] || null,
       storyFormat: "timeline",
       storySubtitle: "Our Journey",
       storyTitle: "The Friendship that Grew",
       storyDescription:
         "We took our time, built a friendship that couldn't be broken, and ended up exactly where we belonged. Here is our story over the years.",
       storyPhotos: [
-        { label: "September 2018", title: "First Meeting", description: "Met during Teen Church Exco team bonding." },
+        {
+          label: "September 2018",
+          title: "First Meeting",
+          description: "Met during Teen Church Exco team bonding.",
+          photo: uploadedMediaMap["groom_standing_sage"] || null,
+        },
         {
           label: "December 2021",
           title: "The Turning Point",
           description: "Realized we were more than just best friends.",
+          photo: uploadedMediaMap["bride_sitting_coral"] || null,
         },
-        { label: "August 2025", title: "The Proposal", description: "A simple, perfect yes by the waterfront." },
+        {
+          label: "August 2025",
+          title: "The Proposal",
+          description: "A simple, perfect yes by the waterfront.",
+          photo: uploadedMediaMap["bride_portrait_brown"] || null,
+        },
       ],
       faqs: [
         {
@@ -318,3 +399,4 @@ seed().catch((err) => {
   console.error("Database seeding failed:", err);
   process.exit(1);
 });
+
