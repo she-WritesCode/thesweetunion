@@ -15,7 +15,7 @@ const { data: siteSettings } = await useAsyncData("site-settings", () =>
 );
 const { data: eventsResult } = await useAsyncData<any>(
   "events-list",
-  () => client.collection("events").find({ limit: 100 }) as any,
+  () => client.collection("events").find({ limit: 100, depth: 2 }) as any,
 );
 
 const config = computed(() => {
