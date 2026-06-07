@@ -1,24 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { siteConfig as fallbackConfig } from "~/config/site";
-import { createClient } from "@dyrected/sdk";
-import { useAsyncData, useRuntimeConfig } from "#app";
+import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
 
-const runtimeConfig = useRuntimeConfig();
-// Use the server-side URL during SSR (resolves to Vercel URL, not localhost)
-// Falls back to public URL on the client
-const client = createClient({
-  baseUrl: (runtimeConfig as any).dyrectedUrl ?? runtimeConfig.public.dyrectedUrl,
-  apiKey: runtimeConfig.public.dyrectedApiKey,
-});
-
-const { data: siteSettings } = await useAsyncData("site-settings", () =>
-  client.global("site_settings").get({ depth: 2 }),
-);
-const { data: eventsResult } = await useAsyncData<any>(
-  "events-list",
-  () => client.collection("events").find({ limit: 100, depth: 2 }) as any,
-);
+const { data: siteSettings } = await useDyrectedGlobal("site_settings", { depth: 2 });
+const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2 });
 
 const config = computed(() => {
   const db = siteSettings.value as any;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter, useAsyncData } from "#app";
-import { createClient } from "@dyrected/sdk";
+import { useDyrectedClient } from "#imports";
 
 interface RSVPData {
   id?: string;
@@ -41,13 +41,7 @@ const GROUPS: GroupConfig[] = [
 const route = useRoute();
 const router = useRouter();
 
-const runtimeConfig = useRuntimeConfig();
-// Use the server-side URL during SSR (resolves to Vercel URL, not localhost)
-// Falls back to public URL on the client
-const client = createClient({
-  baseUrl: (runtimeConfig as any).dyrectedUrl ?? runtimeConfig.public.dyrectedUrl,
-  apiKey: runtimeConfig.public.dyrectedApiKey,
-});
+const client = useDyrectedClient();
 
 // ─── SSR: resolve group / token from URL before first render ─────────────────
 const { data: initData } = await useAsyncData(

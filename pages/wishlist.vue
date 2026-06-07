@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { createClient } from "@dyrected/sdk";
-import { useAsyncData, useRuntimeConfig } from "#app";
+import { useDyrectedClient, useDyrectedCollection, useDyrectedGlobal } from "#imports";
 
 interface WishlistItem {
   id: string;
@@ -22,25 +21,9 @@ interface WishlistItem {
   };
 }
 
-const runtimeConfig = useRuntimeConfig();
-// Use the server-side URL during SSR (resolves to Vercel URL, not localhost)
-const client = createClient({
-  baseUrl: (runtimeConfig as any).dyrectedUrl ?? runtimeConfig.public.dyrectedUrl,
-  apiKey: runtimeConfig.public.dyrectedApiKey,
-});
-
-const { data: wishlistData, refresh } = await useAsyncData(
-  "wishlist-items",
-  () =>
-    (
-      client.collection("wishlist_items").find({
-        where: { isHidden: { not_equals: true } },
-        limit: 100,
-      }) as any
-    ).exec() as Promise<any>,
-);
-
-const { data: siteSettings } = await useAsyncData("site-settings", () => client.global("site_settings").get());
+const { data: wishlistData, refresh } = await useDyrectedCollection("wishlist_items", { limit: 100 });
+const { data: siteSettings } = await useDyrectedGlobal("site_settings");
+const client = useDyrectedClient();
 
 const mapCategory = (cat: string) => {
   if (!cat) return "Other";
@@ -56,8 +39,11 @@ const mapCategory = (cat: string) => {
 const localItems = ref<WishlistItem[]>([]);
 
 const items = computed(() => {
-  if (wishlistData.value?.docs && wishlistData.value.docs.length > 0) {
-    return wishlistData.value.docs.map((doc: any) => ({
+  const visibleDocs = (wishlistData.value?.docs || []).filter(
+    (doc: any) => !doc.isHidden,
+  );
+  if (visibleDocs.length > 0) {
+    return visibleDocs.map((doc: any) => ({
       id: doc.id,
       name: doc.name,
       description: doc.description,
