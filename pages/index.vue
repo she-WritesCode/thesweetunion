@@ -4,7 +4,7 @@ import { siteConfig as fallbackConfig } from "~/config/site";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
 
 const { data: siteSettings } = await useDyrectedGlobal("site_settings", { depth: 2 });
-const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2 });
+const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2, sort: "order" });
 
 const config = computed(() => {
   const db = siteSettings.value as any;
@@ -178,8 +178,7 @@ onUnmounted(() => {
               Counting Down the Days
             </h2>
             <p class="text-deep-espresso/70 max-w-md mx-auto lg:mx-0 font-body text-lg">
-              We've known each other for a long time. Now, we are counting down the hours until our traditional
-              celebration.
+              We've known each other for a long time. Now, we are counting down the days until our wedding day.
             </p>
             <Countdown :target-date="config.weddingDate" />
           </div>
@@ -244,88 +243,69 @@ onUnmounted(() => {
         class="min-h-screen paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
       >
         <FadeInSection>
-          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-16! items-center">
-            <!-- Event text, details, schedule & RSVP -->
-            <div class="space-y-8!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
+          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center">
+
+            <!-- Left: Event details -->
+            <div class="space-y-10!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
+
+              <!-- Event number + name + date -->
               <div class="space-y-4!">
-                <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
+                <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
                   Wedding Event {{ index + 1 }}
                 </span>
-                <h2 class="heading2-small font-bold text-deep-espresso mb-2 font-display-cinzel">
+                <h2 class="heading2-big font-bold text-deep-espresso font-display-cinzel leading-tight">
                   {{ event.name }}
                 </h2>
-                <p class="font-body text-deep-espresso/60 text-sm sm:text-base font-semibold">
-                  {{ event.date }}
-                </p>
-              </div>
-
-              <!-- Venue and Directions Card -->
-              <div v-if="event.venue" class="linen-card p-6 rounded-2xl border border-amber-gold/15 space-y-4">
-                <div>
-                  <h4 class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-0.5">
-                    Venue
-                  </h4>
-                  <p class="font-heading text-base sm:text-lg font-bold text-deep-espresso">
-                    {{ event.venue.name }}
-                  </p>
-                  <p class="text-deep-espresso/80 text-sm">
-                    {{ event.venue.address }}
-                  </p>
-                </div>
-
-                <div class="border-t border-amber-gold/10 pt-3">
-                  <h4 class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-0.5">
-                    Dress Code
-                  </h4>
-                  <p class="font-body text-sm font-semibold text-deep-espresso">
-                    {{ event.dressCode }}
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-px bg-amber-gold/60" />
+                  <p class="font-body text-deep-espresso/70 text-sm sm:text-base">
+                    {{ event.date }}
                   </p>
                 </div>
               </div>
 
-              <!-- Schedule for this specific event -->
-              <div>
-                <h4 class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-4">
-                  The Schedule
-                </h4>
-                <div class="schedule-timeline">
-                  <div v-for="(item, scheduleIdx) in event.schedule" :key="scheduleIdx" class="relative group">
-                    <div
-                      class="absolute left-[-31px] top-1.5 w-3.5 h-3.5 rounded-full border border-amber-gold bg-warm-cream flex items-center justify-center transition-all duration-300"
-                    >
-                      <div class="w-1.5 h-1.5 rounded-full bg-amber-gold" />
-                    </div>
-                    <div>
-                      <span class="font-heading text-xs font-semibold text-amber-gold tracking-wide">
-                        {{ item.time }}
-                      </span>
-                      <h5 class="font-heading text-base font-bold text-deep-espresso mt-0.5">
-                        {{ item.title }}
-                      </h5>
-                      <p class="font-body text-sm text-deep-espresso/70 mt-0.5">
-                        {{ item.description }}
-                      </p>
-                    </div>
+              <!-- Venue + Dress Code — two-column detail panel -->
+              <div v-if="event.venue" class="linen-card rounded-2xl border border-amber-gold/15 overflow-hidden">
+                <div class="grid grid-cols-2">
+                  <div class="p-5 sm:p-6 border-r border-amber-gold/10">
+                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">Venue</p>
+                    <p class="font-heading text-sm sm:text-base font-bold text-deep-espresso leading-snug">
+                      {{ event.venue.name }}
+                    </p>
+                    <p class="font-body text-xs sm:text-sm text-deep-espresso/60 mt-1 leading-relaxed">
+                      {{ event.venue.address }}
+                    </p>
+                  </div>
+                  <div class="p-5 sm:p-6">
+                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">Dress Code</p>
+                    <p class="font-heading text-sm sm:text-base font-bold text-deep-espresso leading-snug">
+                      {{ event.dressCode }}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <!-- Integrated RSVP Call to Action -->
+              <!-- RSVP invitation prompt -->
               <div
                 v-if="event.collectsRsvp !== false && event.rsvpTeaser && event.rsvpLink"
-                class="linen-card p-6 rounded-2xl border border-amber-gold/15 bg-linen-white/40 space-y-3!"
+                class="linen-card p-7 sm:p-8 rounded-2xl border border-amber-gold/20 bg-linen-white/60 text-center space-y-4!"
               >
-                <h4 class="font-heading text-base font-bold text-deep-espresso">
+                <p class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase">
+                  You're invited
+                </p>
+                <h4 class="font-display-cinzel text-xl sm:text-2xl font-bold text-deep-espresso leading-snug">
                   {{ event.rsvpTeaser.title }}
                 </h4>
-                <p class="font-body text-sm text-deep-espresso/80">
+                <p class="font-body text-sm text-deep-espresso/70 max-w-xs mx-auto leading-relaxed">
                   {{ event.rsvpTeaser.description }}
                 </p>
-                <NuxtLink :to="event.rsvpLink" class="btn-primary"> RSVP For This Event </NuxtLink>
+                <NuxtLink :to="event.rsvpLink" class="btn-primary">
+                  RSVP Now
+                </NuxtLink>
               </div>
             </div>
 
-            <!-- Polaroid couple picture — only shown when an image is available -->
+            <!-- Right: Polaroid photo -->
             <div
               v-if="event.imageUrl"
               class="flex flex-col items-center justify-center select-none relative"
@@ -336,7 +316,7 @@ onUnmounted(() => {
                 class="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 -rotate-2 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
                 @click="setLightboxImage(event.imageUrl)"
               >
-                <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+                <div class="relative aspect-[3/4] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                   <img :src="event.imageUrl" alt="Event Photo" class="w-full h-full object-cover" />
                 </div>
                 <div class="mt-4 text-center">
@@ -346,6 +326,7 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
+
           </div>
         </FadeInSection>
       </section>

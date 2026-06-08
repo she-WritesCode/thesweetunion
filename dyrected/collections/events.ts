@@ -7,10 +7,11 @@ export const events: CollectionConfig = {
   labels: { singular: "Event", plural: "Events" },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "date", "venueName", "dressCode", "collectsRsvp"],
+    defaultColumns: ["order", "name", "date", "venueName", "dressCode", "collectsRsvp"],
     group: "Content",
   },
   fields: [
+    { name: "order", type: "number", label: "Display Order", defaultValue: 0, admin: { description: "Lower numbers appear first. e.g. 1 = first, 2 = second." } },
     { name: "name", type: "text", label: "Event Name", required: true },
     { name: "date", type: "datetime", label: "Date & Time", required: true },
     { name: "venueName", type: "text", label: "Venue Name", required: true },
@@ -18,16 +19,6 @@ export const events: CollectionConfig = {
     { name: "dressCode", type: "text", label: "Dress Code", defaultValue: "Strictly Formal" },
     { name: "photo", type: "relationship", label: "Event Photo", relationTo: "media" },
     { name: "collectsRsvp", type: "boolean", label: "Collect RSVPs", defaultValue: true },
-    {
-      name: "schedule",
-      type: "array",
-      label: "Event Schedule",
-      fields: [
-        { name: "time", type: "text", label: "Time", required: true },
-        { name: "title", type: "text", label: "Title", required: true },
-        { name: "description", type: "textarea", label: "Description" },
-      ],
-    },
   ],
   access: {
     read: "true",
