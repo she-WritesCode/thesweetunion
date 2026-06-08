@@ -50,16 +50,10 @@ export default defineConfig({
     apiSecret: process.env.CLOUDINARY_API_SECRET || "mock_secret",
   }),
   email: {
-    from: process.env.EMAIL_FROM || "TheSweetUnion <noreply@thesweetunion.com>",
+    from: process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`,
     send: async ({ to, subject, html }) => {
-      const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY || "re_mock");
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || "TheSweetUnion <noreply@thesweetunion.com>",
-        to,
-        subject,
-        html,
-      });
+      const { sendEmail } = await import("./dyrected/mailer.ts");
+      await sendEmail({ to, subject, html });
     },
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events],
