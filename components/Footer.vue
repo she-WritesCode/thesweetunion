@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<FooterProps>(), {
               v-if="couplesPhoto"
               :src="couplesPhoto"
               alt="Memory"
-              class="w-full h-full object-cover"
+              class="img-fill"
             />
           </div>
         </div>

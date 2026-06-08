@@ -4,7 +4,7 @@ import { siteConfig as fallbackConfig } from "~/config/site";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
 
 const { data: siteSettings } = await useDyrectedGlobal("site_settings", { depth: 2 });
-const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2, sort: "order" });
+const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2 });
 
 const config = computed(() => {
   const db = siteSettings.value as any;
@@ -38,6 +38,7 @@ const config = computed(() => {
     events: ((eventsResult.value as any)?.docs && (eventsResult.value as any).docs.length > 0
       ? (eventsResult.value as any).docs.map((e: any) => ({
           key: e.id,
+          order: e.order ?? 999,
           name: e.name,
           date: e.date
             ? new Date(e.date).toLocaleDateString("en-US", {
@@ -72,7 +73,8 @@ const config = computed(() => {
               : undefined,
           rsvpLink: e.collectsRsvp !== false ? "/rsvp" : undefined,
         }))
-      : fallbackConfig.events.map((e) => ({ ...e, imageUrl: null }))) as any[],
+      : fallbackConfig.events.map((e) => ({ ...e, imageUrl: null }))
+    ).sort((a: any, b: any) => (a.order ?? 999) - (b.order ?? 999)) as any[],
     faqs:
       db?.faqs && db.faqs.length > 0
         ? db.faqs.map((f: any, i: number) => ({
@@ -188,23 +190,23 @@ onUnmounted(() => {
             <!-- Photo 1 -->
             <div
               v-if="config.countdownPhotos[0]"
-              class="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-3/4 bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
               @click="setLightboxImage(config.countdownPhotos[0])"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="w-full h-full object-cover" />
+                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
             <!-- Photo 2 -->
             <div
               v-if="config.countdownPhotos[1]"
-              class="absolute right-[10%] bottom-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute right-[10%] bottom-[5%] w-[180px] sm:w-[220px] aspect-3/4 bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
               @click="setLightboxImage(config.countdownPhotos[1])"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="w-full h-full object-cover" />
+                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
           </div>
@@ -244,10 +246,8 @@ onUnmounted(() => {
       >
         <FadeInSection>
           <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center">
-
             <!-- Left: Event details -->
             <div class="space-y-10!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
-
               <!-- Event number + name + date -->
               <div class="space-y-4!">
                 <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
@@ -268,7 +268,9 @@ onUnmounted(() => {
               <div v-if="event.venue" class="linen-card rounded-2xl border border-amber-gold/15 overflow-hidden">
                 <div class="grid grid-cols-2">
                   <div class="p-5 sm:p-6 border-r border-amber-gold/10">
-                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">Venue</p>
+                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">
+                      Venue
+                    </p>
                     <p class="font-heading text-sm sm:text-base font-bold text-deep-espresso leading-snug">
                       {{ event.venue.name }}
                     </p>
@@ -277,7 +279,9 @@ onUnmounted(() => {
                     </p>
                   </div>
                   <div class="p-5 sm:p-6">
-                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">Dress Code</p>
+                    <p class="font-heading text-xs font-semibold uppercase tracking-wider text-amber-gold mb-2">
+                      Dress Code
+                    </p>
                     <p class="font-heading text-sm sm:text-base font-bold text-deep-espresso leading-snug">
                       {{ event.dressCode }}
                     </p>
@@ -296,12 +300,10 @@ onUnmounted(() => {
                 <h4 class="font-display-cinzel text-xl sm:text-2xl font-bold text-deep-espresso leading-snug">
                   {{ event.rsvpTeaser.title }}
                 </h4>
-                <p class="font-body text-sm text-deep-espresso/70 max-w-xs mx-auto leading-relaxed">
+                <p class="font-body text-sm text-deep-espresso/70 leading-relaxed">
                   {{ event.rsvpTeaser.description }}
                 </p>
-                <NuxtLink :to="event.rsvpLink" class="btn-primary">
-                  RSVP Now
-                </NuxtLink>
+                <NuxtLink :to="event.rsvpLink" class="btn-primary"> RSVP Now </NuxtLink>
               </div>
             </div>
 
@@ -317,7 +319,7 @@ onUnmounted(() => {
                 @click="setLightboxImage(event.imageUrl)"
               >
                 <div class="relative aspect-[3/4] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                  <img :src="event.imageUrl" alt="Event Photo" class="w-full h-full object-cover" />
+                  <img :src="event.imageUrl" alt="Event Photo" class="img-fill" />
                 </div>
                 <div class="mt-4 text-center">
                   <span class="font-display-cormorant text-xl font-semibold text-deep-espresso">
@@ -326,7 +328,6 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-
           </div>
         </FadeInSection>
       </section>
@@ -349,8 +350,8 @@ onUnmounted(() => {
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
               @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
             >
-              <div class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.wishlistTeaser.imageUrl" alt="Building our home" class="w-full h-full object-cover" />
+              <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+                <img :src="config.wishlistTeaser.imageUrl" alt="Building our home" class="img-fill" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -368,7 +369,7 @@ onUnmounted(() => {
               <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-2">
                 Registry
               </span>
-              <h3 class="text-3xl font-bold text-deep-espresso mb-3 font-display-cinzel">
+              <h3 class="heading2-small text-deep-espresso mb-3 font-display-cinzel">
                 {{ config.wishlistTeaser.title }}
               </h3>
               <p class="font-body text-deep-espresso/80 text-base sm:text-lg leading-relaxed">
@@ -395,8 +396,8 @@ onUnmounted(() => {
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[-4deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
               @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
-              <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="w-full h-full object-cover" />
+              <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+                <img :src="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="img-fill" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -435,8 +436,12 @@ onUnmounted(() => {
       class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center cursor-zoom-out p-4 md:p-8 animate-fade-in animate-duration-300"
       @click="setLightboxImage(null)"
     >
-      <div class="relative w-full h-full max-w-5xl max-h-[90vh]">
-        <img :src="lightboxImage" alt="Enlarged scrapbook photo" class="w-full h-full object-contain" />
+      <div class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full">
+        <img
+          :src="lightboxImage"
+          alt="Enlarged scrapbook photo"
+          class="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+        />
       </div>
       <!-- Close button -->
       <button

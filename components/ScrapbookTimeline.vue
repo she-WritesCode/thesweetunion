@@ -74,7 +74,7 @@ const collageStyles = [
             <img
               :src="item.imageUrl"
               :alt="item.title"
-              class="w-full h-full object-cover"
+              class="img-fill"
               @click="emit('imageClick', item.imageUrl)"
             />
             <!-- Subtle shadows & paper details on photo -->
