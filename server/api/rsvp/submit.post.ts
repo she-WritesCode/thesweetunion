@@ -27,6 +27,30 @@ export default defineEventHandler(async (event) => {
 
   const group = groupSearch.docs[0];
 
+  // Duplicate email check
+  const emailCheck = await client.collection("rsvp_records").find({
+    where: { leadEmail: { equals: leadEmail } },
+    limit: 1,
+  });
+  if (emailCheck.total > 0) {
+    throw createError({
+      statusCode: 409,
+      message: "It looks like you've already RSVP'd. Check your confirmation email to make any changes.",
+    });
+  }
+
+  // Duplicate phone check
+  const phoneCheck = await client.collection("rsvp_records").find({
+    where: { leadPhone: { equals: leadPhone } },
+    limit: 1,
+  });
+  if (phoneCheck.total > 0) {
+    throw createError({
+      statusCode: 409,
+      message: "This WhatsApp number has already been used to RSVP. Check your confirmation email to make any changes.",
+    });
+  }
+
   // Capacity check
   if (attending) {
     const seats = hasSpouse ? 2 : 1;
@@ -67,13 +91,6 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, record };
   } catch (err: any) {
-    const msg: string = err.message || "";
-    if (msg.includes("unique") || msg.includes("duplicate") || msg.includes("already exists")) {
-      throw createError({
-        statusCode: 409,
-        message: "It looks like you've already RSVP'd. Check your confirmation email to make any changes.",
-      });
-    }
-    throw createError({ statusCode: 400, message: msg || "Failed to submit RSVP" });
+    throw createError({ statusCode: 400, message: err.message || "Failed to submit RSVP" });
   }
 });

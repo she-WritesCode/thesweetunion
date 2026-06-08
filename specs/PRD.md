@@ -300,6 +300,8 @@ All emails are sent from a configured transactional email provider (SendGrid, Ma
 
 Email templates should be branded with the couple's names and wedding colors/fonts (configurable).
 
+> **Full implementation spec:** See [`specs/EMAIL-NOTIFICATIONS.md`](./EMAIL-NOTIFICATIONS.md) for per-trigger content requirements, subject lines, body structure, token handling, and admin digest options.
+
 ---
 
 ## 5. Admin Dashboard

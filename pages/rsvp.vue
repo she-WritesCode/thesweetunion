@@ -68,7 +68,7 @@ const { data: initData } = await useAsyncData(
     // Priority 1: edit token
     if (tokenQuery) {
       try {
-        const record = await client.collection("rsvp_records").find({ where: { token: { equals: tokenQuery } } });
+        const record = await client.collection("rsvp_records").find({ where: { editToken: { equals: tokenQuery } } });
         if (record.docs.length > 0) {
           return { type: "existing" as const, record: record.docs[0], editToken: tokenQuery };
         }
@@ -107,7 +107,7 @@ const invalidLinkError = ref<boolean>(initData.value?.type === "invalid");
 const groupFullError = ref<string | null>(
   initData.value?.type === "group" && initData.value.isFull ? initData.value.groupInfo.name : null,
 );
-const isEditing = ref(false);
+const isEditing = ref(initData.value?.type === "existing");
 
 // Flow State
 const currentStep = ref(2);
@@ -162,6 +162,7 @@ watch(initData, (val) => {
     groupFullError.value = null;
     populateStates(val.record);
     currentStep.value = 2;
+    isEditing.value = true;
   } else if (val.type === "group") {
     groupInfo.value = val.groupInfo;
     group.value = val.groupInfo.name;
@@ -499,8 +500,12 @@ const isFormActive = computed(() => {
             </div>
           </div>
 
+          <div v-if="existingRSVP.attending" class="rsvp-summary__invite-note">
+            📬 Your personal invitation card will be sent to <strong>{{ existingRSVP.leadEmail }}</strong> closer to the wedding date.
+          </div>
+
           <div class="rsvp-summary__actions">
-            <button @click="isEditing = true" class="btn-primary">Edit My RSVP</button>
+            <button @click="isEditing = true; currentStep = 2; populateStates(existingRSVP)" class="btn-primary">Edit My RSVP</button>
             <button @click="handleCancelRSVP" class="btn-danger">Cancel RSVP</button>
           </div>
         </div>
@@ -575,8 +580,8 @@ const isFormActive = computed(() => {
                 <PhoneInput
                   v-model="leadPhone"
                   required
-                  placeholder="Enter your phone number"
-                  label="Phone Number (Required)"
+                  placeholder="WhatsApp number"
+                  label="WhatsApp Number (Required)"
                 />
               </div>
               <div class="rsvp-field-group">
@@ -676,7 +681,7 @@ const isFormActive = computed(() => {
             <button
               v-else
               type="button"
-              @click="isEditing = false; existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');"
+              @click="isEditing = false; emailError = ''; eventsError = ''; existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');"
               class="rsvp-exit-btn"
             >
               Exit Form

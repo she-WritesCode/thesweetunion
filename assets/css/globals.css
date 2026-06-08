@@ -355,6 +355,7 @@ body {
 .rsvp-summary__name            { @apply font-semibold text-base; }
 .rsvp-summary__meta            { @apply text-deep-espresso/70; }
 .rsvp-summary__notes           { @apply border-t border-amber-gold/10 pt-6 space-y-4 text-sm font-body; }
+.rsvp-summary__invite-note     { @apply border-t border-amber-gold/10 pt-5 text-sm font-body text-deep-espresso/70 leading-relaxed; }
 .rsvp-summary__actions         { @apply border-t border-amber-gold/10 pt-6 flex flex-wrap gap-4 items-center justify-between; }
 .rsvp-events-list              { @apply space-y-1 bg-warm-cream/50 p-3 rounded-xl border border-amber-gold/5; }
 .rsvp-event-item               { @apply flex items-center gap-2 text-deep-espresso; }

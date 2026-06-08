@@ -14,7 +14,7 @@ export const rsvpRecords: CollectionConfig = {
     { name: "group", type: "relationship", label: "RSVP Group", relationTo: "rsvp_groups", required: true },
     { name: "leadName", type: "text", label: "Full Name", required: true },
     { name: "leadEmail", type: "email", label: "Email", required: true, unique: true },
-    { name: "leadPhone", type: "text", label: "Phone Number" },
+    { name: "leadPhone", type: "text", label: "WhatsApp Number", required: true },
     { name: "hasSpouse", type: "boolean", label: "Attending with Spouse", defaultValue: false },
     {
       name: "spouseName",
