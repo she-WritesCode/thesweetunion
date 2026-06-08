@@ -1,7 +1,18 @@
 # Email Notifications — Implementation Spec
 
-**Status:** Not yet implemented  
-**Depends on:** Resend adapter (already configured in `dyrected.config.ts`)
+**Status:** Partially implemented  
+**Transport:** Nodemailer + Gmail (`dyrected/mailer.ts`)  
+**Templates:** `dyrected/emails.ts`
+
+| # | Email | Status |
+|---|---|---|
+| 1 | RSVP Submitted — Guest | ✅ Implemented |
+| 2 | RSVP Edited — Guest | ✅ Implemented |
+| 3 | RSVP Cancelled — Guest | ✅ Implemented |
+| 4 | New RSVP — Admin | ✅ Implemented |
+| 5 | Gift Reserved — Guest | ⏳ Pending wishlist reserve route |
+| 6 | Gift Reservation Cancelled — Guest | ⏳ Pending wishlist cancel route |
+| 7 | New Gift Reserved — Admin | ⏳ Pending wishlist reserve route |
 
 ---
 

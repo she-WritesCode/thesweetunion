@@ -1,5 +1,7 @@
 import { defineEventHandler, getQuery, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { sendEmail } from "~~/dyrected/mailer";
+import { rsvpCancelledEmail } from "~~/dyrected/emails";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -42,6 +44,12 @@ export default defineEventHandler(async (event) => {
     }
 
     await client.collection("rsvp_records").delete(record.id);
+
+    sendEmail({
+      to: record.leadEmail,
+      subject: `Your RSVP has been cancelled, ${record.leadName}`,
+      html: rsvpCancelledEmail({ leadName: record.leadName }),
+    }).catch(console.error);
 
     return { success: true };
   } catch (err: any) {

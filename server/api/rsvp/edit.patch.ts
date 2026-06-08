@@ -1,5 +1,7 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { sendEmail } from "~~/dyrected/mailer";
+import { rsvpUpdatedEmail } from "~~/dyrected/emails";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -67,6 +69,33 @@ export default defineEventHandler(async (event) => {
       message,
       selectedEvents,
     });
+
+    // Fetch event names for email
+    const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
+    let eventNames: string[] = [];
+    if (eventIds.length) {
+      const evRes = await client.collection("events").find({ limit: 20 });
+      eventNames = evRes.docs
+        .filter((e: any) => eventIds.includes(e.id))
+        .map((e: any) => e.name);
+    }
+
+    const config2 = useRuntimeConfig();
+    const appUrl: string = (config2.public as any).appUrl || "http://localhost:3000";
+    const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
+
+    sendEmail({
+      to: updated.leadEmail ?? leadEmail,
+      subject: `Your RSVP has been updated, ${updated.leadName ?? leadName}`,
+      html: rsvpUpdatedEmail({
+        leadName: updated.leadName ?? leadName,
+        attending: newAttending,
+        hasSpouse: updated.hasSpouse ?? hasSpouse,
+        spouseName: updated.spouseName ?? spouseName,
+        eventNames,
+        editLink,
+      }),
+    }).catch(console.error);
 
     return { success: true, record: updated };
   } catch (err: any) {

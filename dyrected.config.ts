@@ -2,6 +2,7 @@ import { defineConfig } from "@dyrected/core";
 import { SqliteAdapter } from "@dyrected/db-sqlite";
 import { PostgresAdapter } from "@dyrected/db-postgres";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
+import { sendEmail } from "./dyrected/mailer.ts";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -51,10 +52,7 @@ export default defineConfig({
   }),
   email: {
     from: process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`,
-    send: async ({ to, subject, html }) => {
-      const { sendEmail } = await import("./dyrected/mailer.ts");
-      await sendEmail({ to, subject, html });
-    },
+    send: ({ to, subject, html }) => sendEmail({ to, subject, html }),
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events],
   globals: [siteSettings],

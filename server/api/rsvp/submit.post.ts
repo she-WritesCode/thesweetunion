@@ -1,5 +1,7 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { sendEmail } from "~~/dyrected/mailer";
+import { rsvpConfirmationEmail, adminRsvpNotificationEmail } from "~~/dyrected/emails";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -87,6 +89,58 @@ export default defineEventHandler(async (event) => {
       await client.collection("rsvp_groups").update(group.id, {
         declinedCount: { $increment: 1 },
       } as any);
+    }
+
+    // Fetch event names for emails
+    const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
+    let eventNames: string[] = [];
+    if (eventIds.length) {
+      const evRes = await client.collection("events").find({ limit: 20 });
+      eventNames = evRes.docs
+        .filter((e: any) => eventIds.includes(e.id))
+        .map((e: any) => e.name);
+    }
+
+    const config2 = useRuntimeConfig();
+    const appUrl: string = (config2.public as any).appUrl || "http://localhost:3000";
+    const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
+
+    // Guest confirmation — fire and forget
+    sendEmail({
+      to: leadEmail,
+      subject: attending
+        ? `You're on the list, ${leadName}! 🎉`
+        : `We'll miss you, ${leadName}`,
+      html: rsvpConfirmationEmail({
+        leadName,
+        attending,
+        hasSpouse,
+        spouseName,
+        eventNames,
+        editLink,
+      }),
+    }).catch(console.error);
+
+    // Admin notification — fire and forget
+    const adminsRes = await client.collection("admins").find({ limit: 20 });
+    const adminEmails: string[] = adminsRes.docs.map((a: any) => a.email).filter(Boolean);
+    if (adminEmails.length) {
+      sendEmail({
+        to: adminEmails.join(","),
+        subject: `New RSVP: ${leadName} — ${attending ? "Attending" : "Declined"}`,
+        html: adminRsvpNotificationEmail({
+          leadName,
+          leadEmail,
+          leadPhone,
+          groupName: group.name,
+          attending,
+          hasSpouse,
+          spouseName,
+          eventNames,
+          message,
+          dashboardLink: `${appUrl}/admin`,
+        }),
+      }).catch(console.error);
     }
 
     return { success: true, record };
