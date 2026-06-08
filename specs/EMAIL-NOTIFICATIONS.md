@@ -57,7 +57,7 @@
 ### 4. New RSVP — Admin Notification
 
 **Trigger:** Successful POST to `/api/rsvp/submit`  
-**Recipient:** Admin email (from `ADMIN_EMAIL` env var)  
+**Recipient:** All admin accounts in the `admins` Dyrected collection — query `admins` collection at send time and email every record found  
 **Subject:** `New RSVP: [leadName] — [attending ? "Attending" : "Declined"]`
 
 **Body:**
@@ -103,7 +103,7 @@
 ### 7. New Gift Reserved — Admin Notification
 
 **Trigger:** Successful reservation creation  
-**Recipient:** Admin email  
+**Recipient:** All admin accounts in the `admins` Dyrected collection  
 **Subject:** `New gift reserved: [item name] by [guestName]`
 
 **Body:**
@@ -116,7 +116,7 @@
 ## Implementation Notes
 
 - All emails use the Resend adapter already wired in `dyrected.config.ts`
-- `ADMIN_EMAIL` should be added to `.env.local` and `nuxt.config.ts` runtimeConfig
+- Admin recipients are resolved at send time by querying the `admins` collection — no hardcoded env var needed; adding a new admin in the CMS automatically adds them to all future notifications
 - The `editToken` (already generated on RSVP creation) is the edit link token — format: `[domain]/rsvp?token=[editToken]`
 - Wishlist cancellation tokens need a `cancelToken` field added to the `reservations` collection (UUID, generated on create)
 - Email templates should use the brand colours and fonts defined in the PRD (Section 8)
