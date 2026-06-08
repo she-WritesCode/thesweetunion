@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import RsvpLinkField from "~/components/admin/RsvpLinkField.vue";
 import RsvpEditLinkField from "~/components/admin/RsvpEditLinkField.vue";
+import CountField from "~/components/admin/CountField.vue";
 
 definePageMeta({
   layout: false,
@@ -25,6 +26,8 @@ const adminComponents = {
     // rsvp_groups collection → rsvpLink field
     "rsvp_groups.rsvpLink": RsvpLinkField,
     "rsvp_groups.rsvpEditLink": RsvpEditLinkField,
+    "rsvp_groups.confirmedCount": CountField,
+    "rsvp_groups.declinedCount": CountField,
   },
 };
 </script>

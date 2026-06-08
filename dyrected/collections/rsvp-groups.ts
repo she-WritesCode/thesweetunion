@@ -66,14 +66,14 @@ export const rsvpGroups: CollectionConfig = {
       type: "number",
       label: "Confirmed Count",
       defaultValue: 0,
-      admin: { readOnly: true, width: "50%", tab: "Reponses" },
+      admin: { component: "rsvp_groups.confirmedCount", readOnly: true, width: "50%", tab: "Reponses" },
     },
     {
       name: "declinedCount",
       type: "number",
       label: "Declined Count",
       defaultValue: 0,
-      admin: { readOnly: true, width: "50%", tab: "Reponses" },
+      admin: { component: "rsvp_groups.confirmedCount", readOnly: true, width: "50%", tab: "Reponses" },
     },
     {
       name: "guests",
