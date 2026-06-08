@@ -5,10 +5,10 @@ import { publicRead } from "../access/public.ts";
 
 export const rsvpGroups: CollectionConfig = {
   slug: "rsvp_groups",
-  labels: { singular: "RSVP Group", plural: "RSVP Groups" },
+  labels: { singular: "Invitation Group", plural: "Invitation Groups" },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "isActive"],
+    defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
     group: "RSVP",
   },
   fields: [

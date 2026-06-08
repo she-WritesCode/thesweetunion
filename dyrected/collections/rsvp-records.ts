@@ -4,10 +4,10 @@ import { adminOnly } from "../access/admin.ts";
 
 export const rsvpRecords: CollectionConfig = {
   slug: "rsvp_records",
-  labels: { singular: "RSVP Record", plural: "RSVP Records" },
+  labels: { singular: "Guest Response", plural: "Guest Responses" },
   admin: {
     useAsTitle: "leadName",
-    defaultColumns: ["leadName", "leadEmail", "group", "attending", "hasSpouse", "submittedAt"],
+    defaultColumns: ["leadName", "leadEmail", "leadPhone", "group", "attending", "spouseName", "selectedEvents", "submittedAt"],
     group: "RSVP",
   },
   fields: [

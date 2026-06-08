@@ -7,7 +7,7 @@ export const events: CollectionConfig = {
   labels: { singular: "Event", plural: "Events" },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "date", "venueName"],
+    defaultColumns: ["name", "date", "venueName", "dressCode", "collectsRsvp"],
     group: "Wedding Details",
   },
   fields: [

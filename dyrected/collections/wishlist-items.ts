@@ -5,7 +5,7 @@ export const wishlistItems: CollectionConfig = {
   labels: { singular: "Wishlist Item", plural: "Wishlist Items" },
   admin: {
     useAsTitle: "name",
-    defaultColumns: ["name", "price", "reservedCount", "maxQuantity", "category"],
+    defaultColumns: ["name", "category", "price", "reservedCount", "maxQuantity", "isCashFund", "isHidden"],
     group: "Wishlist",
   },
   fields: [

@@ -6,7 +6,7 @@ export const reservations: CollectionConfig = {
   labels: { singular: "Reservation", plural: "Reservations" },
   admin: {
     useAsTitle: "guestName",
-    defaultColumns: ["guestName", "item", "reservedAt"],
+    defaultColumns: ["guestName", "guestEmail", "guestPhone", "item", "reservedAt"],
     group: "Wishlist",
   },
   fields: [
