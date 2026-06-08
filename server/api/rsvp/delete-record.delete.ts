@@ -2,6 +2,7 @@ import { defineEventHandler, getQuery, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpCancelledEmail } from "~~/dyrected/emails";
+import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -31,19 +32,8 @@ export default defineEventHandler(async (event) => {
   const groupId = typeof record.group === "object" ? record.group.id : record.group;
 
   try {
-    // Release capacity
-    if (record.attending) {
-      const seats = record.hasSpouse ? 2 : 1;
-      await client.collection("rsvp_groups").update(groupId, {
-        confirmedCount: { $decrement: seats },
-      });
-    } else {
-      await client.collection("rsvp_groups").update(groupId, {
-        declinedCount: { $decrement: 1 },
-      });
-    }
-
     await client.collection("rsvp_records").delete(record.id);
+    await syncGroupCounts(client, groupId);
 
     sendEmail({
       to: record.leadEmail,

@@ -27,17 +27,22 @@ export const rsvpGroups: CollectionConfig = {
       type: "text",
       label: "Group Name",
       required: true,
+      admin: {
+        tab: "General",
+      },
     },
     {
       name: "slug",
       type: "text",
       label: "URL Slug",
-      required: true,
+      // required: true,
       unique: true,
       hooks: {
         beforeChange: [({ value }) => value?.toLowerCase()],
       },
       admin: {
+        tab: "General",
+        hidden: true,
         hooks: {
           onChange: ({ value, siblingData }) => {
             const titleSlug = ((siblingData?.title as string) || "").toLowerCase().replace(/\s/g, "-");
@@ -48,16 +53,41 @@ export const rsvpGroups: CollectionConfig = {
       },
     },
 
-    { name: "maxCapacity", type: "number", label: "Max Capacity", required: true },
-    { name: "confirmedCount", type: "number", label: "Confirmed Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "declinedCount", type: "number", label: "Declined Count", defaultValue: 0, admin: { readOnly: true } },
-    { name: "isActive", type: "boolean", label: "Active", defaultValue: true },
-    { name: "createdAt", type: "date", label: "Created At", admin: { readOnly: true } },
+    {
+      name: "maxCapacity",
+      type: "number",
+      label: "Max Capacity",
+      required: true,
+      admin: { width: "50%", tab: "General" },
+    },
+    { name: "isActive", type: "boolean", label: "Active", defaultValue: true, admin: { width: "50%", tab: "General" } },
+    {
+      name: "confirmedCount",
+      type: "number",
+      label: "Confirmed Count",
+      defaultValue: 0,
+      admin: { readOnly: true, width: "50%", tab: "Reponses" },
+    },
+    {
+      name: "declinedCount",
+      type: "number",
+      label: "Declined Count",
+      defaultValue: 0,
+      admin: { readOnly: true, width: "50%", tab: "Reponses" },
+    },
+    {
+      name: "guests",
+      type: "join",
+      label: "Guest Responses",
+      collection: "rsvp_records",
+      on: "group",
+      admin: { tab: "Reponses" },
+    },
     {
       name: "description",
       type: "textarea",
-      label: "Internal Notes",
-      admin: { description: "Internal notes for the couple" },
+      label: "Description",
+      admin: { description: "Internal notes for the couple", tab: "General" },
     },
   ],
   access: {

@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpUpdatedEmail } from "~~/dyrected/emails";
+import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -30,34 +31,9 @@ export default defineEventHandler(async (event) => {
   const record = search.docs[0];
   const groupId = typeof record.group === "object" ? record.group.id : record.group;
 
-  // Recalculate capacity changes
-  const oldAttending = record.attending;
-  const oldSeats = oldAttending ? (record.hasSpouse ? 2 : 1) : 0;
-  
-  const newAttending = attending !== undefined ? attending : oldAttending;
-  const newSeats = newAttending ? ((hasSpouse !== undefined ? hasSpouse : record.hasSpouse) ? 2 : 1) : 0;
+  const newAttending = attending !== undefined ? attending : record.attending;
 
   try {
-    if (oldAttending && newAttending) {
-      const diff = newSeats - oldSeats;
-      if (diff !== 0) {
-        await client.collection("rsvp_groups").update(groupId, {
-          confirmedCount: { [diff > 0 ? "$increment" : "$decrement"]: Math.abs(diff) }
-        });
-      }
-    } else if (oldAttending && !newAttending) {
-      await client.collection("rsvp_groups").update(groupId, {
-        confirmedCount: { $decrement: oldSeats },
-        declinedCount: { $increment: 1 }
-      });
-    } else if (!oldAttending && newAttending) {
-      await client.collection("rsvp_groups").update(groupId, {
-        confirmedCount: { $increment: newSeats },
-        declinedCount: { $decrement: 1 }
-      });
-    }
-
-    // Perform update bypassing normal access restrictions via admin client
     const updated = await client.collection("rsvp_records").update(record.id, {
       leadName,
       leadEmail,
@@ -69,6 +45,8 @@ export default defineEventHandler(async (event) => {
       message,
       selectedEvents,
     });
+
+    await syncGroupCounts(client, groupId);
 
     // Fetch event names for email
     const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];

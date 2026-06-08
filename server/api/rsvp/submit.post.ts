@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpConfirmationEmail, adminRsvpNotificationEmail } from "~~/dyrected/emails";
+import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -53,11 +54,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Capacity check
+  // Capacity check — live count from records, not the cached field
   if (attending) {
     const seats = hasSpouse ? 2 : 1;
-    const confirmedCount = group.confirmedCount || 0;
-    if (confirmedCount + seats > group.maxCapacity) {
+    const existing = await client.collection("rsvp_records").find({
+      where: { group: { equals: group.id } },
+      limit: 500,
+    });
+    const currentSeats = existing.docs
+      .filter((r: any) => r.attending)
+      .reduce((n: number, r: any) => n + (r.hasSpouse ? 2 : 1), 0);
+    if (currentSeats + seats > group.maxCapacity) {
       throw createError({
         statusCode: 409,
         message: "Sorry, there are no more spots available. Please contact the couple directly.",
@@ -79,17 +86,7 @@ export default defineEventHandler(async (event) => {
       selectedEvents,
     });
 
-    // Update group counts after successful record creation
-    if (attending) {
-      const seats = hasSpouse ? 2 : 1;
-      await client.collection("rsvp_groups").update(group.id, {
-        confirmedCount: { $increment: seats },
-      } as any);
-    } else {
-      await client.collection("rsvp_groups").update(group.id, {
-        declinedCount: { $increment: 1 },
-      } as any);
-    }
+    await syncGroupCounts(client, group.id);
 
     // Fetch event names for emails
     const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
