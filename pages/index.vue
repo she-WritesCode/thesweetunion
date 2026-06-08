@@ -88,11 +88,14 @@ const config = computed(() => {
       imageUrl: db?.wishlistTeaserImage?.url || null,
     },
     rsvpTeaser: {
-      // Only use the DB image — no local fallback
       imageUrl: db?.rsvpTeaserImage?.url || null,
     },
-    // Only use the DB hero image — no local fallback
+    countdownPhotos: Array.isArray(db?.countdownPhotos)
+      ? db.countdownPhotos.map((p: any) => p?.url || null).filter(Boolean)
+      : [],
+    footerImage: db?.footerImage?.url || null,
     heroImage: db?.heroImage?.url || null,
+    heroSubtitle: db?.heroSubtitle || "Celebrate Our Sweet Union",
   };
 });
 
@@ -149,7 +152,7 @@ onUnmounted(() => {
       <!-- Text Overlay -->
       <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream space-y-6!">
         <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-white mb-3 drop-shadow">
-          Celebrate Our Sweet Union
+          {{ config.heroSubtitle }}
         </p>
         <h1 class="heading1 mb-5 drop-shadow-md font-display-cinzel">
           {{ config.couple.person1 }} & {{ config.couple.person2 }}
@@ -185,24 +188,24 @@ onUnmounted(() => {
           <div class="relative h-[320px] sm:h-[400px] w-full flex items-center justify-center select-none">
             <!-- Photo 1 -->
             <div
-              v-if="config.story[0]?.imageUrl"
+              v-if="config.countdownPhotos[0]"
               class="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
-              @click="setLightboxImage(config.story[0].imageUrl)"
+              @click="setLightboxImage(config.countdownPhotos[0])"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.story[0].imageUrl" alt="Our story photo" class="w-full h-full object-cover" />
+                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="w-full h-full object-cover" />
               </div>
             </div>
             <!-- Photo 2 -->
             <div
-              v-if="config.story[1]?.imageUrl"
+              v-if="config.countdownPhotos[1]"
               class="absolute right-[10%] bottom-[5%] w-[180px] sm:w-[220px] aspect-square bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
-              @click="setLightboxImage(config.story[1].imageUrl)"
+              @click="setLightboxImage(config.countdownPhotos[1])"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.story[1].imageUrl" alt="Our story photo" class="w-full h-full object-cover" />
+                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="w-full h-full object-cover" />
               </div>
             </div>
           </div>
@@ -437,7 +440,13 @@ onUnmounted(() => {
     </section>
 
     <!-- Footer Slide -->
-    <Footer :on-image-click="setLightboxImage" :couples-photo="config.rsvpTeaser?.imageUrl" />
+    <Footer
+      :on-image-click="setLightboxImage"
+      :couples-photo="config.footerImage"
+      :hashtag="config.couple.hashtag"
+      :person1="config.couple.person1"
+      :person2="config.couple.person2"
+    />
 
     <!-- Lightbox Modal -->
     <div

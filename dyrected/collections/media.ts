@@ -4,6 +4,10 @@ import { adminOnly } from "../access/admin.ts";
 
 export const media: CollectionConfig = {
   slug: "media",
+  labels: { singular: "Media", plural: "Media" },
+  admin: {
+    group: "Content",
+  },
   upload: {
     allowedMimeTypes: ["image/*"],
     maxFileSize: 30_000_000,

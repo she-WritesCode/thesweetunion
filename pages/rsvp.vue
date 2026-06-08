@@ -51,12 +51,8 @@ const { data: siteSettings } = await useDyrectedGlobal("site_settings");
 const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
 
 // Fetch RSVP events from CMS; filter collectsRsvp in JS (boolean column workaround)
-const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", () =>
-  client.collection("events").find({ limit: 20 }),
-);
-const rsvpEvents = computed<CMSEvent[]>(() =>
-  (cmsEventsRaw.value?.docs ?? []).filter((e: any) => e.collectsRsvp),
-);
+const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", () => client.collection("events").find({ limit: 20 }));
+const rsvpEvents = computed<CMSEvent[]>(() => (cmsEventsRaw.value?.docs ?? []).filter((e: any) => e.collectsRsvp));
 
 // ─── SSR: resolve group / token from URL before first render ─────────────────
 const { data: initData } = await useAsyncData(
@@ -392,14 +388,13 @@ const isFormActive = computed(() => {
 
     <main class="rsvp-main" :class="isFormActive ? 'rsvp-main--form-active' : 'rsvp-main--inactive'">
       <div class="rsvp-content">
-
         <!-- 1. INVALID DIRECT LINK BLOCKER -->
         <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker">
           <div class="rsvp-blocker__icon">✉️</div>
           <h2 class="rsvp-blocker__title">Personal Invitation Required</h2>
           <p class="rsvp-blocker__body">
-            To RSVP for our wedding, please click the personalized RSVP link sent directly to you by the couple.
-            This helps us manage guest capacity and seating charts.
+            To RSVP for our wedding, please click the personalized RSVP link sent directly to you by the couple. This
+            helps us manage guest capacity and seating charts.
           </p>
           <p class="rsvp-blocker__footnote">
             If you have any questions or did not receive your link, please contact Uche or Adun.
@@ -411,13 +406,17 @@ const isFormActive = computed(() => {
           <div class="rsvp-blocker__icon">⚠️</div>
           <h3 class="rsvp-blocker__heading">Allocation Limit Reached</h3>
           <p class="rsvp-blocker__text">
-            We are so sorry, but the allocation spots for this group invitation are completely filled.
-            Please reach out to the couple directly to coordinate manual adjustments.
+            We are so sorry, but the allocation spots for this group invitation are completely filled. Please reach out
+            to the couple directly to coordinate manual adjustments.
           </p>
           <button
             v-if="existingRSVP"
             type="button"
-            @click="groupFullError = null; isEditing = false; populateStates(existingRSVP);"
+            @click="
+              groupFullError = null;
+              isEditing = false;
+              populateStates(existingRSVP);
+            "
             class="btn-primary"
           >
             View My Current Confirmation
@@ -457,7 +456,12 @@ const isFormActive = computed(() => {
                 <h4 class="rsvp-summary__section-heading">Guest</h4>
                 <p class="rsvp-summary__name">{{ existingRSVP.leadName }}</p>
                 <p class="rsvp-summary__meta">{{ existingRSVP.leadEmail }}</p>
-                <p v-if="typeof existingRSVP.leadPhone === 'string' && existingRSVP.leadPhone" class="rsvp-summary__meta">{{ existingRSVP.leadPhone }}</p>
+                <p
+                  v-if="typeof existingRSVP.leadPhone === 'string' && existingRSVP.leadPhone"
+                  class="rsvp-summary__meta"
+                >
+                  {{ existingRSVP.leadPhone }}
+                </p>
               </div>
             </div>
 
@@ -472,7 +476,7 @@ const isFormActive = computed(() => {
                       class="rsvp-event-item"
                     >
                       <span class="rsvp-event-item__check">✓</span>
-                      {{ typeof ev === 'object' ? ev.name : (rsvpEvents.find(e => e.id === ev)?.name ?? ev) }}
+                      {{ typeof ev === "object" ? ev.name : (rsvpEvents.find((e) => e.id === ev)?.name ?? ev) }}
                     </li>
                   </template>
                   <li v-else class="rsvp-spouse-none">No events selected</li>
@@ -501,11 +505,21 @@ const isFormActive = computed(() => {
           </div>
 
           <div v-if="existingRSVP.attending" class="rsvp-summary__invite-note">
-            📬 Your personal invitation card will be sent to <strong>{{ existingRSVP.leadEmail }}</strong> closer to the wedding date.
+            📬 Your personal invitation card will be sent to <strong>{{ existingRSVP.leadEmail }}</strong> closer to the
+            wedding date.
           </div>
 
           <div class="rsvp-summary__actions">
-            <button @click="isEditing = true; currentStep = 2; populateStates(existingRSVP)" class="btn-primary">Edit My RSVP</button>
+            <button
+              @click="
+                isEditing = true;
+                currentStep = 2;
+                populateStates(existingRSVP);
+              "
+              class="btn-primary"
+            >
+              Edit My RSVP
+            </button>
             <button @click="handleCancelRSVP" class="btn-danger">Cancel RSVP</button>
           </div>
         </div>
@@ -531,8 +545,8 @@ const isFormActive = computed(() => {
             <div class="rsvp-notice">
               <span class="rsvp-notice__icon">📌</span>
               <p class="rsvp-notice__text">
-                Please only RSVP <strong>Yes</strong> if you are certain you will be attending.
-                Once submitted, your spot is reserved and cannot be transferred. If your plans change, you can cancel from your confirmation.
+                Please only RSVP <strong>Yes</strong> if you are certain you will be attending. Once submitted, your
+                spot is reserved and cannot be transferred. If your plans change, you can cancel from your confirmation.
               </p>
             </div>
             <div class="rsvp-attendance-grid">
@@ -597,14 +611,14 @@ const isFormActive = computed(() => {
                 />
                 <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
               </div>
-              <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box" :class="eventsError ? 'rsvp-events-box--error' : ''">
+              <div
+                v-if="attending && rsvpEvents.length > 0"
+                class="rsvp-events-box"
+                :class="eventsError ? 'rsvp-events-box--error' : ''"
+              >
                 <h4 class="rsvp-events-box__title">Which events are you joining?</h4>
                 <div class="rsvp-events-options">
-                  <label
-                    v-for="event in rsvpEvents"
-                    :key="event.id"
-                    class="rsvp-checkbox-label"
-                  >
+                  <label v-for="event in rsvpEvents" :key="event.id" class="rsvp-checkbox-label">
                     <input
                       type="checkbox"
                       :value="event.id"
@@ -620,9 +634,7 @@ const isFormActive = computed(() => {
               <div class="rsvp-spouse-section">
                 <div class="rsvp-spouse-row">
                   <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
-                  <label for="hasSpouse" class="rsvp-spouse-label">
-                    I am attending with my spouse / plus-one
-                  </label>
+                  <label for="hasSpouse" class="rsvp-spouse-label"> I am attending with my spouse / plus-one </label>
                 </div>
                 <div v-if="hasSpouse" class="rsvp-spouse-field">
                   <label class="input-label">Spouse / Partner Name (Required)</label>
@@ -635,7 +647,7 @@ const isFormActive = computed(() => {
                   />
                 </div>
               </div>
-              <div class="rsvp-field-group">
+              <!-- <div class="rsvp-field-group">
                 <label class="input-label">Dietary restrictions (Optional)</label>
                 <input
                   type="text"
@@ -643,7 +655,7 @@ const isFormActive = computed(() => {
                   class="rsvp-input"
                   placeholder="Allergies, vegetarian, vegan, etc."
                 />
-              </div>
+              </div> -->
             </div>
           </div>
 
@@ -670,18 +682,16 @@ const isFormActive = computed(() => {
 
           <!-- Form navigation — left: Exit (step 2) or Back (steps 3+) · right: Continue / Submit -->
           <div class="rsvp-form__nav">
-            <button
-              v-if="currentStep > 2"
-              type="button"
-              @click="handleStepBack"
-              class="rsvp-back-btn"
-            >
-              ← Back
-            </button>
+            <button v-if="currentStep > 2" type="button" @click="handleStepBack" class="rsvp-back-btn">← Back</button>
             <button
               v-else
               type="button"
-              @click="isEditing = false; emailError = ''; eventsError = ''; existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');"
+              @click="
+                isEditing = false;
+                emailError = '';
+                eventsError = '';
+                existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');
+              "
               class="rsvp-exit-btn"
             >
               Exit Form
@@ -691,9 +701,23 @@ const isFormActive = computed(() => {
               v-if="currentStep === 3"
               type="button"
               @click="handleStep3Submit"
-              :disabled="!leadName || !leadPhone || !leadEmail || (hasSpouse && !spouseName.trim()) || (attending && selectedEvents.length === 0)"
+              :disabled="
+                !leadName ||
+                !leadPhone ||
+                !leadEmail ||
+                (hasSpouse && !spouseName.trim()) ||
+                (attending && selectedEvents.length === 0)
+              "
               class="rsvp-continue-btn"
-              :class="!leadName || !leadPhone || !leadEmail || (hasSpouse && !spouseName.trim()) || (attending && selectedEvents.length === 0) ? 'rsvp-continue-btn--disabled' : 'rsvp-continue-btn--active'"
+              :class="
+                !leadName ||
+                !leadPhone ||
+                !leadEmail ||
+                (hasSpouse && !spouseName.trim()) ||
+                (attending && selectedEvents.length === 0)
+                  ? 'rsvp-continue-btn--disabled'
+                  : 'rsvp-continue-btn--active'
+              "
             >
               Continue
             </button>
@@ -702,7 +726,6 @@ const isFormActive = computed(() => {
             </button>
           </div>
         </form>
-
       </div>
     </main>
 
