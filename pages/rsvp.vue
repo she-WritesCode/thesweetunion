@@ -240,6 +240,9 @@ const handleStep3Submit = () => {
 
   currentStep.value = 4;
 };
+const handleStep4Submit = () => {
+  currentStep.value = 5;
+};
 
 const handleSubmit = async () => {
   if (attending.value === null) return;
@@ -543,7 +546,7 @@ const isFormActive = computed(() => {
               <p class="rsvp-step__subtitle">We hope you can make the trip to celebrate our marriage vows with us.</p>
             </div>
             <div class="rsvp-notice">
-              <span class="rsvp-notice__icon">📌</span>
+              <span class="rsvp-notice__icon">⚠️</span>
               <p class="rsvp-notice__text">
                 Please only RSVP <strong>Yes</strong> if you are certain you will be attending. Once submitted, your
                 spot is reserved and cannot be transferred. If your plans change, you can cancel from your confirmation.
@@ -626,7 +629,14 @@ const isFormActive = computed(() => {
                       @change="eventsError = ''"
                       class="rsvp-checkbox"
                     />
-                    <span>{{ event.name }}</span>
+                    <span
+                      >{{ event.name }} <br />
+                      {{
+                        new Date(event.date).toLocaleDateString("en-NG", {
+                          dateStyle: "full",
+                        })
+                      }}
+                    </span>
                   </label>
                 </div>
                 <p v-if="eventsError" class="rsvp-field-error mt-2">{{ eventsError }}</p>
@@ -647,15 +657,6 @@ const isFormActive = computed(() => {
                   />
                 </div>
               </div>
-              <!-- <div class="rsvp-field-group">
-                <label class="input-label">Dietary restrictions (Optional)</label>
-                <input
-                  type="text"
-                  v-model="dietaryNotes"
-                  class="rsvp-input"
-                  placeholder="Allergies, vegetarian, vegan, etc."
-                />
-              </div> -->
             </div>
           </div>
 
@@ -676,6 +677,24 @@ const isFormActive = computed(() => {
                   class="rsvp-textarea"
                   placeholder="Share your congrats message..."
                 />
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 5: Confirmation -->
+          <div v-if="currentStep === 5" class="rsvp-step">
+            <div class="rsvp-step__header">
+              <h2 class="rsvp-step__title">Confirmation</h2>
+              <p class="rsvp-step__subtitle">Are you sure you would be attending this wedding?</p>
+            </div>
+            <div class="rsvp-step__content">
+              <div class="rsvp-notice">
+                <span class="rsvp-notice__icon">⚠️</span>
+                <p class="rsvp-notice__text">
+                  Kindly check your calendars and be sure you would be attending this wedding. This is important as it
+                  will help us better prepare and allocate resources. Thank you for your cooperation and we look forward
+                  to celebrating with you!
+                </p>
               </div>
             </div>
           </div>
@@ -721,8 +740,24 @@ const isFormActive = computed(() => {
             >
               Continue
             </button>
-            <button v-else-if="currentStep === 4" type="submit" class="rsvp-submit-btn">
-              {{ isEditing ? "Save RSVP Changes" : "Submit My RSVP" }}
+            <button
+              v-if="currentStep === 5"
+              type="button"
+              @click="
+                () => {
+                  handleAttendanceSelect(false);
+                  handleSubmit();
+                }
+              "
+              class="rsvp-continue-btn"
+            >
+              No, I can't make it
+            </button>
+            <button v-if="currentStep === 4" type="button" @click="handleStep4Submit" class="rsvp-continue-btn">
+              Continue
+            </button>
+            <button v-else-if="currentStep === 5" type="submit" class="rsvp-submit-btn">
+              {{ isEditing ? "Save RSVP Changes" : "Yes I'll be attending" }}
             </button>
           </div>
         </form>
