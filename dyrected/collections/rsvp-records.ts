@@ -7,10 +7,29 @@ export const rsvpRecords: CollectionConfig = {
   labels: { singular: "Guest Response", plural: "Guest Responses" },
   admin: {
     useAsTitle: "leadName",
-    defaultColumns: ["leadName", "leadEmail", "leadPhone", "group", "attending", "spouseName", "selectedEvents", "submittedAt"],
+    defaultColumns: [
+      "leadName",
+      "leadEmail",
+      "leadPhone",
+      "group",
+      "attending",
+      "spouseName",
+      "selectedEvents",
+      "submittedAt",
+    ],
     group: "RSVP",
   },
   fields: [
+    {
+      name: "rsvpEditLink",
+      type: "text",
+      label: "RSVP Edit Link",
+      admin: {
+        readOnly: true,
+        description: "Share this link with your guest so they can edit their RSVP.",
+        component: "rsvp_groups.rsvpEditLink",
+      },
+    },
     { name: "group", type: "relationship", label: "RSVP Group", relationTo: "rsvp_groups", required: true },
     { name: "leadName", type: "text", label: "Full Name", required: true },
     { name: "leadEmail", type: "email", label: "Email", required: true, unique: true },

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import RsvpLinkField from '~/components/admin/RsvpLinkField.vue'
+import RsvpLinkField from "~/components/admin/RsvpLinkField.vue";
+import RsvpEditLinkField from "~/components/admin/RsvpEditLinkField.vue";
 
 definePageMeta({
-  layout: false
-})
+  layout: false,
+});
 useHead({
   bodyAttrs: {
-    class: 'cms-admin-page'
-  }
-})
+    class: "cms-admin-page",
+  },
+});
 
 /**
  * Custom field components injected into the Dyrected Admin UI.
@@ -22,9 +23,10 @@ useHead({
 const adminComponents = {
   fields: {
     // rsvp_groups collection → rsvpLink field
-    'rsvp_groups.rsvpLink': RsvpLinkField,
-  }
-}
+    "rsvp_groups.rsvpLink": RsvpLinkField,
+    "rsvp_groups.rsvpEditLink": RsvpEditLinkField,
+  },
+};
 </script>
 
 <template>
