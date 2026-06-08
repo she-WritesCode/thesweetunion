@@ -113,10 +113,6 @@ async function copyLink() {
           <span>{{ copied ? "Copied!" : "Copy link" }}</span>
         </button>
       </div>
-
-      <p class="rsvp-link-field__hint">
-        {{ field?.admin?.description ?? "Share this link with the guest group so they can RSVP." }}
-      </p>
     </template>
   </div>
 </template>
