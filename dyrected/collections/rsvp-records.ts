@@ -27,6 +27,13 @@ export const rsvpRecords: CollectionConfig = {
     },
     { name: "attending", type: "boolean", label: "Attending", required: true },
     {
+      name: "selectedEvents",
+      type: "relationship",
+      label: "Events Attending",
+      relationTo: "events",
+      hasMany: true,
+    },
+    {
       name: "dietaryNotes",
       type: "textarea",
       label: "Dietary Notes",
@@ -42,9 +49,9 @@ export const rsvpRecords: CollectionConfig = {
     { name: "editToken", type: "text", label: "Edit Token", admin: { readOnly: true, hidden: true } },
   ],
   access: {
-    read: "user != null",
+    read: "true",
     create: "true",
-    update: "false",
+    update: "true",
     delete: "user != null",
   },
   hooks: {

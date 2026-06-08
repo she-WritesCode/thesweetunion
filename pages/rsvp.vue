@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter, useAsyncData } from "#app";
-import { useDyrectedClient } from "#imports";
+import { useDyrectedClient, useDyrectedGlobal } from "#imports";
+import PhoneInput from "~/components/PhoneInput.vue";
+
+interface CMSEvent {
+  id: string;
+  name: string;
+  date: string;
+  collectsRsvp: boolean;
+}
 
 interface RSVPData {
   id?: string;
@@ -10,10 +18,7 @@ interface RSVPData {
   leadEmail: string;
   leadPhone: string;
   attending: boolean;
-  events: {
-    ceremony: boolean;
-    reception: boolean;
-  };
+  selectedEvents: string[];
   hasSpouse: boolean;
   spouseName: string;
   dietaryNotes: string;
@@ -42,6 +47,16 @@ const route = useRoute();
 const router = useRouter();
 
 const client = useDyrectedClient();
+const { data: siteSettings } = await useDyrectedGlobal("site_settings");
+const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
+
+// Fetch RSVP events from CMS; filter collectsRsvp in JS (boolean column workaround)
+const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", () =>
+  client.collection("events").find({ limit: 20 }),
+);
+const rsvpEvents = computed<CMSEvent[]>(() =>
+  (cmsEventsRaw.value?.docs ?? []).filter((e: any) => e.collectsRsvp),
+);
 
 // ─── SSR: resolve group / token from URL before first render ─────────────────
 const { data: initData } = await useAsyncData(
@@ -102,9 +117,12 @@ const groupCounts = ref<Record<string, number>>({});
 const group = ref<string>(initData.value?.type === "group" ? initData.value.groupInfo.name : "");
 const leadName = ref("");
 const leadEmail = ref("");
+const emailError = ref("");
+const eventsError = ref("");
+const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 const leadPhone = ref("");
 const attending = ref<boolean | null>(null);
-const events = ref({ ceremony: true, reception: true });
+const selectedEvents = ref<string[]>([]);
 const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
@@ -117,9 +135,11 @@ const populateStates = (data: RSVPData) => {
   group.value = typeof data.group === "object" ? data.group?.name : data.group;
   leadName.value = data.leadName;
   leadEmail.value = data.leadEmail;
-  leadPhone.value = data.leadPhone || "";
+  leadPhone.value = typeof data.leadPhone === "string" ? data.leadPhone : "";
   attending.value = data.attending;
-  events.value = data.events || { ceremony: true, reception: true };
+  selectedEvents.value = Array.isArray(data.selectedEvents)
+    ? data.selectedEvents.map((e: any) => (typeof e === "object" ? e.id : e))
+    : [];
   hasSpouse.value = data.hasSpouse || false;
   spouseName.value = data.spouseName || "";
   dietaryNotes.value = data.dietaryNotes || "";
@@ -179,9 +199,18 @@ const handleStepBack = () => {
 };
 
 const handleStep3Submit = () => {
-  if (!leadName.value || !leadEmail.value) return;
+  emailError.value = "";
+  eventsError.value = "";
+  if (!leadName.value || !leadPhone.value || !leadEmail.value) return;
+  if (!isValidEmail(leadEmail.value)) {
+    emailError.value = "Please enter a valid email address.";
+    return;
+  }
   if (hasSpouse.value && !spouseName.value.trim()) return;
-  if (!events.value.ceremony && !events.value.reception) return;
+  if (attending.value && selectedEvents.value.length === 0) {
+    eventsError.value = "Please select at least one event you will be attending.";
+    return;
+  }
 
   if (groupInfo.value) {
     const currentCount = groupInfo.value.confirmedCount || 0;
@@ -223,7 +252,7 @@ const handleSubmit = async () => {
     leadEmail: leadEmail.value,
     leadPhone: leadPhone.value,
     attending: attending.value,
-    events: attending.value ? events.value : { ceremony: false, reception: false },
+    selectedEvents: attending.value ? selectedEvents.value : [],
     hasSpouse: attending.value ? hasSpouse.value : false,
     spouseName: attending.value && hasSpouse.value ? spouseName.value : "",
     dietaryNotes: attending.value ? dietaryNotes.value : "",
@@ -335,7 +364,7 @@ const handleCancelRSVP = async () => {
     leadEmail.value = "";
     leadPhone.value = "";
     attending.value = null;
-    events.value = { ceremony: true, reception: true };
+    selectedEvents.value = [];
     hasSpouse.value = false;
     spouseName.value = "";
     dietaryNotes.value = "";
@@ -357,440 +386,328 @@ const isFormActive = computed(() => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen bg-warm-cream text-deep-espresso select-text flex flex-col"
-    :class="isFormActive ? 'justify-center' : 'justify-between'"
-  >
-    <!-- Navigation -->
+  <div class="rsvp-page" :class="isFormActive ? 'rsvp-page--form-active' : 'rsvp-page--inactive'">
     <Navigation v-if="!isFormActive" />
 
-    <!-- Main Content -->
-    <main class="flex-1 flex items-center justify-center p-6" :class="isFormActive ? 'pt-6 pb-6' : 'pt-32 pb-16'">
-      <div class="w-full max-w-2xl">
-        <template>
-          <!-- 1. INVALID DIRECT LINK BLOCKER -->
-          <div
-            v-if="invalidLinkError && !existingRSVP"
-            class="linen-card p-8 rounded-2xl border border-amber-gold/20 shadow-lg text-center space-y-5 animate-fade-in"
+    <main class="rsvp-main" :class="isFormActive ? 'rsvp-main--form-active' : 'rsvp-main--inactive'">
+      <div class="rsvp-content">
+
+        <!-- 1. INVALID DIRECT LINK BLOCKER -->
+        <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker">
+          <div class="rsvp-blocker__icon">✉️</div>
+          <h2 class="rsvp-blocker__title">Personal Invitation Required</h2>
+          <p class="rsvp-blocker__body">
+            To RSVP for our wedding, please click the personalized RSVP link sent directly to you by the couple.
+            This helps us manage guest capacity and seating charts.
+          </p>
+          <p class="rsvp-blocker__footnote">
+            If you have any questions or did not receive your link, please contact Uche or Adun.
+          </p>
+        </div>
+
+        <!-- 2. CAPACITY ALLOCATION BLOCKER -->
+        <div v-if="groupFullError" class="rsvp-blocker rsvp-blocker--error">
+          <div class="rsvp-blocker__icon">⚠️</div>
+          <h3 class="rsvp-blocker__heading">Allocation Limit Reached</h3>
+          <p class="rsvp-blocker__text">
+            We are so sorry, but the allocation spots for this group invitation are completely filled.
+            Please reach out to the couple directly to coordinate manual adjustments.
+          </p>
+          <button
+            v-if="existingRSVP"
+            type="button"
+            @click="groupFullError = null; isEditing = false; populateStates(existingRSVP);"
+            class="btn-primary"
           >
-            <div class="text-4xl">✉️</div>
-            <h2 class="text-2xl sm:text-3xl font-bold font-display-cinzel text-deep-espresso">
-              Personal Invitation Required
-            </h2>
-            <p class="font-body text-deep-espresso/80 text-sm leading-relaxed max-w-md mx-auto">
-              To RSVP for our wedding, please click the personalized RSVP link sent directly to you by the couple. This
-              helps us manage guest capacity and seating charts.
-            </p>
-            <p class="text-xs text-deep-espresso/50 font-body">
-              If you have any questions or did not receive your link, please contact Uche or Adun.
-            </p>
+            View My Current Confirmation
+          </button>
+        </div>
+
+        <!-- 3. CONFIRMED RSVP SUMMARY -->
+        <div v-if="existingRSVP && !isEditing && !groupFullError" class="rsvp-summary">
+          <div class="rsvp-summary__header">
+            <div>
+              <span class="rsvp-summary__status-label">RSVP Status</span>
+              <div class="rsvp-summary__status-row">
+                <span
+                  class="rsvp-summary__dot"
+                  :class="existingRSVP.attending ? 'rsvp-summary__dot--attending' : 'rsvp-summary__dot--declined'"
+                />
+                <h3 class="rsvp-summary__title">
+                  {{ existingRSVP.attending ? "You're Attending! 🎉" : "Declined Attendance" }}
+                </h3>
+              </div>
+            </div>
+            <div class="rsvp-summary__date">
+              Submitted:
+              {{
+                new Date(existingRSVP.submittedAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              }}
+            </div>
           </div>
 
-          <!-- 2. CAPACITY ALLOCATION BLOCKER -->
-          <div
-            v-if="groupFullError"
-            class="linen-card p-8 rounded-2xl border border-red-500/20 shadow-lg text-center space-y-5 animate-fade-in"
-          >
-            <div class="text-4xl">⚠️</div>
-            <h3 class="font-heading text-2xl font-bold text-deep-espresso">Allocation Limit Reached</h3>
-            <p class="font-body text-deep-espresso/80 text-sm sm:text-base leading-relaxed">
-              We are so sorry, but the allocation spots for this group invitation are completely filled. Please reach
-              out to the couple directly to coordinate manual adjustments.
-            </p>
-            <button
-              v-if="existingRSVP"
-              type="button"
-              @click="
-                groupFullError = null;
-                isEditing = false;
-                populateStates(existingRSVP);
-              "
-              class="btn-primary"
-            >
-              View My Current Confirmation
-            </button>
-          </div>
-
-          <!-- 3. CONFIRMED RSVP SUMMARY (No active form) -->
-          <div
-            v-if="existingRSVP && !isEditing && !groupFullError"
-            class="linen-card p-6 sm:p-10 rounded-2xl border border-amber-gold/15 shadow-md space-y-8 animate-fade-in"
-          >
-            <div
-              class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-gold/10 pb-6"
-            >
+          <div class="rsvp-summary__grid">
+            <div class="rsvp-summary__column">
               <div>
-                <span class="text-[10px] uppercase tracking-wider font-bold text-amber-gold block mb-1">
-                  RSVP Status
-                </span>
-                <div class="flex items-center gap-2.5">
-                  <span
-                    class="w-3.5 h-3.5 rounded-full"
-                    :class="existingRSVP.attending ? 'bg-emerald-500' : 'bg-red-400 animate-pulse'"
-                  />
-                  <h3 class="font-heading text-2xl font-bold text-deep-espresso">
-                    {{ existingRSVP.attending ? "You're Attending! 🎉" : "Declined Attendance" }}
-                  </h3>
-                </div>
-              </div>
-              <div class="text-left sm:text-right text-xs text-deep-espresso/60 font-body">
-                Submitted:
-                {{
-                  new Date(existingRSVP.submittedAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                }}
+                <h4 class="rsvp-summary__section-heading">Guest</h4>
+                <p class="rsvp-summary__name">{{ existingRSVP.leadName }}</p>
+                <p class="rsvp-summary__meta">{{ existingRSVP.leadEmail }}</p>
+                <p v-if="typeof existingRSVP.leadPhone === 'string' && existingRSVP.leadPhone" class="rsvp-summary__meta">{{ existingRSVP.leadPhone }}</p>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm font-body">
-              <div class="space-y-4">
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">Guest</h4>
-                  <p class="font-semibold text-base">{{ existingRSVP.leadName }}</p>
-                  <p class="text-deep-espresso/70">{{ existingRSVP.leadEmail }}</p>
-                  <p v-if="existingRSVP.leadPhone" class="text-deep-espresso/70">{{ existingRSVP.leadPhone }}</p>
-                </div>
-              </div>
-
-              <div v-if="existingRSVP.attending" class="space-y-4">
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">Events Selected</h4>
-                  <ul class="space-y-1 bg-warm-cream/50 p-3 rounded-xl border border-amber-gold/5">
-                    <li v-if="existingRSVP.events?.ceremony" class="flex items-center gap-2 text-deep-espresso">
-                      <span class="text-emerald-600">✓</span> Holy Matrimony Ceremony
+            <div v-if="existingRSVP.attending" class="rsvp-summary__column">
+              <div>
+                <h4 class="rsvp-summary__section-heading">Events Selected</h4>
+                <ul class="rsvp-events-list">
+                  <template v-if="existingRSVP.selectedEvents?.length">
+                    <li
+                      v-for="ev in existingRSVP.selectedEvents"
+                      :key="typeof ev === 'object' ? ev.id : ev"
+                      class="rsvp-event-item"
+                    >
+                      <span class="rsvp-event-item__check">✓</span>
+                      {{ typeof ev === 'object' ? ev.name : (rsvpEvents.find(e => e.id === ev)?.name ?? ev) }}
                     </li>
-                    <li v-if="existingRSVP.events?.reception" class="flex items-center gap-2 text-deep-espresso">
-                      <span class="text-emerald-600">✓</span> Grand Reception Banquet
-                    </li>
-                  </ul>
-                </div>
+                  </template>
+                  <li v-else class="rsvp-spouse-none">No events selected</li>
+                </ul>
+              </div>
 
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">Plus-One Details</h4>
-                  <p v-if="existingRSVP.hasSpouse && existingRSVP.spouseName" class="text-deep-espresso/80">
-                    Attending with spouse: <strong>{{ existingRSVP.spouseName }}</strong>
-                  </p>
-                  <p v-else class="text-deep-espresso/50 italic">Attending solo</p>
-                </div>
+              <div>
+                <h4 class="rsvp-summary__section-heading">Plus-One Details</h4>
+                <p v-if="existingRSVP.hasSpouse && existingRSVP.spouseName" class="rsvp-spouse-note">
+                  Attending with spouse: <strong>{{ existingRSVP.spouseName }}</strong>
+                </p>
+                <p v-else class="rsvp-spouse-none">Attending solo</p>
               </div>
             </div>
+          </div>
 
-            <div
-              v-if="existingRSVP.dietaryNotes || existingRSVP.message"
-              class="border-t border-amber-gold/10 pt-6 space-y-4 text-sm font-body"
-            >
-              <div v-if="existingRSVP.dietaryNotes">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">Dietary Restrictions</h4>
-                <p class="text-deep-espresso/80 italic bg-amber-500/5 p-3 rounded-xl border border-amber-gold/10">
-                  {{ existingRSVP.dietaryNotes }}
-                </p>
-              </div>
-
-              <div v-if="existingRSVP.message">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">Message to the Couple</h4>
-                <p
-                  class="text-deep-espresso/80 whitespace-pre-line bg-soft-pearl/50 p-4 rounded-xl border border-amber-gold/10"
-                >
-                  &ldquo;{{ existingRSVP.message }}&rdquo;
-                </p>
-              </div>
+          <div v-if="existingRSVP.dietaryNotes || existingRSVP.message" class="rsvp-summary__notes">
+            <div v-if="existingRSVP.dietaryNotes">
+              <h4 class="rsvp-summary__section-heading">Dietary Restrictions</h4>
+              <p class="rsvp-notes__text">{{ existingRSVP.dietaryNotes }}</p>
             </div>
+            <div v-if="existingRSVP.message">
+              <h4 class="rsvp-summary__section-heading">Message to the Couple</h4>
+              <p class="rsvp-message__text">&ldquo;{{ existingRSVP.message }}&rdquo;</p>
+            </div>
+          </div>
 
-            <div class="border-t border-amber-gold/10 pt-6 flex flex-wrap gap-4 items-center justify-between">
-              <button @click="isEditing = true" class="btn-primary">Edit My RSVP</button>
+          <div class="rsvp-summary__actions">
+            <button @click="isEditing = true" class="btn-primary">Edit My RSVP</button>
+            <button @click="handleCancelRSVP" class="btn-danger">Cancel RSVP</button>
+          </div>
+        </div>
+
+        <!-- 4. ACTIVE FORM -->
+        <form v-if="isFormActive" @submit.prevent="handleSubmit" class="rsvp-form">
+          <div class="rsvp-progress">
+            <div class="rsvp-progress__fill" :style="{ width: `${getStepProgress}%` }" />
+          </div>
+
+          <div class="rsvp-form__branding">
+            <span>#TheSweetUnion</span>
+            <span v-if="isEditing">Editing Mode</span>
+            <span v-else>RSVP Form</span>
+          </div>
+
+          <!-- STEP 2: ATTENDANCE -->
+          <div v-if="currentStep === 2" class="rsvp-step">
+            <div class="rsvp-step__header">
+              <h2 class="rsvp-step__title">Will you be joining us?</h2>
+              <p class="rsvp-step__subtitle">We hope you can make the trip to celebrate our marriage vows with us.</p>
+            </div>
+            <div class="rsvp-notice">
+              <span class="rsvp-notice__icon">📌</span>
+              <p class="rsvp-notice__text">
+                Please only RSVP <strong>Yes</strong> if you are certain you will be attending.
+                Once submitted, your spot is reserved and cannot be transferred. If your plans change, you can cancel from your confirmation.
+              </p>
+            </div>
+            <div class="rsvp-attendance-grid">
               <button
-                @click="handleCancelRSVP"
-                class="px-6 py-2.5 rounded-xl border border-red-500/30 text-red-700 font-bold text-xs uppercase tracking-wider hover:bg-red-50 transition-all duration-300 focus:outline-none cursor-pointer"
+                type="button"
+                @click="handleAttendanceSelect(true)"
+                class="rsvp-attendance-btn"
+                :class="attending === true ? 'rsvp-attendance-btn--active-yes' : 'rsvp-attendance-btn--idle'"
               >
-                Cancel RSVP
+                <span class="rsvp-attendance-btn__emoji">🎉</span>
+                <span class="rsvp-attendance-btn__label">Yes, I will be there</span>
+                <span class="rsvp-attendance-btn__hint">We will set a plate for you!</span>
+              </button>
+              <button
+                type="button"
+                @click="handleAttendanceSelect(false)"
+                class="rsvp-attendance-btn"
+                :class="attending === false ? 'rsvp-attendance-btn--active-no' : 'rsvp-attendance-btn--idle'"
+              >
+                <span class="rsvp-attendance-btn__emoji">✉️</span>
+                <span class="rsvp-attendance-btn__label">Sadly, I cannot make it</span>
+                <span class="rsvp-attendance-btn__hint">We will miss you.</span>
               </button>
             </div>
           </div>
 
-          <!-- 4. ACTIVE FORM -->
-          <form
-            v-if="isFormActive"
-            @submit.prevent="handleSubmit"
-            class="linen-card w-full p-8 sm:p-12 rounded-3xl border border-amber-gold/15 shadow-2xl relative overflow-hidden select-text animate-fade-in"
-          >
-            <!-- Progress Line -->
-            <div class="absolute top-0 left-0 right-0 h-1 bg-amber-gold/10">
-              <div
-                class="h-full bg-deep-terracotta transition-all duration-500"
-                :style="{ width: `${getStepProgress}%` }"
-              />
+          <!-- STEP 3: DETAILS -->
+          <div v-if="currentStep === 3" class="rsvp-step">
+            <div class="rsvp-step__header">
+              <h2 class="rsvp-step__title">Tell us about yourself</h2>
+              <p class="rsvp-step__subtitle">Please enter your contact information. This is an adult-only wedding.</p>
             </div>
-
-            <!-- Branding Context -->
-            <div
-              class="flex justify-between items-center mb-10 text-xs font-bold uppercase tracking-widest text-deep-espresso/45"
-            >
-              <span>#TheSweetUnion</span>
-              <span v-if="isEditing">Editing Mode</span>
-              <span v-else>RSVP Form</span>
-            </div>
-
-            <!-- STEP 2: ATTENDANCE STATUS -->
-            <div v-if="currentStep === 2" class="space-y-8 animate-fade-in">
-              <div class="space-y-2">
-                <h2 class="text-3xl sm:text-4xl font-bold font-heading text-deep-espresso leading-tight">
-                  Will you be joining us?
-                </h2>
-                <p class="font-body text-sm text-deep-espresso/60">
-                  We hope you can make the trip to celebrate our marriage vows with us.
-                </p>
+            <div class="rsvp-fields">
+              <div class="rsvp-field-group">
+                <label class="input-label">Full Name (Required)</label>
+                <input
+                  type="text"
+                  required
+                  v-model="leadName"
+                  class="rsvp-input"
+                  placeholder="Enter your first and last name"
+                />
               </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                <button
-                  type="button"
-                  @click="handleAttendanceSelect(true)"
-                  class="p-6 sm:p-8 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
-                  :class="
-                    attending === true
-                      ? 'bg-deep-terracotta/5 border-deep-terracotta shadow-md scale-[1.01]'
-                      : 'bg-soft-pearl/30 border-amber-gold/15 opacity-80 hover:opacity-100'
-                  "
-                >
-                  <span class="text-4xl">🎉</span>
-                  <span class="font-heading text-xl font-bold text-deep-espresso">Yes, I will be there</span>
-                  <span class="text-xs font-body text-deep-espresso/50 text-center">We will set a plate for you!</span>
-                </button>
-
-                <button
-                  type="button"
-                  @click="handleAttendanceSelect(false)"
-                  class="p-6 sm:p-8 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
-                  :class="
-                    attending === false
-                      ? 'bg-muted-mauve/5 border-muted-mauve shadow-md scale-[1.01]'
-                      : 'bg-soft-pearl/30 border-amber-gold/15 opacity-80 hover:opacity-100'
-                  "
-                >
-                  <span class="text-4xl">✉️</span>
-                  <span class="font-heading text-xl font-bold text-deep-espresso">Sadly, I cannot make it</span>
-                  <span class="text-xs font-body text-deep-espresso/50 text-center">We will miss you.</span>
-                </button>
+              <div class="rsvp-field-group">
+                <PhoneInput
+                  v-model="leadPhone"
+                  required
+                  placeholder="Enter your phone number"
+                  label="Phone Number (Required)"
+                />
               </div>
-            </div>
-
-            <!-- STEP 3: DETAILS -->
-            <div v-if="currentStep === 3" class="space-y-8 animate-fade-in">
-              <div class="space-y-2">
-                <h2 class="text-3xl sm:text-4xl font-bold font-heading text-deep-espresso leading-tight">
-                  Tell us about yourself
-                </h2>
-                <p class="font-body text-sm text-deep-espresso/60">
-                  Please enter your contact information. This is an adult-only wedding.
-                </p>
+              <div class="rsvp-field-group">
+                <label class="input-label">Email Address (Required)</label>
+                <input
+                  type="text"
+                  required
+                  v-model="leadEmail"
+                  @input="emailError = ''"
+                  class="rsvp-input"
+                  :class="emailError ? 'rsvp-input--error' : ''"
+                  placeholder="name@example.com"
+                />
+                <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
               </div>
-
-              <div class="space-y-5 pt-2">
-                <div class="space-y-1">
-                  <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60"
-                    >Full Name (Required)</label
+              <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box" :class="eventsError ? 'rsvp-events-box--error' : ''">
+                <h4 class="rsvp-events-box__title">Which events are you joining?</h4>
+                <div class="rsvp-events-options">
+                  <label
+                    v-for="event in rsvpEvents"
+                    :key="event.id"
+                    class="rsvp-checkbox-label"
                   >
+                    <input
+                      type="checkbox"
+                      :value="event.id"
+                      v-model="selectedEvents"
+                      @change="eventsError = ''"
+                      class="rsvp-checkbox"
+                    />
+                    <span>{{ event.name }}</span>
+                  </label>
+                </div>
+                <p v-if="eventsError" class="rsvp-field-error mt-2">{{ eventsError }}</p>
+              </div>
+              <div class="rsvp-spouse-section">
+                <div class="rsvp-spouse-row">
+                  <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
+                  <label for="hasSpouse" class="rsvp-spouse-label">
+                    I am attending with my spouse / plus-one
+                  </label>
+                </div>
+                <div v-if="hasSpouse" class="rsvp-spouse-field">
+                  <label class="input-label">Spouse / Partner Name (Required)</label>
                   <input
                     type="text"
                     required
-                    v-model="leadName"
-                    class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
-                    placeholder="Enter your first and last name"
-                  />
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="space-y-1">
-                    <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60"
-                      >Email Address (Required)</label
-                    >
-                    <input
-                      type="email"
-                      required
-                      v-model="leadEmail"
-                      class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
-                      placeholder="name@example.com"
-                    />
-                  </div>
-                  <div class="space-y-1">
-                    <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">Phone Number</label>
-                    <input
-                      type="tel"
-                      v-model="leadPhone"
-                      class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
-                      placeholder="e.g. +234..."
-                    />
-                  </div>
-                </div>
-
-                <div class="space-y-3 bg-soft-pearl/60 p-4 rounded-xl border border-amber-gold/15">
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-amber-gold mb-1">
-                    Which events are you joining?
-                  </h4>
-                  <div class="flex flex-col sm:flex-row gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold select-none">
-                      <input
-                        type="checkbox"
-                        v-model="events.ceremony"
-                        class="w-4.5 h-4.5 accent-deep-terracotta rounded"
-                      />
-                      <span>Ceremony (1:00 PM)</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold select-none">
-                      <input
-                        type="checkbox"
-                        v-model="events.reception"
-                        class="w-4.5 h-4.5 accent-deep-terracotta rounded"
-                      />
-                      <span>Reception (3:30 PM)</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="space-y-4 pt-2">
-                  <div class="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="hasSpouse"
-                      v-model="hasSpouse"
-                      class="w-4.5 h-4.5 accent-deep-terracotta rounded cursor-pointer"
-                    />
-                    <label htmlFor="hasSpouse" class="text-sm font-semibold cursor-pointer select-none">
-                      I am attending with my spouse / plus-one
-                    </label>
-                  </div>
-
-                  <div v-if="hasSpouse" class="space-y-1 pl-7 animate-fade-in">
-                    <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60 block"
-                      >Spouse / Partner Name (Required)</label
-                    >
-                    <input
-                      type="text"
-                      required
-                      v-model="spouseName"
-                      class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
-                      placeholder="Enter partner's name"
-                    />
-                  </div>
-                </div>
-
-                <div class="space-y-1">
-                  <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60"
-                    >Dietary restrictions (Optional)</label
-                  >
-                  <input
-                    type="text"
-                    v-model="dietaryNotes"
-                    class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta"
-                    placeholder="Allergies, vegetarian, vegan, etc."
+                    v-model="spouseName"
+                    class="rsvp-input"
+                    placeholder="Enter partner's name"
                   />
                 </div>
               </div>
-
-              <div class="pt-4 flex items-center justify-end">
-                <button
-                  type="button"
-                  @click="handleStep3Submit"
-                  :disabled="
-                    !leadName ||
-                    !leadEmail ||
-                    (hasSpouse && !spouseName.trim()) ||
-                    (!events.ceremony && !events.reception)
-                  "
-                  class="px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow cursor-pointer"
-                  :class="
-                    !leadName ||
-                    !leadEmail ||
-                    (hasSpouse && !spouseName.trim()) ||
-                    (!events.ceremony && !events.reception)
-                      ? 'bg-deep-espresso/10 text-deep-espresso/45 cursor-not-allowed shadow-none'
-                      : 'btn-primary'
-                  "
-                >
-                  Continue
-                </button>
+              <div class="rsvp-field-group">
+                <label class="input-label">Dietary restrictions (Optional)</label>
+                <input
+                  type="text"
+                  v-model="dietaryNotes"
+                  class="rsvp-input"
+                  placeholder="Allergies, vegetarian, vegan, etc."
+                />
               </div>
             </div>
+          </div>
 
-            <!-- STEP 4: MESSAGE & SUBMIT -->
-            <div v-if="currentStep === 4" class="space-y-8 animate-fade-in">
-              <div class="space-y-2">
-                <h2 class="heading2-small font-bold font-heading text-deep-espresso leading-tight">
-                  Greetings for the couple
-                </h2>
-                <p class="font-body text-sm text-deep-espresso/60">
-                  Leave a congratulatory message or prayer for Uche & Adun (Optional).
-                </p>
-              </div>
-
-              <div class="space-y-4 pt-2">
-                <div class="space-y-1">
-                  <label class="text-xs font-bold uppercase tracking-wider text-deep-espresso/60">Message</label>
-                  <textarea
-                    v-model="message"
-                    rows="6"
-                    class="w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta resize-none"
-                    placeholder="Share your congrats message..."
-                  />
-                </div>
-              </div>
-
-              <div class="pt-4 flex items-center justify-end">
-                <button type="submit" class="btn-primary px-8 py-3.5">
-                  {{ isEditing ? "Save RSVP Changes" : "Submit My RSVP" }}
-                </button>
+          <!-- STEP 4: MESSAGE & SUBMIT -->
+          <div v-if="currentStep === 4" class="rsvp-step">
+            <div class="rsvp-step__header">
+              <h2 class="rsvp-step__title">Greetings for the couple</h2>
+              <p class="rsvp-step__subtitle">
+                Leave a congratulatory message or prayer for Uche &amp; Adun (Optional).
+              </p>
+            </div>
+            <div class="rsvp-step__content">
+              <div class="rsvp-field-group">
+                <label class="input-label">Message</label>
+                <textarea
+                  v-model="message"
+                  rows="6"
+                  class="rsvp-textarea"
+                  placeholder="Share your congrats message..."
+                />
               </div>
             </div>
+          </div>
 
-            <!-- Back Navigation inside Form -->
-            <div
-              class="border-t border-amber-gold/10 mt-8 pt-4 flex justify-between items-center text-xs font-bold uppercase tracking-wider"
+          <!-- Form navigation — left: Exit (step 2) or Back (steps 3+) · right: Continue / Submit -->
+          <div class="rsvp-form__nav">
+            <button
+              v-if="currentStep > 2"
+              type="button"
+              @click="handleStepBack"
+              class="rsvp-back-btn"
             >
-              <button
-                v-if="currentStep > 2"
-                type="button"
-                @click="handleStepBack"
-                class="text-deep-espresso/60 hover:text-deep-espresso transition-colors cursor-pointer"
-              >
-                ← Back
-              </button>
-              <div v-else />
+              ← Back
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="isEditing = false; existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');"
+              class="rsvp-exit-btn"
+            >
+              Exit Form
+            </button>
 
-              <button
-                type="button"
-                @click="
-                  isEditing = false;
-                  existingRSVP ? populateStates(existingRSVP) : router.push('/rsvp');
-                "
-                class="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-              >
-                Exit Form
-              </button>
-            </div>
-          </form>
-        </template>
+            <button
+              v-if="currentStep === 3"
+              type="button"
+              @click="handleStep3Submit"
+              :disabled="!leadName || !leadPhone || !leadEmail || (hasSpouse && !spouseName.trim()) || (attending && selectedEvents.length === 0)"
+              class="rsvp-continue-btn"
+              :class="!leadName || !leadPhone || !leadEmail || (hasSpouse && !spouseName.trim()) || (attending && selectedEvents.length === 0) ? 'rsvp-continue-btn--disabled' : 'rsvp-continue-btn--active'"
+            >
+              Continue
+            </button>
+            <button v-else-if="currentStep === 4" type="submit" class="rsvp-submit-btn">
+              {{ isEditing ? "Save RSVP Changes" : "Submit My RSVP" }}
+            </button>
+          </div>
+        </form>
+
       </div>
     </main>
 
-    <!-- Footer -->
-    <Footer v-if="!isFormActive" />
+    <Footer v-if="!isFormActive" :couples-photo="couplesPhoto" />
 
-    <!-- SUCCESS MODALS -->
-    <div
-      v-if="successModal"
-      class="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4 animate-fade-in animate-duration-200"
-    >
-      <div
-        class="linen-card w-full max-w-md p-8 rounded-2xl border border-amber-gold/20 shadow-2xl text-center relative animate-scale-up animate-duration-200"
-      >
-        <div class="text-4xl mb-4">
-          {{ successModal === "cancel" ? "🗑️" : "🎉" }}
-        </div>
-
-        <h3 class="font-heading text-2xl font-bold text-deep-espresso mb-2">
+    <!-- Success modal -->
+    <div v-if="successModal" class="rsvp-success-overlay">
+      <div class="rsvp-success-card">
+        <div class="rsvp-success__icon">{{ successModal === "cancel" ? "🗑️" : "🎉" }}</div>
+        <h3 class="rsvp-success__title">
           {{
             successModal === "cancel"
               ? "RSVP Removed"
@@ -799,8 +716,7 @@ const isFormActive = computed(() => {
                 : "Thank You So Much!"
           }}
         </h3>
-
-        <p class="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
+        <p class="rsvp-success__body">
           <template v-if="successModal === 'cancel'">
             Your RSVP registration details have been successfully deleted from this browser session.
           </template>
@@ -816,7 +732,6 @@ const isFormActive = computed(() => {
             support!
           </template>
         </p>
-
         <button @click="successModal = null" class="btn-primary">Close</button>
       </div>
     </div>

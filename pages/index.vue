@@ -132,12 +132,16 @@ onUnmounted(() => {
     <section
       id="hero"
       class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16"
-      :style="config.heroImage ? {
-        backgroundImage: `url('${config.heroImage}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      } : {}"
+      :style="
+        config.heroImage
+          ? {
+              backgroundImage: `url('${config.heroImage}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }
+          : {}
+      "
     >
       <!-- Gradient overlay -->
       <div class="absolute inset-0 z-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
@@ -352,13 +356,16 @@ onUnmounted(() => {
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <!-- Left Column: Polaroid Home Couple Photo — only shown when image is available -->
-          <div v-if="config.wishlistTeaser.imageUrl" class="flex justify-center select-none relative order-2 lg:order-1">
+          <div
+            v-if="config.wishlistTeaser.imageUrl"
+            class="flex justify-center select-none relative order-2 lg:order-1"
+          >
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
             <div
               class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
               @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
             >
-              <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+              <div class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
                 <img :src="config.wishlistTeaser.imageUrl" alt="Building our home" class="w-full h-full object-cover" />
               </div>
               <div class="mt-4 text-center">
@@ -405,11 +412,7 @@ onUnmounted(() => {
               @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
               <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img
-                  :src="config.rsvpTeaser.imageUrl"
-                  alt="Adun and Uche"
-                  class="w-full h-full object-cover"
-                />
+                <img :src="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="w-full h-full object-cover" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">

@@ -61,9 +61,9 @@ export const rsvpGroups: CollectionConfig = {
     },
   ],
   access: {
-    // read: () => true,
+    read: "true",
     create: "user != null",
-    update: "user != null",
+    update: "true",
     delete: "user != null",
   },
   hooks: {

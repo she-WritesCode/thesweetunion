@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useDyrectedClient, useDyrectedCollection, useDyrectedGlobal } from "#imports";
+import PhoneInput from "~/components/PhoneInput.vue";
 
 interface WishlistItem {
   id: string;
@@ -25,6 +26,12 @@ const { data: wishlistData, refresh } = await useDyrectedCollection("wishlist_it
 const { data: siteSettings } = await useDyrectedGlobal("site_settings");
 const client = useDyrectedClient();
 
+const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
+
+if (process.env.NODE_ENV !== "production" || (import.meta as any).client) {
+  console.log("[wishlist] data:", JSON.stringify(wishlistData.value, null, 2));
+}
+
 const mapCategory = (cat: string) => {
   if (!cat) return "Other";
   if (cat === "kitchen") return "Kitchen";
@@ -39,9 +46,7 @@ const mapCategory = (cat: string) => {
 const localItems = ref<WishlistItem[]>([]);
 
 const items = computed(() => {
-  const visibleDocs = (wishlistData.value?.docs || []).filter(
-    (doc: any) => !doc.isHidden,
-  );
+  const visibleDocs = (wishlistData.value?.docs || []).filter((doc: any) => !doc.isHidden);
   if (visibleDocs.length > 0) {
     return visibleDocs.map((doc: any) => ({
       id: doc.id,
@@ -74,6 +79,7 @@ const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
 const activeItem = ref<WishlistItem | null>(null);
 const guestName = ref("");
 const guestEmail = ref("");
+const guestPhone = ref("");
 const guestMessage = ref("");
 const successItem = ref<WishlistItem | null>(null);
 
@@ -85,6 +91,7 @@ const handleReserveClick = (item: WishlistItem) => {
   activeItem.value = item;
   guestName.value = "";
   guestEmail.value = "";
+  guestPhone.value = "";
   guestMessage.value = "";
 };
 
@@ -98,6 +105,7 @@ const handleConfirmReservation = async () => {
         item: activeItem.value.id,
         guestName: guestName.value,
         guestEmail: guestEmail.value,
+        guestPhone: guestPhone.value,
         message: guestMessage.value,
       });
       await refresh();
@@ -308,7 +316,7 @@ const filteredAndSortedItems = computed(() => {
     </main>
 
     <!-- Footer -->
-    <Footer />
+    <Footer :couples-photo="couplesPhoto" />
 
     <!-- Reservation Form Modal -->
     <div v-if="activeItem" class="modal-overlay">
@@ -361,6 +369,16 @@ const filteredAndSortedItems = computed(() => {
             <div class="space-y-1">
               <label class="input-label"> Your Name (Required) </label>
               <input type="text" required v-model="guestName" class="input-field" placeholder="Enter your name" />
+            </div>
+
+            <div class="space-y-1">
+              <!-- <label class="input-label"> Phone Number (Required) </label> -->
+              <PhoneInput
+                v-model="guestPhone"
+                required
+                placeholder="Enter your phone number"
+                label="Phone Number (Required)"
+              />
             </div>
 
             <div class="space-y-1">

@@ -12,6 +12,7 @@ export const reservations: CollectionConfig = {
   fields: [
     { name: "item", type: "relationship", label: "Wishlist Item", relationTo: "wishlist_items", required: true },
     { name: "guestName", type: "text", label: "Guest Name", required: true },
+    { name: "guestPhone", type: "text", label: "Guest Phone", required: true },
     { name: "guestEmail", type: "email", label: "Guest Email", required: true },
     { name: "message", type: "textarea", label: "Message", admin: { placeholder: "Message to the couple (optional)" } },
     { name: "reservedAt", type: "date", label: "Reserved At", admin: { readOnly: true } },

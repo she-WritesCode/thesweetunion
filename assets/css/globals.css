@@ -295,3 +295,163 @@ body {
 .schedule-timeline {
   @apply space-y-5 relative border-l border-amber-gold/20 pl-6 ml-2;
 }
+
+/* ═══════════════════════════════════════════════════════
+   RSVP Page — Keyframes
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes rsvpFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rsvpScaleUp {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   RSVP Page — Component Classes
+   ═══════════════════════════════════════════════════════ */
+
+/* Layout */
+.rsvp-page              { @apply min-h-screen bg-warm-cream text-deep-espresso select-text flex flex-col; }
+.rsvp-page--form-active { @apply justify-center; }
+.rsvp-page--inactive    { @apply justify-between; }
+.rsvp-main              { @apply flex-1 flex items-center justify-center p-6; }
+.rsvp-main--form-active { @apply pt-6 pb-6; }
+.rsvp-main--inactive    { @apply pt-32 pb-16; }
+.rsvp-content           { @apply w-full max-w-2xl; }
+
+/* Blocker cards (invalid link / capacity full) */
+.rsvp-blocker {
+  @apply bg-soft-pearl p-8 rounded-2xl border border-amber-gold/20 shadow-lg text-center space-y-5;
+  animation: rsvpFadeIn 0.3s ease-out both;
+}
+.rsvp-blocker--error    { @apply border-red-500/20; }
+.rsvp-blocker__icon     { @apply text-4xl; }
+.rsvp-blocker__title    { @apply text-2xl sm:text-3xl font-bold font-display-cinzel text-deep-espresso; }
+.rsvp-blocker__heading  { @apply font-heading text-2xl font-bold text-deep-espresso; }
+.rsvp-blocker__body     { @apply font-body text-deep-espresso/80 text-sm leading-relaxed max-w-md mx-auto; }
+.rsvp-blocker__text     { @apply font-body text-deep-espresso/80 text-sm sm:text-base leading-relaxed; }
+.rsvp-blocker__footnote { @apply text-xs text-deep-espresso/50 font-body; }
+
+/* Confirmed RSVP summary card */
+.rsvp-summary {
+  @apply bg-soft-pearl p-6 sm:p-10 rounded-2xl border border-amber-gold/15 shadow-md space-y-8;
+  animation: rsvpFadeIn 0.3s ease-out both;
+}
+.rsvp-summary__header          { @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-gold/10 pb-6; }
+.rsvp-summary__status-label    { @apply text-[10px] uppercase tracking-wider font-bold text-amber-gold block mb-1; }
+.rsvp-summary__status-row      { @apply flex items-center gap-2.5; }
+.rsvp-summary__dot             { @apply w-3.5 h-3.5 rounded-full; }
+.rsvp-summary__dot--attending  { @apply bg-emerald-500; }
+.rsvp-summary__dot--declined   { @apply bg-red-400 animate-pulse; }
+.rsvp-summary__title           { @apply font-heading text-2xl font-bold text-deep-espresso; }
+.rsvp-summary__date            { @apply text-left sm:text-right text-xs text-deep-espresso/60 font-body; }
+.rsvp-summary__grid            { @apply grid grid-cols-1 md:grid-cols-2 gap-8 text-sm font-body; }
+.rsvp-summary__column          { @apply space-y-4; }
+.rsvp-summary__section-heading { @apply text-xs font-bold uppercase tracking-wider text-amber-gold mb-1; }
+.rsvp-summary__name            { @apply font-semibold text-base; }
+.rsvp-summary__meta            { @apply text-deep-espresso/70; }
+.rsvp-summary__notes           { @apply border-t border-amber-gold/10 pt-6 space-y-4 text-sm font-body; }
+.rsvp-summary__actions         { @apply border-t border-amber-gold/10 pt-6 flex flex-wrap gap-4 items-center justify-between; }
+.rsvp-events-list              { @apply space-y-1 bg-warm-cream/50 p-3 rounded-xl border border-amber-gold/5; }
+.rsvp-event-item               { @apply flex items-center gap-2 text-deep-espresso; }
+.rsvp-event-item__check        { @apply text-emerald-600; }
+.rsvp-spouse-note              { @apply text-deep-espresso/80; }
+.rsvp-spouse-none              { @apply text-deep-espresso/50 italic; }
+.rsvp-notes__text              { @apply text-deep-espresso/80 italic bg-amber-500/5 p-3 rounded-xl border border-amber-gold/10; }
+.rsvp-message__text            { @apply text-deep-espresso/80 whitespace-pre-line bg-soft-pearl/50 p-4 rounded-xl border border-amber-gold/10; }
+
+/* Danger / cancel button */
+.btn-danger {
+  @apply px-6 py-2.5 rounded-xl border border-red-500/30 text-red-700 font-bold text-xs uppercase tracking-wider hover:bg-red-50 transition-all duration-300 focus:outline-none cursor-pointer;
+}
+
+/* Active form card */
+.rsvp-form {
+  @apply bg-soft-pearl w-full p-8 sm:p-12 rounded-3xl border border-amber-gold/15 shadow-2xl relative overflow-hidden select-text;
+  animation: rsvpFadeIn 0.3s ease-out both;
+}
+.rsvp-progress          { @apply absolute top-0 left-0 right-0 h-1 bg-amber-gold/10; }
+.rsvp-progress__fill    { @apply h-full bg-deep-terracotta transition-all duration-500; }
+.rsvp-form__branding    { @apply flex justify-between items-center mb-10 text-xs font-bold uppercase tracking-widest text-deep-espresso/45; }
+
+/* Step containers */
+.rsvp-step {
+  @apply space-y-8;
+  animation: rsvpFadeIn 0.25s ease-out both;
+}
+.rsvp-step__header      { @apply space-y-2; }
+.rsvp-step__title       { @apply text-3xl sm:text-4xl font-bold font-heading text-deep-espresso leading-tight; }
+.rsvp-step__subtitle    { @apply font-body text-sm text-deep-espresso/60; }
+.rsvp-step__content     { @apply space-y-4 pt-2; }
+.rsvp-step__actions     { @apply pt-4 flex items-center justify-end; }
+
+/* Attendance notice banner */
+.rsvp-notice       { @apply flex items-start gap-3 bg-amber-500/8 border border-amber-gold/30 rounded-xl px-4 py-3; }
+.rsvp-notice__icon { @apply text-base shrink-0 mt-0.5; }
+.rsvp-notice__text { @apply font-body text-sm text-deep-espresso/80 leading-relaxed; }
+
+/* Step 2: Attendance selection */
+.rsvp-attendance-grid            { @apply grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4; }
+.rsvp-attendance-btn             { @apply p-6 sm:p-8 rounded-2xl border flex flex-col items-center justify-center gap-3 transition-all duration-300 cursor-pointer; }
+.rsvp-attendance-btn--active-yes { @apply bg-deep-terracotta/5 border-deep-terracotta shadow-md scale-[1.01]; }
+.rsvp-attendance-btn--active-no  { @apply bg-muted-mauve/5 border-muted-mauve shadow-md scale-[1.01]; }
+.rsvp-attendance-btn--idle       { @apply bg-soft-pearl/30 border-amber-gold/15 opacity-80 hover:opacity-100; }
+.rsvp-attendance-btn__emoji      { @apply text-4xl; }
+.rsvp-attendance-btn__label      { @apply font-heading text-xl font-bold text-deep-espresso; }
+.rsvp-attendance-btn__hint       { @apply text-xs font-body text-deep-espresso/50 text-center; }
+
+/* Form inputs */
+.rsvp-input          { @apply w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta; }
+.rsvp-input--error   { @apply border-red-400 focus:border-red-500; }
+.rsvp-textarea       { @apply w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta resize-none; }
+.rsvp-field-error    { @apply text-xs text-red-500 mt-1; }
+.rsvp-fields      { @apply space-y-5 pt-2; }
+.rsvp-field-group { @apply space-y-1; }
+
+/* Events checkbox group */
+.rsvp-events-box           { @apply space-y-3 bg-soft-pearl/60 p-4 rounded-xl border border-amber-gold/15; }
+.rsvp-events-box--error    { @apply border-red-400; }
+.rsvp-events-box__title { @apply text-xs font-bold uppercase tracking-wider text-amber-gold mb-1; }
+.rsvp-events-options    { @apply flex flex-col sm:flex-row gap-4; }
+.rsvp-checkbox-label    { @apply flex items-center gap-2 cursor-pointer text-sm font-semibold select-none; }
+.rsvp-checkbox          { @apply w-4.5 h-4.5 accent-deep-terracotta rounded cursor-pointer; }
+
+/* Spouse/plus-one section */
+.rsvp-spouse-section { @apply space-y-4 pt-2; }
+.rsvp-spouse-row     { @apply flex items-center gap-3; }
+.rsvp-spouse-label   { @apply text-sm font-semibold cursor-pointer select-none; }
+.rsvp-spouse-field {
+  @apply space-y-1 pl-7;
+  animation: rsvpFadeIn 0.2s ease-out both;
+}
+
+/* Continue & submit buttons */
+.rsvp-continue-btn           { @apply px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer; }
+.rsvp-continue-btn--active   { @apply bg-deep-terracotta text-white shadow-md hover:bg-burnt-sienna hover:shadow-lg; }
+.rsvp-continue-btn--disabled { @apply bg-deep-espresso/10 text-deep-espresso/45 cursor-not-allowed shadow-none; }
+.rsvp-submit-btn {
+  @apply px-8 py-3.5 rounded-xl bg-deep-terracotta text-white font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md hover:bg-burnt-sienna hover:shadow-lg focus:outline-none cursor-pointer text-center inline-block;
+}
+
+/* Form bottom navigation */
+.rsvp-form__nav { @apply border-t border-amber-gold/10 mt-8 pt-4 flex justify-between items-center text-xs font-bold uppercase tracking-wider; }
+.rsvp-back-btn  { @apply text-deep-espresso/60 hover:text-deep-espresso transition-colors cursor-pointer; }
+.rsvp-exit-btn  { @apply text-red-500 hover:text-red-700 transition-colors cursor-pointer; }
+
+/* Success modal */
+.rsvp-success-overlay {
+  @apply fixed inset-0 bg-black/70 flex items-center justify-center p-4;
+  z-index: 9999;
+  animation: rsvpFadeIn 0.2s ease-out both;
+}
+.rsvp-success-card {
+  @apply bg-soft-pearl w-full max-w-md p-8 rounded-2xl border border-amber-gold/20 shadow-2xl text-center relative;
+  animation: rsvpScaleUp 0.2s ease-out both;
+}
+.rsvp-success__icon   { @apply text-4xl mb-4; }
+.rsvp-success__title  { @apply font-heading text-2xl font-bold text-deep-espresso mb-2; }
+.rsvp-success__body   { @apply font-body text-deep-espresso/80 text-sm leading-relaxed mb-6; }

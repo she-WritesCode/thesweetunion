@@ -3,7 +3,7 @@ import { createClient } from "@dyrected/sdk";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { editToken, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, events } = body;
+  const { editToken, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents } = body;
 
   if (!editToken) {
     throw createError({ statusCode: 400, message: "Missing edit token" });
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
       spouseName,
       dietaryNotes,
       message,
-      events,
+      selectedEvents,
     });
 
     return { success: true, record: updated };
