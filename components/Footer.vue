@@ -7,12 +7,14 @@ interface FooterProps {
   hashtag?: string;
   person1?: string;
   person2?: string;
+  wishlistUrl?: string;
 }
 
 const props = withDefaults(defineProps<FooterProps>(), {
   hashtag: siteConfig.couple.hashtag,
   person1: siteConfig.couple.person1,
   person2: siteConfig.couple.person2,
+  wishlistUrl: siteConfig.wishlistUrl,
 })
 </script>
 
@@ -42,6 +44,12 @@ const props = withDefaults(defineProps<FooterProps>(), {
         </div>
         <p class="font-body text-xs text-deep-espresso/60 pt-4">
           © 2026 {{ person1 }} & {{ person2 }}. Handcrafted with love.
+        </p>
+        <p v-if="wishlistUrl" class="font-body text-sm text-deep-espresso/70 pt-2">
+          In case you were wondering what to gift us check this out →
+          <a :href="wishlistUrl" target="_blank" rel="noopener noreferrer" class="text-amber-gold hover:underline ml-1">
+            View Wishlist
+          </a>
         </p>
       </div>
     </FadeInSection>

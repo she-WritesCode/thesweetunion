@@ -35,12 +35,6 @@ interface GroupConfig {
 const GROUPS: GroupConfig[] = [
   { name: "RCF UNILAG", slug: "rcf-unilag", capacity: 30 },
   { name: "Victory Center Teens", slug: "victory-teens", capacity: 15 },
-  { name: "Africa Missions", slug: "africa-missions", capacity: 25 },
-  { name: "Bride's Extended Family", slug: "bride-family", capacity: 50 },
-  { name: "Groom's Extended Family", slug: "groom-family", capacity: 50 },
-  { name: "Friends of the Bride", slug: "bride-friends", capacity: 40 },
-  { name: "Friends of the Groom", slug: "groom-friends", capacity: 40 },
-  { name: "Other / Mutual Friends", slug: "mutual-friends", capacity: 20 },
 ];
 
 const route = useRoute();
@@ -394,10 +388,11 @@ const isFormActive = computed(() => {
         <!-- 1. INVALID DIRECT LINK BLOCKER -->
         <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker">
           <div class="rsvp-blocker__icon">✉️</div>
-          <h2 class="rsvp-blocker__title">Personal Invitation Required</h2>
+          <h2 class="rsvp-blocker__title">Your invitation holds the key.</h2>
           <p class="rsvp-blocker__body">
-            To RSVP for our wedding, please click the personalized RSVP link sent directly to you by the couple. This
-            helps us manage guest capacity and seating charts.
+            Please click the link in the invitation card that Adun and Uche sent to you to RSVP for our wedding. This
+            will help us ensure that all guests are accounted for and that we can manage the seating arrangements
+            efficiently.
           </p>
           <p class="rsvp-blocker__footnote">
             If you have any questions or did not receive your link, please contact Uche or Adun.
@@ -407,10 +402,10 @@ const isFormActive = computed(() => {
         <!-- 2. CAPACITY ALLOCATION BLOCKER -->
         <div v-if="groupFullError" class="rsvp-blocker rsvp-blocker--error">
           <div class="rsvp-blocker__icon">⚠️</div>
-          <h3 class="rsvp-blocker__heading">Allocation Limit Reached</h3>
+          <h3 class="rsvp-blocker__heading">We wish we could fit the whole world.</h3>
           <p class="rsvp-blocker__text">
-            We are so sorry, but the allocation spots for this group invitation are completely filled. Please reach out
-            to the couple directly to coordinate manual adjustments.
+            As much as we'd love to have you there, we've reached the last of our seats. Please know your love and good
+            wishes mean just as much to us — we'll be thinking of you on the day.
           </p>
           <button
             v-if="existingRSVP"

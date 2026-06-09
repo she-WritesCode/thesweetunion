@@ -3,6 +3,9 @@ import { ref, computed } from "vue";
 import { useDyrectedClient, useDyrectedCollection, useDyrectedGlobal } from "#imports";
 import PhoneInput from "~/components/PhoneInput.vue";
 
+const SUGGESTED_AMOUNTS = [5000, 10000, 25000, 50000, 100000];
+const MIN_CONTRIBUTION = 5000;
+
 interface WishlistItem {
   id: string;
   name: string;
@@ -13,7 +16,9 @@ interface WishlistItem {
   maxQuantity: number;
   reservedCount: number;
   category: string;
-  isCashFund?: boolean;
+  fundingType?: "fixed" | "crowdfund";
+  amountRaised?: number;
+  contributorCount?: number;
   bankDetails?: {
     bankName: string;
     accountNumber: string;
@@ -41,8 +46,6 @@ const mapCategory = (cat: string) => {
   return cat.charAt(0).toUpperCase() + cat.slice(1);
 };
 
-// Static fallback items — initialized as a ref so the mock confirmation path can mutate them.
-// Defined inline (not in onMounted) so SSR can use them as an initial value.
 const localItems = ref<WishlistItem[]>([]);
 
 const items = computed(() => {
@@ -58,15 +61,18 @@ const items = computed(() => {
       maxQuantity: doc.maxQuantity,
       reservedCount: doc.reservedCount || 0,
       category: mapCategory(doc.category),
-      isCashFund: doc.isCashFund || false,
-      bankDetails: doc.isCashFund
-        ? {
-            bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
-            accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
-            accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
-            note: "Please transfer your contribution directly using your banking app, then confirm details below.",
-          }
-        : undefined,
+      fundingType: doc.fundingType || "fixed",
+      amountRaised: doc.amountRaised || 0,
+      contributorCount: doc.contributorCount || 0,
+      bankDetails:
+        doc.fundingType === "crowdfund"
+          ? {
+              bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
+              accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
+              accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
+              note: "Please transfer your contribution directly using your banking app, then confirm details below.",
+            }
+          : undefined,
     }));
   }
   return localItems.value;
@@ -82,6 +88,29 @@ const guestEmail = ref("");
 const guestPhone = ref("");
 const guestMessage = ref("");
 const successItem = ref<WishlistItem | null>(null);
+const successContributionAmount = ref<number>(0);
+
+// Crowdfund amount selection
+const selectedAmount = ref<number>(SUGGESTED_AMOUNTS[0]);
+const useCustomAmount = ref(false);
+const customAmount = ref<string>("");
+
+const effectiveAmount = computed(() => {
+  if (useCustomAmount.value) {
+    return parseInt(customAmount.value) || 0;
+  }
+  return selectedAmount.value;
+});
+
+const isAmountValid = computed(() => {
+  if (!activeItem.value?.fundingType || activeItem.value.fundingType !== "crowdfund") return true;
+  return effectiveAmount.value >= MIN_CONTRIBUTION;
+});
+
+const isCrowdfundGoalReached = computed(() => {
+  if (!activeItem.value) return false;
+  return activeItem.value.fundingType === "crowdfund" && activeItem.value.price > 0 && (activeItem.value.amountRaised ?? 0) >= activeItem.value.price;
+});
 
 const categories = computed(() => {
   return ["All", ...Array.from(new Set(items.value.map((item: WishlistItem) => item.category)))];
@@ -93,6 +122,9 @@ const handleReserveClick = (item: WishlistItem) => {
   guestEmail.value = "";
   guestPhone.value = "";
   guestMessage.value = "";
+  selectedAmount.value = SUGGESTED_AMOUNTS[0];
+  useCustomAmount.value = false;
+  customAmount.value = "";
 };
 
 const handleConfirmReservation = async () => {
@@ -101,13 +133,20 @@ const handleConfirmReservation = async () => {
   try {
     const isDbItem = wishlistData.value?.docs?.some((d: any) => d.id === activeItem.value?.id);
     if (isDbItem) {
-      await client.collection("reservations").create({
+      const payload: any = {
         item: activeItem.value.id,
         guestName: guestName.value,
         guestEmail: guestEmail.value,
         guestPhone: guestPhone.value,
         message: guestMessage.value,
-      });
+      };
+
+      if (activeItem.value.fundingType === "crowdfund") {
+        payload.contributionAmount = effectiveAmount.value;
+      }
+
+      await client.collection("reservations").create(payload);
+      successContributionAmount.value = effectiveAmount.value;
       await refresh();
     } else {
       localItems.value = localItems.value.map((item) => {
@@ -138,6 +177,11 @@ const filteredAndSortedItems = computed(() => {
 
   return list;
 });
+
+const progressPercent = (item: WishlistItem) => {
+  if (item.fundingType !== "crowdfund" || item.price <= 0) return 0;
+  return Math.min(100, Math.round(((item.amountRaised ?? 0) / item.price) * 100));
+};
 </script>
 
 <template>
@@ -190,7 +234,7 @@ const filteredAndSortedItems = computed(() => {
           </div>
         </div>
 
-        <!-- Empty state — shown when no items are in the DB yet -->
+        <!-- Empty state -->
         <div
           v-if="filteredAndSortedItems.length === 0"
           class="linen-card col-span-full py-24 px-8 rounded-2xl border border-amber-gold/15 text-center space-y-4"
@@ -209,9 +253,11 @@ const filteredAndSortedItems = computed(() => {
             :key="item.id"
             class="linen-card rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-md group"
             :class="
-              item.maxQuantity - item.reservedCount > 0
+              item.fundingType === 'crowdfund'
                 ? 'hover:-translate-y-1 hover:shadow-lg border-amber-gold/15'
-                : 'opacity-75 border-amber-gold/10 grayscale-15'
+                : item.maxQuantity - item.reservedCount > 0
+                  ? 'hover:-translate-y-1 hover:shadow-lg border-amber-gold/15'
+                  : 'opacity-75 border-amber-gold/10 grayscale-15'
             "
           >
             <!-- Item Image -->
@@ -233,10 +279,16 @@ const filteredAndSortedItems = computed(() => {
               <!-- Badge Indicator -->
               <div class="absolute top-4 right-4 z-10">
                 <span
-                  v-if="item.isCashFund"
-                  class="bg-purple-950/80 border border-purple-500/30 text-purple-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  v-if="activeItem.fundingType === 'crowdfund' && activeItem.price > 0 && (activeItem.amountRaised ?? 0) >= activeItem.price"
+                  class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
                 >
-                  Cash Fund
+                  Fund Fully Raised
+                </span>
+                <span
+                  v-else-if="item.fundingType === 'crowdfund'"
+                  class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                >
+                  {{ item.price > 0 ? "Crowdfund" : "Open Fund" }}
                 </span>
                 <span
                   v-else-if="item.maxQuantity - item.reservedCount <= 0"
@@ -267,7 +319,9 @@ const filteredAndSortedItems = computed(() => {
                     {{ item.category }}
                   </span>
                   <span class="text-sm font-bold text-deep-espresso font-body">
-                    ₦{{ item.price.toLocaleString("en-US") }}
+                    {{ item.fundingType === "crowdfund" && item.price > 0 ? "Goal: " : "" }}₦{{
+                      item.price.toLocaleString("en-US")
+                    }}
                   </span>
                 </div>
                 <h3
@@ -278,12 +332,48 @@ const filteredAndSortedItems = computed(() => {
                 <p class="font-body text-sm text-deep-espresso/70 leading-relaxed">
                   {{ item.description }}
                 </p>
+
+                <!-- Crowdfund Progress -->
+                <div v-if="item.fundingType === 'crowdfund'" class="space-y-1.5">
+                  <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full transition-all duration-500"
+                      :class="
+                        item.price > 0 && item.amountRaised >= item.price
+                          ? 'bg-emerald-600'
+                          : 'bg-amber-gold'
+                      "
+                      :style="{ width: `${progressPercent(item)}%` }"
+                    />
+                  </div>
+                  <p class="text-xs text-deep-espresso/60 font-body">
+                    <template v-if="item.price > 0">
+                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{ item.price.toLocaleString("en-US") }}
+                      raised
+                    </template>
+                    <template v-else>
+                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised
+                    </template>
+                    · {{ item.contributorCount ?? 0 }} {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                  </p>
+                </div>
               </div>
 
               <!-- Action Buttons -->
               <div class="flex items-center gap-3 pt-2">
-                <button v-if="item.isCashFund" @click="handleReserveClick(item)" class="flex-1 btn-secondary">
-                  Contribute Cash
+                <button
+                  v-if="activeItem.fundingType === 'crowdfund' && activeItem.price > 0 && (activeItem.amountRaised ?? 0) >= activeItem.price"
+                  disabled
+                  class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
+                >
+                  Fund Fully Raised
+                </button>
+                <button
+                  v-else-if="item.fundingType === 'crowdfund'"
+                  @click="handleReserveClick(item)"
+                  class="flex-1 btn-secondary"
+                >
+                  Contribute to Fund
                 </button>
                 <button
                   v-else-if="item.maxQuantity - item.reservedCount > 0"
@@ -327,23 +417,51 @@ const filteredAndSortedItems = computed(() => {
         <div class="space-y-4 max-h-[85vh] overflow-y-auto pr-1">
           <div>
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
-              {{ activeItem.isCashFund ? "Cash Contribution" : "Commit to Gift" }}
+              {{ activeItem.fundingType === "crowdfund" ? "Contribute to Fund" : "Commit to Gift" }}
             </span>
             <h3 class="font-heading text-xl font-bold text-deep-espresso leading-snug">
               {{ activeItem.name }}
             </h3>
             <p class="font-body text-xs text-deep-espresso/60">
-              {{ activeItem.isCashFund ? "Suggested Contribution:" : "Approximate Value:" }} ₦{{
+              {{ activeItem.fundingType === "crowdfund" ? "Funding Goal:" : "Approximate Value:" }} ₦{{
                 activeItem.price.toLocaleString("en-US")
               }}
               · Category: {{ activeItem.category }}
             </p>
           </div>
 
+          <!-- Crowdfund Progress Bar -->
+          <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-2">
+            <div class="w-full h-3 bg-deep-espresso/10 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                :class="
+                  activeItem.price > 0 && (activeItem.amountRaised ?? 0) >= activeItem.price
+                    ? 'bg-emerald-600'
+                    : 'bg-amber-gold'
+                "
+                :style="{ width: `${progressPercent(activeItem)}%` }"
+              />
+            </div>
+            <p class="text-xs text-deep-espresso/60 font-body">
+              <template v-if="activeItem.price > 0">
+                ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+                  activeItem.price.toLocaleString("en-US")
+                }}
+                raised
+              </template>
+              <template v-else>
+                ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised
+              </template>
+              · {{ activeItem.contributorCount ?? 0 }}
+              {{ (activeItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+            </p>
+          </div>
+
           <div class="border-t border-amber-gold/10 my-4" />
 
-          <!-- Direct Bank Transfer Section -->
-          <div v-if="activeItem.isCashFund && activeItem.bankDetails" class="bank-details-card">
+          <!-- Bank Transfer Section -->
+          <div v-if="activeItem.fundingType === 'crowdfund' && activeItem.bankDetails" class="bank-details-card">
             <p class="font-semibold text-deep-terracotta uppercase tracking-wide">Bank Transfer Details</p>
             <div class="grid grid-cols-3 gap-y-1 font-body">
               <span class="text-deep-espresso/60">Bank:</span>
@@ -366,13 +484,61 @@ const filteredAndSortedItems = computed(() => {
           </div>
 
           <form @submit.prevent="handleConfirmReservation" class="space-y-4 pt-2">
+            <!-- Crowdfund Amount Selector -->
+            <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-2">
+              <label class="input-label"> Contribution Amount (Min ₦{{ MIN_CONTRIBUTION.toLocaleString() }}) </label>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="amount in SUGGESTED_AMOUNTS"
+                  :key="amount"
+                  type="button"
+                  @click="
+                    selectedAmount = amount;
+                    useCustomAmount = false;
+                  "
+                  class="px-3 py-2 rounded-xl border text-sm font-semibold transition-all duration-200"
+                  :class="
+                    !useCustomAmount && selectedAmount === amount
+                      ? 'bg-deep-terracotta text-white border-deep-terracotta'
+                      : 'bg-white text-deep-espresso border-amber-gold/20 hover:border-amber-gold/40'
+                  "
+                >
+                  ₦{{ amount.toLocaleString("en-US") }}
+                </button>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="useCustomAmount = true"
+                  class="px-3 py-2 rounded-xl border text-sm font-semibold transition-all duration-200"
+                  :class="
+                    useCustomAmount
+                      ? 'bg-deep-terracotta text-white border-deep-terracotta'
+                      : 'bg-white text-deep-espresso border-amber-gold/20 hover:border-amber-gold/40'
+                  "
+                >
+                  Custom
+                </button>
+                <input
+                  v-if="useCustomAmount"
+                  v-model="customAmount"
+                  type="number"
+                  :min="MIN_CONTRIBUTION"
+                  class="input-field flex-1"
+                  placeholder="Enter amount"
+                />
+              </div>
+              <p v-if="!isAmountValid" class="text-xs text-red-600">
+                Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}
+              </p>
+            </div>
+
             <div class="space-y-1">
               <label class="input-label"> Your Name (Required) </label>
               <input type="text" required v-model="guestName" class="input-field" placeholder="Enter your name" />
             </div>
 
             <div class="space-y-1">
-              <!-- <label class="input-label"> Phone Number (Required) </label> -->
               <PhoneInput
                 v-model="guestPhone"
                 required
@@ -396,8 +562,16 @@ const filteredAndSortedItems = computed(() => {
               />
             </div>
 
-            <button type="submit" class="w-full btn-primary mt-2">
-              {{ activeItem.isCashFund ? "Confirm Contribution" : "Confirm Reservation" }}
+            <button
+              type="submit"
+              class="w-full btn-primary mt-2"
+              :disabled="activeItem.fundingType === 'crowdfund' && !isAmountValid"
+            >
+              {{
+                activeItem.fundingType === "crowdfund"
+                  ? `Contribute ₦${effectiveAmount.toLocaleString("en-US")}`
+                  : "Confirm Reservation"
+              }}
             </button>
           </form>
         </div>
@@ -415,10 +589,11 @@ const filteredAndSortedItems = computed(() => {
         <div class="text-4xl mb-4">🎉</div>
         <h3 class="font-heading text-2xl font-bold text-deep-espresso mb-2">Thank You So Much!</h3>
         <p class="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
-          <template v-if="successItem.isCashFund">
-            You have successfully initiated a contribution to the <strong>{{ successItem.name }}</strong
+          <template v-if="successItem.fundingType === 'crowdfund'">
+            You have successfully contributed <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to
+            the <strong>{{ successItem.name }}</strong
             >. Please ensure you complete the bank transfer using the details provided, and we will send a confirmation
-            details card to your email.
+            to your email.
           </template>
           <template v-else>
             You have successfully reserved the <strong>{{ successItem.name }}</strong> registry gift item. We have sent

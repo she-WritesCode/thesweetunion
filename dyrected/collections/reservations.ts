@@ -6,7 +6,7 @@ export const reservations: CollectionConfig = {
   labels: { singular: "Reservation", plural: "Reservations" },
   admin: {
     useAsTitle: "guestName",
-    defaultColumns: ["guestName", "guestEmail", "guestPhone", "item", "reservedAt"],
+    defaultColumns: ["guestName", "guestEmail", "guestPhone", "item", "contributionAmount", "reservedAt"],
     group: "Wishlist",
   },
   fields: [
@@ -14,6 +14,7 @@ export const reservations: CollectionConfig = {
     { name: "guestName", type: "text", label: "Guest Name", required: true },
     { name: "guestPhone", type: "text", label: "Guest Phone", required: true },
     { name: "guestEmail", type: "email", label: "Guest Email", required: true },
+    { name: "contributionAmount", type: "number", label: "Contribution Amount", admin: { description: "Required for crowdfund items (min ₦5,000)" } },
     { name: "message", type: "textarea", label: "Message", admin: { placeholder: "Message to the couple (optional)" } },
     { name: "reservedAt", type: "date", label: "Reserved At", admin: { readOnly: true } },
   ],

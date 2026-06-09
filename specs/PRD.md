@@ -154,13 +154,58 @@ Each wishlist item has an optional `purchase_link` field. Behaviour:
 
 The `link` field in the data model may also carry a note (e.g. "Pay via bank transfer — details will be shared after you reserve") — the admin can add this as part of the item description.
 
-#### 3.2.7 Cash Funds & Bank Transfers
+#### 3.2.7 Cash Funds & Crowdfunding
 
-For registry items that are cash contributions (e.g., "Honeymoon Fund" or "Nest Egg Fund"), the item can be configured as a **Cash Fund**:
-- **CTA Button:** Shows "Contribute Cash" instead of "Reserve This Gift".
-- **Display Badge:** Shows "Cash Fund / Contribution" and can support open-ended quantities.
-- **Direct Bank Transfer Details:** When the guest clicks "Contribute Cash", the modal presents the couple's bank account details (Bank Name, Account Number, and Account Name) along with a form to notify the couple of their transfer.
-- **Terminology:** Uses modern giving terms like *Newlywed Fund*, *Nest Egg*, *Honeymoon Experience Contribution*, and *Bless our Home*.
+Cash gifts are **crowdfundable by default**. Guests can contribute partial amounts toward a shared goal or open-ended fund.
+
+**Two modes:**
+
+| Mode | `price` value | Behaviour |
+|------|---------------|-----------|
+| **With Goal** | `price > 0` | Progress bar shows "₦{amountRaised} of ₦{price} raised". Button disables when goal reached. |
+| **Unlimited** | `price = 0` | No goal — just "₦{amountRaised} raised". Button never disables. |
+
+**Data Model Additions:**
+
+```
+WishlistItem {
+  // ... existing fields
+  fundingType:      'fixed' | 'crowdfund'   // default: 'fixed'
+  amountRaised:     number                   // running total (default: 0)
+  contributorCount: integer                  // unique contributors (default: 0)
+}
+
+WishlistReservation {
+  // ... existing fields
+  contributionAmount: number                 // required for crowdfund
+}
+```
+
+**Hardcoded Values (not configurable per item):**
+- Minimum contribution: ₦5,000
+- Suggested amounts: ₦5,000 | ₦10,000 | ₦25,000 | ₦50,000 | ₦100,000
+
+**Guest Flow — Crowdfund:**
+
+1. Guest sees crowdfund items with progress bar and contributor count.
+2. Clicks **"Contribute to Fund"**.
+3. Modal shows: fund name, progress bar, amount selector, bank details, guest form.
+4. Guest selects suggested amount or enters custom amount (min ₦5,000).
+5. On confirm: `amountRaised` increments, `contributorCount` increments, reservation saved.
+6. Confirmation: "Thank you! You've contributed ₦{amount} to {Fund Name}."
+
+**Display Logic:**
+
+| State | Visual Treatment |
+|-------|-----------------|
+| `fundingType = 'fixed'`, `reserved_count = 0` | Green badge: "Available" |
+| `fundingType = 'fixed'`, `0 < reserved_count < max_quantity` | Yellow badge: "Reserved by [N] · [X] spots left" |
+| `fundingType = 'fixed'`, `reserved_count = max_quantity` | Red badge: "Fully Reserved" — button disabled |
+| `fundingType = 'crowdfund'`, `price > 0`, `amountRaised < price` | Amber badge: "₦{amountRaised} of ₦{price} raised · {N} contributors" — progress bar |
+| `fundingType = 'crowdfund'`, `price > 0`, `amountRaised >= price` | Green badge: "Fund Fully Raised 🎉" — button disabled |
+| `fundingType = 'crowdfund'`, `price = 0` | Amber badge: "₦{amountRaised} raised · {N} contributors" — no progress bar, button always available |
+
+**Bank Details:** Crowdfund items show bank transfer details in the modal (same as current cash fund).
 
 #### 3.2.8 Guest Cancellation
 
@@ -302,6 +347,11 @@ Email templates should be branded with the couple's names and wedding colors/fon
 
 > **Full implementation spec:** See [`specs/EMAIL-NOTIFICATIONS.md`](./EMAIL-NOTIFICATIONS.md) for per-trigger content requirements, subject lines, body structure, token handling, and admin digest options.
 
+> **Seating, Invitations & Check-in specs:**
+> - [`specs/SEATING-ARRANGEMENT.md`](./SEATING-ARRANGEMENT.md) — Seating arrangement feature
+> - [`specs/INVITATIONS.md`](./INVITATIONS.md) — WhatsApp/email invitations using Live Preview on RSVP records
+> - [`specs/CHECK-IN.md`](./CHECK-IN.md) — QR code scanning and check-in system
+
 ---
 
 ## 5. Admin Dashboard
@@ -334,7 +384,137 @@ Access: Protected route (e.g. `/admin`) behind a single shared username + passwo
 - Export to CSV (full export, or filtered by group)
 - Manual override: admin can delete or edit any RSVP record
 
-### 5.3 Wishlist Management
+> **Implementation specs:**
+> - [`specs/SEATING-ARRANGEMENT.md`](./SEATING-ARRANGEMENT.md) — Seating arrangement feature
+> - [`specs/INVITATIONS.md`](./INVITATIONS.md) — WhatsApp/email invitations with QR codes
+> - [`specs/CHECK-IN.md`](./CHECK-IN.md) — QR code scanning and check-in system
+
+### 5.3 Seating Arrangement Manager (Post-RSVP)
+
+**Purpose:** After RSVP closes, the couple/event planner assigns confirmed guests to physical tables. Groups sit together by default; planner manages the full floor plan.
+
+#### 5.3.1 Table Data Model
+
+```
+Table {
+  id:            UUID
+  label:         string        // e.g. "Table 1", "Family Table A", "VIP Table"
+  shape:         'round' | 'rectangular' | 'square'
+  capacity:      integer       // max seats at this table (e.g. 8, 10, 12)
+  x:             number        // canvas X position (for visual editor)
+  y:             number        // canvas Y position (for visual editor)
+  rotation:      number        // degrees (for rectangular tables)
+  category:      'standard' | 'family' | 'vip' | 'accessible' | 'sweetheart' | 'head'
+  notes:         string        // internal: "near dance floor", "wheelchair access"
+  createdAt:     timestamp
+  updatedAt:     timestamp
+}
+```
+
+#### 5.3.2 Seat Assignment Data Model
+
+```
+SeatAssignment {
+  id:            UUID
+  tableId:       UUID (FK → Table)
+  rsvpRecordId:  UUID (FK → RSVPRecord)  // the lead guest
+  seatNumber:    integer       // 1..capacity (position at table)
+  guestName:     string        // denormalized: "Lead Name" or "Lead + Spouse Name"
+  partySize:     integer       // 1 or 2 (denormalized from RSVPRecord)
+  groupId:       UUID          // denormalized from RSVPRecord.group_id
+  groupName:     string        // denormalized from RSVPGroup.name
+  assignedAt:    timestamp
+  assignedBy:    string        // admin user identifier
+}
+```
+
+#### 5.3.3 Core Rules
+
+| Rule | Behavior |
+|------|----------|
+| **Group Together** | All members of an RSVP group should be seated at adjacent tables (or same table if capacity allows). The UI shows group membership visually. |
+| **Party Integrity** | A lead + spouse (partySize=2) must occupy 2 adjacent seats at the same table. Never split a party. |
+| **Capacity Enforcement** | `SUM(partySize) per table ≤ table.capacity`. UI prevents over-assignment. |
+| **Unassigned Pool** | Confirmed guests not yet assigned appear in an "Unseated Guests" sidebar, grouped by RSVP group. |
+| **Drag-and-Drop** | Planner drags guests/groups from sidebar onto tables. Visual feedback on capacity. |
+| **Auto-Assign** | "Auto-seat remaining" button: fills tables optimizing for group togetherness and capacity utilization. |
+
+#### 5.3.4 Admin UI — Seating Manager Tab
+
+**Layout:** Two-pane view — left: unseated guests (grouped by RSVP group), right: visual table canvas.
+
+**Left Pane — Unseated Guests:**
+```
+┌─────────────────────────────────────┐
+│ 🔍 Search guests...                 │
+│ ▼ Filter: [All Groups ▼] [Unseated] │
+├─────────────────────────────────────┤
+│ 📁 Church Friends (8 unseated)      │
+│   ├─ Ade + Funmi (2) 🟢             │
+│   ├─ Tunde (1) 🟢                   │
+│   └─ Bola + Chidi (2) 🟢            │
+│ 📁 Work Colleagues (4 unseated)     │
+│   ├─ Sarah (1) 🟢                   │
+│   └─ Mike + Lisa (2) 🟢             │
+│ 🟢 = ready to seat  🟡 = partial    │
+└─────────────────────────────────────┘
+```
+
+**Right Pane — Visual Table Canvas:**
+- Zoomable/panable SVG or Canvas grid
+- Tables rendered as circles (round) or rectangles with seat markers
+- Color coding: 🟢 empty seats, 🟡 partial, 🔴 full
+- Hover table → tooltip: "Table 3 · 6/8 seated · Church Friends (4), Family (2)"
+- Click table → shows seated guests list with edit/remove options
+- Drag guest from left → drop on table → assigns to next available seat(s)
+
+**Table Toolbar:**
+- **Add Table** — modal: label, shape, capacity, category, position
+- **Duplicate Table** — copy with incremented label
+- **Auto-Layout** — arrange tables in grid/circle around dance floor
+- **Import from Venue** — upload CSV/floor plan (v2)
+- **Export** — PDF (printable place cards), CSV (venue spreadsheet), JSON (backup)
+
+#### 5.3.5 Special Handling
+
+| Scenario | Handling |
+|----------|----------|
+| **Wheelchair Accessible** | Tables tagged `category: 'accessible'` — filtered in sidebar; guests with accessibility needs (captured in RSVP dietary_notes or new field) flagged for these tables |
+| **Sweetheart/Head Table** | `category: 'sweetheart'` or `'head'` — reserved for couple/parents; excluded from auto-assign |
+| **VIP / Family Tables** | `category: 'vip'` or `'family'` — pre-assigned by planner; locked from auto-assign |
+| **Late RSVPs** | After seating is "finalized", new RSVP edits (within cutoff) appear in unseated pool with 🔔 badge |
+| **No-Show Buffer** | Planner can set "buffer seats" per table (e.g., seat 8 at a 10-capacity table) |
+
+#### 5.3.6 Workflow
+
+1. **RSVP Cutoff Passes** → Admin clicks "Open Seating Manager"
+2. **Define Tables** — Add tables matching venue floor plan (capacity, shape, position)
+3. **Pre-Assign Special Tables** — Sweetheart, parents, VIP, accessible
+4. **Auto-Assign or Manual Drag-Drop** — Seat remaining guests by group
+5. **Review & Adjust** — Check group togetherness, capacity, special needs
+6. **Finalize** — Lock assignments; generate exports
+7. **Export for Venue** — CSV with table, seat, guest name, dietary notes
+8. **Print Place Cards** — PDF with table numbers, guest names (optionally meal choice)
+
+#### 5.3.7 Exports
+
+| Format | Use Case |
+|--------|----------|
+| **CSV** | Venue coordinator: `table_label, seat_number, guest_name, party_size, dietary_notes, group_name` |
+| **PDF Place Cards** | Double-sided cards: front = guest name, back = table number |
+| **PDF Table Chart** | One-page summary: each table with seated guests |
+| **JSON** | Backup / re-import for edits |
+
+#### 5.3.8 Data Integrity
+
+- Seat assignments are **only created after RSVP cutoff** (configurable)
+- Changing an RSVP (edit/decline) after seating → shows warning: "This guest is seated at Table 3. Update seating?"
+- Deleting a table with assignments → requires reassignment confirmation
+- All assignments audited: `assignedBy`, `assignedAt`, `modifiedAt`, `modifiedBy`
+
+---
+
+### 5.4 Wishlist Management
 
 **Item Manager**
 
