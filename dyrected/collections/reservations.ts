@@ -12,8 +12,8 @@ export const reservations: CollectionConfig = {
   fields: [
     { name: "item", type: "relationship", label: "Wishlist Item", relationTo: "wishlist_items", required: true },
     { name: "guestName", type: "text", label: "Guest Name", required: true },
-    { name: "guestPhone", type: "text", label: "Guest Phone", required: true },
-    { name: "guestEmail", type: "email", label: "Guest Email", required: true },
+    { name: "guestPhone", type: "text", label: "Guest Phone" },
+    { name: "guestEmail", type: "email", label: "Guest Email" },
     { name: "contributionAmount", type: "number", label: "Contribution Amount", admin: { description: "Required for crowdfund items (min ₦5,000)" } },
     { name: "message", type: "textarea", label: "Message", admin: { placeholder: "Message to the couple (optional)" } },
     { name: "reservedAt", type: "date", label: "Reserved At", admin: { readOnly: true } },

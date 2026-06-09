@@ -298,6 +298,107 @@ body {
   @apply bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2.5 text-xs text-deep-espresso/90;
 }
 
+/* Modal Wizard Step Indicator */
+.modal-step-indicator {
+  @apply flex items-center justify-center gap-2 mb-6;
+}
+
+.modal-step-dot {
+  @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300;
+}
+
+.modal-step-dot--active {
+  @apply bg-deep-terracotta text-white;
+}
+
+.modal-step-dot--inactive {
+  @apply bg-deep-espresso/10 text-deep-espresso/40;
+}
+
+.modal-step-line {
+  @apply w-8 h-0.5 transition-all duration-300;
+}
+
+.modal-step-line--active {
+  @apply bg-deep-terracotta;
+}
+
+.modal-step-line--inactive {
+  @apply bg-deep-espresso/10;
+}
+
+/* Modal Wizard Step Body */
+.modal-step {
+  @apply space-y-4;
+}
+
+/* Modal Item Header (centered) */
+.modal-item-header {
+  @apply text-center space-y-2 mb-4;
+}
+
+/* Modal Amount Grid */
+.modal-amount-grid {
+  @apply grid grid-cols-3 gap-2;
+}
+
+.modal-amount-btn {
+  @apply px-3 py-2 rounded-xl border text-sm font-semibold transition-all duration-200;
+}
+
+.modal-amount-btn--active {
+  @apply bg-deep-terracotta text-white border-deep-terracotta;
+}
+
+.modal-amount-btn--inactive {
+  @apply bg-white text-deep-espresso border-amber-gold/20 hover:border-amber-gold/40;
+}
+
+/* Modal Custom Amount Row */
+.modal-custom-row {
+  @apply flex items-center gap-2;
+}
+
+/* Anonymous Toggle Button */
+.modal-anon-btn {
+  @apply px-4 py-2 rounded-full border text-xs font-semibold transition-all duration-200;
+}
+
+.modal-anon-btn--active {
+  @apply bg-deep-espresso text-white border-deep-espresso;
+}
+
+.modal-anon-btn--inactive {
+  @apply bg-white text-deep-espresso/60 border-amber-gold/20 hover:border-amber-gold/40;
+}
+
+/* Modal Navigation Row (back + continue/submit) */
+.modal-nav-row {
+  @apply flex gap-3 mt-4;
+}
+
+.modal-nav-back {
+  @apply flex-1 px-4 py-2.5 rounded-xl border border-amber-gold/20 text-deep-espresso font-bold text-xs uppercase tracking-wider hover:bg-soft-pearl transition-all duration-200;
+}
+
+/* Modal Review Summary Card */
+.modal-summary-card {
+  @apply bg-soft-pearl/80 p-4 rounded-xl border border-amber-gold/15 space-y-2 text-sm;
+}
+
+.modal-summary-row {
+  @apply flex justify-between;
+}
+
+.modal-summary-label {
+  @apply text-deep-espresso/60;
+}
+
+/* Validation message */
+.modal-validation {
+  @apply text-xs text-red-600;
+}
+
 /* Event Detail Vertical Schedule Timeline */
 .schedule-timeline {
   @apply space-y-5 relative border-l border-amber-gold/20 pl-6 ml-2;
