@@ -61,11 +61,11 @@ const items = computed(() => {
         link: doc.link,
         price: doc.price,
         maxQuantity: doc.maxQuantity,
-        reservedCount: local?.reservedCount ?? doc.reservedCount || 0,
+        reservedCount: (local?.reservedCount ?? doc.reservedCount) || 0,
         category: mapCategory(doc.category),
         fundingType: doc.fundingType || "fixed",
-        amountRaised: local?.amountRaised ?? doc.amountRaised || 0,
-        contributorCount: local?.contributorCount ?? doc.contributorCount || 0,
+        amountRaised: (local?.amountRaised ?? doc.amountRaised) || 0,
+        contributorCount: (local?.contributorCount ?? doc.contributorCount) || 0,
         bankDetails:
           doc.fundingType === "crowdfund"
             ? {
