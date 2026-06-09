@@ -362,7 +362,7 @@ const progressPercent = (item: WishlistItem) => {
               <!-- Action Buttons -->
               <div class="flex items-center gap-3 pt-2">
                 <button
-                  v-if="activeItem.fundingType === 'crowdfund' && activeItem.price > 0 && (activeItem.amountRaised ?? 0) >= activeItem.price"
+                  v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
                   disabled
                   class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
                 >
