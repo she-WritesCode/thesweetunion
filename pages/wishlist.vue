@@ -32,10 +32,6 @@ const { data: siteSettings } = await useDyrectedGlobal("site_settings");
 
 const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
 
-if (process.env.NODE_ENV !== "production" || (import.meta as any).client) {
-  console.log("[wishlist] data:", JSON.stringify(wishlistData.value, null, 2));
-}
-
 const mapCategory = (cat: string) => {
   if (!cat) return "Other";
   if (cat === "kitchen") return "Kitchen";
@@ -138,7 +134,11 @@ const prevStep = () => {
 
 const isCrowdfundGoalReached = computed(() => {
   if (!activeItem.value) return false;
-  return activeItem.value.fundingType === "crowdfund" && activeItem.value.price > 0 && (activeItem.value.amountRaised ?? 0) >= activeItem.value.price;
+  return (
+    activeItem.value.fundingType === "crowdfund" &&
+    activeItem.value.price > 0 &&
+    (activeItem.value.amountRaised ?? 0) >= activeItem.value.price
+  );
 });
 
 const categories = computed(() => {
@@ -385,23 +385,20 @@ const progressPercent = (item: WishlistItem) => {
                   <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-500"
-                      :class="
-                        item.price > 0 && item.amountRaised >= item.price
-                          ? 'bg-emerald-600'
-                          : 'bg-amber-gold'
-                      "
+                      :class="item.price > 0 && item.amountRaised >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'"
                       :style="{ width: `${progressPercent(item)}%` }"
                     />
                   </div>
                   <p class="text-xs text-deep-espresso/60 font-body">
                     <template v-if="item.price > 0">
-                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{ item.price.toLocaleString("en-US") }}
+                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+                        item.price.toLocaleString("en-US")
+                      }}
                       raised
                     </template>
-                    <template v-else>
-                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised
-                    </template>
-                    · {{ item.contributorCount ?? 0 }} {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                    <template v-else> ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
+                    · {{ item.contributorCount ?? 0 }}
+                    {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
                   </p>
                 </div>
               </div>
@@ -463,11 +460,8 @@ const progressPercent = (item: WishlistItem) => {
 
         <!-- Step Indicator -->
         <div class="modal-step-indicator">
-          <template v-for="s in (isAnonymous ? [1, 3] : [1, 2, 3])" :key="s">
-            <div
-              class="modal-step-dot"
-              :class="modalStep >= s ? 'modal-step-dot--active' : 'modal-step-dot--inactive'"
-            >
+          <template v-for="s in isAnonymous ? [1, 3] : [1, 2, 3]" :key="s">
+            <div class="modal-step-dot" :class="modalStep >= s ? 'modal-step-dot--active' : 'modal-step-dot--inactive'">
               {{ s }}
             </div>
             <div
@@ -513,11 +507,10 @@ const progressPercent = (item: WishlistItem) => {
                 <template v-if="activeItem.price > 0">
                   ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
                     activeItem.price.toLocaleString("en-US")
-                  }} raised
+                  }}
+                  raised
                 </template>
-                <template v-else>
-                  ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised
-                </template>
+                <template v-else> ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
                 · {{ activeItem.contributorCount ?? 0 }}
                 {{ (activeItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
               </p>
@@ -531,7 +524,10 @@ const progressPercent = (item: WishlistItem) => {
                   v-for="amount in SUGGESTED_AMOUNTS"
                   :key="amount"
                   type="button"
-                  @click="selectedAmount = amount; useCustomAmount = false"
+                  @click="
+                    selectedAmount = amount;
+                    useCustomAmount = false;
+                  "
                   class="modal-amount-btn"
                   :class="
                     !useCustomAmount && selectedAmount === amount
@@ -547,11 +543,7 @@ const progressPercent = (item: WishlistItem) => {
                   type="button"
                   @click="useCustomAmount = true"
                   class="modal-amount-btn"
-                  :class="
-                    useCustomAmount
-                      ? 'modal-amount-btn--active'
-                      : 'modal-amount-btn--inactive'
-                  "
+                  :class="useCustomAmount ? 'modal-amount-btn--active' : 'modal-amount-btn--inactive'"
                 >
                   Custom
                 </button>
@@ -577,7 +569,7 @@ const progressPercent = (item: WishlistItem) => {
                 class="modal-anon-btn"
                 :class="isAnonymous ? 'modal-anon-btn--active' : 'modal-anon-btn--inactive'"
               >
-                {{ isAnonymous ? '✓ Anonymous' : 'Anonymously' }}
+                {{ isAnonymous ? "✓ Anonymous" : "Anonymously" }}
               </button>
             </div>
 
@@ -598,11 +590,7 @@ const progressPercent = (item: WishlistItem) => {
             </div>
 
             <div class="space-y-1">
-              <PhoneInput
-                v-model="guestPhone"
-                placeholder="Enter your phone number"
-                label="Phone Number"
-              />
+              <PhoneInput v-model="guestPhone" placeholder="Enter your phone number" label="Phone Number" />
             </div>
 
             <div class="space-y-1">
@@ -626,11 +614,7 @@ const progressPercent = (item: WishlistItem) => {
 
             <div class="modal-nav-row">
               <button @click="prevStep" class="modal-nav-back">← Back</button>
-              <button
-                @click="nextStep"
-                class="flex-1 btn-primary"
-                :disabled="!isContactValid || !guestName.trim()"
-              >
+              <button @click="nextStep" class="flex-1 btn-primary" :disabled="!isContactValid || !guestName.trim()">
                 Continue →
               </button>
             </div>
@@ -707,8 +691,9 @@ const progressPercent = (item: WishlistItem) => {
         <h3 class="font-heading text-2xl font-bold text-deep-espresso mb-2">Thank You So Much!</h3>
         <p class="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
           <template v-if="successItem.fundingType === 'crowdfund'">
-            You have successfully contributed <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to
-            the <strong>{{ successItem.name }}</strong
+            You have successfully contributed
+            <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to the
+            <strong>{{ successItem.name }}</strong
             >. Please ensure you complete the bank transfer using the details provided, and we will send a confirmation
             to your email.
           </template>
