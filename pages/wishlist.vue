@@ -50,29 +50,33 @@ const localItems = ref<WishlistItem[]>([]);
 const items = computed(() => {
   const visibleDocs = (wishlistData.value?.docs || []).filter((doc: any) => !doc.isHidden);
   if (visibleDocs.length > 0) {
-    return visibleDocs.map((doc: any) => ({
-      id: doc.id,
-      name: doc.name,
-      description: doc.description,
-      imageUrl: doc.image?.url || "/images/placeholder.png",
-      link: doc.link,
-      price: doc.price,
-      maxQuantity: doc.maxQuantity,
-      reservedCount: doc.reservedCount || 0,
-      category: mapCategory(doc.category),
-      fundingType: doc.fundingType || "fixed",
-      amountRaised: doc.amountRaised || 0,
-      contributorCount: doc.contributorCount || 0,
-      bankDetails:
-        doc.fundingType === "crowdfund"
-          ? {
-              bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
-              accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
-              accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
-              note: "Please transfer your contribution directly using your banking app, then confirm details below.",
-            }
-          : undefined,
-    }));
+    return visibleDocs.map((doc: any) => {
+      // Check if localItems has updated stats for this item
+      const local = localItems.value.find((li) => li.id === doc.id);
+      return {
+        id: doc.id,
+        name: doc.name,
+        description: doc.description,
+        imageUrl: doc.image?.url || "/images/placeholder.png",
+        link: doc.link,
+        price: doc.price,
+        maxQuantity: doc.maxQuantity,
+        reservedCount: local?.reservedCount ?? doc.reservedCount || 0,
+        category: mapCategory(doc.category),
+        fundingType: doc.fundingType || "fixed",
+        amountRaised: local?.amountRaised ?? doc.amountRaised || 0,
+        contributorCount: local?.contributorCount ?? doc.contributorCount || 0,
+        bankDetails:
+          doc.fundingType === "crowdfund"
+            ? {
+                bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
+                accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
+                accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
+                note: "Please transfer your contribution directly using your banking app, then confirm details below.",
+              }
+            : undefined,
+      };
+    });
   }
   return localItems.value;
 });
@@ -160,7 +164,7 @@ const handleConfirmReservation = async () => {
   try {
     const isDbItem = wishlistData.value?.docs?.some((d: any) => d.id === activeItem.value?.id);
     if (isDbItem) {
-      await $fetch("/api/reservations/create", {
+      const result: any = await $fetch("/api/reservations/create", {
         method: "POST",
         body: {
           itemId: activeItem.value.id,
@@ -173,6 +177,22 @@ const handleConfirmReservation = async () => {
         },
       });
       successContributionAmount.value = effectiveAmount.value;
+
+      // Update local items with fresh stats from backend
+      if (result?.stats) {
+        localItems.value = localItems.value.map((item) => {
+          if (item.id === activeItem.value?.id) {
+            return {
+              ...item,
+              amountRaised: result.stats.amountRaised,
+              contributorCount: result.stats.contributorCount,
+              reservedCount: result.stats.reservedCount,
+            };
+          }
+          return item;
+        });
+      }
+
       await refresh();
     } else {
       localItems.value = localItems.value.map((item) => {
