@@ -639,7 +639,7 @@ const isFormActive = computed(() => {
               <div class="rsvp-spouse-section">
                 <div class="rsvp-spouse-row">
                   <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
-                  <label for="hasSpouse" class="rsvp-spouse-label"> I am attending with my spouse / plus-one </label>
+                  <label for="hasSpouse" class="rsvp-spouse-label"> I am attending with my spouse</label>
                 </div>
                 <div v-if="hasSpouse" class="rsvp-spouse-field">
                   <label class="input-label">Spouse / Partner Name (Required)</label>
