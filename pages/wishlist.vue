@@ -279,7 +279,7 @@ const progressPercent = (item: WishlistItem) => {
               <!-- Badge Indicator -->
               <div class="absolute top-4 right-4 z-10">
                 <span
-                  v-if="activeItem.fundingType === 'crowdfund' && activeItem.price > 0 && (activeItem.amountRaised ?? 0) >= activeItem.price"
+                  v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
                   class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
                 >
                   Fund Fully Raised
