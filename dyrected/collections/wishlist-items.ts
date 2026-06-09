@@ -46,7 +46,7 @@ export const wishlistItems: CollectionConfig = {
   access: {
     read: "true",
     create: "user != null",
-    update: "user != null",
+    update: "true",
     delete: "user != null",
   },
   hooks: {
