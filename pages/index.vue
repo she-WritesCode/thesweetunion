@@ -303,7 +303,7 @@ onUnmounted(() => {
                 <p class="font-body text-sm text-white/90 leading-relaxed">
                   {{ event.rsvpTeaser.description }}
                 </p>
-                <NuxtLink :to="event.rsvpLink" class="btn-secondary w-full block"> RSVP Now </NuxtLink>
+                <NuxtLink :to="event.rsvpLink" class="btn-contrast w-full block"> RSVP Now </NuxtLink>
               </div>
             </div>
 
