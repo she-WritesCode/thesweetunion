@@ -485,7 +485,11 @@ async function sendEmail() {
 
 .acp-card-wrap {
   position: relative;
-  display: inline-block;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
 }
 
 .acp-overlay {

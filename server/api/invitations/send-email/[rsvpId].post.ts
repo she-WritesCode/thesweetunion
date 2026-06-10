@@ -59,6 +59,13 @@ export default defineEventHandler(async (event) => {
         contentType: "image/png",
         cid: "accesscard@thesweetunion",
       },
+      {
+        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        content: base64Data,
+        encoding: "base64",
+        contentType: "image/png",
+        contentDisposition: "attachment",
+      },
     ],
   });
 

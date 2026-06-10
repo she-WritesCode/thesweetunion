@@ -203,7 +203,7 @@ export function invitationEmail({
     `<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0;">
       <tr>
         <td align="center">
-          <img src="cid:accesscard@thesweetunion" alt="Your Access Card" style="max-width:320px;width:100%;border-radius:12px;border:1px solid ${BORDER};" />
+          <img src="cid:accesscard@thesweetunion" alt="Your Access Card" style="max-width:320px;width:100%;border-radius:0;border:1px solid ${BORDER};" />
         </td>
       </tr>
     </table>`,

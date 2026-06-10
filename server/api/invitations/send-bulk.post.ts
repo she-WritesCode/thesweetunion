@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   for (const rsvpId of rsvpIds) {
     try {
-      const rsvp = await client.collection("rsvp_records").findByID(rsvpId);
+      const rsvp = await client.collection("rsvp_records").findOne(rsvpId);
       if (!rsvp || !rsvp.leadPhone) {
         results.push({ id: rsvpId, success: false, error: "No phone number on record" });
         continue;
