@@ -217,7 +217,7 @@ onUnmounted(() => {
     <!-- Our Story Section -->
     <section
       id="story"
-      class="min-h-screen paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
+      class="paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
     >
       <div class="w-full max-w-6xl mx-auto flex flex-col justify-center">
         <FadeInSection>
