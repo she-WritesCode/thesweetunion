@@ -35,6 +35,7 @@ import { reservations } from "./dyrected/collections/reservations.ts";
 import { rsvpGroups } from "./dyrected/collections/rsvp-groups.ts";
 import { rsvpRecords } from "./dyrected/collections/rsvp-records.ts";
 import { events } from "./dyrected/collections/events.ts";
+import { checkIns } from "./dyrected/collections/check-ins.ts";
 
 // Globals
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
@@ -54,7 +55,7 @@ export default defineConfig({
     from: process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`,
     send: ({ to, subject, html }) => sendEmail({ to, subject, html }),
   },
-  collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events],
+  collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events, checkIns],
   globals: [siteSettings],
   admin: { branding: { logoText: "TheSweetUnion" } },
 });

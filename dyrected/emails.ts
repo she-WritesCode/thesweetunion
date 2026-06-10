@@ -185,6 +185,36 @@ export function rsvpCancelledEmail({ leadName }: { leadName: string }): string {
   );
 }
 
+// ─── Guest: Invitation (with access card) ────────────────────────────────────
+
+export function invitationEmail({
+  guestName,
+  accessCode,
+  eventNames,
+}: {
+  guestName: string;
+  accessCode: string;
+  eventNames: string[];
+}): string {
+  return layout(
+    heading(`You're invited, ${guestName}! 🎉`),
+    paragraph("We're so excited to celebrate with you. Your personal access card is below — please save it or screenshot it to show at the entrance."),
+    divider(),
+    `<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0;">
+      <tr>
+        <td align="center">
+          <img src="cid:accesscard@thesweetunion" alt="Your Access Card" style="max-width:320px;width:100%;border-radius:12px;border:1px solid ${BORDER};" />
+        </td>
+      </tr>
+    </table>`,
+    sectionLabel("Your access code"),
+    `<p style="margin:0 0 16px;font-size:18px;font-family:'Courier New',monospace;color:${TEXT};letter-spacing:2px;background:${BASE};border:1px solid ${BORDER};border-radius:6px;padding:10px 16px;display:inline-block;">${accessCode}</p>`,
+    eventNames.length ? sectionLabel("Events you're attending") + eventList(eventNames) : "",
+    divider(),
+    paragraph("Present this card (or your access code) at the entrance and it will be scanned to check you in. We cannot wait to see you!"),
+  );
+}
+
 // ─── Admin: New RSVP notification ────────────────────────────────────────────
 
 export function adminRsvpNotificationEmail({

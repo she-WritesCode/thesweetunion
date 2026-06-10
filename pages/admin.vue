@@ -2,6 +2,8 @@
 import RsvpLinkField from "~/components/admin/RsvpLinkField.vue";
 import RsvpEditLinkField from "~/components/admin/RsvpEditLinkField.vue";
 import CountField from "~/components/admin/CountField.vue";
+import CheckInScanner from "~/components/admin/CheckInScanner.vue";
+import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
 
 definePageMeta({
   layout: false,
@@ -23,11 +25,15 @@ useHead({
  */
 const adminComponents = {
   fields: {
-    // rsvp_groups collection → rsvpLink field
+    // rsvp_groups collection
     "rsvp_groups.rsvpLink": RsvpLinkField,
     "rsvp_groups.rsvpEditLink": RsvpEditLinkField,
     "rsvp_groups.confirmedCount": CountField,
     "rsvp_groups.declinedCount": CountField,
+    // check_ins collection — QR scanner panel
+    "check_ins.checkInScanner": CheckInScanner,
+    // rsvp_records collection — invitation tools
+    "rsvp_records.accessCardPreview": AccessCardPreview,
   },
 };
 </script>
