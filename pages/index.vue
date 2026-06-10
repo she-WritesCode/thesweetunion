@@ -167,7 +167,7 @@ onUnmounted(() => {
 
     <!-- Countdown Timer Section -->
     <section
-      class="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10"
+      class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -186,27 +186,27 @@ onUnmounted(() => {
           </div>
 
           <!-- Right Column: Scrapbook Photo Collage -->
-          <div class="relative h-[320px] sm:h-[400px] w-full flex items-center justify-center select-none">
+          <div class="relative h-[300px] sm:h-[400px] w-full flex items-center justify-center select-none">
             <!-- Photo 1 -->
             <div
               v-if="config.countdownPhotos[0]"
-              class="absolute left-[10%] top-[5%] w-[180px] sm:w-[220px] aspect-3/4 bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute left-[10%] top-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
               @click="setLightboxImage(config.countdownPhotos[0])"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill countdown-aspect" />
+                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
             <!-- Photo 2 -->
             <div
               v-if="config.countdownPhotos[1]"
-              class="absolute right-[10%] bottom-[5%] w-[180px] sm:w-[220px] aspect-3/4 bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute right-[10%] bottom-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
               @click="setLightboxImage(config.countdownPhotos[1])"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill countdown-aspect" />
+                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ onUnmounted(() => {
     <!-- Our Story Section -->
     <section
       id="story"
-      class="paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
+      class="paper-texture w-full flex items-center justify-center p-4 py-24 border-b border-amber-gold/10"
     >
       <div class="w-full max-w-6xl mx-auto flex flex-col justify-center">
         <FadeInSection>
@@ -242,7 +242,7 @@ onUnmounted(() => {
       <section
         v-for="(event, index) in config.events"
         :key="event.key"
-        class="min-h-screen paper-texture w-full flex items-center justify-center p-6 py-24 border-b border-amber-gold/10"
+        class="min-h-screen paper-texture w-full flex items-center justify-center p-4 py-24 border-b border-amber-gold/10"
       >
         <FadeInSection>
           <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center">
@@ -334,7 +334,7 @@ onUnmounted(() => {
     <!-- Registry Teaser Section -->
     <section
       id="wishlist"
-      class="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10"
+      class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -383,7 +383,7 @@ onUnmounted(() => {
     <!-- FAQs & Playful Couple Photo -->
     <section
       id="faqs"
-      class="min-h-screen paper-texture w-full flex items-center justify-center p-6 border-b border-amber-gold/10"
+      class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
       <FadeInSection>
         <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
