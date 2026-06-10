@@ -2,9 +2,9 @@
 
 const BASE = "#FAF7F5";
 const CARD = "#F3EDEB";
-const TEXT = "#30222A";
-const MUTED = "#6B5060";
-const ACCENT = "#8A627C";
+const TEXT = "#462137";
+const MUTED = "#865172";
+const ACCENT = "#865172";
 const BORDER = "#D9C9C4";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────

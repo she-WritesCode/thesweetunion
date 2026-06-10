@@ -1,18 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-muted-mauve: #8A627C;
+  --color-mauve-lightest: #B98EA7;
+  --color-mauve-light: #A37391;
+  --color-mauve-medium: #865172;
+  --color-mauve-dark: #653853;
+  --color-mauve-darkest: #462137;
+
+  --color-muted-mauve: var(--color-mauve-medium);
   --color-bright-gold: #D4AF37;
-  --color-burnt-orange: #B54E24;
-  --color-terracotta-peach: #E09F8C;
+  --color-burnt-orange: var(--color-mauve-dark);
+  --color-terracotta-peach: var(--color-mauve-light);
   --color-warm-alabaster: #FAF5F8;
   --color-soft-pearl: #F5EDF1;
-  --color-deep-plum-slate: #30222A;
+  --color-deep-plum-slate: var(--color-mauve-darkest);
 
   /* Legacy name mappings for compatibility with existing classes */
   --color-amber-gold: var(--color-muted-mauve);
   --color-deep-terracotta: var(--color-muted-mauve);
-  --color-burnt-sienna: #a37895;
+  --color-burnt-sienna: var(--color-mauve-light);
   --color-warm-cream: var(--color-warm-alabaster);
   --color-linen-white: var(--color-soft-pearl);
   --color-deep-espresso: var(--color-deep-plum-slate);
