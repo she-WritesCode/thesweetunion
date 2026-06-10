@@ -382,7 +382,7 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
 }
 .ci-stats__bar-fill {
   height: 100%;
-  background: #b54e24;
+  background: #8A627C;
   border-radius: 4px;
   transition: width 0.4s ease;
 }
@@ -426,7 +426,7 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
     background 150ms;
 }
 .ci-event-card:hover {
-  border-color: #b54e24;
+  border-color: #8A627C;
   background: #fdf8f6;
 }
 .ci-event-card__name {
@@ -436,7 +436,7 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
 }
 .ci-event-card__arrow {
   font-size: 1.1rem;
-  color: #b54e24;
+  color: #8A627C;
 }
 
 .ci-scanned-by {
@@ -499,7 +499,7 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
   transition: border-color 150ms;
 }
 .ci-input:focus {
-  border-color: #b54e24;
+  border-color: #8A627C;
 }
 .ci-input--mono {
   font-family: ui-monospace, monospace;
@@ -582,12 +582,12 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
   cursor: not-allowed;
 }
 .ci-btn--primary {
-  background: #b54e24;
+  background: #8A627C;
   color: #fff;
-  border-color: #b54e24;
+  border-color: #8A627C;
 }
 .ci-btn--primary:hover:not(:disabled) {
-  background: #a04520;
+  background: #6e4f63;
 }
 .ci-btn--ghost {
   background: transparent;

@@ -4,7 +4,7 @@ const BASE = "#FAF7F5";
 const CARD = "#F3EDEB";
 const TEXT = "#30222A";
 const MUTED = "#6B5060";
-const ACCENT = "#B54E24";
+const ACCENT = "#8A627C";
 const BORDER = "#D9C9C4";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────

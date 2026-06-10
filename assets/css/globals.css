@@ -2,6 +2,7 @@
 
 @theme {
   --color-muted-mauve: #8A627C;
+  --color-bright-gold: #D4AF37;
   --color-burnt-orange: #B54E24;
   --color-terracotta-peach: #E09F8C;
   --color-warm-alabaster: #FAF5F8;
@@ -10,8 +11,8 @@
 
   /* Legacy name mappings for compatibility with existing classes */
   --color-amber-gold: var(--color-muted-mauve);
-  --color-deep-terracotta: var(--color-burnt-orange);
-  --color-burnt-sienna: var(--color-terracotta-peach);
+  --color-deep-terracotta: var(--color-muted-mauve);
+  --color-burnt-sienna: #a37895;
   --color-warm-cream: var(--color-warm-alabaster);
   --color-linen-white: var(--color-soft-pearl);
   --color-deep-espresso: var(--color-deep-plum-slate);
@@ -79,7 +80,9 @@ body {
   object-fit: cover;
   object-position: center;
 }
-
+.countdown-aspect {
+  @apply aspect-square
+}
 /* Custom scrollbar matching theme */
 ::-webkit-scrollbar {
   width: 8px;
@@ -112,13 +115,13 @@ body {
 }
 
 .washi-tape-terracotta {
-  background-color: rgba(181, 78, 36, 0.35);
+  background-color: rgba(138, 98, 124, 0.35);
   border-left-color: rgba(243, 237, 235, 0.3);
   border-right-color: rgba(243, 237, 235, 0.3);
 }
 
 .washi-tape-gold {
-  background-color: rgba(154, 123, 142, 0.35);
+  background-color: rgba(212, 175, 55, 0.35);
   border-left-color: rgba(243, 237, 235, 0.3);
   border-right-color: rgba(243, 237, 235, 0.3);
 }
@@ -219,7 +222,7 @@ body {
 }
 
 .btn-secondary {
-  @apply px-6 py-2.5 rounded-xl bg-burnt-orange text-white font-bold text-xs uppercase tracking-wider hover:bg-deep-terracotta transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer text-center inline-block;
+  @apply px-6 py-2.5 rounded-xl bg-bright-gold text-deep-espresso font-bold text-xs uppercase tracking-wider hover:bg-deep-terracotta hover:text-white transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none cursor-pointer text-center inline-block;
 }
 
 .btn-contrast {
@@ -234,25 +237,25 @@ body {
   --card-foreground: 325 17% 16%;
   --popover: 324 17% 97%;
   --popover-foreground: 325 17% 16%;
-  --primary: 17 67% 43%; /* Burnt Orange as primary action brand */
+  --primary: 321 17% 46%; /* Muted Mauve as primary action brand */
   --primary-foreground: 324 17% 97%;
   --secondary: 320 20% 95%;
   --secondary-foreground: 325 17% 16%;
   --muted: 320 20% 95%;
   --muted-foreground: 321 10% 46%;
   --accent: 320 20% 95%;
-  --accent-foreground: 17 67% 43%;
+  --accent-foreground: 321 17% 46%;
   --border: 321 10% 88%;
   --input: 321 10% 88%;
-  --ring: 17 67% 43% / 0.15;
+  --ring: 321 17% 46% / 0.15;
   --sidebar-background: 320 20% 95%;
   --sidebar-foreground: 325 17% 16%;
-  --sidebar-primary: 17 67% 43%;
+  --sidebar-primary: 321 17% 46%;
   --sidebar-primary-foreground: 324 17% 97%;
   --sidebar-accent: 320 20% 90%;
-  --sidebar-accent-foreground: 17 67% 43%;
+  --sidebar-accent-foreground: 321 17% 46%;
   --sidebar-border: 321 10% 85%;
-  --sidebar-ring: 17 67% 43%;
+  --sidebar-ring: 321 17% 46%;
   
   /* Update font families to match theme */
   --font-sans: "Jost", sans-serif;

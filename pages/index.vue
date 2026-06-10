@@ -195,7 +195,7 @@ onUnmounted(() => {
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill" />
+                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill countdown-aspect" />
               </div>
             </div>
             <!-- Photo 2 -->
@@ -206,7 +206,7 @@ onUnmounted(() => {
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill" />
+                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill countdown-aspect" />
               </div>
             </div>
           </div>
@@ -294,9 +294,7 @@ onUnmounted(() => {
                 v-if="event.collectsRsvp !== false && event.rsvpTeaser && event.rsvpLink"
                 class="p-7 sm:p-8 rounded-2xl text-center space-y-4! bg-deep-terracotta border border-deep-terracotta"
               >
-                <p class="font-heading text-xs font-semibold text-white tracking-widest uppercase">
-                  You're invited
-                </p>
+                <p class="font-heading text-xs font-semibold text-white tracking-widest uppercase">You're invited</p>
                 <h4 class="font-display-cinzel text-xl sm:text-2xl font-bold text-white leading-snug">
                   {{ event.rsvpTeaser.title }}
                 </h4>

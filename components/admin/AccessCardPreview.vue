@@ -270,7 +270,7 @@ async function sendEmail() {
           <div class="acp-divider">
             <span class="acp-divider__line" />
             <svg class="acp-divider__diamond" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#8A627C" opacity="0.5" />
+              <path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#8a627c" opacity="0.5" />
             </svg>
             <span class="acp-divider__line" />
           </div>
@@ -585,13 +585,13 @@ async function sendEmail() {
 .acp-admits__pill {
   display: inline-block;
   padding: 3px 10px;
-  border: 1px solid #b54e24;
+  border: 1px solid #8A627C;
   border-radius: 20px;
   font-family: "Jost", sans-serif;
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: #b54e24;
+  color: #8A627C;
   text-transform: uppercase;
 }
 
@@ -754,13 +754,13 @@ async function sendEmail() {
 }
 
 .acp-btn--email {
-  background: #b54e24;
+  background: #8A627C;
   color: #fff;
-  border-color: #b54e24;
+  border-color: #8A627C;
 }
 .acp-btn--email:hover:not(:disabled) {
-  background: #9a3f1a;
-  border-color: #9a3f1a;
+  background: #6e4f63;
+  border-color: #6e4f63;
   color: #fff;
 }
 
