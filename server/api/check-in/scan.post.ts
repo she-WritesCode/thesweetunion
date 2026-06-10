@@ -22,8 +22,9 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  // Look up the RSVP record
-  const rsvp = await findOne(client, "rsvp_records", rsvpRecordId);
+  // Look up the RSVP record — depth:1 populates group inline
+  const rsvpRes = await client.collection("rsvp_records").find({ where: { id: { equals: rsvpRecordId } }, limit: 1, depth: 1 });
+  const rsvp = rsvpRes.docs?.[0] ?? null;
   if (!rsvp) {
     throw createError({ statusCode: 404, message: "Invalid QR code — guest not found." });
   }
@@ -59,29 +60,14 @@ export default defineEventHandler(async (event) => {
       : rsvp.leadName;
   const partySize = rsvp.hasSpouse ? 2 : 1;
 
-  // Get table label from seat assignment if seating has been implemented
-  let tableLabel = "";
-  if (rsvp.seatAssignment) {
-    try {
-      const assignmentId =
-        typeof rsvp.seatAssignment === "object" ? rsvp.seatAssignment.id : rsvp.seatAssignment;
-      const assignment = await findOne(client, "seat_assignments", assignmentId);
-      if (assignment?.table) {
-        const tableId = typeof assignment.table === "object" ? assignment.table.id : assignment.table;
-        const table = await findOne(client, "tables", tableId);
-        tableLabel = table?.label || "";
-      }
-    } catch {
-      // Seating not yet implemented — skip gracefully
-    }
-  }
+  // group is populated via depth:1
+  const groupName = typeof rsvp.group === "object" ? (rsvp.group?.name ?? "") : "";
 
   // Create the check-in record
   const checkIn = await client.collection("check_ins").create({
     rsvpRecord: rsvpRecordId,
     event: eventId || null,
     guestName,
-    tableLabel,
     partySize,
     scannedBy: scannedBy || "",
   });
@@ -97,12 +83,12 @@ export default defineEventHandler(async (event) => {
     checkIn,
     guest: {
       id: rsvp.id,
-      name: guestName,
+      leadName: rsvp.leadName,
+      spouseName: rsvp.hasSpouse ? rsvp.spouseName : null,
+      hasSpouse: rsvp.hasSpouse ?? false,
       partySize,
-      tableLabel,
+      groupName,
     },
-    welcomeMessage: tableLabel
-      ? `Welcome, ${guestName}! You're at ${tableLabel}. 🎉`
-      : `Welcome, ${guestName}! 🎉`,
+    welcomeMessage: `Welcome, ${guestName}! 🎉`,
   };
 });

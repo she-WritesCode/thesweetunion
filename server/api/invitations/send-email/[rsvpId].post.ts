@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
   const result = await client.collection("rsvp_records").find({
     where: { id: { equals: rsvpId } },
     limit: 1,
+    depth: 1, // populates selectedEvents inline
   });
   const rsvp = result.docs?.[0];
   if (!rsvp) throw createError({ statusCode: 404, message: "RSVP record not found" });
@@ -29,20 +30,9 @@ export default defineEventHandler(async (event) => {
       ? `${rsvp.leadName} & ${rsvp.spouseName}`
       : rsvp.leadName;
 
-  // Resolve event names from selected event IDs
-  const selectedEventIds: string[] = Array.isArray(rsvp.selectedEvents)
-    ? rsvp.selectedEvents.map((e: any) => (typeof e === "object" ? e.id : e))
+  const eventNames: string[] = Array.isArray(rsvp.selectedEvents)
+    ? rsvp.selectedEvents.map((e: any) => (typeof e === "object" ? e.name : e)).filter(Boolean)
     : [];
-
-  let eventNames: string[] = [];
-  if (selectedEventIds.length) {
-    try {
-      const eventsRes = await client.collection("events").find({ limit: 20 });
-      eventNames = (eventsRes.docs ?? [])
-        .filter((e: any) => selectedEventIds.includes(e.id))
-        .map((e: any) => e.name as string);
-    } catch {}
-  }
 
   const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 

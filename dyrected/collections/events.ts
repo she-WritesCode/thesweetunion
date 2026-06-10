@@ -8,10 +8,16 @@ export const events: CollectionConfig = {
   admin: {
     useAsTitle: "name",
     defaultColumns: ["order", "name", "date", "venueName", "dressCode", "collectsRsvp"],
-    group: "Content",
+    group: "RSVP",
   },
   fields: [
-    { name: "order", type: "number", label: "Display Order", defaultValue: 0, admin: { description: "Lower numbers appear first. e.g. 1 = first, 2 = second." } },
+    {
+      name: "order",
+      type: "number",
+      label: "Display Order",
+      defaultValue: 0,
+      admin: { description: "Lower numbers appear first. e.g. 1 = first, 2 = second." },
+    },
     { name: "name", type: "text", label: "Event Name", required: true },
     { name: "date", type: "datetime", label: "Date & Time", required: true },
     { name: "venueName", type: "text", label: "Venue Name", required: true },

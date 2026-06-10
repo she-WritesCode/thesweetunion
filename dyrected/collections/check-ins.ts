@@ -6,8 +6,8 @@ export const checkIns: CollectionConfig = {
   labels: { singular: "Check-in", plural: "Check-ins" },
   admin: {
     useAsTitle: "guestName",
-    defaultColumns: ["guestName", "tableLabel", "partySize", "event", "scannedBy", "createdAt"],
-    group: "Check-in",
+    defaultColumns: ["guestName", "partySize", "event", "scannedBy", "createdAt"],
+    group: "RSVP",
   },
   fields: [
     // ── Scanner tab ───────────────────────────────────────────────────────────
@@ -46,12 +46,6 @@ export const checkIns: CollectionConfig = {
       name: "guestName",
       type: "text",
       label: "Guest Name",
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "tableLabel",
-      type: "text",
-      label: "Table",
       admin: { tab: "Record", readOnly: true, width: "50%" },
     },
     {

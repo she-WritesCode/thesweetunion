@@ -114,9 +114,15 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,     // server-side private key
   });
 
+  // depth controls relationship population:
+  //   depth: 0 → raw IDs ("g5r53e")
+  //   depth: 1 → populated objects ({ id, name, slug, ... })   ← USE THIS BY DEFAULT
+  //   depth: 2 → nested population (e.g. event.photo → full Cloudinary media object)
+  // Default when omitted is depth: 1. Always set explicitly to be clear.
   const records = await client.collection("slug").find({
     where: { field: { equals: value } },
     limit: 100,
+    depth: 1,
   });
 
   // findByID does NOT exist in the SDK — fetch a single record like this:
@@ -125,6 +131,11 @@ export default defineEventHandler(async (event) => {
 
   const created = await client.collection("slug").create({ ...data });
   const updated = await client.collection("slug").update(id, { ...data });
+
+  // Boolean WHERE filters fail with "operator does not exist: text = boolean"
+  // Fetch all and filter in JS instead:
+  const all = await client.collection("slug").find({ limit: 1000 });
+  const filtered = all.docs.filter((r: any) => r.boolField === true || r.boolField === "true");
 
   return { success: true };
 });
@@ -140,12 +151,27 @@ Components are Vue 3 files that render inside specific fields in DyrectedAdmin. 
 - `context.siblingData` — all field values of the current record (does NOT include `id`)
 - `context.user` — current logged-in user
 
-The record `id` is not in `siblingData`. Read it from the URL hash — DyrectedAdmin uses hash routing, so `window.location.pathname` is always `/admin`:
+The record `id` is not in `siblingData`. DyrectedAdmin URL format: `/admin/#/collections/<slug>/<id>` — the ID is in the hash.
+
+**Important:** `computed()` does not react to `window.location` changes (not a Vue reactive dep). Use a `ref` + event listeners instead. DyrectedAdmin uses React Router which calls `history.pushState` — must patch it to detect navigation:
+
 ```typescript
-const recordId = computed(() => {
-  const segments = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const id = segments.at(-1);
-  return id && id !== "create" ? id : undefined;
+const SKIP = new Set(["admin", "create", "collections", "globals"]);
+function readIdFromUrl() {
+  const hashId = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).at(-1);
+  return hashId && !SKIP.has(hashId) ? hashId : undefined;
+}
+const recordId = ref<string | undefined>(readIdFromUrl());
+
+onMounted(() => {
+  const update = () => { recordId.value = readIdFromUrl(); };
+  const origPush = history.pushState.bind(history);
+  history.pushState = (...args) => { origPush(...args); update(); };
+  window.addEventListener("hashchange", update);
+  onUnmounted(() => {
+    history.pushState = origPush;
+    window.removeEventListener("hashchange", update);
+  });
 });
 ```
 

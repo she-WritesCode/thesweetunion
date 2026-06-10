@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 
 const props = defineProps<{
   value?: any;
@@ -28,12 +28,22 @@ const coupleName = ref("Adun & Uche");
 const hashtag = ref("#TheSweetUnion");
 const weddingDateText = ref("");
 
-// id is not in siblingData — read from hash (/admin#/collections/rsvp_records/<id>)
-const rsvpId = computed(() => {
-  const segments = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const id = segments.at(-1);
-  return id && id !== "create" ? id : undefined;
-});
+// id is not in siblingData — extracted from the URL and kept reactive via event listeners.
+// Dyrected admin uses React Router (History API), so window.location.hash never changes;
+// we must listen to pushState/replaceState and popstate to detect navigation.
+const ROUTE_SEGMENTS = new Set(["admin", "create", "collections", "globals"]);
+
+function readIdFromUrl(): string | undefined {
+  // Try pathname first (React Router / History API)
+  const pathId = window.location.pathname.split("/").filter(Boolean).at(-1);
+  if (pathId && !ROUTE_SEGMENTS.has(pathId)) return pathId;
+  // Fall back to hash routing
+  const hashId = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).at(-1);
+  if (hashId && !ROUTE_SEGMENTS.has(hashId)) return hashId;
+  return undefined;
+}
+
+const rsvpId = ref<string | undefined>(readIdFromUrl());
 
 const siblingData = computed(() => props.context?.siblingData ?? {});
 const leadName = computed(() => (siblingData.value.leadName as string) ?? "");
@@ -116,8 +126,29 @@ async function renderQR() {
   });
 }
 
+function handleNavigation() {
+  rsvpId.value = readIdFromUrl();
+}
+
+// Patch history API — React Router uses pushState, not hashchange
+let origPushState: typeof history.pushState;
+let origReplaceState: typeof history.replaceState;
+
 onMounted(async () => {
+  origPushState = history.pushState.bind(history);
+  origReplaceState = history.replaceState.bind(history);
+  history.pushState = (...args) => { origPushState(...args); handleNavigation(); };
+  history.replaceState = (...args) => { origReplaceState(...args); handleNavigation(); };
+  window.addEventListener("popstate", handleNavigation);
+  window.addEventListener("hashchange", handleNavigation);
   await loadCardData();
+});
+
+onUnmounted(() => {
+  if (origPushState) history.pushState = origPushState;
+  if (origReplaceState) history.replaceState = origReplaceState;
+  window.removeEventListener("popstate", handleNavigation);
+  window.removeEventListener("hashchange", handleNavigation);
 });
 
 watch(rsvpId, loadCardData);
@@ -247,6 +278,10 @@ async function sendEmail() {
           <!-- ── Body ───────────────────────────────────────── -->
           <div class="acp-body">
             <p class="acp-guest">{{ guestName }}</p>
+
+            <div v-if="hasSpouse" class="acp-admits">
+              <span class="acp-admits__pill">ADMITS 2</span>
+            </div>
 
             <p v-if="groupName" class="acp-group">{{ groupName }}</p>
 
@@ -535,12 +570,29 @@ async function sendEmail() {
 
 .acp-guest {
   margin: 0;
-  font-family: "Cormorant Upright", serif;
+  font-family: "Lora", serif;
   font-size: 1.5rem;
   font-weight: 500;
   color: #30222a;
   letter-spacing: 0.01em;
   line-height: 1.2;
+}
+
+.acp-admits {
+  margin: 6px 0 2px;
+}
+
+.acp-admits__pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 1px solid #b54e24;
+  border-radius: 20px;
+  font-family: "Jost", sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #b54e24;
+  text-transform: uppercase;
 }
 
 .acp-group {

@@ -8,22 +8,19 @@ export default defineEventHandler(async () => {
     apiKey: config.dyrectedApiKey,
   });
 
-  const allRsvps = await client.collection("rsvp_records").find({
-    where: { attending: { equals: true } },
-    limit: 1000,
-  });
+  const allRsvps = await client.collection("rsvp_records").find({ limit: 1000, depth: 1 });
+  const attending = allRsvps.docs.filter((r: any) => r.attending === true || r.attending === "true");
 
-  const manifest = allRsvps.docs.map((r: any) => ({
+  const manifest = attending.map((r: any) => ({
     id: r.id,
     leadName: r.leadName,
     spouseName: r.spouseName,
     hasSpouse: r.hasSpouse,
     partySize: r.hasSpouse ? 2 : 1,
-    groupId: typeof r.group === "object" ? r.group.id : r.group,
-    groupName: typeof r.group === "object" ? r.group.name : null,
+    groupId: r.group?.id ?? r.group,
+    groupName: r.group?.name ?? null,
     checkedIn: r.checkedIn || false,
-    checkInId: r.checkIn ? (typeof r.checkIn === "object" ? r.checkIn.id : r.checkIn) : null,
-    tableLabel: null, // populated once seating is implemented
+    checkInId: r.checkIn?.id ?? r.checkIn ?? null,
   }));
 
   return { manifest, total: manifest.length };

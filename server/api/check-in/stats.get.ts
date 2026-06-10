@@ -9,14 +9,13 @@ export default defineEventHandler(async () => {
   });
 
   const [allRsvps, allCheckIns] = await Promise.all([
-    client.collection("rsvp_records").find({
-      where: { attending: { equals: true } },
-      limit: 1000,
-    }),
+    client.collection("rsvp_records").find({ limit: 1000 }),
     client.collection("check_ins").find({ limit: 1000 }),
   ]);
 
-  const totalExpected = allRsvps.docs.reduce(
+  const attendingRsvps = allRsvps.docs.filter((r: any) => r.attending === true || r.attending === "true");
+
+  const totalExpected = attendingRsvps.reduce(
     (n: number, r: any) => n + (r.hasSpouse ? 2 : 1),
     0
   );

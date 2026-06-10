@@ -34,34 +34,9 @@ export default defineEventHandler(async (event) => {
     color: { dark: "#30222A", light: "#FFFFFF" },
   });
 
-  // Get table label if seating is set up
-  let tableLabel = "";
-  if (rsvp.seatAssignment) {
-    try {
-      const assignmentId =
-        typeof rsvp.seatAssignment === "object" ? rsvp.seatAssignment.id : rsvp.seatAssignment;
-      const assignmentRes = await client.collection("seat_assignments").find({
-        where: { id: { equals: assignmentId } },
-        limit: 1,
-      });
-      const assignment = assignmentRes.docs?.[0];
-      if (assignment?.table) {
-        const tableId = typeof assignment.table === "object" ? assignment.table.id : assignment.table;
-        const tableRes = await client.collection("tables").find({
-          where: { id: { equals: tableId } },
-          limit: 1,
-        });
-        tableLabel = tableRes.docs?.[0]?.label || "";
-      }
-    } catch {
-      // Seating not yet implemented
-    }
-  }
-
   return {
     rsvpId,
     guestName,
-    tableLabel,
     qrDataUrl,
     rsvp: {
       id: rsvp.id,
