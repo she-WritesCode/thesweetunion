@@ -122,7 +122,7 @@ async function renderQR() {
   await QRCode.toCanvas(qrCanvas.value, rsvpId.value, {
     width: 130,
     margin: 1,
-    color: { dark: "#30222A", light: "#F5EDF1" },
+    color: { dark: "#8A627C", light: "#F5EDF1" },
   });
 }
 
@@ -239,27 +239,27 @@ async function sendEmail() {
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              <path d="M80 18 C65 10, 48 8, 30 14" stroke="#E09F8C" stroke-width="1" stroke-linecap="round" />
-              <path d="M80 18 C95 10, 112 8, 130 14" stroke="#E09F8C" stroke-width="1" stroke-linecap="round" />
-              <path d="M50 14 C46 8, 40 6, 34 10" stroke="#E09F8C" stroke-width="0.8" stroke-linecap="round" />
-              <path d="M110 14 C114 8, 120 6, 126 10" stroke="#E09F8C" stroke-width="0.8" stroke-linecap="round" />
+              <path d="M80 18 C65 10, 48 8, 30 14" stroke="#D4AF37" stroke-width="1" stroke-linecap="round" />
+              <path d="M80 18 C95 10, 112 8, 130 14" stroke="#D4AF37" stroke-width="1" stroke-linecap="round" />
+              <path d="M50 14 C46 8, 40 6, 34 10" stroke="#D4AF37" stroke-width="0.8" stroke-linecap="round" />
+              <path d="M110 14 C114 8, 120 6, 126 10" stroke="#D4AF37" stroke-width="0.8" stroke-linecap="round" />
               <path
                 d="M60 12 C57 6, 53 4, 48 7"
-                stroke="#9A7B8E"
+                stroke="#D4AF37"
                 stroke-width="0.7"
                 stroke-linecap="round"
                 opacity="0.7"
               />
               <path
                 d="M100 12 C103 6, 107 4, 112 7"
-                stroke="#9A7B8E"
+                stroke="#D4AF37"
                 stroke-width="0.7"
                 stroke-linecap="round"
                 opacity="0.7"
               />
-              <circle cx="80" cy="18" r="1.5" fill="#E09F8C" opacity="0.8" />
-              <circle cx="34" cy="10" r="1" fill="#9A7B8E" opacity="0.6" />
-              <circle cx="126" cy="10" r="1" fill="#9A7B8E" opacity="0.6" />
+              <circle cx="80" cy="18" r="1.5" fill="#D4AF37" opacity="0.8" />
+              <circle cx="34" cy="10" r="1" fill="#D4AF37" opacity="0.6" />
+              <circle cx="126" cy="10" r="1" fill="#D4AF37" opacity="0.6" />
             </svg>
 
             <p class="acp-couple">{{ coupleName }}</p>
@@ -270,7 +270,7 @@ async function sendEmail() {
           <div class="acp-divider">
             <span class="acp-divider__line" />
             <svg class="acp-divider__diamond" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#8a627c" opacity="0.5" />
+              <path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#D4AF37" opacity="0.5" />
             </svg>
             <span class="acp-divider__line" />
           </div>
@@ -501,7 +501,7 @@ async function sendEmail() {
 
 /* ── Header ───────────────────────────────────────────────────────── */
 .acp-header {
-  background: #30222a;
+  background: #8A627C;
   padding: 20px 24px 16px;
   text-align: center;
   display: flex;
@@ -522,7 +522,7 @@ async function sendEmail() {
   font-family: "Cinzel Decorative", serif;
   font-size: 1.05rem;
   font-weight: 400;
-  color: #e09f8c;
+  color: #D4AF37;
   letter-spacing: 0.04em;
   line-height: 1.3;
 }
@@ -532,7 +532,7 @@ async function sendEmail() {
   font-family: "Jost", sans-serif;
   font-size: 0.65rem;
   font-weight: 500;
-  color: #8a627c;
+  color: #D4AF37;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -585,13 +585,13 @@ async function sendEmail() {
 .acp-admits__pill {
   display: inline-block;
   padding: 3px 10px;
-  border: 1px solid #8A627C;
+  border: 1px solid #D4AF37;
   border-radius: 20px;
   font-family: "Jost", sans-serif;
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: #8A627C;
+  color: #D4AF37;
   text-transform: uppercase;
 }
 
