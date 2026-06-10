@@ -292,18 +292,18 @@ onUnmounted(() => {
               <!-- RSVP invitation prompt -->
               <div
                 v-if="event.collectsRsvp !== false && event.rsvpTeaser && event.rsvpLink"
-                class="linen-card p-7 sm:p-8 rounded-2xl border border-amber-gold/20 bg-linen-white/60 text-center space-y-4!"
+                class="p-7 sm:p-8 rounded-2xl text-center space-y-4! bg-deep-terracotta border border-deep-terracotta"
               >
-                <p class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase">
+                <p class="font-heading text-xs font-semibold text-white tracking-widest uppercase">
                   You're invited
                 </p>
-                <h4 class="font-display-cinzel text-xl sm:text-2xl font-bold text-deep-espresso leading-snug">
+                <h4 class="font-display-cinzel text-xl sm:text-2xl font-bold text-white leading-snug">
                   {{ event.rsvpTeaser.title }}
                 </h4>
-                <p class="font-body text-sm text-deep-espresso/70 leading-relaxed">
+                <p class="font-body text-sm text-white/90 leading-relaxed">
                   {{ event.rsvpTeaser.description }}
                 </p>
-                <NuxtLink :to="event.rsvpLink" class="btn-primary"> RSVP Now </NuxtLink>
+                <NuxtLink :to="event.rsvpLink" class="btn-secondary w-full block"> RSVP Now </NuxtLink>
               </div>
             </div>
 
