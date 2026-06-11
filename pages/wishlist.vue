@@ -220,7 +220,8 @@ const handleConfirmReservation = async () => {
     activeItem.value = null;
     modalStep.value = 1;
   } catch (err: any) {
-    alert(err.message || "An error occurred while confirming reservation.");
+    const msg = err.data?.message || err.message || "An error occurred while confirming reservation.";
+    alert(msg);
   }
 };
 
@@ -627,20 +628,7 @@ const progressPercent = (item: WishlistItem) => {
                 />
               </div>
 
-              <!-- Anonymous Toggle for Fixed Gifts (since it is step 1 for them) -->
-              <div
-                v-if="activeItem.fundingType !== 'crowdfund'"
-                class="md:col-span-2 flex items-center justify-center pt-2"
-              >
-                <button
-                  type="button"
-                  @click="isAnonymous = !isAnonymous"
-                  class="modal-anon-btn"
-                  :class="isAnonymous ? 'modal-anon-btn--active' : 'modal-anon-btn--inactive'"
-                >
-                  {{ isAnonymous ? "✓ Gift Anonymously" : "Gift Anonymously" }}
-                </button>
-              </div>
+
             </div>
 
             <p v-if="!isContactValid" class="modal-validation text-center">

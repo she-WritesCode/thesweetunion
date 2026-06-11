@@ -71,14 +71,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  const isCrowdfund = item.fundingType === "crowdfund";
+  const effectiveAnonymous = !!isAnonymous && isCrowdfund;
+
   // Create the reservation record
   const reservation = await client.collection("reservations").create({
     item: itemId,
-    guestName: isAnonymous ? "Anonymous" : guestName,
+    guestName: effectiveAnonymous ? "Anonymous" : guestName,
     guestEmail: guestEmail || "",
     guestPhone: guestPhone || "",
     message: message || "",
-    contributionAmount: item.fundingType === "crowdfund" ? contributionAmount : undefined,
+    contributionAmount: isCrowdfund ? contributionAmount : undefined,
     reservedAt: new Date().toISOString(),
   });
 
@@ -88,7 +91,7 @@ export default defineEventHandler(async (event) => {
   // Send email if guest provided an email address
   if (guestEmail && guestEmail.trim() !== "") {
     try {
-      if (item.fundingType === "crowdfund") {
+      if (isCrowdfund) {
         // Fetch site settings global for bank details
         let siteSettings: any = null;
         try {
@@ -105,7 +108,7 @@ export default defineEventHandler(async (event) => {
           to: guestEmail,
           subject: `Thank you for contributing to our ${item.name}! 💖`,
           html: wishlistCrowdfundConfirmationEmail({
-            guestName: isAnonymous ? "Anonymous" : guestName,
+            guestName: effectiveAnonymous ? "Anonymous" : guestName,
             itemName: item.name,
             contributionAmount,
             bankName,
@@ -118,7 +121,7 @@ export default defineEventHandler(async (event) => {
           to: guestEmail,
           subject: `Thank you for your registry gift: ${item.name}! 🎁`,
           html: wishlistFixedConfirmationEmail({
-            guestName: isAnonymous ? "Anonymous" : guestName,
+            guestName: guestName, // Fixed gifts are never anonymous
             itemName: item.name,
             itemLink: item.link,
           }),
@@ -137,14 +140,14 @@ export default defineEventHandler(async (event) => {
       const appUrl: string = (config.public as any).appUrl || "http://localhost:3000";
       sendEmail({
         to: adminEmails.join(","),
-        subject: `New Registry ${item.fundingType === 'crowdfund' ? 'Contribution' : 'Reservation'}: ${isAnonymous ? 'Anonymous' : guestName} — ${item.name}`,
+        subject: `New Registry ${isCrowdfund ? 'Contribution' : 'Reservation'}: ${effectiveAnonymous ? 'Anonymous' : guestName} — ${item.name}`,
         html: adminWishlistNotificationEmail({
-          guestName: isAnonymous ? "Anonymous" : guestName,
+          guestName: effectiveAnonymous ? "Anonymous" : guestName,
           guestEmail: guestEmail || undefined,
           guestPhone: guestPhone || undefined,
           itemName: item.name,
           fundingType: item.fundingType,
-          contributionAmount: item.fundingType === "crowdfund" ? contributionAmount : undefined,
+          contributionAmount: isCrowdfund ? contributionAmount : undefined,
           message: message || undefined,
           dashboardLink: `${appUrl}/admin`,
         }),
