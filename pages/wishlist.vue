@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
 import PhoneInput from "~/components/PhoneInput.vue";
 
@@ -29,6 +29,14 @@ interface WishlistItem {
 
 const { data: wishlistData, refresh } = await useDyrectedCollection("wishlist_items", { limit: 100 });
 const { data: siteSettings } = await useDyrectedGlobal("site_settings");
+
+onMounted(async () => {
+  try {
+    await refresh();
+  } catch (e) {
+    console.error("Failed to refresh wishlist items on mount:", e);
+  }
+});
 
 const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
 
@@ -188,22 +196,18 @@ const handleConfirmReservation = async () => {
       successContributionAmount.value = effectiveAmount.value;
 
       // Update local items with fresh stats from backend
-      if (result?.stats) {
-        localItems.value = localItems.value.map((item) => {
-          if (item.id === activeItem.value?.id) {
-            return {
-              ...item,
-              amountRaised: result.stats.amountRaised,
-              contributorCount: result.stats.contributorCount,
-              reservedCount: result.stats.reservedCount,
-            };
-          }
-          return item;
-        });
+      if (result?.stats && wishlistData.value?.docs) {
+        const docIndex = wishlistData.value.docs.findIndex((d: any) => d.id === activeItem.value?.id);
+        if (docIndex !== -1) {
+          wishlistData.value.docs[docIndex].amountRaised = result.stats.amountRaised;
+          wishlistData.value.docs[docIndex].contributorCount = result.stats.contributorCount;
+          wishlistData.value.docs[docIndex].reservedCount = result.stats.reservedCount;
+        }
       }
 
       await refresh();
     } else {
+      // Fallback local update if not database connected
       localItems.value = localItems.value.map((item) => {
         if (item.id === activeItem.value?.id && item.reservedCount < item.maxQuantity) {
           return { ...item, reservedCount: item.reservedCount + 1 };
