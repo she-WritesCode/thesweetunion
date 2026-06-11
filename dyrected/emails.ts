@@ -105,6 +105,7 @@ export function rsvpConfirmationEmail({
   spouseName,
   eventNames,
   editLink,
+  wishlistLink,
 }: {
   leadName: string;
   attending: boolean;
@@ -112,6 +113,7 @@ export function rsvpConfirmationEmail({
   spouseName?: string;
   eventNames: string[];
   editLink: string;
+  wishlistLink?: string;
 }): string {
   if (!attending) {
     return layout(
@@ -138,6 +140,16 @@ export function rsvpConfirmationEmail({
       "Your personal invitation card will be sent closer to the wedding date. Need to make a change? Use the link below — it's your unique edit link, keep it safe.",
     ),
     ctaButton("Edit My RSVP", editLink),
+    attending && wishlistLink
+      ? `${divider()}
+         <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Our Registry</p>
+         <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+           Your love, presence, and prayers are our greatest gifts. However, if you'd like to help us bless our new home as we begin our life together, we have curated a wishlist of items we need.
+         </p>
+         <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
+           <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
+         </div>`
+      : ""
   );
 }
 
@@ -150,6 +162,7 @@ export function rsvpUpdatedEmail({
   spouseName,
   eventNames,
   editLink,
+  wishlistLink,
 }: {
   leadName: string;
   attending: boolean;
@@ -157,6 +170,7 @@ export function rsvpUpdatedEmail({
   spouseName?: string;
   eventNames: string[];
   editLink: string;
+  wishlistLink?: string;
 }): string {
   const partyLine = attending ? (hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance") : "Declined";
 
@@ -169,6 +183,16 @@ export function rsvpUpdatedEmail({
     divider(),
     paragraph("Need to change something again? Use your edit link below."),
     ctaButton("Edit My RSVP", editLink),
+    attending && wishlistLink
+      ? `${divider()}
+         <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Our Registry</p>
+         <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+           Your love, presence, and prayers are our greatest gifts. However, if you'd like to help us bless our new home as we begin our life together, we have curated a wishlist of items we need.
+         </p>
+         <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
+           <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
+         </div>`
+      : ""
   );
 }
 
@@ -259,3 +283,117 @@ export function adminRsvpNotificationEmail({
     ctaButton("View in Dashboard", dashboardLink),
   );
 }
+
+// ─── Guest: Wishlist Fixed Gift Confirmation ───────────────────────────
+
+export function wishlistFixedConfirmationEmail({
+  guestName,
+  itemName,
+  itemLink,
+}: {
+  guestName: string;
+  itemName: string;
+  itemLink?: string;
+}): string {
+  const bodyParts = [
+    heading("Thank you so much! 🎁"),
+    paragraph(`Hi ${guestName}, we are so incredibly grateful for your love and support. This email confirms that you've reserved the following registry item for our new home:`),
+    divider(),
+    table(
+      row("Gift Item", itemName),
+      row("Status", "Reserved & Committed")
+    ),
+    divider(),
+    heading("Drop-off & Delivery"),
+    paragraph("Since we are all family and friends here, you can bring this gift with you to the wedding, drop it off with us, or coordinate with Uche or Adun directly. Let us know what works best for you!"),
+  ];
+
+  if (itemLink) {
+    bodyParts.push(
+      paragraph("If you haven't purchased the item yet from the store, you can visit the store page using the link below:"),
+      ctaButton("Buy from Store ↗", itemLink)
+    );
+  }
+
+  return layout(...bodyParts);
+}
+
+// ─── Guest: Wishlist Crowdfund Confirmation ───────────────────────────
+
+export function wishlistCrowdfundConfirmationEmail({
+  guestName,
+  itemName,
+  contributionAmount,
+  bankName,
+  accountNumber,
+  accountName,
+}: {
+  guestName: string;
+  itemName: string;
+  contributionAmount: number;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}): string {
+  return layout(
+    heading("Thank you for your contribution! 💖"),
+    paragraph(`Hi ${guestName}, thank you so much for contributing to our cash fund. Your support means the world to us as we begin our life together.`),
+    divider(),
+    table(
+      row("Fund", itemName),
+      row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`),
+    ),
+    divider(),
+    heading("Bank Transfer Details"),
+    paragraph("In case you need them for reference, here are our bank details:"),
+    table(
+      row("Bank", bankName),
+      row("Account Number", accountNumber),
+      row("Account Name", accountName)
+    ),
+    paragraph("We will look out for the transfer on our end. Thank you so much again!")
+  );
+}
+
+// ─── Admin: New Registry Contribution / Reservation Notification ──────
+
+export function adminWishlistNotificationEmail({
+  guestName,
+  guestEmail,
+  guestPhone,
+  itemName,
+  fundingType,
+  contributionAmount,
+  message,
+  dashboardLink,
+}: {
+  guestName: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  itemName: string;
+  fundingType: "fixed" | "crowdfund";
+  contributionAmount?: number;
+  message?: string;
+  dashboardLink: string;
+}): string {
+  const isCrowdfund = fundingType === "crowdfund";
+  const actionType = isCrowdfund ? "Contribution" : "Reservation";
+
+  return layout(
+    heading(`New Wishlist ${actionType}! 🎁`),
+    paragraph(`${guestName} has submitted a new ${actionType.toLowerCase()} on your wedding registry.`),
+    divider(),
+    table(
+      row("Guest Name", guestName),
+      row("Email", guestEmail || "Not provided"),
+      row("Phone/WhatsApp", guestPhone || "Not provided"),
+      row("Gift Item", itemName),
+      isCrowdfund && contributionAmount
+        ? row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`)
+        : row("Status", "Reserved")
+    ),
+    message ? divider() + sectionLabel("Message from the guest") + quote(message) : "",
+    ctaButton("View Registry in Dashboard", dashboardLink)
+  );
+}
+

@@ -101,6 +101,7 @@ export default defineEventHandler(async (event) => {
     const config2 = useRuntimeConfig();
     const appUrl: string = (config2.public as any).appUrl || "http://localhost:3000";
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
+    const wishlistLink = `${appUrl}/wishlist`;
 
     // Guest confirmation — fire and forget
     sendEmail({
@@ -115,6 +116,7 @@ export default defineEventHandler(async (event) => {
         spouseName,
         eventNames,
         editLink,
+        wishlistLink,
       }),
     }).catch(console.error);
 

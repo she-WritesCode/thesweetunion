@@ -30,6 +30,9 @@ const adminComponents = {
     "rsvp_groups.rsvpEditLink": RsvpEditLinkField,
     "rsvp_groups.confirmedCount": CountField,
     "rsvp_groups.declinedCount": CountField,
+    "wishlist_items.amountRaised": CountField,
+    "wishlist_items.contributorCount": CountField,
+    "wishlist_items.reservedCount": CountField,
     // check_ins collection — QR scanner panel
     "check_ins.checkInScanner": CheckInScanner,
     // rsvp_records collection — invitation tools

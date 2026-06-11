@@ -274,7 +274,7 @@ body {
 }
 
 .modal-content-container {
-  @apply w-full max-w-md p-6 sm:p-8 rounded-2xl border border-amber-gold/20 shadow-2xl relative transition-all duration-300 max-h-[85vh] overflow-y-auto pr-1;
+  @apply w-full max-w-md md:max-w-2xl p-6 sm:p-8 rounded-2xl border border-amber-gold/20 shadow-2xl relative transition-all duration-300 max-h-[85vh] overflow-y-auto pr-1;
 }
 
 .modal-close-btn {

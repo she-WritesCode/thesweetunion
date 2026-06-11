@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onUnmounted } from "vue";
 import { useRoute, useRouter, useAsyncData } from "#app";
 import { useDyrectedClient, useDyrectedGlobal } from "#imports";
 import PhoneInput from "~/components/PhoneInput.vue";
@@ -120,6 +120,38 @@ const message = ref("");
 
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
+
+const redirectCountdown = ref(60);
+let redirectInterval: any = null;
+
+const startRedirectTimer = () => {
+  if (attending.value !== true) return;
+  redirectCountdown.value = 60;
+  if (redirectInterval) clearInterval(redirectInterval);
+  redirectInterval = setInterval(() => {
+    redirectCountdown.value--;
+    if (redirectCountdown.value <= 0) {
+      closeSuccessModal();
+      router.push("/wishlist");
+    }
+  }, 1000);
+};
+
+const cancelRedirect = () => {
+  if (redirectInterval) {
+    clearInterval(redirectInterval);
+    redirectInterval = null;
+  }
+};
+
+const closeSuccessModal = () => {
+  cancelRedirect();
+  successModal.value = null;
+};
+
+onUnmounted(() => {
+  cancelRedirect();
+});
 
 const populateStates = (data: RSVPData) => {
   group.value = typeof data.group === "object" ? data.group?.name : data.group;
@@ -286,6 +318,7 @@ const handleSubmit = async () => {
         successModal.value = "submit";
         isEditing.value = false;
         populateStates(res.record);
+        startRedirectTimer();
       }
     } else {
       // Local Mock fallback
@@ -320,6 +353,9 @@ const handleSubmit = async () => {
       successModal.value = existingRSVP.value ? "edit" : "submit";
       existingRSVP.value = mockPayload;
       isEditing.value = false;
+      if (successModal.value === "submit") {
+        startRedirectTimer();
+      }
     }
   } catch (err: any) {
     alert(err.data?.message || err.message || "An error occurred while submitting your RSVP.");
@@ -774,23 +810,34 @@ const isFormActive = computed(() => {
                 : "Thank You So Much!"
           }}
         </h3>
-        <p class="rsvp-success__body">
+        <div class="rsvp-success__body">
           <template v-if="successModal === 'cancel'">
-            Your RSVP registration details have been successfully deleted from this browser session.
+            <p>Your RSVP registration details have been successfully deleted from this browser session.</p>
           </template>
           <template v-else-if="successModal === 'edit'">
-            Your details have been successfully updated. We look forward to celebrating together in Lagos.
+            <p>Your details have been successfully updated. We look forward to celebrating together in Lagos.</p>
           </template>
           <template v-else-if="successModal === 'submit' && attending === true">
-            You're officially on the list! We cannot wait to celebrate our union with you. We have saved your
-            confirmation card details.
+            <p>You're officially on the list! We cannot wait to celebrate our union with you. We have saved your confirmation details.</p>
+            <div class="rsvp-success__redirect-box" style="margin-top: 20px; padding: 16px; border-radius: 12px; background: rgba(134, 81, 114, 0.08); border: 1px solid rgba(134, 81, 114, 0.15); text-align: center;">
+              <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500;">
+                We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our wishlist.
+              </p>
+              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" @click="() => { cancelRedirect(); router.push('/wishlist'); }" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                  Browse Registry Now
+                </button>
+                <button type="button" @click="cancelRedirect" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2);">
+                  Stay on Page
+                </button>
+              </div>
+            </div>
           </template>
           <template v-else-if="successModal === 'submit' && attending === false">
-            Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and
-            support!
+            <p>Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and support!</p>
           </template>
-        </p>
-        <button @click="successModal = null" class="btn-primary">Close</button>
+        </div>
+        <button @click="closeSuccessModal" class="btn-primary mt-4">Close</button>
       </div>
     </div>
   </div>

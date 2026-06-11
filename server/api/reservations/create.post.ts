@@ -1,5 +1,7 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { sendEmail } from "~~/dyrected/mailer";
+import { wishlistFixedConfirmationEmail, wishlistCrowdfundConfirmationEmail, adminWishlistNotificationEmail } from "~~/dyrected/emails";
 
 const MIN_CONTRIBUTION = 5000;
 
@@ -41,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   const client = createClient({
-    baseUrl: config.public.dyrectedUrl,
+    baseUrl: config.dyrectedUrl,
     apiKey: config.dyrectedApiKey,
   });
 
@@ -82,6 +84,75 @@ export default defineEventHandler(async (event) => {
 
   // Recompute stats after adding the new reservation
   const finalStats = await recomputeItemStats(client, itemId);
+
+  // Send email if guest provided an email address
+  if (guestEmail && guestEmail.trim() !== "") {
+    try {
+      if (item.fundingType === "crowdfund") {
+        // Fetch site settings global for bank details
+        let siteSettings: any = null;
+        try {
+          siteSettings = await $fetch("/api/globals/site_settings");
+        } catch (e) {
+          console.error("Failed to fetch site settings in reservation backend:", e);
+        }
+
+        const bankName = siteSettings?.bankName || "Guaranty Trust Bank (GTBank)";
+        const accountNumber = siteSettings?.accountNumber || "0123456789";
+        const accountName = siteSettings?.accountName || "Uche & Adun Wedding Account";
+
+        sendEmail({
+          to: guestEmail,
+          subject: `Thank you for contributing to our ${item.name}! 💖`,
+          html: wishlistCrowdfundConfirmationEmail({
+            guestName: isAnonymous ? "Anonymous" : guestName,
+            itemName: item.name,
+            contributionAmount,
+            bankName,
+            accountNumber,
+            accountName,
+          }),
+        }).catch(console.error);
+      } else {
+        sendEmail({
+          to: guestEmail,
+          subject: `Thank you for your registry gift: ${item.name}! 🎁`,
+          html: wishlistFixedConfirmationEmail({
+            guestName: isAnonymous ? "Anonymous" : guestName,
+            itemName: item.name,
+            itemLink: item.link,
+          }),
+        }).catch(console.error);
+      }
+    } catch (mailErr) {
+      console.error("Error preparing email send:", mailErr);
+    }
+  }
+
+  // Admin notification — fire and forget
+  try {
+    const adminsRes = await client.collection("admins").find({ limit: 20 });
+    const adminEmails: string[] = adminsRes.docs.map((a: any) => a.email).filter(Boolean);
+    if (adminEmails.length) {
+      const appUrl: string = (config.public as any).appUrl || "http://localhost:3000";
+      sendEmail({
+        to: adminEmails.join(","),
+        subject: `New Registry ${item.fundingType === 'crowdfund' ? 'Contribution' : 'Reservation'}: ${isAnonymous ? 'Anonymous' : guestName} — ${item.name}`,
+        html: adminWishlistNotificationEmail({
+          guestName: isAnonymous ? "Anonymous" : guestName,
+          guestEmail: guestEmail || undefined,
+          guestPhone: guestPhone || undefined,
+          itemName: item.name,
+          fundingType: item.fundingType,
+          contributionAmount: item.fundingType === "crowdfund" ? contributionAmount : undefined,
+          message: message || undefined,
+          dashboardLink: `${appUrl}/admin`,
+        }),
+      }).catch(console.error);
+    }
+  } catch (adminErr) {
+    console.error("Failed to send admin registry email:", adminErr);
+  }
 
   return { success: true, reservation, stats: finalStats };
 });

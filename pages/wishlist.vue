@@ -43,7 +43,7 @@ const mapCategory = (cat: string) => {
 
 const localItems = ref<WishlistItem[]>([]);
 
-const items = computed(() => {
+const items = computed<WishlistItem[]>(() => {
   const visibleDocs = (wishlistData.value?.docs || []).filter((doc: any) => !doc.isHidden);
   if (visibleDocs.length > 0) {
     return visibleDocs.map((doc: any) => {
@@ -82,14 +82,26 @@ const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
 
 // Modal Reservation State
 const activeItem = ref<WishlistItem | null>(null);
-const modalStep = ref<1 | 2 | 3>(1);
+const modalStep = ref<number>(1);
 const isAnonymous = ref(false);
 const guestName = ref("");
 const guestEmail = ref("");
 const guestPhone = ref("");
 const guestMessage = ref("");
+const senderName = ref("");
 const successItem = ref<WishlistItem | null>(null);
 const successContributionAmount = ref<number>(0);
+
+// Copy to Clipboard Utility
+const isCopied = ref(false);
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text).then(() => {
+    isCopied.value = true;
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2000);
+  });
+};
 
 // Crowdfund amount selection
 const selectedAmount = ref<number>(SUGGESTED_AMOUNTS[0]);
@@ -113,23 +125,15 @@ const isContactValid = computed(() => {
 });
 
 const nextStep = () => {
-  if (modalStep.value === 1) {
-    if (isAnonymous.value) {
-      modalStep.value = 3;
-    } else {
-      modalStep.value = 2;
-    }
-  } else if (modalStep.value === 2) {
-    modalStep.value = 3;
+  if (activeItem.value?.fundingType === "crowdfund") {
+    if (modalStep.value < 3) modalStep.value++;
+  } else {
+    if (modalStep.value < 2) modalStep.value++;
   }
 };
 
 const prevStep = () => {
-  if (modalStep.value === 3) {
-    modalStep.value = isAnonymous.value ? 1 : 2;
-  } else if (modalStep.value === 2) {
-    modalStep.value = 1;
-  }
+  if (modalStep.value > 1) modalStep.value--;
 };
 
 const isCrowdfundGoalReached = computed(() => {
@@ -141,8 +145,8 @@ const isCrowdfundGoalReached = computed(() => {
   );
 });
 
-const categories = computed(() => {
-  return ["All", ...Array.from(new Set(items.value.map((item: WishlistItem) => item.category)))];
+const categories = computed<string[]>(() => {
+  return ["All", ...(Array.from(new Set(items.value.map((item: WishlistItem) => item.category))) as string[])];
 });
 
 const handleReserveClick = (item: WishlistItem) => {
@@ -153,6 +157,7 @@ const handleReserveClick = (item: WishlistItem) => {
   guestEmail.value = "";
   guestPhone.value = "";
   guestMessage.value = "";
+  senderName.value = "";
   selectedAmount.value = SUGGESTED_AMOUNTS[0];
   useCustomAmount.value = false;
   customAmount.value = "";
@@ -164,14 +169,18 @@ const handleConfirmReservation = async () => {
   try {
     const isDbItem = wishlistData.value?.docs?.some((d: any) => d.id === activeItem.value?.id);
     if (isDbItem) {
+      const formattedMessage =
+        guestMessage.value.trim() +
+        (senderName.value.trim() ? `\n\n(Transfer sender name: ${senderName.value.trim()})` : "");
+
       const result: any = await $fetch("/api/reservations/create", {
         method: "POST",
         body: {
           itemId: activeItem.value.id,
-          guestName: guestName.value,
-          guestEmail: guestEmail.value,
-          guestPhone: guestPhone.value,
-          message: guestMessage.value,
+          guestName: guestName.value.trim() || "Anonymous Guest",
+          guestEmail: guestEmail.value.trim(),
+          guestPhone: guestPhone.value.trim(),
+          message: formattedMessage,
           contributionAmount: activeItem.value.fundingType === "crowdfund" ? effectiveAmount.value : undefined,
           isAnonymous: isAnonymous.value,
         },
@@ -201,6 +210,10 @@ const handleConfirmReservation = async () => {
         }
         return item;
       });
+    }
+
+    if (activeItem.value?.link) {
+      window.open(activeItem.value.link, "_blank", "noopener,noreferrer");
     }
 
     successItem.value = activeItem.value;
@@ -385,7 +398,7 @@ const progressPercent = (item: WishlistItem) => {
                   <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-500"
-                      :class="item.price > 0 && item.amountRaised >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'"
+                      :class="item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'"
                       :style="{ width: `${progressPercent(item)}%` }"
                     />
                   </div>
@@ -460,12 +473,12 @@ const progressPercent = (item: WishlistItem) => {
 
         <!-- Step Indicator -->
         <div class="modal-step-indicator">
-          <template v-for="s in isAnonymous ? [1, 3] : [1, 2, 3]" :key="s">
+          <template v-for="s in activeItem.fundingType === 'crowdfund' ? [1, 2, 3] : [1, 2]" :key="s">
             <div class="modal-step-dot" :class="modalStep >= s ? 'modal-step-dot--active' : 'modal-step-dot--inactive'">
               {{ s }}
             </div>
             <div
-              v-if="s < 3 && !(isAnonymous && s === 1)"
+              v-if="s < (activeItem.fundingType === 'crowdfund' ? 3 : 2)"
               class="modal-step-line"
               :class="modalStep > s ? 'modal-step-line--active' : 'modal-step-line--inactive'"
             />
@@ -473,25 +486,22 @@ const progressPercent = (item: WishlistItem) => {
         </div>
 
         <div class="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-          <!-- ═══════════════ STEP 1: Amount & Item Info ═══════════════ -->
-          <div v-show="modalStep === 1" class="modal-step">
+          <!-- ═══════════════ CROWDFUND STEP 1: Amount & Anonymity ═══════════════ -->
+          <div v-show="activeItem.fundingType === 'crowdfund' && modalStep === 1" class="modal-step">
             <div class="modal-item-header">
               <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
-                {{ activeItem.fundingType === "crowdfund" ? "Contribute to Fund" : "Commit to Gift" }}
+                Contribute to Cash Fund
               </span>
               <h3 class="font-heading text-xl font-bold text-deep-espresso leading-snug">
                 {{ activeItem.name }}
               </h3>
               <p class="font-body text-xs text-deep-espresso/60">
-                {{ activeItem.fundingType === "crowdfund" ? "Funding Goal:" : "Approximate Value:" }} ₦{{
-                  activeItem.price.toLocaleString("en-US")
-                }}
-                · {{ activeItem.category }}
+                Funding Goal: ₦{{ activeItem.price.toLocaleString("en-US") }} · {{ activeItem.category }}
               </p>
             </div>
 
             <!-- Crowdfund Progress Bar -->
-            <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-2 mb-4">
+            <div class="space-y-2 mb-4">
               <div class="w-full h-3 bg-deep-espresso/10 rounded-full overflow-hidden">
                 <div
                   class="h-full rounded-full transition-all duration-500"
@@ -504,21 +514,19 @@ const progressPercent = (item: WishlistItem) => {
                 />
               </div>
               <p class="text-xs text-deep-espresso/60 font-body text-center">
-                <template v-if="activeItem.price > 0">
-                  ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
-                    activeItem.price.toLocaleString("en-US")
-                  }}
-                  raised
-                </template>
-                <template v-else> ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
-                · {{ activeItem.contributorCount ?? 0 }}
+                ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+                  activeItem.price.toLocaleString("en-US")
+                }}
+                raised · {{ activeItem.contributorCount ?? 0 }}
                 {{ (activeItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
               </p>
             </div>
 
             <!-- Crowdfund Amount Selector -->
-            <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-2 mb-4">
-              <label class="input-label"> Amount (Min ₦{{ MIN_CONTRIBUTION.toLocaleString() }}) </label>
+            <div class="space-y-2 mb-4">
+              <label class="input-label"
+                >How much would you love to contribute? (Min ₦{{ MIN_CONTRIBUTION.toLocaleString() }})</label
+              >
               <div class="modal-amount-grid">
                 <button
                   v-for="amount in SUGGESTED_AMOUNTS"
@@ -545,7 +553,7 @@ const progressPercent = (item: WishlistItem) => {
                   class="modal-amount-btn"
                   :class="useCustomAmount ? 'modal-amount-btn--active' : 'modal-amount-btn--inactive'"
                 >
-                  Custom
+                  Custom Amount
                 </button>
                 <input
                   v-if="useCustomAmount"
@@ -553,7 +561,7 @@ const progressPercent = (item: WishlistItem) => {
                   type="number"
                   :min="MIN_CONTRIBUTION"
                   class="input-field flex-1"
-                  placeholder="Enter amount"
+                  placeholder="How much would you love to contribute?"
                 />
               </div>
               <p v-if="!isAmountValid" class="modal-validation">
@@ -569,109 +577,190 @@ const progressPercent = (item: WishlistItem) => {
                 class="modal-anon-btn"
                 :class="isAnonymous ? 'modal-anon-btn--active' : 'modal-anon-btn--inactive'"
               >
-                {{ isAnonymous ? "✓ Anonymous" : "Anonymously" }}
+                {{ isAnonymous ? "✓ Send Anonymously" : "Send Anonymously" }}
               </button>
             </div>
 
-            <button
-              @click="nextStep"
-              class="w-full btn-primary mt-4"
-              :disabled="activeItem.fundingType === 'crowdfund' && !isAmountValid"
-            >
-              Continue →
-            </button>
+            <button @click="nextStep" class="w-full btn-primary mt-4" :disabled="!isAmountValid">Continue →</button>
           </div>
 
-          <!-- ═══════════════ STEP 2: Personal Details ═══════════════ -->
-          <div v-show="modalStep === 2" class="modal-step">
-            <div class="space-y-1">
-              <label class="input-label"> Your Name (Required) </label>
-              <input type="text" v-model="guestName" class="input-field" placeholder="Enter your name" />
+          <!-- ═══════════════ PERSONAL DETAILS (Step 2 for Crowdfund, Step 1 for Fixed) ═══════════════ -->
+          <div
+            v-show="
+              (activeItem.fundingType === 'crowdfund' && modalStep === 2) ||
+              (activeItem.fundingType !== 'crowdfund' && modalStep === 1)
+            "
+            class="modal-step"
+          >
+            <div class="modal-item-header">
+              <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
+                {{ activeItem.fundingType === "crowdfund" ? "Your Details" : "Gifting: " + activeItem.name }}
+              </span>
+              <p class="font-body text-xs text-deep-espresso/60" v-if="activeItem.fundingType !== 'crowdfund'">
+                Please tell us who is reserving this gift so we can say thank you.
+              </p>
             </div>
 
-            <div class="space-y-1">
-              <PhoneInput v-model="guestPhone" placeholder="Enter your phone number" label="Phone Number" />
+            <!-- Responsive Two-Column Grid for Inputs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1">
+                <label class="input-label">What should we call you? (Required)</label>
+                <input type="text" v-model="guestName" class="input-field" placeholder="Enter your name" />
+              </div>
+
+              <div class="space-y-1">
+                <PhoneInput v-model="guestPhone" placeholder="What's your WhatsApp number?" label="WhatsApp Number" />
+              </div>
+
+              <div class="space-y-1 md:col-span-2">
+                <label class="input-label">Where should we send your confirmation email?</label>
+                <input type="email" v-model="guestEmail" class="input-field" placeholder="name@example.com" />
+              </div>
+
+              <div class="space-y-1 md:col-span-2">
+                <label class="input-label">Would you like to leave a message for us?</label>
+                <textarea
+                  v-model="guestMessage"
+                  rows="3"
+                  class="input-field resize-none"
+                  placeholder="Leave a lovely note..."
+                />
+              </div>
+
+              <!-- Anonymous Toggle for Fixed Gifts (since it is step 1 for them) -->
+              <div
+                v-if="activeItem.fundingType !== 'crowdfund'"
+                class="md:col-span-2 flex items-center justify-center pt-2"
+              >
+                <button
+                  type="button"
+                  @click="isAnonymous = !isAnonymous"
+                  class="modal-anon-btn"
+                  :class="isAnonymous ? 'modal-anon-btn--active' : 'modal-anon-btn--inactive'"
+                >
+                  {{ isAnonymous ? "✓ Gift Anonymously" : "Gift Anonymously" }}
+                </button>
+              </div>
             </div>
 
-            <div class="space-y-1">
-              <label class="input-label"> Email Address </label>
-              <input type="email" v-model="guestEmail" class="input-field" placeholder="name@example.com" />
-            </div>
-
-            <p v-if="!isContactValid" class="modal-validation">
+            <p v-if="!isContactValid" class="modal-validation text-center">
               Please provide at least a phone number or email address.
             </p>
 
-            <div class="space-y-1">
-              <label class="input-label"> Message to Couple (Optional) </label>
-              <textarea
-                v-model="guestMessage"
-                rows="3"
-                class="input-field resize-none"
-                placeholder="Leave a lovely note..."
-              />
-            </div>
-
-            <div class="modal-nav-row">
-              <button @click="prevStep" class="modal-nav-back">← Back</button>
+            <div class="modal-nav-row mt-4">
+              <button v-if="modalStep > 1" @click="prevStep" class="modal-nav-back">← Back</button>
               <button @click="nextStep" class="flex-1 btn-primary" :disabled="!isContactValid || !guestName.trim()">
                 Continue →
               </button>
             </div>
           </div>
 
-          <!-- ═══════════════ STEP 3: Review & Confirm ═══════════════ -->
-          <div v-show="modalStep === 3" class="modal-step">
-            <div class="modal-summary-card">
-              <div class="modal-summary-row">
-                <span class="modal-summary-label">Item</span>
-                <span class="font-semibold text-right">{{ activeItem.name }}</span>
+          <!-- ═══════════════ REVIEW & CONFIRM (Step 3 for Crowdfund, Step 2 for Fixed) ═══════════════ -->
+          <div
+            v-show="
+              (activeItem.fundingType === 'crowdfund' && modalStep === 3) ||
+              (activeItem.fundingType !== 'crowdfund' && modalStep === 2)
+            "
+            class="modal-step"
+          >
+            <div class="modal-item-header">
+              <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
+                Review & Confirm
+              </span>
+            </div>
+
+            <!-- Responsive Two-Column Grid for Review Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Left side: Summary details -->
+              <div class="space-y-4">
+                <div class="modal-summary-card">
+                  <div class="modal-summary-row">
+                    <span class="modal-summary-label">Gift</span>
+                    <span class="font-semibold text-right">{{ activeItem.name }}</span>
+                  </div>
+                  <div v-if="activeItem.fundingType === 'crowdfund'" class="modal-summary-row">
+                    <span class="modal-summary-label">Contribution</span>
+                    <span class="font-bold text-deep-terracotta">₦{{ effectiveAmount.toLocaleString("en-US") }}</span>
+                  </div>
+                  <div class="modal-summary-row">
+                    <span class="modal-summary-label">From</span>
+                    <span class="font-semibold">{{ isAnonymous ? "Anonymous" : guestName }}</span>
+                  </div>
+                </div>
+
+                <!-- Store Purchase Instructions -->
+                <div v-if="activeItem.fundingType !== 'crowdfund' && activeItem.link" class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left">
+                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">Store Purchase Instructions</p>
+                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
+                    Please buy this gift from the online store. Click the button below to buy, then confirm below to lock the reservation.
+                  </p>
+                  <a :href="activeItem.link" target="_blank" rel="noopener noreferrer" class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px] mt-2">
+                    Buy from Store ↗
+                  </a>
+                </div>
+
+                <!-- Drop-off instructions for Fixed/Physical gifts -->
+                <div
+                  v-if="activeItem.fundingType !== 'crowdfund'"
+                  class="p-4 rounded-xl border border-amber-gold/15 bg-soft-pearl/50 space-y-2 text-center md:text-left"
+                >
+                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">Drop-off & Delivery</p>
+                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
+                    You can bring this gift with you to the wedding, drop it off, or coordinate with us directly. Since
+                    we're all family and friends here, just let us know what works best for you!
+                  </p>
+                </div>
+
+                <!-- Sender Name field to match bank alerts -->
+                <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-1">
+                  <label class="input-label text-[11px]">What name will appear on the transfer alert? (Optional)</label>
+                  <input type="text" v-model="senderName" class="input-field" placeholder="Sender Account Name" />
+                </div>
               </div>
-              <div v-if="activeItem.fundingType === 'crowdfund'" class="modal-summary-row">
-                <span class="modal-summary-label">Amount</span>
-                <span class="font-bold text-deep-terracotta">₦{{ effectiveAmount.toLocaleString("en-US") }}</span>
-              </div>
-              <div class="modal-summary-row">
-                <span class="modal-summary-label">Contributor</span>
-                <span class="font-semibold">{{ isAnonymous ? "Anonymous" : guestName }}</span>
+
+              <!-- Right side: Payment / Transfer info (only for Crowdfund) -->
+              <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-4">
+                <div v-if="activeItem.bankDetails" class="bank-details-card">
+                  <p class="font-semibold text-deep-terracotta uppercase tracking-wide">
+                    Please make your bank transfer to:
+                  </p>
+                  <div class="grid grid-cols-3 gap-y-1.5 font-body">
+                    <span class="text-deep-espresso/60 text-xs">Bank:</span>
+                    <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.bankName }}</span>
+
+                    <span class="text-deep-espresso/60 text-xs">Account #:</span>
+                    <span class="col-span-2 font-mono font-bold text-sm text-deep-terracotta flex items-center gap-2">
+                      <span class="select-all">{{ activeItem.bankDetails.accountNumber }}</span>
+                      <button
+                        type="button"
+                        @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
+                        class="px-2 py-0.5 text-[9px] uppercase bg-deep-terracotta/10 text-deep-terracotta hover:bg-deep-terracotta hover:text-white rounded-md transition-all font-sans cursor-pointer"
+                      >
+                        {{ isCopied ? "Copied!" : "Copy" }}
+                      </button>
+                    </span>
+
+                    <span class="text-deep-espresso/60 text-xs">Name:</span>
+                    <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.accountName }}</span>
+                  </div>
+                  <p
+                    v-if="activeItem.bankDetails.note"
+                    class="text-[10px] text-deep-espresso/70 italic pt-1 border-t border-amber-gold/5"
+                  >
+                    {{ activeItem.bankDetails.note }}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <!-- Bank Transfer Section -->
-            <div v-if="activeItem.fundingType === 'crowdfund' && activeItem.bankDetails" class="bank-details-card">
-              <p class="font-semibold text-deep-terracotta uppercase tracking-wide">Bank Transfer Details</p>
-              <div class="grid grid-cols-3 gap-y-1 font-body">
-                <span class="text-deep-espresso/60">Bank:</span>
-                <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.bankName }}</span>
-
-                <span class="text-deep-espresso/60">Account #:</span>
-                <span class="col-span-2 font-mono font-bold text-sm text-deep-terracotta select-all">{{
-                  activeItem.bankDetails.accountNumber
-                }}</span>
-
-                <span class="text-deep-espresso/60">Name:</span>
-                <span class="col-span-2 font-semibold">{{ activeItem.bankDetails.accountName }}</span>
-              </div>
-              <p
-                v-if="activeItem.bankDetails.note"
-                class="text-[10px] text-deep-espresso/70 italic pt-1 border-t border-amber-gold/5"
-              >
-                {{ activeItem.bankDetails.note }}
-              </p>
-            </div>
-
-            <div class="modal-nav-row">
+            <div class="modal-nav-row mt-6">
               <button @click="prevStep" class="modal-nav-back">← Back</button>
               <button
                 @click="handleConfirmReservation"
                 class="flex-1 btn-primary"
                 :disabled="activeItem.fundingType === 'crowdfund' && !isAmountValid"
               >
-                {{
-                  activeItem.fundingType === "crowdfund"
-                    ? `I have sent ₦${effectiveAmount.toLocaleString("en-US")}`
-                    : "I have committed to this gift"
-                }}
+                {{ activeItem.fundingType === "crowdfund" ? `I've made the transfer!` : "I'm gifting this!" }}
               </button>
             </div>
           </div>
@@ -693,13 +782,16 @@ const progressPercent = (item: WishlistItem) => {
           <template v-if="successItem.fundingType === 'crowdfund'">
             You have successfully contributed
             <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to the
-            <strong>{{ successItem.name }}</strong
-            >. Please ensure you complete the bank transfer using the details provided, and we will send a confirmation
-            to your email.
+            <strong>{{ successItem.name }}</strong>. We will look out for the transfer.<span v-if="guestEmail"> We have sent the details of the account number to your email.</span>
           </template>
           <template v-else>
-            You have successfully reserved the <strong>{{ successItem.name }}</strong> registry gift item. We have sent
-            a confirmation details card to your email.
+            You have successfully reserved the <strong>{{ successItem.name }}</strong> registry gift item.<span v-if="guestEmail"> We have sent a confirmation details card to your email.</span>
+            <div v-if="successItem.link" class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center">
+              <p class="text-xs text-deep-espresso/80 mb-2 font-body">If you haven't bought it yet, please purchase the item from the store using the link below:</p>
+              <a :href="successItem.link" target="_blank" rel="noopener noreferrer" class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]">
+                Buy from Store ↗
+              </a>
+            </div>
           </template>
         </p>
         <button @click="successItem = null" class="btn-primary">Back to Registry</button>

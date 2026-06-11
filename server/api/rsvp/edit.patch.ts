@@ -61,6 +61,7 @@ export default defineEventHandler(async (event) => {
     const config2 = useRuntimeConfig();
     const appUrl: string = (config2.public as any).appUrl || "http://localhost:3000";
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
+    const wishlistLink = `${appUrl}/wishlist`;
 
     sendEmail({
       to: updated.leadEmail ?? leadEmail,
@@ -72,6 +73,7 @@ export default defineEventHandler(async (event) => {
         spouseName: updated.spouseName ?? spouseName,
         eventNames,
         editLink,
+        wishlistLink,
       }),
     }).catch(console.error);
 
