@@ -92,6 +92,7 @@ const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
 const activeItem = ref<WishlistItem | null>(null);
 const modalStep = ref<number>(1);
 const isAnonymous = ref(false);
+const isSubmitting = ref(false);
 const guestName = ref("");
 const guestEmail = ref("");
 const guestPhone = ref("");
@@ -172,8 +173,9 @@ const handleReserveClick = (item: WishlistItem) => {
 };
 
 const handleConfirmReservation = async () => {
-  if (!activeItem.value) return;
+  if (!activeItem.value || isSubmitting.value) return;
 
+  isSubmitting.value = true;
   try {
     const isDbItem = wishlistData.value?.docs?.some((d: any) => d.id === activeItem.value?.id);
     if (isDbItem) {
@@ -226,6 +228,8 @@ const handleConfirmReservation = async () => {
   } catch (err: any) {
     const msg = err.data?.message || err.message || "An error occurred while confirming reservation.";
     alert(msg);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
@@ -749,10 +753,13 @@ const progressPercent = (item: WishlistItem) => {
               <button @click="prevStep" class="modal-nav-back">← Back</button>
               <button
                 @click="handleConfirmReservation"
-                class="flex-1 btn-primary"
-                :disabled="activeItem.fundingType === 'crowdfund' && !isAmountValid"
+                class="flex-1 btn-primary flex items-center justify-center gap-2"
+                :disabled="isSubmitting || (activeItem.fundingType === 'crowdfund' && !isAmountValid)"
               >
-                {{ activeItem.fundingType === "crowdfund" ? `I've made the transfer!` : "I'm gifting this!" }}
+                <span v-if="isSubmitting" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+                <span>
+                  {{ isSubmitting ? "Processing..." : (activeItem.fundingType === "crowdfund" ? `I've made the transfer!` : "I'm gifting this!") }}
+                </span>
               </button>
             </div>
           </div>

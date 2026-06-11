@@ -120,6 +120,7 @@ const message = ref("");
 
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
+const isSubmitting = ref(false);
 
 const redirectCountdown = ref(60);
 let redirectInterval: any = null;
@@ -271,8 +272,9 @@ const handleStep4Submit = () => {
 };
 
 const handleSubmit = async () => {
-  if (attending.value === null) return;
+  if (attending.value === null || isSubmitting.value) return;
 
+  isSubmitting.value = true;
   const payload = {
     leadName: leadName.value,
     leadEmail: leadEmail.value,
@@ -358,12 +360,17 @@ const handleSubmit = async () => {
       }
     }
   } catch (err: any) {
-    alert(err.data?.message || err.message || "An error occurred while submitting your RSVP.");
+    const msg = err.data?.message || err.message || "An error occurred while submitting your RSVP.";
+    alert(msg);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
 const handleCancelRSVP = async () => {
+  if (isSubmitting.value) return;
   if (confirm("Are you sure you want to cancel your RSVP? This will release your spots for others.")) {
+    isSubmitting.value = true;
     try {
       if (editToken.value) {
         await $fetch(`/api/rsvp/delete-record?token=${editToken.value}`, {
@@ -382,6 +389,8 @@ const handleCancelRSVP = async () => {
       }
     } catch (err: any) {
       console.error("Failed to cancel RSVP in DB:", err);
+    } finally {
+      isSubmitting.value = false;
     }
 
     localStorage.removeItem("thesweetunion_rsvp");
@@ -554,7 +563,10 @@ const isFormActive = computed(() => {
             >
               Edit My RSVP
             </button>
-            <button @click="handleCancelRSVP" class="btn-danger">Cancel RSVP</button>
+            <button @click="handleCancelRSVP" :disabled="isSubmitting" class="btn-danger flex items-center justify-center gap-2">
+              <span v-if="isSubmitting" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+              <span>{{ isSubmitting ? "Cancelling..." : "Cancel RSVP" }}</span>
+            </button>
           </div>
         </div>
 
@@ -776,19 +788,23 @@ const isFormActive = computed(() => {
               type="button"
               @click="
                 () => {
+                  if (isSubmitting) return;
                   handleAttendanceSelect(false);
                   handleSubmit();
                 }
               "
-              class="rsvp-continue-btn"
+              :disabled="isSubmitting"
+              class="rsvp-continue-btn flex items-center justify-center gap-2"
             >
-              No, I can't make it
+              <span v-if="isSubmitting && attending === false" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+              <span>No, I can't make it</span>
             </button>
             <button v-if="currentStep === 4" type="button" @click="handleStep4Submit" class="rsvp-continue-btn">
               Continue
             </button>
-            <button v-else-if="currentStep === 5" type="submit" class="rsvp-submit-btn">
-              {{ isEditing ? "Save RSVP Changes" : "Yes I'll be attending" }}
+            <button v-else-if="currentStep === 5" type="submit" :disabled="isSubmitting" class="rsvp-submit-btn flex items-center justify-center gap-2">
+              <span v-if="isSubmitting && attending === true" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+              <span>{{ isEditing ? (isSubmitting ? "Saving..." : "Save RSVP Changes") : (isSubmitting ? "Submitting..." : "Yes I'll be attending") }}</span>
             </button>
           </div>
         </form>

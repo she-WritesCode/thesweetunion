@@ -18,6 +18,9 @@ export default defineNuxtConfig({
       (process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}/api/dyrected`
         : "http://localhost:3000/api/dyrected"),
+    gmailUser: process.env.GMAIL_USER || "",
+    gmailAppPassword: process.env.GMAIL_APP_PASSWORD || "",
+    emailFrom: process.env.EMAIL_FROM || "",
     public: {
       dyrectedUrl:
         process.env.NUXT_PUBLIC_DYRECTED_URL ||
