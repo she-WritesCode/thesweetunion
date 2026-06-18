@@ -237,13 +237,19 @@ body {
 
 /* Customize Dyrected Admin page with site theme colors */
 .cms-admin-page .dy-admin-ui {
+  --intelligence: 321 17% 38%;
+  --accent: 320 20% 91%;
+  --accent-foreground: 321 17% 34%;
+
+
+  --ring: 321 17% 38% / 0.22;
   --background: 324 17% 97%;
   --foreground: 325 17% 16%;
   --card: 320 20% 95%;
   --card-foreground: 325 17% 16%;
   --popover: 324 17% 97%;
-  --popover-foreground: 325 17% 16%;
-  --primary: 321 17% 46%; /* Muted Mauve as primary action brand */
+  --popover-foreground: 325 17% 16%; 
+  --primary: 321 17% 38%; /* Muted Mauve as primary action brand */
   --primary-foreground: 324 17% 97%;
   --secondary: 320 20% 95%;
   --secondary-foreground: 325 17% 16%;
@@ -256,10 +262,10 @@ body {
   --ring: 321 17% 46% / 0.15;
   --sidebar-background: 320 20% 95%;
   --sidebar-foreground: 325 17% 16%;
-  --sidebar-primary: 321 17% 46%;
+  --sidebar-primary: 321 17% 38%;
   --sidebar-primary-foreground: 324 17% 97%;
-  --sidebar-accent: 320 20% 90%;
-  --sidebar-accent-foreground: 321 17% 46%;
+  --sidebar-accent: 320 20% 89%;
+  --sidebar-accent-foreground: 321 17% 34%;
   --sidebar-border: 321 10% 85%;
   --sidebar-ring: 321 17% 46%;
   
