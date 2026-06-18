@@ -11,12 +11,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@dyrected/core": "^2.5.25",
-    "@dyrected/db-postgres": "^2.5.25",
-    "@dyrected/db-sqlite": "^2.5.25",
-    "@dyrected/nuxt": "^2.5.25",
-    "@dyrected/sdk": "^2.5.25",
-    "@dyrected/storage-cloudinary": "^2.5.25",
+    "@dyrected/core": "^2.5.27",
+    "@dyrected/db-postgres": "^2.5.27",
+    "@dyrected/db-sqlite": "^2.5.27",
+    "@dyrected/nuxt": "^2.5.27",
+    "@dyrected/sdk": "^2.5.27",
+    "@dyrected/storage-cloudinary": "^2.5.27",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "nodemailer": "^8.0.10",
