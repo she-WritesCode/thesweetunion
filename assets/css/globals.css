@@ -236,7 +236,7 @@ body {
 }
 
 /* Customize Dyrected Admin page with site theme colors */
-.cms-admin-page {
+.cms-admin-page .dy-admin-ui {
   --background: 324 17% 97%;
   --foreground: 325 17% 16%;
   --card: 320 20% 95%;
