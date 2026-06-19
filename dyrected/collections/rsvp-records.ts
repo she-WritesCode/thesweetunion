@@ -161,9 +161,9 @@ export const rsvpRecords: CollectionConfig = {
     },
   ],
   access: {
-    read: "true",
-    create: "true",
-    update: "true",
+    read: "user != null",
+    create: "user != null",
+    update: "user != null",
     delete: "user != null",
   },
   hooks: {

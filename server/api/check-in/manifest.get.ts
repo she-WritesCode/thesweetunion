@@ -1,7 +1,8 @@
 import { defineEventHandler } from "h3";
 import { createClient } from "@dyrected/sdk";
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const config = useRuntimeConfig();
   const client = createClient({
     baseUrl: config.dyrectedUrl,

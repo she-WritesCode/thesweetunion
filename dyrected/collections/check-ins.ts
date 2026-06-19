@@ -75,8 +75,8 @@ export const checkIns: CollectionConfig = {
     },
   ],
   access: {
-    read: "true",
-    create: "true",
+    read: "user != null",
+    create: "user != null",
     update: "user != null",
     delete: "user != null",
   },

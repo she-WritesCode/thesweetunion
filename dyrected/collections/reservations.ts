@@ -19,8 +19,8 @@ export const reservations: CollectionConfig = {
     { name: "message", type: "textarea", label: "Message", admin: { tab: "Details", placeholder: "Message to the couple (optional)" } },
   ],
   access: {
-    read: "true",
-    create: "true",
+    read: "user != null",
+    create: "user != null",
     update: "false",
     delete: "user != null",
   },

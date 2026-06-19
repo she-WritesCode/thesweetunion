@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
   value?: any;
@@ -66,7 +67,7 @@ onUnmounted(() => {
 
 async function fetchStats() {
   try {
-    const data = await $fetch<any>("/api/check-in/stats");
+    const data = await $fetch<any>("/api/check-in/stats", { headers: adminAuthHeaders() });
     stats.value = data;
   } catch {}
 }
@@ -153,6 +154,7 @@ async function handleScanResult(rsvpRecordId: string) {
   try {
     const data = await $fetch<any>("/api/check-in/scan", {
       method: "POST",
+      headers: adminAuthHeaders(),
       body: {
         rsvpRecordId,
         eventId: selectedEvent.value?.id || undefined,

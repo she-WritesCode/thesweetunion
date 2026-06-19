@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
   value?: any;
@@ -200,7 +201,10 @@ async function sendWhatsApp() {
     a.click();
 
     // Mark as sent + get wa.me link
-    const data = await $fetch<any>(`/api/invitations/send-single/${rsvpId.value}`, { method: "POST" });
+    const data = await $fetch<any>(`/api/invitations/send-single/${rsvpId.value}`, {
+      method: "POST",
+      headers: adminAuthHeaders(),
+    });
     if (data.waUrl) {
       window.open(data.waUrl, "_blank", "noopener,noreferrer");
     }
@@ -222,6 +226,7 @@ async function sendEmail() {
     const imageBase64 = await captureCardImage();
     await $fetch(`/api/invitations/send-email/${rsvpId.value}`, {
       method: "POST",
+      headers: adminAuthHeaders(),
       body: { imageBase64 },
     });
     sendSuccess.value = `Invitation emailed to ${leadEmail.value || "guest"}.`;

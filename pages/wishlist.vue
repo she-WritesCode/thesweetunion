@@ -635,8 +635,10 @@ const progressPercent = (item: WishlistItem) => {
                   placeholder="Leave a lovely note..."
                 />
               </div>
-
-
+              <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
+                🔒 Your information is used only to manage your gift reservation and send its confirmation. It will not
+                be shared or used for marketing.
+              </p>
             </div>
 
             <p v-if="!isContactValid" class="modal-validation text-center">

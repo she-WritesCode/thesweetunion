@@ -19,6 +19,7 @@
     "@dyrected/storage-cloudinary": "^2.5.29",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
+    "jose": "^6.2.3",
     "nodemailer": "^8.0.10",
     "nuxt": "^3.21.6",
     "qrcode": "^1.5.4",

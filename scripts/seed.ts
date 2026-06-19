@@ -151,7 +151,8 @@ async function seed() {
 
   // 1. Seed Admin User
   console.log("Seeding default admin...");
-  const adminPassword = process.env.ADMIN_PASSWORD || "TheSweetUnion@2026";
+  const generatedAdminPassword = randomBytes(24).toString("base64url");
+  const adminPassword = process.env.ADMIN_PASSWORD || generatedAdminPassword;
   const hashed = await hashPassword(adminPassword);
   const adminUser = await db.create({
     collection: "admins",
@@ -164,7 +165,11 @@ async function seed() {
       updatedAt: new Date().toISOString(),
     },
   });
-  console.log(`Created Admin: ${adminUser.email} (Password: ${adminPassword})`);
+  console.log(`Created Admin: ${adminUser.email}`);
+  if (!process.env.ADMIN_PASSWORD) {
+    console.log(`Generated one-time admin password: ${adminPassword}`);
+    console.log("Store it securely now; it will not be written to the repository.");
+  }
 
   // 2. Seed Events
   console.log("Seeding wedding events...");
@@ -399,4 +404,3 @@ seed().catch((err) => {
   console.error("Database seeding failed:", err);
   process.exit(1);
 });
-

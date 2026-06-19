@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const body = await readBody(event);
   const { rsvpIds, via = "whatsapp" }: { rsvpIds: string[]; via?: string } = body;
 

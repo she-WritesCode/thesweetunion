@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import QRCode from "qrcode";
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const rsvpId = getRouterParam(event, "rsvpId");
   if (!rsvpId) {
     throw createError({ statusCode: 400, message: "Missing rsvpId" });
@@ -37,12 +38,16 @@ export default defineEventHandler(async (event) => {
   const phone = rawPhone.startsWith("+")
     ? rawPhone.replace(/\D/g, "")
     : `234${rawPhone.replace(/^0/, "").replace(/\D/g, "")}`;
+  const appUrl = (config.public as any).appUrl || "http://localhost:3000";
+  const wishlistUrl = `${appUrl}/wishlist`;
 
   const message = encodeURIComponent(
     `Hi ${rsvp.leadName}!\n\n` +
       `You're invited to Adun & Uche's wedding. Your personal access code is:\n\n` +
       `${rsvpId?.toUpperCase()}\n\n` +
-      `Please show this at the entrance.\n\n#TheSweetUnion`,
+      `Please show this at the entrance.\n\n` +
+      `Your love, presence, and prayers are our greatest gifts. If you'd like to bless our new home, browse our wishlist here:\n${wishlistUrl}\n\n` +
+      `#TheSweetUnion`,
   );
   const waUrl = `https://wa.me/${phone}?text=${message}`;
 

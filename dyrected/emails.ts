@@ -215,10 +215,12 @@ export function invitationEmail({
   guestName,
   accessCode,
   eventNames,
+  wishlistLink,
 }: {
   guestName: string;
   accessCode: string;
   eventNames: string[];
+  wishlistLink: string;
 }): string {
   return layout(
     heading(`You're invited, ${guestName}! 🎉`),
@@ -236,6 +238,10 @@ export function invitationEmail({
     eventNames.length ? sectionLabel("Events you're attending") + eventList(eventNames) : "",
     divider(),
     paragraph("Present this card (or your access code) at the entrance and it will be scanned to check you in. We cannot wait to see you!"),
+    divider(),
+    sectionLabel("Our Registry"),
+    paragraph("Your love, presence, and prayers are our greatest gifts. If you would like to help us bless our new home, we have curated a wishlist of items we need."),
+    ctaButton("Browse Our Wishlist", wishlistLink),
   );
 }
 
@@ -396,4 +402,3 @@ export function adminWishlistNotificationEmail({
     ctaButton("View Registry in Dashboard", dashboardLink)
   );
 }
-

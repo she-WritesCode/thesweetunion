@@ -58,10 +58,8 @@ const { data: initData } = await useAsyncData(
     // Priority 1: edit token
     if (tokenQuery) {
       try {
-        const record = await client.collection("rsvp_records").find({ where: { editToken: { equals: tokenQuery } } });
-        if (record.docs.length > 0) {
-          return { type: "existing" as const, record: record.docs[0], editToken: tokenQuery };
-        }
+        const record = await $fetch<any>("/api/rsvp/record", { query: { token: tokenQuery } });
+        return { type: "existing" as const, record, editToken: tokenQuery };
       } catch {
         // token invalid — fall through
       }
@@ -70,11 +68,9 @@ const { data: initData } = await useAsyncData(
     // Priority 2: group slug
     if (groupQuery) {
       try {
-        const dbGroup = await client.collection("rsvp_groups").find({ where: { slug: { equals: groupQuery } } });
-        if (dbGroup.docs.length > 0) {
-          const isFull = (dbGroup.docs[0].confirmedCount || 0) >= dbGroup.docs[0].maxCapacity;
-          return { type: "group" as const, groupInfo: dbGroup.docs[0], isFull };
-        }
+        const dbGroup = await $fetch<any>("/api/rsvp/group", { query: { slug: groupQuery } });
+        const isFull = (dbGroup.confirmedCount || 0) >= dbGroup.maxCapacity;
+        return { type: "group" as const, groupInfo: dbGroup, isFull };
       } catch {
         // group not found in DB — invalid link
       }
@@ -657,6 +653,10 @@ const isFormActive = computed(() => {
                 />
                 <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
               </div>
+              <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
+                🔒 Your information is used only to manage your RSVP, invitation, and wedding-day check-in. It will not
+                be shared or used for marketing.
+              </p>
               <div
                 v-if="attending && rsvpEvents.length > 0"
                 class="rsvp-events-box"

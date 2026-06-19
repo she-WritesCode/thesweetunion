@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import QRCode from "qrcode";
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const rsvpId = getRouterParam(event, "rsvpId");
   if (!rsvpId) {
     throw createError({ statusCode: 400, message: "Missing rsvpId" });

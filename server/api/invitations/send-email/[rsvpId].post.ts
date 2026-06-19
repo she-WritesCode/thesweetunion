@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import { invitationEmail } from "~~/dyrected/emails";
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const rsvpId = getRouterParam(event, "rsvpId");
   if (!rsvpId) throw createError({ statusCode: 400, message: "Missing rsvpId" });
 
@@ -45,12 +46,14 @@ export default defineEventHandler(async (event) => {
   });
 
   const from = process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`;
+  const appUrl = (config.public as any).appUrl || "http://localhost:3000";
+  const wishlistLink = `${appUrl}/wishlist`;
 
   await transporter.sendMail({
     from,
     to: rsvp.leadEmail,
     subject: `You're invited, ${rsvp.leadName}! Your access card is inside 🎉`,
-    html: invitationEmail({ guestName, accessCode: rsvpId, eventNames }),
+    html: invitationEmail({ guestName, accessCode: rsvpId, eventNames, wishlistLink }),
     attachments: [
       {
         filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 /**
  * Renders a "Send WhatsApp" button inside the rsvp_records detail view.
@@ -63,6 +64,7 @@ async function send() {
   try {
     const data = await $fetch<any>(`/api/invitations/send-single/${rsvpId.value}`, {
       method: "POST",
+      headers: adminAuthHeaders(),
     });
 
     // Open WhatsApp in a new tab

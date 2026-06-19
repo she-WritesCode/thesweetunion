@@ -2,6 +2,7 @@ import { defineEventHandler, getQuery, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const query = getQuery(event);
   const id = query.id as string;
 
