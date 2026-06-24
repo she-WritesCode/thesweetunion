@@ -19,15 +19,9 @@ export const wishlistItems: CollectionConfig = {
     group: "Wishlist",
   },
   fields: [
+    { name: "image", type: "relationship", label: "Product Image", relationTo: "media", admin: { tab: "General" } },
     { name: "name", type: "text", label: "Item Name", required: true, admin: { tab: "General" } },
     { name: "description", type: "textarea", label: "Description", admin: { tab: "General" } },
-    { name: "image", type: "relationship", label: "Product Image", relationTo: "media", admin: { tab: "General" } },
-    {
-      name: "link",
-      type: "url",
-      label: "Purchase Link",
-      admin: { tab: "General", description: "External purchase link (optional)" },
-    },
     {
       name: "category",
       type: "select",
@@ -41,15 +35,13 @@ export const wishlistItems: CollectionConfig = {
       ],
       admin: { tab: "General" },
     },
-    { name: "isHidden", type: "boolean", label: "Hidden", defaultValue: false, admin: { tab: "General" } },
-
     {
       name: "price",
       type: "number",
       label: "Price / Funding Goal",
       required: true,
       admin: {
-        tab: "Pricing & Funding",
+        tab: "General",
         description: "For crowdfund items: set to the goal amount, or 0 for unlimited",
         width: "75%",
       },
@@ -63,7 +55,7 @@ export const wishlistItems: CollectionConfig = {
         { label: "Fixed (one person reserves the full item)", value: "fixed" },
         { label: "Crowdfund (guests contribute partial amounts)", value: "crowdfund" },
       ],
-      admin: { tab: "Pricing & Funding", width: "75%" },
+      admin: { tab: "General", width: "50%" },
     },
     {
       name: "maxQuantity",
@@ -72,32 +64,39 @@ export const wishlistItems: CollectionConfig = {
       required: true,
       defaultValue: 1,
       admin: {
-        tab: "Pricing & Funding",
+        tab: "General",
         description: "For crowdfund: leave at 1 (not used). For fixed: how many people can reserve.",
-        width: "75%",
+        width: "50%",
       },
     },
+    {
+      name: "link",
+      type: "url",
+      label: "Purchase Link",
+      admin: { tab: "General", description: "External purchase link (optional)" },
+    },
+    { name: "isHidden", type: "boolean", label: "Hidden", defaultValue: false, admin: { tab: "General" } },
 
     {
       name: "amountRaised",
       type: "number",
       label: "Amount Raised",
       defaultValue: 0,
-      admin: { tab: "Reservations", readOnly: true, width: "50%" },
+      admin: { tab: "Reservations", component: "wishlist_items.amountRaised", readOnly: true, width: "50%" },
     },
     {
       name: "contributorCount",
       type: "number",
       label: "Contributors",
       defaultValue: 0,
-      admin: { tab: "Reservations", readOnly: true, width: "50%" },
+      admin: { tab: "Reservations", component: "wishlist_items.contributorCount", readOnly: true, width: "50%" },
     },
     {
       name: "reservedCount",
       type: "number",
       label: "Reserved Count",
       defaultValue: 0,
-      admin: { tab: "Reservations", readOnly: true, width: "50%" },
+      admin: { tab: "Reservations", component: "wishlist_items.reservedCount", readOnly: true, width: "50%" },
     },
     {
       name: "reservations",
