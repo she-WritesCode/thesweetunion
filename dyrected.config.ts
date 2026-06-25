@@ -1,5 +1,4 @@
 import { defineConfig } from "@dyrected/core";
-import { SqliteAdapter } from "@dyrected/db-sqlite";
 import { PostgresAdapter } from "@dyrected/db-postgres";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
 import { sendEmail } from "./dyrected/mailer.ts";
@@ -41,9 +40,9 @@ import { checkIns } from "./dyrected/collections/check-ins.ts";
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
 import { asoebiSettings } from "./dyrected/globals/asoebi-settings.ts";
 
-const dbAdapter = process.env.DATABASE_URL
-  ? new PostgresAdapter({ url: process.env.DATABASE_URL })
-  : new SqliteAdapter({ filename: process.env.DYRECTED_DATABASE_FILE || "./data/sweetunion.db" });
+const dbAdapter = new PostgresAdapter({
+  url: process.env.DATABASE_URL || "postgres://localhost:5432/sweetunion",
+});
 
 export default defineConfig({
   db: dbAdapter,
