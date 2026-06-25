@@ -33,14 +33,14 @@ export const checkIns: CollectionConfig = {
       label: "RSVP Record",
       relationTo: "rsvp_records",
       required: true,
-      admin: { tab: "Record", width: "50%" },
+      admin: { tab: "Record", readOnly: true, width: "50%" },
     },
     {
       name: "event",
       type: "relationship",
       label: "Event",
       relationTo: "events",
-      admin: { tab: "Record", width: "50%" },
+      admin: { tab: "Record", readOnly: true, width: "50%" },
     },
     {
       name: "guestName",
@@ -65,7 +65,7 @@ export const checkIns: CollectionConfig = {
       name: "scannedBy",
       type: "text",
       label: "Scanned By",
-      admin: { tab: "Record", width: "50%" },
+      admin: { tab: "Record", readOnly: true, width: "50%" },
     },
     {
       name: "notes",
