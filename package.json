@@ -13,7 +13,6 @@
   "dependencies": {
     "@dyrected/core": "^2.5.38",
     "@dyrected/db-postgres": "^2.5.38",
-    "@dyrected/db-sqlite": "^2.5.38",
     "@dyrected/nuxt": "^2.5.38",
     "@dyrected/sdk": "^2.5.38",
     "@dyrected/storage-cloudinary": "^2.5.38",

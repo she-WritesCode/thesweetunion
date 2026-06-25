@@ -91,6 +91,40 @@ export const rsvpRecords: CollectionConfig = {
       admin: { tab: "Response" },
     },
     {
+      name: "wantsAsoebi",
+      type: "boolean",
+      label: "Wants Asoebi",
+      defaultValue: false,
+      admin: { tab: "Response", width: "50%" },
+    },
+    {
+      name: "asoebiYards",
+      type: "select",
+      label: "Asoebi Yards",
+      options: [
+        { label: "2 Yards (₦20,000)", value: "2" },
+        { label: "3 Yards (₦30,000)", value: "3" },
+        { label: "4 Yards (₦40,000)", value: "4" },
+        { label: "5 Yards (₦50,000)", value: "5" },
+        { label: "6 Yards (₦60,000)", value: "6" },
+      ],
+      admin: {
+        tab: "Response",
+        width: "50%",
+        condition: (data: any) => data.wantsAsoebi === true,
+      },
+    },
+    {
+      name: "asoebiReminder",
+      type: "json",
+      label: "Asoebi Reminder",
+      admin: {
+        tab: "Response",
+        component: "rsvp_records.asoebiReminder",
+        condition: (data: any) => data.attending === true && data.wantsAsoebi === true,
+      },
+    },
+    {
       name: "message",
       type: "textarea",
       label: "Message to Couple",

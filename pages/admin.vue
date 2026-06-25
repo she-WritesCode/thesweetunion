@@ -4,6 +4,7 @@ import RsvpEditLinkField from "~/components/admin/RsvpEditLinkField.vue";
 import CountField from "~/components/admin/CountField.vue";
 import CheckInScanner from "~/components/admin/CheckInScanner.vue";
 import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
+import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButton.vue";
 
 definePageMeta({
   layout: false,
@@ -37,6 +38,7 @@ const adminComponents = {
     "check_ins.checkInScanner": CheckInScanner,
     // rsvp_records collection — invitation tools
     "rsvp_records.accessCardPreview": AccessCardPreview,
+    "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
   },
 };
 </script>

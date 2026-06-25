@@ -24,6 +24,8 @@ interface RSVPData {
   dietaryNotes: string;
   message: string;
   submittedAt: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
 }
 
 interface GroupConfig {
@@ -113,6 +115,8 @@ const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
 const message = ref("");
+const wantsAsoebi = ref(false);
+const asoebiYards = ref("");
 
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
@@ -163,6 +167,8 @@ const populateStates = (data: RSVPData) => {
   spouseName.value = data.spouseName || "";
   dietaryNotes.value = data.dietaryNotes || "";
   message.value = data.message || "";
+  wantsAsoebi.value = data.wantsAsoebi || false;
+  asoebiYards.value = data.asoebiYards || "";
 };
 
 // Pre-populate form if SSR resolved an existing RSVP
@@ -204,15 +210,23 @@ watch(initData, (val) => {
 const handleAttendanceSelect = (isAttending: boolean) => {
   attending.value = isAttending;
   if (!isAttending) {
-    currentStep.value = 4;
+    currentStep.value = 5; // Skip details and Asoebi, go straight to Message (Step 5)
   } else {
-    currentStep.value = 3;
+    currentStep.value = 3; // Go to Details (Step 3)
   }
 };
 
 const handleStepBack = () => {
-  if (currentStep.value === 4 && attending.value === false) {
-    currentStep.value = 2;
+  if (currentStep.value === 5 && attending.value === false) {
+    currentStep.value = 2; // Back to Attendance
+  } else if (currentStep.value === 5 && attending.value === true) {
+    currentStep.value = 4; // Back to Asoebi (Step 4)
+  } else if (currentStep.value === 4) {
+    currentStep.value = 3; // Back to Details (Step 3)
+  } else if (currentStep.value === 3) {
+    currentStep.value = 2; // Back to Attendance
+  } else if (currentStep.value === 6) {
+    currentStep.value = 5; // Back to Message (Step 5)
   } else {
     currentStep.value = currentStep.value - 1;
   }
@@ -261,10 +275,13 @@ const handleStep3Submit = () => {
     }
   }
 
-  currentStep.value = 4;
+  currentStep.value = 4; // Go to Asoebi (Step 4)
 };
 const handleStep4Submit = () => {
-  currentStep.value = 5;
+  currentStep.value = 5; // Go to Message (Step 5)
+};
+const handleStep5Submit = () => {
+  currentStep.value = 6; // Go to Confirmation (Step 6)
 };
 
 const handleSubmit = async () => {
@@ -281,6 +298,8 @@ const handleSubmit = async () => {
     spouseName: attending.value && hasSpouse.value ? spouseName.value : "",
     dietaryNotes: attending.value ? dietaryNotes.value : "",
     message: message.value,
+    wantsAsoebi: attending.value ? wantsAsoebi.value : false,
+    asoebiYards: attending.value && wantsAsoebi.value ? asoebiYards.value : "",
   };
 
   try {
@@ -404,6 +423,8 @@ const handleCancelRSVP = async () => {
     spouseName.value = "";
     dietaryNotes.value = "";
     message.value = "";
+    wantsAsoebi.value = false;
+    asoebiYards.value = "";
 
     successModal.value = "cancel";
     isEditing.value = false;
@@ -412,7 +433,10 @@ const handleCancelRSVP = async () => {
 };
 
 const getStepProgress = computed(() => {
-  return ((currentStep.value - 1) / 3) * 100;
+  const steps = attending.value === false ? [2, 5, 6] : [2, 3, 4, 5, 6];
+  const idx = steps.indexOf(currentStep.value);
+  if (idx === -1) return 0;
+  return (idx / (steps.length - 1)) * 100;
 });
 
 const isFormActive = computed(() => {
@@ -528,6 +552,14 @@ const isFormActive = computed(() => {
                   Attending with spouse: <strong>{{ existingRSVP.spouseName }}</strong>
                 </p>
                 <p v-else class="rsvp-spouse-none">Attending solo</p>
+              </div>
+
+              <div style="margin-top: 16px;">
+                <h4 class="rsvp-summary__section-heading">Asoebi Choice</h4>
+                <p v-if="existingRSVP.wantsAsoebi" class="rsvp-spouse-note">
+                  Yes, requested <strong>{{ existingRSVP.asoebiYards }} Yards</strong> (₦{{ (parseInt(existingRSVP.asoebiYards, 10) * 10000).toLocaleString() }})
+                </p>
+                <p v-else class="rsvp-spouse-none">No Asoebi requested</p>
               </div>
             </div>
           </div>
@@ -703,8 +735,46 @@ const isFormActive = computed(() => {
             </div>
           </div>
 
-          <!-- STEP 4: MESSAGE & SUBMIT -->
+          <!-- STEP 4: ASOEBI -->
           <div v-if="currentStep === 4" class="rsvp-step">
+            <div class="rsvp-step__header">
+              <h2 class="rsvp-step__title">Would you like our Asoebi?</h2>
+              <p class="rsvp-step__subtitle">Our beautiful wedding fabric is available for guests to purchase.</p>
+            </div>
+            <div class="rsvp-fields">
+              <div class="rsvp-field-group">
+                <label class="input-label">Would you like to purchase the Asoebi?</label>
+                <div style="display: flex; gap: 16px; margin-top: 8px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
+                    <span>Yes, I want to purchase</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="false" v-model="wantsAsoebi" class="rsvp-checkbox" />
+                    <span>No, thank you</span>
+                  </label>
+                </div>
+              </div>
+
+              <div v-if="wantsAsoebi" class="rsvp-field-group" style="margin-top: 16px;">
+                <label class="input-label">Select Quantity (Yards)</label>
+                <select v-model="asoebiYards" class="rsvp-input">
+                  <option value="" disabled>-- Select yards --</option>
+                  <option value="2">2 Yards (₦20,000)</option>
+                  <option value="3">3 Yards (₦30,000)</option>
+                  <option value="4">4 Yards (₦40,000)</option>
+                  <option value="5">5 Yards (₦50,000)</option>
+                  <option value="6">6 Yards (₦60,000)</option>
+                </select>
+                <p v-if="asoebiYards" style="margin-top: 8px; font-size: 0.9rem; font-weight: 600; color: #462137;">
+                  Total: ₦{{ (parseInt(asoebiYards, 10) * 10000).toLocaleString() }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 5: MESSAGE -->
+          <div v-if="currentStep === 5" class="rsvp-step">
             <div class="rsvp-step__header">
               <h2 class="rsvp-step__title">Greetings for the couple</h2>
               <p class="rsvp-step__subtitle">
@@ -724,8 +794,8 @@ const isFormActive = computed(() => {
             </div>
           </div>
 
-          <!-- STEP 5: Confirmation -->
-          <div v-if="currentStep === 5" class="rsvp-step">
+          <!-- STEP 6: Confirmation -->
+          <div v-if="currentStep === 6" class="rsvp-step">
             <div class="rsvp-step__header">
               <h2 class="rsvp-step__title">Confirmation</h2>
               <p class="rsvp-step__subtitle">Are you sure you would be attending this wedding?</p>
@@ -759,6 +829,7 @@ const isFormActive = computed(() => {
               Exit Form
             </button>
 
+            <!-- Step 3 Details continue -->
             <button
               v-if="currentStep === 3"
               type="button"
@@ -783,8 +854,32 @@ const isFormActive = computed(() => {
             >
               Continue
             </button>
+
+            <!-- Step 4 Asoebi continue -->
             <button
-              v-if="currentStep === 5"
+              v-else-if="currentStep === 4"
+              type="button"
+              @click="handleStep4Submit"
+              :disabled="wantsAsoebi && !asoebiYards"
+              class="rsvp-continue-btn"
+              :class="wantsAsoebi && !asoebiYards ? 'rsvp-continue-btn--disabled' : 'rsvp-continue-btn--active'"
+            >
+              Continue
+            </button>
+
+            <!-- Step 5 Message continue -->
+            <button
+              v-else-if="currentStep === 5 && attending === true"
+              type="button"
+              @click="handleStep5Submit"
+              class="rsvp-continue-btn rsvp-continue-btn--active"
+            >
+              Continue
+            </button>
+
+            <!-- Step 6 Final Submit / Decline submit on Step 6 -->
+            <button
+              v-if="currentStep === 6 && attending === false"
               type="button"
               @click="
                 () => {
@@ -799,10 +894,7 @@ const isFormActive = computed(() => {
               <span v-if="isSubmitting && attending === false" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
               <span>No, I can't make it</span>
             </button>
-            <button v-if="currentStep === 4" type="button" @click="handleStep4Submit" class="rsvp-continue-btn">
-              Continue
-            </button>
-            <button v-else-if="currentStep === 5" type="submit" :disabled="isSubmitting" class="rsvp-submit-btn flex items-center justify-center gap-2">
+            <button v-else-if="currentStep === 6 && attending === true" type="submit" :disabled="isSubmitting" class="rsvp-submit-btn flex items-center justify-center gap-2">
               <span v-if="isSubmitting && attending === true" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
               <span>{{ isEditing ? (isSubmitting ? "Saving..." : "Save RSVP Changes") : (isSubmitting ? "Submitting..." : "Yes I'll be attending") }}</span>
             </button>

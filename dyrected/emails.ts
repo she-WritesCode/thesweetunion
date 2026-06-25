@@ -98,6 +98,44 @@ function layout(...body: string[]): string {
 
 // ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
 
+// Helper to render Asoebi payment details
+function asoebiSection(wantsAsoebi?: boolean, asoebiYards?: string, asoebiSettings?: any): string {
+  if (!wantsAsoebi || !asoebiYards || !asoebiSettings) return "";
+
+  const yards = parseInt(asoebiYards, 10);
+  const amount = isNaN(yards) ? 0 : yards * 10000;
+
+  const bankName = asoebiSettings.bankName || "";
+  const accountNumber = asoebiSettings.accountNumber || "";
+  const accountName = asoebiSettings.accountName || "";
+  const whatsAppContact = asoebiSettings.whatsAppContact || "";
+
+  return `${divider()}
+    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi Purchase Details</p>
+    <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+      You have requested <strong>${asoebiYards} yards</strong> of our wedding Asoebi. Please transfer the total amount of <strong>₦${amount.toLocaleString("en-US")}</strong> to the account below to secure your order:
+    </p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:16px;background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:12px;">
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:${MUTED};width:120px;font-family:Georgia,serif;">Bank</td>
+        <td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;font-family:Georgia,serif;">${bankName}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Account Number</td>
+        <td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;font-family:Georgia,serif;">${accountNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Account Name</td>
+        <td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;font-family:Georgia,serif;">${accountName}</td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+      Once done, kindly send proof of payment on WhatsApp to: <strong>${whatsAppContact}</strong>.
+    </p>`;
+}
+
+// ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
+
 export function rsvpConfirmationEmail({
   leadName,
   attending,
@@ -106,6 +144,9 @@ export function rsvpConfirmationEmail({
   eventNames,
   editLink,
   wishlistLink,
+  wantsAsoebi,
+  asoebiYards,
+  asoebiSettings,
 }: {
   leadName: string;
   attending: boolean;
@@ -114,6 +155,9 @@ export function rsvpConfirmationEmail({
   eventNames: string[];
   editLink: string;
   wishlistLink?: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
+  asoebiSettings?: any;
 }): string {
   if (!attending) {
     return layout(
@@ -127,14 +171,20 @@ export function rsvpConfirmationEmail({
   }
 
   const partyLine = hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance";
+  const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
 
   return layout(
     heading("You're on the list! 🎉"),
     paragraph(`We've received your RSVP, ${leadName}. We cannot wait to celebrate with you.`),
     divider(),
-    table(row("Guest", leadName), row("Party", partyLine)),
+    table(
+      row("Guest", leadName),
+      row("Party", partyLine),
+      row("Asoebi Request", asoebiLabel)
+    ),
     sectionLabel("Events"),
     eventList(eventNames),
+    asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
     divider(),
     paragraph(
       "Your personal invitation card will be sent closer to the wedding date. Need to make a change? Use the link below — it's your unique edit link, keep it safe.",
@@ -163,6 +213,9 @@ export function rsvpUpdatedEmail({
   eventNames,
   editLink,
   wishlistLink,
+  wantsAsoebi,
+  asoebiYards,
+  asoebiSettings,
 }: {
   leadName: string;
   attending: boolean;
@@ -171,15 +224,24 @@ export function rsvpUpdatedEmail({
   eventNames: string[];
   editLink: string;
   wishlistLink?: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
+  asoebiSettings?: any;
 }): string {
   const partyLine = attending ? (hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance") : "Declined";
+  const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
 
   return layout(
     heading(`RSVP updated, ${leadName}.`),
     paragraph("Here's a summary of your updated RSVP."),
     divider(),
-    table(row("Status", attending ? "Attending ✓" : "Declined"), row("Party", partyLine)),
+    table(
+      row("Status", attending ? "Attending ✓" : "Declined"),
+      row("Party", partyLine),
+      attending ? row("Asoebi Request", asoebiLabel) : ""
+    ),
     attending && eventNames.length ? sectionLabel("Events") + eventList(eventNames) : "",
+    asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
     divider(),
     paragraph("Need to change something again? Use your edit link below."),
     ctaButton("Edit My RSVP", editLink),
@@ -258,6 +320,8 @@ export function adminRsvpNotificationEmail({
   eventNames,
   message,
   dashboardLink,
+  wantsAsoebi,
+  asoebiYards,
 }: {
   leadName: string;
   leadEmail: string;
@@ -269,8 +333,11 @@ export function adminRsvpNotificationEmail({
   eventNames: string[];
   message?: string;
   dashboardLink: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
 }): string {
   const seats = attending ? (hasSpouse ? 2 : 1) : 0;
+  const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
 
   return layout(
     heading(`New RSVP — ${attending ? "Attending 🎉" : "Declined"}`),
@@ -283,6 +350,7 @@ export function adminRsvpNotificationEmail({
       row("Group", groupName),
       row("Status", attending ? `Attending (${seats} seat${seats > 1 ? "s" : ""})` : "Declined"),
       hasSpouse && spouseName ? row("Spouse", spouseName) : "",
+      attending ? row("Asoebi Request", asoebiLabel) : ""
     ),
     attending && eventNames.length ? sectionLabel("Events") + eventList(eventNames, "•") : "",
     message ? divider() + sectionLabel("Message to the couple") + quote(message) : "",

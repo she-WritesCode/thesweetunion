@@ -6,7 +6,7 @@ import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { editToken, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents } = body;
+  const { editToken, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents, wantsAsoebi, asoebiYards } = body;
 
   if (!editToken) {
     throw createError({ statusCode: 400, message: "Missing edit token" });
@@ -32,6 +32,8 @@ export default defineEventHandler(async (event) => {
   const groupId = typeof record.group === "object" ? record.group.id : record.group;
 
   const newAttending = attending !== undefined ? attending : record.attending;
+  const newWantsAsoebi = wantsAsoebi !== undefined ? wantsAsoebi : record.wantsAsoebi;
+  const newAsoebiYards = asoebiYards !== undefined ? asoebiYards : record.asoebiYards;
 
   try {
     const updated = await client.collection("rsvp_records").update(record.id, {
@@ -44,6 +46,8 @@ export default defineEventHandler(async (event) => {
       dietaryNotes,
       message,
       selectedEvents,
+      wantsAsoebi: newAttending ? newWantsAsoebi : false,
+      asoebiYards: newAttending && newWantsAsoebi ? newAsoebiYards : "",
     });
 
     await syncGroupCounts(client, groupId);
@@ -63,6 +67,16 @@ export default defineEventHandler(async (event) => {
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
     const wishlistLink = `${appUrl}/wishlist`;
 
+    // Fetch Asoebi global settings if wantsAsoebi is true
+    let asoebiSettings: any = null;
+    if (newAttending && newWantsAsoebi) {
+      try {
+        asoebiSettings = await $fetch("/api/globals/asoebi_settings");
+      } catch (e) {
+        console.error("Failed to fetch asoebi settings in edit.patch.ts:", e);
+      }
+    }
+
     sendEmail({
       to: updated.leadEmail ?? leadEmail,
       subject: `Your RSVP has been updated, ${updated.leadName ?? leadName}`,
@@ -74,6 +88,9 @@ export default defineEventHandler(async (event) => {
         eventNames,
         editLink,
         wishlistLink,
+        wantsAsoebi: newAttending && newWantsAsoebi,
+        asoebiYards: newAttending && newWantsAsoebi ? newAsoebiYards : "",
+        asoebiSettings,
       }),
     }).catch(console.error);
 

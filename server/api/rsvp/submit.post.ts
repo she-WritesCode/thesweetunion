@@ -6,7 +6,7 @@ import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { groupSlug, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents } = body;
+  const { groupSlug, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents, wantsAsoebi, asoebiYards } = body;
 
   if (!groupSlug) {
     throw createError({ statusCode: 400, message: "Missing group slug" });
@@ -84,6 +84,8 @@ export default defineEventHandler(async (event) => {
       dietaryNotes,
       message,
       selectedEvents,
+      wantsAsoebi: attending ? wantsAsoebi : false,
+      asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
     });
 
     await syncGroupCounts(client, group.id);
@@ -103,6 +105,16 @@ export default defineEventHandler(async (event) => {
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
     const wishlistLink = `${appUrl}/wishlist`;
 
+    // Fetch Asoebi global settings if wantsAsoebi is true
+    let asoebiSettings: any = null;
+    if (attending && wantsAsoebi) {
+      try {
+        asoebiSettings = await $fetch("/api/globals/asoebi_settings");
+      } catch (e) {
+        console.error("Failed to fetch asoebi settings in submit.post.ts:", e);
+      }
+    }
+
     // Guest confirmation — fire and forget
     sendEmail({
       to: leadEmail,
@@ -117,6 +129,9 @@ export default defineEventHandler(async (event) => {
         eventNames,
         editLink,
         wishlistLink,
+        wantsAsoebi: attending && wantsAsoebi,
+        asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
+        asoebiSettings,
       }),
     }).catch(console.error);
 
@@ -138,6 +153,8 @@ export default defineEventHandler(async (event) => {
           eventNames,
           message,
           dashboardLink: `${appUrl}/admin`,
+          wantsAsoebi: attending && wantsAsoebi,
+          asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
         }),
       }).catch(console.error);
     }
