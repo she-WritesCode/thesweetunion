@@ -90,6 +90,7 @@ const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
 
 // Modal Reservation State
 const activeItem = ref<WishlistItem | null>(null);
+const selectedDetailItem = ref<WishlistItem | null>(null);
 const modalStep = ref<number>(1);
 const isAnonymous = ref(false);
 const isSubmitting = ref(false);
@@ -172,6 +173,11 @@ const handleReserveClick = (item: WishlistItem) => {
   customAmount.value = "";
 };
 
+const handleDrawerAction = (item: WishlistItem) => {
+  selectedDetailItem.value = null;
+  handleReserveClick(item);
+};
+
 const handleConfirmReservation = async () => {
   if (!activeItem.value || isSubmitting.value) return;
 
@@ -242,6 +248,8 @@ const filteredAndSortedItems = computed(() => {
     list.sort((a, b) => a.price - b.price);
   } else if (priceSort.value === "high-to-low") {
     list.sort((a, b) => b.price - a.price);
+  } else {
+    list.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   return list;
@@ -320,7 +328,8 @@ const progressPercent = (item: WishlistItem) => {
           <div
             v-for="item in filteredAndSortedItems"
             :key="item.id"
-            class="linen-card rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-md group"
+            @click="selectedDetailItem = item"
+            class="linen-card rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-md group cursor-pointer"
             :class="
               item.fundingType === 'crowdfund'
                 ? 'hover:-translate-y-1 hover:shadow-lg border-amber-gold/15'
@@ -398,7 +407,7 @@ const progressPercent = (item: WishlistItem) => {
                 >
                   {{ item.name }}
                 </h3>
-                <p class="font-body text-sm text-deep-espresso/70 leading-relaxed">
+                <p class="font-body text-sm text-deep-espresso/70 leading-relaxed line-clamp-2">
                   {{ item.description }}
                 </p>
 
@@ -433,19 +442,20 @@ const progressPercent = (item: WishlistItem) => {
                   v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
                   disabled
                   class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
+                  @click.stop
                 >
                   Fund Fully Raised
                 </button>
                 <button
                   v-else-if="item.fundingType === 'crowdfund'"
-                  @click="handleReserveClick(item)"
+                  @click.stop="handleReserveClick(item)"
                   class="flex-1 btn-secondary"
                 >
                   Contribute to Fund
                 </button>
                 <button
                   v-else-if="item.maxQuantity - item.reservedCount > 0"
-                  @click="handleReserveClick(item)"
+                  @click.stop="handleReserveClick(item)"
                   class="flex-1 btn-primary"
                 >
                   Reserve Gift
@@ -454,6 +464,7 @@ const progressPercent = (item: WishlistItem) => {
                   v-else
                   disabled
                   class="flex-1 px-4 py-2 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
+                  @click.stop
                 >
                   Fully Reserved
                 </button>
@@ -463,6 +474,7 @@ const progressPercent = (item: WishlistItem) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   class="px-4 py-2 rounded-xl border border-amber-gold/20 text-deep-espresso font-semibold text-xs uppercase tracking-wider hover:bg-soft-pearl transition-all duration-300 text-center"
+                  @click.stop
                 >
                   View Link
                 </a>
@@ -837,5 +849,145 @@ const progressPercent = (item: WishlistItem) => {
         <button @click="successItem = null" class="btn-primary">Back to Registry</button>
       </div>
     </div>
+
+    <!-- Detail Side Drawer -->
+    <Transition
+      enter-active-class="transition-opacity duration-300 ease-out"
+      leave-active-class="transition-opacity duration-200 ease-in"
+      enter-from-class="opacity-0"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="selectedDetailItem" class="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs flex justify-end" @click="selectedDetailItem = null">
+        <Transition
+          enter-active-class="transition-transform duration-300 ease-out"
+          leave-active-class="transition-transform duration-200 ease-in"
+          enter-from-class="translate-x-full"
+          leave-to-class="translate-x-full"
+          appear
+        >
+          <div
+            class="w-full max-w-md md:max-w-lg bg-warm-cream border-l border-amber-gold/20 h-full shadow-2xl flex flex-col justify-between overflow-hidden"
+            @click.stop
+          >
+            <!-- Drawer Header / Image -->
+            <div class="relative overflow-y-auto flex-1 select-text">
+              <button
+                @click="selectedDetailItem = null"
+                class="absolute top-4 right-4 z-10 text-deep-espresso/60 hover:text-deep-espresso text-xl font-sans bg-warm-cream/80 backdrop-blur-xs w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-pearl shadow-sm transition-all duration-200"
+              >
+                ✕
+              </button>
+
+              <div class="aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden relative">
+                <img
+                  v-if="selectedDetailItem.imageUrl && selectedDetailItem.imageUrl !== '/images/placeholder.png'"
+                  :src="selectedDetailItem.imageUrl"
+                  :alt="selectedDetailItem.name"
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  v-else
+                  class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
+                >
+                  No Image Placeholder
+                </div>
+              </div>
+
+              <!-- Drawer Body Content -->
+              <div class="p-6 md:p-8 space-y-6">
+                <div class="space-y-2">
+                  <span class="text-[10px] md:text-xs uppercase tracking-widest font-semibold text-amber-gold block">
+                    {{ selectedDetailItem.category }}
+                  </span>
+                  <h2 class="font-heading text-2xl md:text-3xl font-bold text-deep-espresso leading-snug">
+                    {{ selectedDetailItem.name }}
+                  </h2>
+                  <p class="text-lg md:text-xl font-bold text-deep-espresso font-body">
+                    {{ selectedDetailItem.fundingType === "crowdfund" && selectedDetailItem.price > 0 ? "Goal: " : "" }}₦{{
+                      selectedDetailItem.price.toLocaleString("en-US")
+                    }}
+                  </p>
+                </div>
+
+                <!-- Crowdfund Progress in Drawer -->
+                <div v-if="selectedDetailItem.fundingType === 'crowdfund'" class="space-y-2.5 p-4 rounded-2xl border border-amber-gold/10 bg-soft-pearl/30">
+                  <div class="w-full h-2.5 bg-deep-espresso/10 rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full transition-all duration-500"
+                      :class="
+                        selectedDetailItem.price > 0 && (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price ? 'bg-emerald-600' : 'bg-amber-gold'
+                      "
+                      :style="{ width: `${progressPercent(selectedDetailItem)}%` }"
+                    />
+                  </div>
+                  <p class="text-xs md:text-sm text-deep-espresso/70 font-body">
+                    <template v-if="selectedDetailItem.price > 0">
+                      <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> of ₦{{
+                        selectedDetailItem.price.toLocaleString("en-US")
+                      }} raised
+                    </template>
+                    <template v-else>
+                      <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> raised
+                    </template>
+                    · {{ selectedDetailItem.contributorCount ?? 0 }}
+                    {{ (selectedDetailItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                  </p>
+                </div>
+
+                <div class="space-y-3">
+                  <h4 class="font-heading text-xs font-semibold text-deep-espresso/50 uppercase tracking-wider">
+                    Description
+                  </h4>
+                  <p class="font-body text-base text-deep-espresso/80 leading-relaxed whitespace-pre-line">
+                    {{ selectedDetailItem.description }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drawer Actions -->
+            <div class="p-6 md:p-8 bg-soft-pearl/30 border-t border-amber-gold/10 flex items-center gap-3">
+              <button
+                v-if="selectedDetailItem.fundingType === 'crowdfund' && selectedDetailItem.price > 0 && (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price"
+                disabled
+                class="flex-1 px-4 py-3 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
+              >
+                Fund Fully Raised
+              </button>
+              <button
+                v-else-if="selectedDetailItem.fundingType === 'crowdfund'"
+                @click="handleDrawerAction(selectedDetailItem)"
+                class="flex-1 btn-secondary py-3 text-sm"
+              >
+                Contribute to Fund
+              </button>
+              <button
+                v-else-if="selectedDetailItem.maxQuantity - selectedDetailItem.reservedCount > 0"
+                @click="handleDrawerAction(selectedDetailItem)"
+                class="flex-1 btn-primary py-3 text-sm"
+              >
+                Reserve Gift
+              </button>
+              <button
+                v-else
+                disabled
+                class="flex-1 px-4 py-3 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
+              >
+                Fully Reserved
+              </button>
+              <a
+                v-if="selectedDetailItem.link"
+                :href="selectedDetailItem.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="px-5 py-3 rounded-xl border border-amber-gold/20 text-deep-espresso font-semibold text-xs uppercase tracking-wider hover:bg-soft-pearl transition-all duration-300 text-center"
+              >
+                View Link
+              </a>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
   </div>
 </template>
