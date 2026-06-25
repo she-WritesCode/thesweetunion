@@ -62,7 +62,7 @@ const items = computed<WishlistItem[]>(() => {
         name: doc.name,
         description: doc.description,
         imageUrl: doc.image?.url || "/images/placeholder.png",
-        link: doc.link,
+        link: typeof doc.link === "object" && doc.link !== null ? (doc.link as any).url : doc.link,
         price: doc.price,
         maxQuantity: doc.maxQuantity,
         reservedCount: (local?.reservedCount ?? doc.reservedCount) || 0,
@@ -316,7 +316,7 @@ const progressPercent = (item: WishlistItem) => {
         </div>
 
         <!-- Registry Item Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           <div
             v-for="item in filteredAndSortedItems"
             :key="item.id"
@@ -407,7 +407,9 @@ const progressPercent = (item: WishlistItem) => {
                   <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-500"
-                      :class="item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'"
+                      :class="
+                        item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'
+                      "
                       :style="{ width: `${progressPercent(item)}%` }"
                     />
                   </div>
@@ -687,12 +689,23 @@ const progressPercent = (item: WishlistItem) => {
                 </div>
 
                 <!-- Store Purchase Instructions -->
-                <div v-if="activeItem.fundingType !== 'crowdfund' && activeItem.link" class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left">
-                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">Store Purchase Instructions</p>
-                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
-                    Please buy this gift from the online store. Click the button below to buy, then confirm below to lock the reservation.
+                <div
+                  v-if="activeItem.fundingType !== 'crowdfund' && activeItem.link"
+                  class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left"
+                >
+                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">
+                    Store Purchase Instructions
                   </p>
-                  <a :href="activeItem.link" target="_blank" rel="noopener noreferrer" class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px] mt-2">
+                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
+                    Please buy this gift from the online store. Click the button below to buy, then confirm below to
+                    lock the reservation.
+                  </p>
+                  <a
+                    :href="activeItem.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px] mt-2"
+                  >
                     Buy from Store ↗
                   </a>
                 </div>
@@ -758,9 +771,18 @@ const progressPercent = (item: WishlistItem) => {
                 class="flex-1 btn-primary flex items-center justify-center gap-2"
                 :disabled="isSubmitting || (activeItem.fundingType === 'crowdfund' && !isAmountValid)"
               >
-                <span v-if="isSubmitting" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+                <span
+                  v-if="isSubmitting"
+                  class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+                ></span>
                 <span>
-                  {{ isSubmitting ? "Processing..." : (activeItem.fundingType === "crowdfund" ? `I've made the transfer!` : "I'm gifting this!") }}
+                  {{
+                    isSubmitting
+                      ? "Processing..."
+                      : activeItem.fundingType === "crowdfund"
+                        ? `I've made the transfer!`
+                        : "I'm gifting this!"
+                  }}
                 </span>
               </button>
             </div>
@@ -783,13 +805,30 @@ const progressPercent = (item: WishlistItem) => {
           <template v-if="successItem.fundingType === 'crowdfund'">
             You have successfully contributed
             <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to the
-            <strong>{{ successItem.name }}</strong>. We will look out for the transfer.<span v-if="guestEmail"> We have sent the details of the account number to your email.</span>
+            <strong>{{ successItem.name }}</strong
+            >. We will look out for the transfer.<span v-if="guestEmail">
+              We have sent the details of the account number to your email.</span
+            >
           </template>
           <template v-else>
-            You have successfully reserved the <strong>{{ successItem.name }}</strong> registry gift item.<span v-if="guestEmail"> We have sent a confirmation details card to your email.</span>
-            <div v-if="successItem.link" class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center">
-              <p class="text-xs text-deep-espresso/80 mb-2 font-body">If you haven't bought it yet, please purchase the item from the store using the link below:</p>
-              <a :href="successItem.link" target="_blank" rel="noopener noreferrer" class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]">
+            You have successfully reserved the <strong>{{ successItem.name }}</strong> registry gift item.<span
+              v-if="guestEmail"
+            >
+              We have sent a confirmation details card to your email.</span
+            >
+            <div
+              v-if="successItem.link"
+              class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center"
+            >
+              <p class="text-xs text-deep-espresso/80 mb-2 font-body">
+                If you haven't bought it yet, please purchase the item from the store using the link below:
+              </p>
+              <a
+                :href="successItem.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]"
+              >
                 Buy from Store ↗
               </a>
             </div>

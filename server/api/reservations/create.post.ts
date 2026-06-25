@@ -117,13 +117,14 @@ export default defineEventHandler(async (event) => {
           }),
         }).catch(console.error);
       } else {
+        const itemLinkStr = typeof item.link === "object" && item.link !== null ? (item.link as any).url : item.link;
         sendEmail({
           to: guestEmail,
           subject: `Thank you for your registry gift: ${item.name}! 🎁`,
           html: wishlistFixedConfirmationEmail({
             guestName: guestName, // Fixed gifts are never anonymous
             itemName: item.name,
-            itemLink: item.link,
+            itemLink: itemLinkStr,
           }),
         }).catch(console.error);
       }
