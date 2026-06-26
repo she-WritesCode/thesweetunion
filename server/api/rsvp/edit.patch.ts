@@ -52,14 +52,12 @@ export default defineEventHandler(async (event) => {
 
     await syncGroupCounts(client, groupId);
 
-    // Fetch event names for email
+    // Fetch events for email
     const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
-    let eventNames: string[] = [];
+    let rsvpEvents: any[] = [];
     if (eventIds.length) {
       const evRes = await client.collection("events").find({ limit: 20 });
-      eventNames = evRes.docs
-        .filter((e: any) => eventIds.includes(e.id))
-        .map((e: any) => e.name);
+      rsvpEvents = evRes.docs.filter((e: any) => eventIds.includes(e.id));
     }
 
     const config2 = useRuntimeConfig();
@@ -85,12 +83,13 @@ export default defineEventHandler(async (event) => {
         attending: newAttending,
         hasSpouse: updated.hasSpouse ?? hasSpouse,
         spouseName: updated.spouseName ?? spouseName,
-        eventNames,
+        events: rsvpEvents,
         editLink,
         wishlistLink,
         wantsAsoebi: newAttending && newWantsAsoebi,
         asoebiYards: newAttending && newWantsAsoebi ? newAsoebiYards : "",
         asoebiSettings,
+        appUrl,
       }),
     }).catch(console.error);
 

@@ -136,28 +136,80 @@ function asoebiSection(wantsAsoebi?: boolean, asoebiYards?: string, asoebiSettin
 
 // ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
 
+// Helper to format ISO dates to Google Calendar basic date format (YYYYMMDDTHHMMSSZ)
+function formatGoogleDate(isoString: string): string {
+  try {
+    const d = new Date(isoString);
+    return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  } catch {
+    return "";
+  }
+}
+
+// Helper to generate a Google Calendar link
+function getGoogleCalendarUrl(event: any): string {
+  const title = encodeURIComponent(event.name || "Wedding Event");
+  const start = formatGoogleDate(event.date);
+  // Default end time to +5 hours
+  const endD = new Date(new Date(event.date).getTime() + 5 * 60 * 60 * 1000);
+  const end = formatGoogleDate(endD.toISOString());
+  const location = encodeURIComponent(`${event.venueName || ""}, ${event.venueAddress || ""}`);
+  const details = encodeURIComponent(`Dress Code: ${event.dressCode || "Strictly Formal"}\n\nThank you for RSVPing to our wedding! See you there.`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+}
+
+// Renders list of events with Calendar links
+function eventListWithCalendars(events: any[], appUrl: string): string {
+  if (!events || !events.length) return "";
+  
+  const items = events
+    .map((e) => {
+      const gCalUrl = getGoogleCalendarUrl(e);
+      const icsUrl = `${appUrl}/api/rsvp/calendar?eventId=${e.id}`;
+      return `<li style="padding:10px 0;border-bottom:1px solid ${BORDER};font-family:Georgia,serif;list-style:none;">
+        <span style="font-size:14px;color:${TEXT};font-weight:600;display:block;">✓ ${e.name}</span>
+        <span style="font-size:12px;color:${MUTED};display:block;margin-top:2px;">
+          ${new Date(e.date).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+        </span>
+        <span style="font-size:11px;color:${MUTED};display:block;margin-top:2px;">
+          Venue: ${e.venueName || "To Be Announced"}
+        </span>
+        <span style="font-size:11px;display:block;margin-top:6px;">
+          <a href="${gCalUrl}" target="_blank" style="color:${ACCENT};text-decoration:underline;margin-right:12px;">+ Google Calendar</a>
+          <a href="${icsUrl}" style="color:${ACCENT};text-decoration:underline;">+ Apple / Outlook (.ics)</a>
+        </span>
+      </li>`;
+    })
+    .join("");
+  return `<ul style="margin:0;padding:0;list-style:none;">${items}</ul>`;
+}
+
+// ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
+
 export function rsvpConfirmationEmail({
   leadName,
   attending,
   hasSpouse,
   spouseName,
-  eventNames,
+  events,
   editLink,
   wishlistLink,
   wantsAsoebi,
   asoebiYards,
   asoebiSettings,
+  appUrl,
 }: {
   leadName: string;
   attending: boolean;
   hasSpouse: boolean;
   spouseName?: string;
-  eventNames: string[];
+  events: any[];
   editLink: string;
   wishlistLink?: string;
   wantsAsoebi?: boolean;
   asoebiYards?: string;
   asoebiSettings?: any;
+  appUrl: string;
 }): string {
   if (!attending) {
     return layout(
@@ -182,8 +234,8 @@ export function rsvpConfirmationEmail({
       row("Party", partyLine),
       row("Asoebi Request", asoebiLabel)
     ),
-    sectionLabel("Events"),
-    eventList(eventNames),
+    sectionLabel("Events & Calendars"),
+    eventListWithCalendars(events, appUrl),
     asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
     divider(),
     paragraph(
@@ -210,23 +262,25 @@ export function rsvpUpdatedEmail({
   attending,
   hasSpouse,
   spouseName,
-  eventNames,
+  events,
   editLink,
   wishlistLink,
   wantsAsoebi,
   asoebiYards,
   asoebiSettings,
+  appUrl,
 }: {
   leadName: string;
   attending: boolean;
   hasSpouse: boolean;
   spouseName?: string;
-  eventNames: string[];
+  events: any[];
   editLink: string;
   wishlistLink?: string;
   wantsAsoebi?: boolean;
   asoebiYards?: string;
   asoebiSettings?: any;
+  appUrl: string;
 }): string {
   const partyLine = attending ? (hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance") : "Declined";
   const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
@@ -240,7 +294,7 @@ export function rsvpUpdatedEmail({
       row("Party", partyLine),
       attending ? row("Asoebi Request", asoebiLabel) : ""
     ),
-    attending && eventNames.length ? sectionLabel("Events") + eventList(eventNames) : "",
+    attending && events.length ? sectionLabel("Events & Calendars") + eventListWithCalendars(events, appUrl) : "",
     asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
     divider(),
     paragraph("Need to change something again? Use your edit link below."),
