@@ -111,6 +111,11 @@ const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 const leadPhone = ref("");
 const attending = ref<boolean | null>(null);
 const selectedEvents = ref<string[]>([]);
+watch(rsvpEvents, (events) => {
+  if (initData.value?.type === "group" && selectedEvents.value.length === 0) {
+    selectedEvents.value = events.map(e => e.id);
+  }
+}, { immediate: true });
 const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
@@ -196,6 +201,8 @@ watch(initData, (val) => {
     invalidLinkError.value = false;
     groupFullError.value = val.isFull ? val.groupInfo.name : null;
     if (!val.isFull) currentStep.value = 2;
+    // Auto-select all available events by default
+    selectedEvents.value = rsvpEvents.value.map(e => e.id);
   } else {
     existingRSVP.value = null;
     groupInfo.value = null;
@@ -692,29 +699,21 @@ const isFormActive = computed(() => {
               <div
                 v-if="attending && rsvpEvents.length > 0"
                 class="rsvp-events-box"
-                :class="eventsError ? 'rsvp-events-box--error' : ''"
               >
-                <h4 class="rsvp-events-box__title">Which events are you joining?</h4>
+                <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
                 <div class="rsvp-events-options">
-                  <label v-for="event in rsvpEvents" :key="event.id" class="rsvp-checkbox-label">
-                    <input
-                      type="checkbox"
-                      :value="event.id"
-                      v-model="selectedEvents"
-                      @change="eventsError = ''"
-                      class="rsvp-checkbox"
-                    />
-                    <span
-                      >{{ event.name }} <br />
+                  <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
+                    <span class="rsvp-event-info-display__check">✓</span>
+                    <span class="rsvp-event-info-display__text">
+                      <strong>{{ event.name }}</strong> <br />
                       {{
                         new Date(event.date).toLocaleDateString("en-NG", {
                           dateStyle: "full",
                         })
                       }}
                     </span>
-                  </label>
+                  </div>
                 </div>
-                <p v-if="eventsError" class="rsvp-field-error mt-2">{{ eventsError }}</p>
               </div>
               <div class="rsvp-spouse-section">
                 <div class="rsvp-spouse-row">
