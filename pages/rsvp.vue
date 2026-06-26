@@ -111,11 +111,15 @@ const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 const leadPhone = ref("");
 const attending = ref<boolean | null>(null);
 const selectedEvents = ref<string[]>([]);
-watch(rsvpEvents, (events) => {
-  if (initData.value?.type === "group" && selectedEvents.value.length === 0) {
-    selectedEvents.value = events.map(e => e.id);
-  }
-}, { immediate: true });
+watch(
+  rsvpEvents,
+  (events) => {
+    if (initData.value?.type === "group" && selectedEvents.value.length === 0) {
+      selectedEvents.value = events.map((e) => e.id);
+    }
+  },
+  { immediate: true },
+);
 const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
@@ -202,7 +206,7 @@ watch(initData, (val) => {
     groupFullError.value = val.isFull ? val.groupInfo.name : null;
     if (!val.isFull) currentStep.value = 2;
     // Auto-select all available events by default
-    selectedEvents.value = rsvpEvents.value.map(e => e.id);
+    selectedEvents.value = rsvpEvents.value.map((e) => e.id);
   } else {
     existingRSVP.value = null;
     groupInfo.value = null;
@@ -561,10 +565,12 @@ const isFormActive = computed(() => {
                 <p v-else class="rsvp-spouse-none">Attending solo</p>
               </div>
 
-              <div style="margin-top: 16px;">
+              <div style="margin-top: 16px">
                 <h4 class="rsvp-summary__section-heading">Asoebi Choice</h4>
                 <p v-if="existingRSVP.wantsAsoebi" class="rsvp-spouse-note">
-                  Yes, requested <strong>{{ existingRSVP.asoebiYards }} Yards</strong> (₦{{ (parseInt(existingRSVP.asoebiYards, 10) * 10000).toLocaleString() }})
+                  Yes, requested <strong>{{ existingRSVP.asoebiYards }} Yards</strong> (₦{{
+                    (parseInt(existingRSVP.asoebiYards, 10) * 10000).toLocaleString()
+                  }})
                 </p>
                 <p v-else class="rsvp-spouse-none">No Asoebi requested</p>
               </div>
@@ -598,8 +604,15 @@ const isFormActive = computed(() => {
             >
               Edit My RSVP
             </button>
-            <button @click="handleCancelRSVP" :disabled="isSubmitting" class="btn-danger flex items-center justify-center gap-2">
-              <span v-if="isSubmitting" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+            <button
+              @click="handleCancelRSVP"
+              :disabled="isSubmitting"
+              class="btn-danger flex items-center justify-center gap-2"
+            >
+              <span
+                v-if="isSubmitting"
+                class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+              ></span>
               <span>{{ isSubmitting ? "Cancelling..." : "Cancel RSVP" }}</span>
             </button>
           </div>
@@ -692,29 +705,6 @@ const isFormActive = computed(() => {
                 />
                 <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
               </div>
-              <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
-                🔒 Your information is used only to manage your RSVP, invitation, and wedding-day check-in. It will not
-                be shared or used for marketing.
-              </p>
-              <div
-                v-if="attending && rsvpEvents.length > 0"
-                class="rsvp-events-box"
-              >
-                <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
-                <div class="rsvp-events-options">
-                  <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
-                    <span class="rsvp-event-info-display__check">✓</span>
-                    <span class="rsvp-event-info-display__text">
-                      <strong>{{ event.name }}</strong> <br />
-                      {{
-                        new Date(event.date).toLocaleDateString("en-NG", {
-                          dateStyle: "full",
-                        })
-                      }}
-                    </span>
-                  </div>
-                </div>
-              </div>
               <div class="rsvp-spouse-section">
                 <div class="rsvp-spouse-row">
                   <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
@@ -731,6 +721,26 @@ const isFormActive = computed(() => {
                   />
                 </div>
               </div>
+              <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box">
+                <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
+                <div class="rsvp-events-options">
+                  <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
+                    <span class="rsvp-event-info-display__check">✓</span>
+                    <span class="rsvp-event-info-display__text">
+                      <strong>{{ event.name }}</strong> <br />
+                      {{
+                        new Date(event.date).toLocaleDateString("en-NG", {
+                          dateStyle: "full",
+                        })
+                      }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
+                🔒 Your information is used only to manage your RSVP, invitation, and wedding-day check-in. It will not
+                be shared or used for marketing.
+              </p>
             </div>
           </div>
 
@@ -743,19 +753,19 @@ const isFormActive = computed(() => {
             <div class="rsvp-fields">
               <div class="rsvp-field-group">
                 <label class="input-label">Would you like to purchase the Asoebi?</label>
-                <div style="display: flex; gap: 16px; margin-top: 8px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <div style="display: flex; gap: 16px; margin-top: 8px">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
                     <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
                     <span>Yes, I want to purchase</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
                     <input type="radio" :value="false" v-model="wantsAsoebi" class="rsvp-checkbox" />
                     <span>No, thank you</span>
                   </label>
                 </div>
               </div>
 
-              <div v-if="wantsAsoebi" class="rsvp-field-group" style="margin-top: 16px;">
+              <div v-if="wantsAsoebi" class="rsvp-field-group" style="margin-top: 16px">
                 <label class="input-label">Select Quantity (Yards)</label>
                 <select v-model="asoebiYards" class="rsvp-input">
                   <option value="" disabled>-- Select yards --</option>
@@ -765,7 +775,7 @@ const isFormActive = computed(() => {
                   <option value="5">5 Yards (₦50,000)</option>
                   <option value="6">6 Yards (₦60,000)</option>
                 </select>
-                <p v-if="asoebiYards" style="margin-top: 8px; font-size: 0.9rem; font-weight: 600; color: #462137;">
+                <p v-if="asoebiYards" style="margin-top: 8px; font-size: 0.9rem; font-weight: 600; color: #462137">
                   Total: ₦{{ (parseInt(asoebiYards, 10) * 10000).toLocaleString() }}
                 </p>
               </div>
@@ -890,12 +900,31 @@ const isFormActive = computed(() => {
               :disabled="isSubmitting"
               class="rsvp-continue-btn flex items-center justify-center gap-2"
             >
-              <span v-if="isSubmitting && attending === false" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
+              <span
+                v-if="isSubmitting && attending === false"
+                class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+              ></span>
               <span>No, I can't make it</span>
             </button>
-            <button v-else-if="currentStep === 6 && attending === true" type="submit" :disabled="isSubmitting" class="rsvp-submit-btn flex items-center justify-center gap-2">
-              <span v-if="isSubmitting && attending === true" class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></span>
-              <span>{{ isEditing ? (isSubmitting ? "Saving..." : "Save RSVP Changes") : (isSubmitting ? "Submitting..." : "Yes I'll be attending") }}</span>
+            <button
+              v-else-if="currentStep === 6 && attending === true"
+              type="submit"
+              :disabled="isSubmitting"
+              class="rsvp-submit-btn flex items-center justify-center gap-2"
+            >
+              <span
+                v-if="isSubmitting && attending === true"
+                class="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+              ></span>
+              <span>{{
+                isEditing
+                  ? isSubmitting
+                    ? "Saving..."
+                    : "Save RSVP Changes"
+                  : isSubmitting
+                    ? "Submitting..."
+                    : "Yes I'll be attending"
+              }}</span>
             </button>
           </div>
         </form>
@@ -925,23 +954,55 @@ const isFormActive = computed(() => {
             <p>Your details have been successfully updated. We look forward to celebrating together in Lagos.</p>
           </template>
           <template v-else-if="successModal === 'submit' && attending === true">
-            <p>You're officially on the list! We cannot wait to celebrate our union with you. We have saved your confirmation details.</p>
-            <div class="rsvp-success__redirect-box" style="margin-top: 20px; padding: 16px; border-radius: 12px; background: rgba(134, 81, 114, 0.08); border: 1px solid rgba(134, 81, 114, 0.15); text-align: center;">
-              <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500;">
-                We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our wishlist.
+            <p>
+              You're officially on the list! We cannot wait to celebrate our union with you. We have saved your
+              confirmation details.
+            </p>
+            <div
+              class="rsvp-success__redirect-box"
+              style="
+                margin-top: 20px;
+                padding: 16px;
+                border-radius: 12px;
+                background: rgba(134, 81, 114, 0.08);
+                border: 1px solid rgba(134, 81, 114, 0.15);
+                text-align: center;
+              "
+            >
+              <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500">
+                We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our
+                wishlist.
               </p>
-              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                <button type="button" @click="() => { cancelRedirect(); router.push('/wishlist'); }" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap">
+                <button
+                  type="button"
+                  @click="
+                    () => {
+                      cancelRedirect();
+                      router.push('/wishlist');
+                    }
+                  "
+                  class="btn-primary"
+                  style="font-size: 0.8rem; padding: 6px 14px"
+                >
                   Browse Registry Now
                 </button>
-                <button type="button" @click="cancelRedirect" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2);">
+                <button
+                  type="button"
+                  @click="cancelRedirect"
+                  class="btn-secondary"
+                  style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2)"
+                >
                   Stay on Page
                 </button>
               </div>
             </div>
           </template>
           <template v-else-if="successModal === 'submit' && attending === false">
-            <p>Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and support!</p>
+            <p>
+              Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and
+              support!
+            </p>
           </template>
         </div>
         <button @click="closeSuccessModal" class="btn-primary mt-4">Close</button>
