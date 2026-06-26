@@ -6,20 +6,20 @@ settings:
 
 dependencies:
   '@dyrected/core':
-    specifier: ^2.5.38
-    version: 2.5.38(react@19.2.7)
+    specifier: ^2.5.39
+    version: 2.5.39(react@19.2.7)
   '@dyrected/db-postgres':
-    specifier: ^2.5.38
-    version: 2.5.38(@types/react@19.2.17)(react@19.2.7)
+    specifier: ^2.5.39
+    version: 2.5.39(@types/react@19.2.17)(react@19.2.7)
   '@dyrected/nuxt':
-    specifier: ^2.5.38
-    version: 2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(nuxt@3.21.8)(react-router-dom@7.18.0)(tailwindcss@4.3.1)(vue@3.5.39)
+    specifier: ^2.5.39
+    version: 2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(nuxt@3.21.8)(react-router-dom@7.18.0)(tailwindcss@4.3.1)(vue@3.5.39)
   '@dyrected/sdk':
-    specifier: ^2.5.38
-    version: 2.5.38
+    specifier: ^2.5.39
+    version: 2.5.39
   '@dyrected/storage-cloudinary':
-    specifier: ^2.5.38
-    version: 2.5.38(react@19.2.7)
+    specifier: ^2.5.39
+    version: 2.5.39(react@19.2.7)
   html2canvas:
     specifier: ^1.4.1
     version: 1.4.1
@@ -489,8 +489,8 @@ packages:
     resolution: {integrity: sha512-/B8YJGPzaYq1NbsQmwgP8EZqg40NpTw4ZB3suuI0TplbxKHeK94jeaawLmVhCv+YwUnOpiWEz9U6SeThku/8JQ==}
     dev: false
 
-  /@dyrected/admin@2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1):
-    resolution: {integrity: sha512-6F78cFfmCkc+X+TaKCesT4qQDoYwyvpBQxlbzB6Go775AQIgNs3ozTHREsK02+8AItn4YNQ0wbK+G8zx6Ah2Yg==}
+  /@dyrected/admin@2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1):
+    resolution: {integrity: sha512-VmBCYjrpLD1hQzqiedRk4BQJC8lGTHX0cSIexN5bgfR7VLlxUNGiDivEr27UtLI1S4ruxjdRurWngG9euwr67g==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       react: ^18.0.0 || ^19.0.0
@@ -500,8 +500,8 @@ packages:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.7)(react@19.2.7)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1)(react@19.2.7)
       '@dnd-kit/utilities': 3.2.2(react@19.2.7)
-      '@dyrected/core': 2.5.38(react@19.2.7)
-      '@dyrected/sdk': 2.5.38
+      '@dyrected/core': 2.5.39(react@19.2.7)
+      '@dyrected/sdk': 2.5.39
       '@hookform/resolvers': 5.4.0(react-hook-form@7.80.0)
       '@radix-ui/react-aspect-ratio': 1.1.10(@types/react-dom@19.2.3)(@types/react@19.2.17)(react-dom@19.2.7)(react@19.2.7)
       '@radix-ui/react-checkbox': 1.3.5(@types/react-dom@19.2.3)(@types/react@19.2.17)(react-dom@19.2.7)(react@19.2.7)
@@ -559,8 +559,8 @@ packages:
       - tailwindcss
     dev: false
 
-  /@dyrected/core@2.5.38(react@19.2.7):
-    resolution: {integrity: sha512-5J5AtO3mdFnUQvAnu5pZhptwTdbXBN8EDXqCkjVfHtLt6ov37+cdU9vV0NHhR0orNPFp0fA2crEl81KoDIWpsg==}
+  /@dyrected/core@2.5.39(react@19.2.7):
+    resolution: {integrity: sha512-k2GYekU+qgOBtCCk7evmaFLTe5fvX+kP06DDyHWEOf0C/XcwTaLM8uSMrId03otT3y/7Rye+pNk4LYaW0s3VAQ==}
     dependencies:
       '@types/jexl': 2.3.4
       hono: 4.12.27
@@ -573,10 +573,10 @@ packages:
       - react
     dev: false
 
-  /@dyrected/db-postgres@2.5.38(@types/react@19.2.17)(react@19.2.7):
-    resolution: {integrity: sha512-3Vjg7fF7wcOE1xgi0MoHOduX7ys4PEoRLjJZ8znfUr8vj+P3JkStbfHx1EqwGo005/C/dTuPEJ+wW4QMeyH5Jw==}
+  /@dyrected/db-postgres@2.5.39(@types/react@19.2.17)(react@19.2.7):
+    resolution: {integrity: sha512-yS2gf2JM+JckxR6aMJ/rAFIo13IyMmhH/l3eCrnkQroeyI0euOPi+oEQ/4F7yo6ES9nfJuDAyfwbHcdF5u5X0A==}
     dependencies:
-      '@dyrected/core': 2.5.38(react@19.2.7)
+      '@dyrected/core': 2.5.39(react@19.2.7)
       drizzle-orm: 0.30.10(@types/react@19.2.17)(postgres@3.4.9)(react@19.2.7)
       postgres: 3.4.9
     transitivePeerDependencies:
@@ -606,16 +606,16 @@ packages:
       - sqlite3
     dev: false
 
-  /@dyrected/nuxt@2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(nuxt@3.21.8)(react-router-dom@7.18.0)(tailwindcss@4.3.1)(vue@3.5.39):
-    resolution: {integrity: sha512-VMMqeXoPY3mT97YEgKgdEua6GTXutVIj0WfVTzZ+Osbxn7a2xVT1pvvFBeDk5Kg6HbtFw3/JwIRfbExj7h9Sug==}
+  /@dyrected/nuxt@2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(nuxt@3.21.8)(react-router-dom@7.18.0)(tailwindcss@4.3.1)(vue@3.5.39):
+    resolution: {integrity: sha512-N3/JzVKhDPODv5coq0+9gfVdXRYIelpVb9dcehHFtVZMpTDSQ/csSu78SMtKkQPIdWUwleHqKXYzNcqVU89HFQ==}
     peerDependencies:
       nuxt: ^3.0.0
       vue: ^3.0.0
     dependencies:
-      '@dyrected/admin': 2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)
-      '@dyrected/core': 2.5.38(react@19.2.7)
-      '@dyrected/sdk': 2.5.38
-      '@dyrected/vue': 2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)(vue@3.5.39)
+      '@dyrected/admin': 2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)
+      '@dyrected/core': 2.5.39(react@19.2.7)
+      '@dyrected/sdk': 2.5.39
+      '@dyrected/vue': 2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)(vue@3.5.39)
       '@nuxt/kit': 3.21.8
       h3: 1.15.11
       nuxt: 3.21.8(@types/node@25.9.4)(@vue/compiler-sfc@3.5.39)(vite@8.1.0)
@@ -635,28 +635,28 @@ packages:
       - tailwindcss
     dev: false
 
-  /@dyrected/sdk@2.5.38:
-    resolution: {integrity: sha512-SPw3RSJtqefbZp8IcYr+wvKyfLtCOc1UnjCRrCVeVcRK5S3y2ql9w8vXFOSNUoNVpDyLWO2DcnWX7CneVZYSkA==}
+  /@dyrected/sdk@2.5.39:
+    resolution: {integrity: sha512-0r7fFXfyq9xlB6QRbIbOj2H6ot2aG9zSnSGNsBpBtsqAmGBcLNhYTjPQshDNZkWF0LqTgSc8uws/VsSTGiCglg==}
     dev: false
 
-  /@dyrected/storage-cloudinary@2.5.38(react@19.2.7):
-    resolution: {integrity: sha512-p3dPTjGVggw8TjkIPQUuEIjmCzIdmrooF/3ay1Z6br9g3ZZEaU0LW9sG13nqYJylcHLN5XRjpYVxkTBPkSohQw==}
+  /@dyrected/storage-cloudinary@2.5.39(react@19.2.7):
+    resolution: {integrity: sha512-HPjraEun17ud3g6qnFxDskI3xw80nE3oj2e93eUmHsnGBOCFh91hslw8ltQNqtZRvZA0iua7H9r8aDiNK8aUpA==}
     dependencies:
-      '@dyrected/core': 2.5.38(react@19.2.7)
+      '@dyrected/core': 2.5.39(react@19.2.7)
       cloudinary: 2.10.0
     transitivePeerDependencies:
       - react
     dev: false
 
-  /@dyrected/vue@2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)(vue@3.5.39):
-    resolution: {integrity: sha512-iJi6BdC9PuX8MI9hJFvqI+/2BrIVrFN655oOaEtcqbyaProzpv3VAWUl2N4XiusS3TjWTF/FPPmXY5TkfJIu+g==}
+  /@dyrected/vue@2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)(vue@3.5.39):
+    resolution: {integrity: sha512-kWYImvh5Ro+Aune2pLedxprA0EW1dY8oQvZ3etZVbwRv6sibyifVGX3pWVj09cgnh4hkR2pe1b86vsf88Dv4kA==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
       vue: ^3.0.0
     dependencies:
-      '@dyrected/admin': 2.5.38(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)
-      '@dyrected/sdk': 2.5.38
+      '@dyrected/admin': 2.5.39(@floating-ui/dom@1.7.6)(@tanstack/react-query@5.101.1)(@tiptap/core@3.27.1)(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3)(@types/react@19.2.17)(blurhash@2.0.5)(react-dom@19.2.7)(react-router-dom@7.18.0)(react@19.2.7)(tailwindcss@4.3.1)
+      '@dyrected/sdk': 2.5.39
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
       vue: 3.5.39
