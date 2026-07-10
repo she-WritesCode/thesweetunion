@@ -1,4 +1,4 @@
-import type { CollectionConfig } from "@dyrected/core";
+import { defineNumberField, type CollectionConfig } from "@dyrected/core";
 
 export const wishlistItems: CollectionConfig = {
   slug: "wishlist_items",
@@ -36,7 +36,7 @@ export const wishlistItems: CollectionConfig = {
       ],
       admin: { tab: "General" },
     },
-    {
+    defineNumberField({
       name: "price",
       type: "number",
       label: "Price / Funding Goal",
@@ -45,8 +45,12 @@ export const wishlistItems: CollectionConfig = {
         tab: "General",
         description: "For crowdfund items: set to the goal amount, or 0 for unlimited",
         width: "75%",
+        format: {
+          type: "currency",
+          currency: "NGN",
+        },
       },
-    },
+    }),
     {
       name: "fundingType",
       type: "select",
@@ -78,13 +82,22 @@ export const wishlistItems: CollectionConfig = {
     },
     { name: "isHidden", type: "boolean", label: "Hidden", defaultValue: false, admin: { tab: "General" } },
 
-    {
+    defineNumberField({
       name: "amountRaised",
       type: "number",
       label: "Amount Raised",
       defaultValue: 0,
-      admin: { tab: "Reservations", component: "wishlist_items.amountRaised", readOnly: true, width: "50%" },
-    },
+      admin: {
+        tab: "Reservations",
+        component: "wishlist_items.amountRaised",
+        readOnly: true,
+        width: "50%",
+        format: {
+          type: "currency",
+          currency: "NGN",
+        },
+      },
+    }),
     {
       name: "contributorCount",
       type: "number",

@@ -1,4 +1,4 @@
-import type { CollectionConfig } from "@dyrected/core";
+import { defineDateTimeField, defineNumberField, type CollectionConfig } from "@dyrected/core";
 import { reserveItem, releaseReservation } from "../hooks/reservation-hooks.ts";
 
 export const reservations: CollectionConfig = {
@@ -22,13 +22,30 @@ export const reservations: CollectionConfig = {
     { name: "guestName", type: "text", label: "Guest Name", required: true, admin: { tab: "Details", width: "50%" } },
     { name: "guestEmail", type: "email", label: "Guest Email", admin: { tab: "Details", width: "50%" } },
     { name: "guestPhone", type: "text", label: "Guest Phone", admin: { tab: "Details", width: "50%" } },
-    {
+    defineNumberField({
       name: "contributionAmount",
       type: "number",
       label: "Contribution Amount",
-      admin: { tab: "Details", description: "Required for crowdfund items (min ₦5,000)", width: "50%" },
-    },
-    { name: "reservedAt", type: "date", label: "Reserved At", admin: { tab: "Details", readOnly: true, width: "50%" } },
+      admin: {
+        tab: "Details",
+        description: "Required for crowdfund items (min ₦5,000)",
+        width: "50%",
+        format: {
+          type: "currency",
+          currency: "NGN",
+        },
+      },
+    }),
+    defineDateTimeField({
+      name: "reservedAt",
+      type: "date",
+      label: "Reserved At",
+      admin: {
+        tab: "Details",
+        readOnly: true,
+        width: "50%",
+      },
+    }),
     {
       name: "message",
       type: "textarea",
