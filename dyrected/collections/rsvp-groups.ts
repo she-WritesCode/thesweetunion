@@ -7,6 +7,7 @@ export const rsvpGroups: CollectionConfig = {
   slug: "rsvp_groups",
   labels: { singular: "Invitation Group", plural: "Invitation Groups" },
   admin: {
+    icon: "ListMusic",
     useAsTitle: "name",
     defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
     group: "RSVP",

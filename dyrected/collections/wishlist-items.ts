@@ -4,6 +4,7 @@ export const wishlistItems: CollectionConfig = {
   slug: "wishlist_items",
   labels: { singular: "Wishlist Item", plural: "Wishlist Items" },
   admin: {
+    icon: "ClipboardList",
     useAsTitle: "name",
     defaultColumns: [
       "name",

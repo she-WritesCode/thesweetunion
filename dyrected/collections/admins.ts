@@ -4,5 +4,6 @@ export const admins: CollectionConfig = {
   slug: "admins",
   auth: true,
   labels: { singular: "Admin", plural: "Admins" },
+  admin: { useAsTitle: "name" },
   fields: [{ name: "name", type: "text", label: "Name" }],
 };

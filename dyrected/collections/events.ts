@@ -6,6 +6,7 @@ export const events: CollectionConfig = {
   slug: "events",
   labels: { singular: "Event", plural: "Events" },
   admin: {
+    icon: "Ticket",
     useAsTitle: "name",
     defaultColumns: ["order", "name", "date", "venueName", "dressCode", "collectsRsvp"],
     group: "RSVP",

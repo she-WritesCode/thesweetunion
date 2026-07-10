@@ -5,6 +5,7 @@ export const checkIns: CollectionConfig = {
   slug: "check_ins",
   labels: { singular: "Check-in", plural: "Check-ins" },
   admin: {
+    icon: "TicketCheck",
     useAsTitle: "guestName",
     defaultColumns: ["guestName", "partySize", "event", "scannedBy", "createdAt"],
     group: "RSVP",

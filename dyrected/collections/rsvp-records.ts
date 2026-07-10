@@ -5,6 +5,7 @@ export const rsvpRecords: CollectionConfig = {
   slug: "rsvp_records",
   labels: { singular: "Guest Response", plural: "Guest Responses" },
   admin: {
+    icon: "ReceiptText",
     useAsTitle: "leadName",
     defaultColumns: [
       "leadName",
