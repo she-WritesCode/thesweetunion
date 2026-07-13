@@ -148,28 +148,30 @@ function formatGoogleDate(isoString: string): string {
 
 // Helper to generate a Google Calendar link
 function getGoogleCalendarUrl(event: any): string {
-  const title = encodeURIComponent(event.name || "Wedding Event");
+  const title = encodeURIComponent("Adun & Uche's " + event.name || "Wedding Event");
   const start = formatGoogleDate(event.date);
   // Default end time to +5 hours
   const endD = new Date(new Date(event.date).getTime() + 5 * 60 * 60 * 1000);
   const end = formatGoogleDate(endD.toISOString());
   const location = encodeURIComponent(`${event.venueName || ""}, ${event.venueAddress || ""}`);
-  const details = encodeURIComponent(`Dress Code: ${event.dressCode || "Strictly Formal"}\n\nThank you for RSVPing to our wedding! See you there.`);
+  const details = encodeURIComponent(
+    `Dress Code: ${event.dressCode || "Strictly Formal"}\n\nThank you for RSVPing to our wedding! See you there.`,
+  );
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
 }
 
 // Renders list of events with Calendar links
 function eventListWithCalendars(events: any[], appUrl: string): string {
   if (!events || !events.length) return "";
-  
+
   const items = events
     .map((e) => {
       const gCalUrl = getGoogleCalendarUrl(e);
       const icsUrl = `${appUrl}/api/rsvp/calendar?eventId=${e.id}`;
       return `<li style="padding:10px 0;border-bottom:1px solid ${BORDER};font-family:Georgia,serif;list-style:none;">
-        <span style="font-size:14px;color:${TEXT};font-weight:600;display:block;">✓ ${e.name}</span>
+        <span style="font-size:14px;color:${TEXT};font-weight:600;display:block;">✓ Adun & Uche's ${e.name}</span>
         <span style="font-size:12px;color:${MUTED};display:block;margin-top:2px;">
-          ${new Date(e.date).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          ${new Date(e.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
         </span>
         <span style="font-size:11px;color:${MUTED};display:block;margin-top:2px;">
           Venue: ${e.venueName || "To Be Announced"}
@@ -229,11 +231,7 @@ export function rsvpConfirmationEmail({
     heading("You're on the list! 🎉"),
     paragraph(`We've received your RSVP, ${leadName}. We cannot wait to celebrate with you.`),
     divider(),
-    table(
-      row("Guest", leadName),
-      row("Party", partyLine),
-      row("Asoebi Request", asoebiLabel)
-    ),
+    table(row("Guest", leadName), row("Party", partyLine), row("Asoebi Request", asoebiLabel)),
     sectionLabel("Events & Calendars"),
     eventListWithCalendars(events, appUrl),
     asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
@@ -251,7 +249,7 @@ export function rsvpConfirmationEmail({
          <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
            <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
          </div>`
-      : ""
+      : "",
   );
 }
 
@@ -292,7 +290,7 @@ export function rsvpUpdatedEmail({
     table(
       row("Status", attending ? "Attending ✓" : "Declined"),
       row("Party", partyLine),
-      attending ? row("Asoebi Request", asoebiLabel) : ""
+      attending ? row("Asoebi Request", asoebiLabel) : "",
     ),
     attending && events.length ? sectionLabel("Events & Calendars") + eventListWithCalendars(events, appUrl) : "",
     asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
@@ -308,7 +306,7 @@ export function rsvpUpdatedEmail({
          <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
            <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
          </div>`
-      : ""
+      : "",
   );
 }
 
@@ -340,7 +338,9 @@ export function invitationEmail({
 }): string {
   return layout(
     heading(`You're invited, ${guestName}! 🎉`),
-    paragraph("We're so excited to celebrate with you. Your personal access card is below — please save it or screenshot it to show at the entrance."),
+    paragraph(
+      "We're so excited to celebrate with you. Your personal access card is below — please save it or screenshot it to show at the entrance.",
+    ),
     divider(),
     `<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0;">
       <tr>
@@ -353,10 +353,14 @@ export function invitationEmail({
     `<p style="margin:0 0 16px;font-size:18px;font-family:'Courier New',monospace;color:${TEXT};letter-spacing:2px;background:${BASE};border:1px solid ${BORDER};border-radius:6px;padding:10px 16px;display:inline-block;">${accessCode}</p>`,
     eventNames.length ? sectionLabel("Events you're attending") + eventList(eventNames) : "",
     divider(),
-    paragraph("Present this card (or your access code) at the entrance and it will be scanned to check you in. We cannot wait to see you!"),
+    paragraph(
+      "Present this card (or your access code) at the entrance and it will be scanned to check you in. We cannot wait to see you!",
+    ),
     divider(),
     sectionLabel("Our Registry"),
-    paragraph("Your love, presence, and prayers are our greatest gifts. If you would like to help us bless our new home, we have curated a wishlist of items we need."),
+    paragraph(
+      "Your love, presence, and prayers are our greatest gifts. If you would like to help us bless our new home, we have curated a wishlist of items we need.",
+    ),
     ctaButton("Browse Our Wishlist", wishlistLink),
   );
 }
@@ -404,7 +408,7 @@ export function adminRsvpNotificationEmail({
       row("Group", groupName),
       row("Status", attending ? `Attending (${seats} seat${seats > 1 ? "s" : ""})` : "Declined"),
       hasSpouse && spouseName ? row("Spouse", spouseName) : "",
-      attending ? row("Asoebi Request", asoebiLabel) : ""
+      attending ? row("Asoebi Request", asoebiLabel) : "",
     ),
     attending && eventNames.length ? sectionLabel("Events") + eventList(eventNames, "•") : "",
     message ? divider() + sectionLabel("Message to the couple") + quote(message) : "",
@@ -425,21 +429,24 @@ export function wishlistFixedConfirmationEmail({
 }): string {
   const bodyParts = [
     heading("Thank you so much! 🎁"),
-    paragraph(`Hi ${guestName}, we are so incredibly grateful for your love and support. This email confirms that you've reserved the following registry item for our new home:`),
-    divider(),
-    table(
-      row("Gift Item", itemName),
-      row("Status", "Reserved & Committed")
+    paragraph(
+      `Hi ${guestName}, we are so incredibly grateful for your love and support. This email confirms that you've reserved the following registry item for our new home:`,
     ),
     divider(),
+    table(row("Gift Item", itemName), row("Status", "Reserved & Committed")),
+    divider(),
     heading("Drop-off & Delivery"),
-    paragraph("Since we are all family and friends here, you can bring this gift with you to the wedding, drop it off with us, or coordinate with Uche or Adun directly. Let us know what works best for you!"),
+    paragraph(
+      "Since we are all family and friends here, you can bring this gift with you to the wedding, drop it off with us, or coordinate with Uche or Adun directly. Let us know what works best for you!",
+    ),
   ];
 
   if (itemLink) {
     bodyParts.push(
-      paragraph("If you haven't purchased the item yet from the store, you can visit the store page using the link below:"),
-      ctaButton("Buy from Store ↗", itemLink)
+      paragraph(
+        "If you haven't purchased the item yet from the store, you can visit the store page using the link below:",
+      ),
+      ctaButton("Buy from Store ↗", itemLink),
     );
   }
 
@@ -465,21 +472,16 @@ export function wishlistCrowdfundConfirmationEmail({
 }): string {
   return layout(
     heading("Thank you for your contribution! 💖"),
-    paragraph(`Hi ${guestName}, thank you so much for contributing to our cash fund. Your support means the world to us as we begin our life together.`),
-    divider(),
-    table(
-      row("Fund", itemName),
-      row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`),
+    paragraph(
+      `Hi ${guestName}, thank you so much for contributing to our cash fund. Your support means the world to us as we begin our life together.`,
     ),
+    divider(),
+    table(row("Fund", itemName), row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`)),
     divider(),
     heading("Bank Transfer Details"),
     paragraph("In case you need them for reference, here are our bank details:"),
-    table(
-      row("Bank", bankName),
-      row("Account Number", accountNumber),
-      row("Account Name", accountName)
-    ),
-    paragraph("We will look out for the transfer on our end. Thank you so much again!")
+    table(row("Bank", bankName), row("Account Number", accountNumber), row("Account Name", accountName)),
+    paragraph("We will look out for the transfer on our end. Thank you so much again!"),
   );
 }
 
@@ -518,9 +520,9 @@ export function adminWishlistNotificationEmail({
       row("Gift Item", itemName),
       isCrowdfund && contributionAmount
         ? row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`)
-        : row("Status", "Reserved")
+        : row("Status", "Reserved"),
     ),
     message ? divider() + sectionLabel("Message from the guest") + quote(message) : "",
-    ctaButton("View Registry in Dashboard", dashboardLink)
+    ctaButton("View Registry in Dashboard", dashboardLink),
   );
 }

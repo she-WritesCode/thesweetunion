@@ -94,7 +94,7 @@ export const rsvpGroups: CollectionConfig = {
   access: {
     read: "true",
     create: "user != null",
-    update: "true",
+    update: "true", // only true becuse we neeed to update the count so wee need to make it more secure
     delete: "user != null",
   },
   hooks: {
