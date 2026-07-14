@@ -757,7 +757,7 @@ const isFormActive = computed(() => {
             <div class="rsvp-fields">
               <div class="rsvp-field-group">
                 <label class="input-label">Would you like to purchase the Asoebi?</label>
-                <div style="display: flex; gap: 16px; margin-top: 8px">
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px">
                   <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
                     <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
                     <span>Yes, I want to purchase</span>
