@@ -970,6 +970,7 @@ const isFormActive = computed(() => {
               "
             >
               <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500">
+                We know exactly what you should gift us for our wedding! <br />
                 We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our
                 wishlist.
               </p>
