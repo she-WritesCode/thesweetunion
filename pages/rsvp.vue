@@ -153,6 +153,10 @@ const cancelRedirect = () => {
     redirectInterval = null;
   }
 };
+const cancelRedirectAndGoHome = () => {
+  cancelRedirect();
+  router.push("/");
+};
 
 const closeSuccessModal = () => {
   cancelRedirect();
@@ -990,11 +994,11 @@ const isFormActive = computed(() => {
                 </button>
                 <button
                   type="button"
-                  @click="cancelRedirect"
+                  @click="cancelRedirectAndGoHome"
                   class="btn-secondary"
                   style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2)"
                 >
-                  Stay on Page
+                  Go to home page
                 </button>
               </div>
             </div>
