@@ -508,7 +508,7 @@ const progressPercent = (item: WishlistItem) => {
           </template>
         </div>
 
-        <div class="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+        <div class="space-y-4 max-h-[75vh] pr-1">
           <!-- ═══════════════ CROWDFUND STEP 1: Amount & Anonymity ═══════════════ -->
           <div v-show="activeItem.fundingType === 'crowdfund' && modalStep === 1" class="modal-step">
             <div class="modal-item-header">
@@ -857,7 +857,11 @@ const progressPercent = (item: WishlistItem) => {
       enter-from-class="opacity-0"
       leave-to-class="opacity-0"
     >
-      <div v-if="selectedDetailItem" class="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs flex justify-end" @click="selectedDetailItem = null">
+      <div
+        v-if="selectedDetailItem"
+        class="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs flex justify-end"
+        @click="selectedDetailItem = null"
+      >
         <Transition
           enter-active-class="transition-transform duration-300 ease-out"
           leave-active-class="transition-transform duration-200 ease-in"
@@ -878,7 +882,9 @@ const progressPercent = (item: WishlistItem) => {
                 ✕
               </button>
 
-              <div class="aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden relative">
+              <div
+                class="aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden relative"
+              >
                 <img
                   v-if="selectedDetailItem.imageUrl && selectedDetailItem.imageUrl !== '/images/placeholder.png'"
                   :src="selectedDetailItem.imageUrl"
@@ -903,19 +909,25 @@ const progressPercent = (item: WishlistItem) => {
                     {{ selectedDetailItem.name }}
                   </h2>
                   <p class="text-lg md:text-xl font-bold text-deep-espresso font-body">
-                    {{ selectedDetailItem.fundingType === "crowdfund" && selectedDetailItem.price > 0 ? "Goal: " : "" }}₦{{
-                      selectedDetailItem.price.toLocaleString("en-US")
-                    }}
+                    {{
+                      selectedDetailItem.fundingType === "crowdfund" && selectedDetailItem.price > 0 ? "Goal: " : ""
+                    }}₦{{ selectedDetailItem.price.toLocaleString("en-US") }}
                   </p>
                 </div>
 
                 <!-- Crowdfund Progress in Drawer -->
-                <div v-if="selectedDetailItem.fundingType === 'crowdfund'" class="space-y-2.5 p-4 rounded-2xl border border-amber-gold/10 bg-soft-pearl/30">
+                <div
+                  v-if="selectedDetailItem.fundingType === 'crowdfund'"
+                  class="space-y-2.5 p-4 rounded-2xl border border-amber-gold/10 bg-soft-pearl/30"
+                >
                   <div class="w-full h-2.5 bg-deep-espresso/10 rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-500"
                       :class="
-                        selectedDetailItem.price > 0 && (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price ? 'bg-emerald-600' : 'bg-amber-gold'
+                        selectedDetailItem.price > 0 &&
+                        (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price
+                          ? 'bg-emerald-600'
+                          : 'bg-amber-gold'
                       "
                       :style="{ width: `${progressPercent(selectedDetailItem)}%` }"
                     />
@@ -924,7 +936,8 @@ const progressPercent = (item: WishlistItem) => {
                     <template v-if="selectedDetailItem.price > 0">
                       <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> of ₦{{
                         selectedDetailItem.price.toLocaleString("en-US")
-                      }} raised
+                      }}
+                      raised
                     </template>
                     <template v-else>
                       <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> raised
@@ -948,7 +961,11 @@ const progressPercent = (item: WishlistItem) => {
             <!-- Drawer Actions -->
             <div class="p-6 md:p-8 bg-soft-pearl/30 border-t border-amber-gold/10 flex items-center gap-3">
               <button
-                v-if="selectedDetailItem.fundingType === 'crowdfund' && selectedDetailItem.price > 0 && (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price"
+                v-if="
+                  selectedDetailItem.fundingType === 'crowdfund' &&
+                  selectedDetailItem.price > 0 &&
+                  (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price
+                "
                 disabled
                 class="flex-1 px-4 py-3 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
               >
