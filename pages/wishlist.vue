@@ -508,7 +508,7 @@ const progressPercent = (item: WishlistItem) => {
           </template>
         </div>
 
-        <div class="space-y-4 max-h-[75vh] pr-1">
+        <div class="space-y-4 max-h-[72vh] pr-1">
           <!-- ═══════════════ CROWDFUND STEP 1: Amount & Anonymity ═══════════════ -->
           <div v-show="activeItem.fundingType === 'crowdfund' && modalStep === 1" class="modal-step">
             <div class="modal-item-header">
