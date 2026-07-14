@@ -27,6 +27,7 @@ const totalAmount = computed(() => {
   const yards = parseInt(asoebiYards.value, 10);
   return isNaN(yards) ? 0 : yards * 10000;
 });
+const { data: asoebiSettings } = await useDyrectedGlobal("asoebi_settings");
 
 async function sendReminder() {
   if (loading.value) return;
@@ -34,7 +35,6 @@ async function sendReminder() {
   error.value = "";
 
   try {
-    const asoebiSettings = await $fetch<any>("/api/globals/asoebi_settings");
     if (!asoebiSettings) {
       throw new Error("Could not load Asoebi Settings from the database.");
     }
@@ -68,12 +68,7 @@ async function sendReminder() {
     </template>
     <template v-else>
       <div class="row">
-        <button
-          type="button"
-          class="btn-wa"
-          :disabled="loading"
-          @click="sendReminder"
-        >
+        <button type="button" class="btn-wa" :disabled="loading" @click="sendReminder">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -147,7 +142,9 @@ async function sendReminder() {
   background: #25d366;
   color: #fff;
   border-color: #25d366;
-  transition: background 150ms, opacity 150ms;
+  transition:
+    background 150ms,
+    opacity 150ms;
 }
 
 .btn-wa:hover:not(:disabled) {
