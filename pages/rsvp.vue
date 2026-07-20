@@ -4,21 +4,34 @@ import { useRoute, useRouter, useAsyncData } from "#app";
 import { useDyrectedClient, useDyrectedGlobal } from "#imports";
 import PhoneInput from "~/components/PhoneInput.vue";
 
-interface CMSEvent {
-  id: string;
-  name: string;
-  date: string;
-  collectsRsvp: boolean;
-}
+import type { Rsvp_records, Events as CMSEvent } from "~/dyrected-types";
 
-interface RSVPData {
+interface RSVPData extends Omit<
+  Rsvp_records,
+  | "group"
+  | "selectedEvents"
+  | "asoebiYards"
+  | "leadName"
+  | "leadEmail"
+  | "leadPhone"
+  | "attending"
+  | "hasSpouse"
+  | "spouseName"
+  | "message"
+  | "submittedAt"
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+> {
   id?: string;
+  createdAt?: string;
+  updatedAt?: string;
   group?: any;
+  selectedEvents: string[];
   leadName: string;
   leadEmail: string;
   leadPhone: string;
   attending: boolean;
-  selectedEvents: string[];
   hasSpouse: boolean;
   spouseName: string;
   dietaryNotes: string;
@@ -44,11 +57,20 @@ const router = useRouter();
 
 const client = useDyrectedClient();
 const { data: siteSettings } = await useDyrectedGlobal("site_settings");
-const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
+const couplesPhoto = computed(() => {
+  const img = siteSettings.value?.rsvpTeaserImage;
+  return typeof img === "object" && img !== null ? img.url : img || null;
+});
 
 // Fetch RSVP events from CMS; filter collectsRsvp in JS (boolean column workaround)
-const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", () => client.collection("events").find({ limit: 20 }));
-const rsvpEvents = computed<CMSEvent[]>(() => (cmsEventsRaw.value?.docs ?? []).filter((e: any) => e.collectsRsvp));
+const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", async () => {
+  const res = await client.collection("events").find({ limit: 20 });
+  return res;
+});
+const rsvpEvents = computed<CMSEvent[]>(() => {
+  const docs = (cmsEventsRaw.value as any)?.docs || [];
+  return docs.filter((e: any) => e.collectsRsvp);
+});
 
 // ─── SSR: resolve group / token from URL before first render ─────────────────
 const { data: initData } = await useAsyncData(
@@ -131,12 +153,12 @@ const asoebiYards = ref("");
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
 const isSubmitting = ref(false);
 
-const redirectCountdown = ref(60);
+const redirectCountdown = ref(10);
 let redirectInterval: any = null;
 
 const startRedirectTimer = () => {
   if (attending.value !== true) return;
-  redirectCountdown.value = 60;
+  redirectCountdown.value = 10;
   if (redirectInterval) clearInterval(redirectInterval);
   redirectInterval = setInterval(() => {
     redirectCountdown.value--;
@@ -144,7 +166,7 @@ const startRedirectTimer = () => {
       closeSuccessModal();
       router.push("/wishlist");
     }
-  }, 1000);
+  }, 1001);
 };
 
 const cancelRedirect = () => {
@@ -851,16 +873,16 @@ const isFormActive = computed(() => {
                 !leadName ||
                 !leadPhone ||
                 !leadEmail ||
-                (hasSpouse && !spouseName.trim()) ||
-                (attending && selectedEvents.length === 0)
+                (hasSpouse === true && !spouseName.trim()) ||
+                (attending === true && selectedEvents.length === 0)
               "
               class="rsvp-continue-btn"
               :class="
                 !leadName ||
                 !leadPhone ||
                 !leadEmail ||
-                (hasSpouse && !spouseName.trim()) ||
-                (attending && selectedEvents.length === 0)
+                (hasSpouse === true && !spouseName.trim()) ||
+                (attending === true && selectedEvents.length === 0)
                   ? 'rsvp-continue-btn--disabled'
                   : 'rsvp-continue-btn--active'
               "

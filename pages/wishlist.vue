@@ -6,19 +6,17 @@ import PhoneInput from "~/components/PhoneInput.vue";
 const SUGGESTED_AMOUNTS = [5000, 10000, 25000, 50000, 100000];
 const MIN_CONTRIBUTION = 5000;
 
-interface WishlistItem {
-  id: string;
-  name: string;
-  description: string;
+import type { Wishlist_items } from "~/dyrected-types";
+
+interface WishlistItem extends Omit<Wishlist_items, "image" | "link" | "category" | "description" | "reservedCount" | "amountRaised" | "contributorCount"> {
   imageUrl: string;
+  image?: Wishlist_items["image"];
   link?: string;
-  price: number;
-  maxQuantity: number;
-  reservedCount: number;
   category: string;
-  fundingType?: "fixed" | "crowdfund";
-  amountRaised?: number;
-  contributorCount?: number;
+  description: string;
+  reservedCount: number;
+  amountRaised: number;
+  contributorCount: number;
   bankDetails?: {
     bankName: string;
     accountNumber: string;
@@ -38,7 +36,10 @@ onMounted(async () => {
   }
 });
 
-const couplesPhoto = computed(() => siteSettings.value?.rsvpTeaserImage?.url || null);
+const couplesPhoto = computed(() => {
+  const img = siteSettings.value?.rsvpTeaserImage;
+  return typeof img === "object" && img !== null ? img.url : (img || null);
+});
 
 const mapCategory = (cat: string) => {
   if (!cat) return "Other";
@@ -57,11 +58,13 @@ const items = computed<WishlistItem[]>(() => {
     return visibleDocs.map((doc: any) => {
       // Check if localItems has updated stats for this item
       const local = localItems.value.find((li) => li.id === doc.id);
+      const imgUrl = typeof doc.image === "object" && doc.image !== null ? doc.image.url : (typeof doc.image === "string" ? doc.image : "/images/placeholder.png");
       return {
         id: doc.id,
         name: doc.name,
-        description: doc.description,
-        imageUrl: doc.image?.url || "/images/placeholder.png",
+        description: doc.description || "",
+        imageUrl: imgUrl,
+        image: doc.image,
         link: typeof doc.link === "object" && doc.link !== null ? (doc.link as any).url : doc.link,
         price: doc.price,
         maxQuantity: doc.maxQuantity,
@@ -70,15 +73,15 @@ const items = computed<WishlistItem[]>(() => {
         fundingType: doc.fundingType || "fixed",
         amountRaised: (local?.amountRaised ?? doc.amountRaised) || 0,
         contributorCount: (local?.contributorCount ?? doc.contributorCount) || 0,
-        bankDetails:
-          doc.fundingType === "crowdfund"
-            ? {
-                bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
-                accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
-                accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
-                note: "Please transfer your contribution directly using your banking app, then confirm details below.",
-              }
-            : undefined,
+        bankDetails: {
+          bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
+          accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
+          accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
+          note:
+            doc.fundingType === "crowdfund"
+              ? "Please transfer your contribution directly using your banking app, then confirm details below."
+              : "Please transfer the equivalent amount or your support directly using your banking app.",
+        },
       };
     });
   }
@@ -342,9 +345,9 @@ const progressPercent = (item: WishlistItem) => {
             <div
               class="relative aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden select-none"
             >
-              <img
+              <DyrectedMedia
                 v-if="item.imageUrl && item.imageUrl !== '/images/placeholder.png'"
-                :src="item.imageUrl"
+                :media="item.image || item.imageUrl"
                 :alt="item.name"
                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
@@ -683,7 +686,7 @@ const progressPercent = (item: WishlistItem) => {
 
             <!-- Responsive Two-Column Grid for Review Details -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Left side: Summary details -->
+              <!-- Left side: Summary details & Option 1 / Crowdfund Note -->
               <div class="space-y-4">
                 <div class="modal-summary-card">
                   <div class="modal-summary-row">
@@ -694,57 +697,62 @@ const progressPercent = (item: WishlistItem) => {
                     <span class="modal-summary-label">Contribution</span>
                     <span class="font-bold text-deep-terracotta">₦{{ effectiveAmount.toLocaleString("en-US") }}</span>
                   </div>
+                  <div v-else class="modal-summary-row">
+                    <span class="modal-summary-label">Value</span>
+                    <span class="font-bold text-deep-terracotta">₦{{ activeItem.price.toLocaleString("en-US") }}</span>
+                  </div>
                   <div class="modal-summary-row">
                     <span class="modal-summary-label">From</span>
                     <span class="font-semibold">{{ isAnonymous ? "Anonymous" : guestName }}</span>
                   </div>
                 </div>
 
-                <!-- Store Purchase Instructions -->
-                <div
-                  v-if="activeItem.fundingType !== 'crowdfund' && activeItem.link"
-                  class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left"
-                >
-                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">
-                    Store Purchase Instructions
-                  </p>
-                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
-                    Please buy this gift from the online store. Click the button below to buy, then confirm below to
-                    lock the reservation.
-                  </p>
-                  <a
-                    :href="activeItem.link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px] mt-2"
-                  >
-                    Buy from Store ↗
-                  </a>
-                </div>
+                <!-- Crowdfund Instructions -->
+                <template v-if="activeItem.fundingType === 'crowdfund'">
+                  <div class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left">
+                    <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">
+                      Cash Fund Contribution
+                    </p>
+                    <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
+                      Please transfer your contribution of <strong>₦{{ effectiveAmount.toLocaleString("en-US") }}</strong> to the wedding account shown on the right.
+                    </p>
+                  </div>
+                  <div class="space-y-1">
+                    <label class="input-label text-[11px]">What name will appear on the transfer alert? (Optional)</label>
+                    <input type="text" v-model="senderName" class="input-field" placeholder="Sender Account Name" />
+                  </div>
+                </template>
 
-                <!-- Drop-off instructions for Fixed/Physical gifts -->
-                <div
-                  v-if="activeItem.fundingType !== 'crowdfund'"
-                  class="p-4 rounded-xl border border-amber-gold/15 bg-soft-pearl/50 space-y-2 text-center md:text-left"
-                >
-                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">Drop-off & Delivery</p>
-                  <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
-                    You can bring this gift with you to the wedding, drop it off, or coordinate with us directly. Since
-                    we're all family and friends here, just let us know what works best for you!
-                  </p>
-                </div>
-
-                <!-- Sender Name field to match bank alerts -->
-                <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-1">
-                  <label class="input-label text-[11px]">What name will appear on the transfer alert? (Optional)</label>
-                  <input type="text" v-model="senderName" class="input-field" placeholder="Sender Account Name" />
-                </div>
+                <!-- Fixed Gift Option 1: Purchase & Deliver -->
+                <template v-else>
+                  <div class="p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 space-y-2 text-left">
+                    <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">
+                      Option 1: Purchase & Deliver Gift
+                    </p>
+                    <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
+                      If you'd like to buy the physical item, click below to purchase from the store, then bring it to the wedding or drop it off.
+                    </p>
+                    <a
+                      v-if="activeItem.link"
+                      :href="activeItem.link"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px] mt-1"
+                    >
+                      Buy from Store ↗
+                    </a>
+                    <p class="font-body text-[11px] text-deep-espresso/60 leading-relaxed mt-2 pt-2 border-t border-amber-gold/10">
+                      <strong>Delivery / Drop-off:</strong> You can bring it with you to the wedding or coordinate with us directly.
+                    </p>
+                  </div>
+                </template>
               </div>
 
-              <!-- Right side: Payment / Transfer info (only for Crowdfund) -->
-              <div v-if="activeItem.fundingType === 'crowdfund'" class="space-y-4">
-                <div v-if="activeItem.bankDetails" class="bank-details-card">
-                  <p class="font-semibold text-deep-terracotta uppercase tracking-wide">
+              <!-- Right side: Payment / Transfer info -->
+              <div class="space-y-4">
+                <!-- Crowdfund Bank Details -->
+                <div v-if="activeItem.fundingType === 'crowdfund' && activeItem.bankDetails" class="bank-details-card">
+                  <p class="font-semibold text-deep-terracotta uppercase tracking-wide text-xs">
                     Please make your bank transfer to:
                   </p>
                   <div class="grid grid-cols-3 gap-y-1.5 font-body">
@@ -772,6 +780,41 @@ const progressPercent = (item: WishlistItem) => {
                   >
                     {{ activeItem.bankDetails.note }}
                   </p>
+                </div>
+
+                <!-- Fixed Gift Option 2: Cash Equivalent Transfer -->
+                <div v-else-if="activeItem.bankDetails" class="bank-details-card space-y-3">
+                  <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-wider">
+                    Option 2: Transfer Equivalent Cash
+                  </p>
+                  <p class="font-body text-xs text-deep-espresso/85 leading-relaxed">
+                    If you prefer, you can transfer the cash value of <strong>₦{{ activeItem.price.toLocaleString("en-US") }}</strong> directly to the wedding account:
+                  </p>
+                  
+                  <div class="grid grid-cols-3 gap-y-1.5 font-body pt-2 border-t border-amber-gold/10">
+                    <span class="text-deep-espresso/60 text-[11px]">Bank:</span>
+                    <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.bankName }}</span>
+
+                    <span class="text-deep-espresso/60 text-[11px]">Account #:</span>
+                    <span class="col-span-2 font-mono font-bold text-sm text-deep-terracotta flex items-center gap-2">
+                      <span class="select-all">{{ activeItem.bankDetails.accountNumber }}</span>
+                      <button
+                        type="button"
+                        @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
+                        class="px-2 py-0.5 text-[9px] uppercase bg-deep-terracotta/10 text-deep-terracotta hover:bg-deep-terracotta hover:text-white rounded-md transition-all font-sans cursor-pointer"
+                      >
+                        {{ isCopied ? "Copied!" : "Copy" }}
+                      </button>
+                    </span>
+
+                    <span class="text-deep-espresso/60 text-[11px]">Name:</span>
+                    <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.accountName }}</span>
+                  </div>
+                  
+                  <div class="space-y-1 pt-2 border-t border-amber-gold/5">
+                    <label class="input-label text-[10px] text-deep-espresso/70">If transferring, what name will appear on the alert?</label>
+                    <input type="text" v-model="senderName" class="input-field py-1 text-xs" placeholder="Sender Account Name" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -885,9 +928,9 @@ const progressPercent = (item: WishlistItem) => {
               <div
                 class="aspect-[4/3] w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden relative"
               >
-                <img
+                <DyrectedMedia
                   v-if="selectedDetailItem.imageUrl && selectedDetailItem.imageUrl !== '/images/placeholder.png'"
-                  :src="selectedDetailItem.imageUrl"
+                  :media="selectedDetailItem.image || selectedDetailItem.imageUrl"
                   :alt="selectedDetailItem.name"
                   class="w-full h-full object-cover"
                 />
