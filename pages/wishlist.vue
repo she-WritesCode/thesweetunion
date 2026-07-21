@@ -8,7 +8,18 @@ const MIN_CONTRIBUTION = 5000;
 
 import type { Wishlist_items } from "~/dyrected-types";
 
-interface WishlistItem extends Omit<Wishlist_items, "image" | "link" | "category" | "description" | "reservedCount" | "amountRaised" | "contributorCount"> {
+interface WishlistItem extends Omit<
+  Wishlist_items,
+  | "image"
+  | "link"
+  | "category"
+  | "description"
+  | "reservedCount"
+  | "amountRaised"
+  | "contributorCount"
+  | "createdAt"
+  | "updatedAt"
+> {
   imageUrl: string;
   image?: Wishlist_items["image"];
   link?: string;
@@ -38,7 +49,7 @@ onMounted(async () => {
 
 const couplesPhoto = computed(() => {
   const img = siteSettings.value?.rsvpTeaserImage;
-  return typeof img === "object" && img !== null ? img.url : (img || null);
+  return typeof img === "object" && img !== null ? img.url : img || null;
 });
 
 const mapCategory = (cat: string) => {
@@ -53,39 +64,54 @@ const mapCategory = (cat: string) => {
 const localItems = ref<WishlistItem[]>([]);
 
 const items = computed<WishlistItem[]>(() => {
-  const visibleDocs = (wishlistData.value?.docs || []).filter((doc: any) => !doc.isHidden);
-  if (visibleDocs.length > 0) {
-    return visibleDocs.map((doc: any) => {
-      // Check if localItems has updated stats for this item
-      const local = localItems.value.find((li) => li.id === doc.id);
-      const imgUrl = typeof doc.image === "object" && doc.image !== null ? doc.image.url : (typeof doc.image === "string" ? doc.image : "/images/placeholder.png");
-      return {
-        id: doc.id,
-        name: doc.name,
-        description: doc.description || "",
-        imageUrl: imgUrl,
-        image: doc.image,
-        link: typeof doc.link === "object" && doc.link !== null ? (doc.link as any).url : doc.link,
-        price: doc.price,
-        maxQuantity: doc.maxQuantity,
-        reservedCount: (local?.reservedCount ?? doc.reservedCount) || 0,
-        category: mapCategory(doc.category),
-        fundingType: doc.fundingType || "fixed",
-        amountRaised: (local?.amountRaised ?? doc.amountRaised) || 0,
-        contributorCount: (local?.contributorCount ?? doc.contributorCount) || 0,
-        bankDetails: {
-          bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
-          accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
-          accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
-          note:
-            doc.fundingType === "crowdfund"
-              ? "Please transfer your contribution directly using your banking app, then confirm details below."
-              : "Please transfer the equivalent amount or your support directly using your banking app.",
-        },
-      };
+  const docs = wishlistData.value?.docs || [];
+  if (docs.length === 0) return localItems.value;
+
+  const bankDetailsObj = {
+    bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
+    accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
+    accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
+    noteFixed: "Please transfer the equivalent amount or your support directly using your banking app.",
+    noteCrowdfund: "Please transfer your contribution directly using your banking app, then confirm details below.",
+  };
+
+  const result: WishlistItem[] = [];
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i] as any;
+    if (doc.isHidden) continue;
+
+    const local = localItems.value.find((li) => li.id === doc.id);
+    const imgUrl =
+      typeof doc.image === "object" && doc.image !== null
+        ? doc.image.url
+        : typeof doc.image === "string"
+          ? doc.image
+          : "/images/placeholder.png";
+    const isCrowdfund = doc.fundingType === "crowdfund";
+
+    result.push({
+      id: doc.id,
+      name: doc.name,
+      description: doc.description || "",
+      imageUrl: imgUrl,
+      image: doc.image,
+      link: typeof doc.link === "object" && doc.link !== null ? (doc.link as any).url : doc.link,
+      price: doc.price,
+      maxQuantity: doc.maxQuantity,
+      reservedCount: (local?.reservedCount ?? doc.reservedCount) || 0,
+      category: mapCategory(doc.category),
+      fundingType: doc.fundingType || "fixed",
+      amountRaised: (local?.amountRaised ?? doc.amountRaised) || 0,
+      contributorCount: (local?.contributorCount ?? doc.contributorCount) || 0,
+      bankDetails: {
+        bankName: bankDetailsObj.bankName,
+        accountNumber: bankDetailsObj.accountNumber,
+        accountName: bankDetailsObj.accountName,
+        note: isCrowdfund ? bankDetailsObj.noteCrowdfund : bankDetailsObj.noteFixed,
+      },
     });
   }
-  return localItems.value;
+  return result;
 });
 
 const selectedCategory = ref<string>("All");
@@ -242,7 +268,7 @@ const handleConfirmReservation = async () => {
   }
 };
 
-const filteredAndSortedItems = computed(() => {
+const filteredAndSortedItems = computed<WishlistItem[]>(() => {
   let list = [...items.value].filter(
     (item) => selectedCategory.value === "All" || item.category === selectedCategory.value,
   );
@@ -714,11 +740,15 @@ const progressPercent = (item: WishlistItem) => {
                       Cash Fund Contribution
                     </p>
                     <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
-                      Please transfer your contribution of <strong>₦{{ effectiveAmount.toLocaleString("en-US") }}</strong> to the wedding account shown on the right.
+                      Please transfer your contribution of
+                      <strong>₦{{ effectiveAmount.toLocaleString("en-US") }}</strong> to the wedding account shown on
+                      the right.
                     </p>
                   </div>
                   <div class="space-y-1">
-                    <label class="input-label text-[11px]">What name will appear on the transfer alert? (Optional)</label>
+                    <label class="input-label text-[11px]"
+                      >What name will appear on the transfer alert? (Optional)</label
+                    >
                     <input type="text" v-model="senderName" class="input-field" placeholder="Sender Account Name" />
                   </div>
                 </template>
@@ -730,7 +760,8 @@ const progressPercent = (item: WishlistItem) => {
                       Option 1: Purchase & Deliver Gift
                     </p>
                     <p class="font-body text-xs text-deep-espresso/80 leading-relaxed">
-                      If you'd like to buy the physical item, click below to purchase from the store, then bring it to the wedding or drop it off.
+                      If you'd like to buy the physical item, click below to purchase from the store, then bring it to
+                      the wedding or drop it off.
                     </p>
                     <a
                       v-if="activeItem.link"
@@ -741,8 +772,11 @@ const progressPercent = (item: WishlistItem) => {
                     >
                       Buy from Store ↗
                     </a>
-                    <p class="font-body text-[11px] text-deep-espresso/60 leading-relaxed mt-2 pt-2 border-t border-amber-gold/10">
-                      <strong>Delivery / Drop-off:</strong> You can bring it with you to the wedding or coordinate with us directly.
+                    <p
+                      class="font-body text-[11px] text-deep-espresso/60 leading-relaxed mt-2 pt-2 border-t border-amber-gold/10"
+                    >
+                      <strong>Delivery / Drop-off:</strong> You can bring it with you to the wedding or coordinate with
+                      us directly.
                     </p>
                   </div>
                 </template>
@@ -788,9 +822,10 @@ const progressPercent = (item: WishlistItem) => {
                     Option 2: Transfer Equivalent Cash
                   </p>
                   <p class="font-body text-xs text-deep-espresso/85 leading-relaxed">
-                    If you prefer, you can transfer the cash value of <strong>₦{{ activeItem.price.toLocaleString("en-US") }}</strong> directly to the wedding account:
+                    If you prefer, you can transfer the cash value of
+                    <strong>₦{{ activeItem.price.toLocaleString("en-US") }}</strong> directly to the wedding account:
                   </p>
-                  
+
                   <div class="grid grid-cols-3 gap-y-1.5 font-body pt-2 border-t border-amber-gold/10">
                     <span class="text-deep-espresso/60 text-[11px]">Bank:</span>
                     <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.bankName }}</span>
@@ -810,10 +845,17 @@ const progressPercent = (item: WishlistItem) => {
                     <span class="text-deep-espresso/60 text-[11px]">Name:</span>
                     <span class="col-span-2 font-semibold text-xs">{{ activeItem.bankDetails.accountName }}</span>
                   </div>
-                  
+
                   <div class="space-y-1 pt-2 border-t border-amber-gold/5">
-                    <label class="input-label text-[10px] text-deep-espresso/70">If transferring, what name will appear on the alert?</label>
-                    <input type="text" v-model="senderName" class="input-field py-1 text-xs" placeholder="Sender Account Name" />
+                    <label class="input-label text-[10px] text-deep-espresso/70"
+                      >If transferring, what name will appear on the alert?</label
+                    >
+                    <input
+                      type="text"
+                      v-model="senderName"
+                      class="input-field py-1 text-xs"
+                      placeholder="Sender Account Name"
+                    />
                   </div>
                 </div>
               </div>
