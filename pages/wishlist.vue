@@ -36,8 +36,10 @@ interface WishlistItem extends Omit<
   };
 }
 
-const { data: wishlistData, refresh } = await useDyrectedCollection("wishlist_items", { limit: 100 });
-const { data: siteSettings } = await useDyrectedGlobal("site_settings");
+const { data: wishlistData, pending: wishlistPending, refresh } = await useDyrectedCollection("wishlist_items", {
+  limit: 100,
+});
+const { data: siteSettings, pending: siteSettingsPending } = await useDyrectedGlobal("site_settings");
 
 onMounted(async () => {
   try {
@@ -112,6 +114,10 @@ const items = computed<WishlistItem[]>(() => {
     });
   }
   return result;
+});
+
+const isInitialLoading = computed(() => {
+  return (wishlistPending.value || siteSettingsPending.value) && !wishlistData.value;
 });
 
 const selectedCategory = ref<string>("All");
@@ -315,7 +321,10 @@ const progressPercent = (item: WishlistItem) => {
     <main class="flex-1 paper-texture py-12 px-6">
       <div class="max-w-7xl mx-auto space-y-8">
         <!-- Controls Panel -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-amber-gold/10 pb-6">
+        <div
+          v-if="!isInitialLoading"
+          class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-amber-gold/10 pb-6"
+        >
           <!-- Filter buttons -->
           <div class="flex flex-wrap gap-2 justify-center">
             <button
@@ -340,9 +349,38 @@ const progressPercent = (item: WishlistItem) => {
           </div>
         </div>
 
+        <!-- Loading state -->
+        <div v-if="isInitialLoading" class="space-y-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-amber-gold/10 pb-6">
+            <div class="flex flex-wrap gap-2 justify-center">
+              <div v-for="n in 4" :key="`filter-skeleton-${n}`" class="h-9 w-24 rounded-full bg-deep-espresso/8 animate-pulse" />
+            </div>
+            <div class="h-10 w-40 rounded-xl bg-deep-espresso/8 animate-pulse" />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <div
+              v-for="n in 8"
+              :key="`wishlist-skeleton-${n}`"
+              class="linen-card rounded-2xl border border-amber-gold/10 overflow-hidden shadow-md"
+            >
+              <div class="aspect-[4/3] w-full bg-deep-espresso/8 animate-pulse" />
+              <div class="p-6 space-y-4">
+                <div class="space-y-2">
+                  <div class="h-3 w-20 rounded-full bg-deep-espresso/8 animate-pulse" />
+                  <div class="h-6 w-3/4 rounded-full bg-deep-espresso/8 animate-pulse" />
+                  <div class="h-4 w-full rounded-full bg-deep-espresso/8 animate-pulse" />
+                  <div class="h-4 w-5/6 rounded-full bg-deep-espresso/8 animate-pulse" />
+                </div>
+                <div class="h-10 w-full rounded-xl bg-deep-espresso/8 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Empty state -->
         <div
-          v-if="filteredAndSortedItems.length === 0"
+          v-else-if="filteredAndSortedItems.length === 0"
           class="linen-card col-span-full py-24 px-8 rounded-2xl border border-amber-gold/15 text-center space-y-4"
         >
           <div class="text-5xl mb-2">🎁</div>
