@@ -152,20 +152,6 @@ body {
   animation: stampFade 0.7s forwards cubic-bezier(0.215, 0.610, 0.355, 1);
 }
 
-@media (pointer: fine) {
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)),
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) a,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) button,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) [role="button"],
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) input,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) select,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) textarea,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) .cursor-pointer,
-  body:not(.cms-admin-page):not(:has(.dyrected-admin)) [onClick] {
-    cursor: none !important;
-  }
-}
-
 /* Explicitly restore browser cursor for CMS Admin page */
 .cms-admin-page,
 .cms-admin-page *,

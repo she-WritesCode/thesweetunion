@@ -1,8 +1,6 @@
-import type { CollectionConfig } from "@dyrected/core";
-import { publicRead } from "../access/public.ts";
-import { adminOnly } from "../access/admin.ts";
+import { defineCollection, defineTextField, defineTextareaField } from "@dyrected/core";
 
-export const media: CollectionConfig = {
+export const media = defineCollection({
   slug: "media",
   labels: { singular: "Media", plural: "Media" },
   admin: {
@@ -18,8 +16,8 @@ export const media: CollectionConfig = {
     ],
   },
   fields: [
-    { name: "alt", type: "text", label: "Alt Text", required: true },
-    { name: "caption", type: "textarea", label: "Caption" },
+    defineTextField({ name: "alt", label: "Alt Text", required: true }),
+    defineTextareaField({ name: "caption", label: "Caption" }),
   ],
   access: {
     read: "true",
@@ -27,4 +25,4 @@ export const media: CollectionConfig = {
     update: "user != null",
     delete: "user != null",
   },
-};
+});

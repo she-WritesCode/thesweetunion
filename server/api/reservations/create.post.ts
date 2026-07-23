@@ -1,11 +1,12 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
-import { wishlistFixedConfirmationEmail, wishlistCrowdfundConfirmationEmail, adminWishlistNotificationEmail } from "~~/dyrected/emails";
+import { adminWishlistNotificationEmail } from "~~/dyrected/emails";
 
 const MIN_CONTRIBUTION = 5000;
 
 async function recomputeItemStats(client: any, itemId: string) {
+  const item = await client.findOne("wishlist_items", itemId);
   const reservations = await client.collection("reservations").find({
     where: { item: { equals: itemId } },
     limit: 1000,
@@ -16,10 +17,10 @@ async function recomputeItemStats(client: any, itemId: string) {
   let reservedCount = 0;
 
   for (const r of reservations.docs) {
-    if (r.contributionAmount && r.contributionAmount > 0) {
+    if (r.intent === "contribute" && r.contributionAmount && r.contributionAmount > 0) {
       amountRaised += r.contributionAmount;
       contributorCount += 1;
-    } else {
+    } else if ((item?.fundingType || "fixed") === "fixed" && r.intent === "reserve") {
       reservedCount += 1;
     }
   }
@@ -35,10 +36,26 @@ async function recomputeItemStats(client: any, itemId: string) {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { itemId, guestName, guestEmail, guestPhone, message, contributionAmount, isAnonymous } = body;
+  const {
+    itemId,
+    guestName,
+    paymentTiming,
+    intent,
+    contributionAmount,
+    reminderAt,
+    reminderChannel,
+    reminderContact,
+    paymentOption,
+  } = body;
 
   if (!itemId) {
     throw createError({ statusCode: 400, message: "Missing item ID" });
+  }
+  if (!guestName?.trim()) {
+    throw createError({ statusCode: 400, message: "Please enter your name." });
+  }
+  if (paymentTiming !== "now" && paymentTiming !== "later") {
+    throw createError({ statusCode: 400, message: "Please choose whether you are paying now or later." });
   }
 
   const config = useRuntimeConfig();
@@ -54,11 +71,24 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: "Wishlist item not found." });
   }
 
+  const isCrowdfund = item.fundingType === "crowdfund";
+  const normalizedIntent = intent || (isCrowdfund ? (paymentTiming === "now" ? "contribute" : "reminder") : "reserve");
+  const trimmedReminderContact = reminderContact?.trim() || "";
+
+  if (paymentTiming === "later" && paymentOption !== "bring_to_wedding") {
+    if (!reminderAt) {
+      throw createError({ statusCode: 400, message: "Please choose when you would like to be reminded." });
+    }
+    if (!trimmedReminderContact || !["whatsapp", "email"].includes(reminderChannel)) {
+      throw createError({ statusCode: 400, message: "Please add one contact method for your reminder." });
+    }
+  }
+
   // Compute current stats from reservations (source of truth)
   const currentStats = await recomputeItemStats(client, itemId);
 
-  if (item.fundingType === "crowdfund") {
-    if (!contributionAmount || contributionAmount < MIN_CONTRIBUTION) {
+  if (isCrowdfund) {
+    if (paymentTiming === "now" && (!contributionAmount || contributionAmount < MIN_CONTRIBUTION)) {
       throw createError({ statusCode: 400, message: `Minimum contribution is ₦${MIN_CONTRIBUTION.toLocaleString()}.` });
     }
 
@@ -71,67 +101,22 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const isCrowdfund = item.fundingType === "crowdfund";
-  const effectiveAnonymous = !!isAnonymous && isCrowdfund;
-
   // Create the reservation record
   const reservation = await client.collection("reservations").create({
     item: itemId,
-    guestName: effectiveAnonymous ? "Anonymous" : guestName,
-    guestEmail: guestEmail || "",
-    guestPhone: guestPhone || "",
-    message: message || "",
-    contributionAmount: isCrowdfund ? contributionAmount : undefined,
+    guestName: guestName.trim(),
+    intent: normalizedIntent,
+    paymentTiming,
+    reminderAt: paymentTiming === "later" ? reminderAt : undefined,
+    reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
+    reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
+    paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
+    contributionAmount: isCrowdfund && paymentTiming === "now" ? contributionAmount : undefined,
     reservedAt: new Date().toISOString(),
   });
 
   // Recompute stats after adding the new reservation
   const finalStats = await recomputeItemStats(client, itemId);
-
-  // Send email if guest provided an email address
-  if (guestEmail && guestEmail.trim() !== "") {
-    try {
-      if (isCrowdfund) {
-        // Fetch site settings global for bank details
-        let siteSettings: any = null;
-        try {
-          siteSettings = await $fetch("/api/globals/site_settings");
-        } catch (e) {
-          console.error("Failed to fetch site settings in reservation backend:", e);
-        }
-
-        const bankName = siteSettings?.bankName || "Guaranty Trust Bank (GTBank)";
-        const accountNumber = siteSettings?.accountNumber || "0123456789";
-        const accountName = siteSettings?.accountName || "Uche & Adun Wedding Account";
-
-        sendEmail({
-          to: guestEmail,
-          subject: `Thank you for contributing to our ${item.name}! 💖`,
-          html: wishlistCrowdfundConfirmationEmail({
-            guestName: effectiveAnonymous ? "Anonymous" : guestName,
-            itemName: item.name,
-            contributionAmount,
-            bankName,
-            accountNumber,
-            accountName,
-          }),
-        }).catch(console.error);
-      } else {
-        const itemLinkStr = typeof item.link === "object" && item.link !== null ? (item.link as any).url : item.link;
-        sendEmail({
-          to: guestEmail,
-          subject: `Thank you for your registry gift: ${item.name}! 🎁`,
-          html: wishlistFixedConfirmationEmail({
-            guestName: guestName, // Fixed gifts are never anonymous
-            itemName: item.name,
-            itemLink: itemLinkStr,
-          }),
-        }).catch(console.error);
-      }
-    } catch (mailErr) {
-      console.error("Error preparing email send:", mailErr);
-    }
-  }
 
   // Admin notification — fire and forget
   try {
@@ -141,15 +126,18 @@ export default defineEventHandler(async (event) => {
       const appUrl: string = (config.public as any).appUrl || "http://localhost:3000";
       sendEmail({
         to: adminEmails.join(","),
-        subject: `New Registry ${isCrowdfund ? 'Contribution' : 'Reservation'}: ${effectiveAnonymous ? 'Anonymous' : guestName} — ${item.name}`,
+        subject: `New Registry ${normalizedIntent === "contribute" ? "Contribution" : normalizedIntent === "reminder" ? "Reminder" : "Reservation"}: ${guestName.trim()} — ${item.name}`,
         html: adminWishlistNotificationEmail({
-          guestName: effectiveAnonymous ? "Anonymous" : guestName,
-          guestEmail: guestEmail || undefined,
-          guestPhone: guestPhone || undefined,
+          guestName: guestName.trim(),
           itemName: item.name,
           fundingType: item.fundingType,
-          contributionAmount: isCrowdfund ? contributionAmount : undefined,
-          message: message || undefined,
+          paymentTiming,
+          intent: normalizedIntent,
+          contributionAmount: isCrowdfund && paymentTiming === "now" ? contributionAmount : undefined,
+          reminderAt: paymentTiming === "later" ? reminderAt : undefined,
+          reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
+          reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
+          paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
           dashboardLink: `${appUrl}/admin`,
         }),
       }).catch(console.error);

@@ -489,25 +489,40 @@ export function wishlistCrowdfundConfirmationEmail({
 
 export function adminWishlistNotificationEmail({
   guestName,
-  guestEmail,
-  guestPhone,
   itemName,
   fundingType,
+  paymentTiming,
+  intent,
   contributionAmount,
-  message,
+  reminderAt,
+  reminderChannel,
+  reminderContact,
+  paymentOption,
   dashboardLink,
 }: {
   guestName: string;
-  guestEmail?: string;
-  guestPhone?: string;
   itemName: string;
   fundingType: "fixed" | "crowdfund";
+  paymentTiming: "now" | "later";
+  intent: "reserve" | "contribute" | "reminder";
   contributionAmount?: number;
-  message?: string;
+  reminderAt?: string;
+  reminderChannel?: "whatsapp" | "email";
+  reminderContact?: string;
+  paymentOption?: "bank_transfer" | "purchase_link";
   dashboardLink: string;
 }): string {
-  const isCrowdfund = fundingType === "crowdfund";
-  const actionType = isCrowdfund ? "Contribution" : "Reservation";
+  const actionType = intent === "contribute" ? "Contribution" : intent === "reminder" ? "Reminder" : "Reservation";
+  const paymentLabel = paymentTiming === "now" ? "Paying now" : "Paying later";
+  const optionLabel =
+    paymentOption === "purchase_link"
+      ? "Buy item directly"
+      : paymentOption === "bank_transfer"
+        ? "Bank transfer"
+        : "Not specified";
+  const reminderDateLabel = reminderAt
+    ? new Date(reminderAt).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })
+    : "Not set";
 
   return layout(
     heading(`New Wishlist ${actionType}! 🎁`),
@@ -515,14 +530,17 @@ export function adminWishlistNotificationEmail({
     divider(),
     table(
       row("Guest Name", guestName),
-      row("Email", guestEmail || "Not provided"),
-      row("Phone/WhatsApp", guestPhone || "Not provided"),
       row("Gift Item", itemName),
-      isCrowdfund && contributionAmount
+      row("Funding Type", fundingType === "crowdfund" ? "Crowdfund" : "Fixed gift"),
+      row("Payment Timing", paymentLabel),
+      row("Payment Option", optionLabel),
+      intent === "contribute" && contributionAmount
         ? row("Contribution Amount", `₦${contributionAmount.toLocaleString("en-US")}`)
-        : row("Status", "Reserved"),
+        : row("Intent", actionType),
+      paymentTiming === "later" ? row("Reminder Date", reminderDateLabel) : "",
+      paymentTiming === "later" ? row("Reminder Channel", reminderChannel === "whatsapp" ? "WhatsApp" : "Email") : "",
+      paymentTiming === "later" ? row("Reminder Contact", reminderContact || "Not provided") : "",
     ),
-    message ? divider() + sectionLabel("Message from the guest") + quote(message) : "",
     ctaButton("View Registry in Dashboard", dashboardLink),
   );
 }

@@ -1,9 +1,11 @@
-import type { CollectionConfig } from "@dyrected/core";
+import { defineCollection, defineTextField } from "@dyrected/core";
 
-export const admins: CollectionConfig = {
+export const admins = defineCollection({
   slug: "admins",
   auth: true,
   labels: { singular: "Admin", plural: "Admins" },
   admin: { useAsTitle: "name" },
-  fields: [{ name: "name", type: "text", label: "Name" }],
-};
+  fields: [
+    defineTextField({ name: "name", label: "Name" }),
+  ],
+});

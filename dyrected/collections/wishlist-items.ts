@@ -1,6 +1,17 @@
-import { defineNumberField, type CollectionConfig } from "@dyrected/core";
+import {
+  defineCollection,
+  defineTab,
+  defineRelationshipField,
+  defineTextField,
+  defineTextareaField,
+  defineSelectField,
+  defineNumberField,
+  defineUrlField,
+  defineBooleanField,
+  defineJoinField,
+} from "@dyrected/core";
 
-export const wishlistItems: CollectionConfig = {
+export const wishlistItems = defineCollection({
   slug: "wishlist_items",
   labels: { singular: "Wishlist Item", plural: "Wishlist Items" },
   admin: {
@@ -20,106 +31,106 @@ export const wishlistItems: CollectionConfig = {
     group: "Wishlist",
   },
   fields: [
-    { name: "image", type: "relationship", label: "Product Image", relationTo: "media", admin: { tab: "General" } },
-    { name: "name", type: "text", label: "Item Name", required: true, admin: { tab: "General" } },
-    { name: "description", type: "textarea", label: "Description", admin: { tab: "General" } },
-    {
-      name: "category",
-      type: "select",
-      label: "Category",
-      options: [
-        { label: "Kitchen", value: "kitchen" },
-        { label: "Travel", value: "travel" },
-        { label: "Home", value: "home" },
-        { label: "Cash Fund", value: "cash-fund" },
-        { label: "Other", value: "other" },
+    ...defineTab({
+      label: "General",
+      fields: [
+        defineRelationshipField({
+          name: "image",
+          label: "Product Image",
+          relationTo: "media",
+        }),
+        defineTextField({ name: "name", label: "Item Name", required: true }),
+        defineTextareaField({ name: "description", label: "Description" }),
+        defineSelectField({
+          name: "category",
+          label: "Category",
+          options: [
+            { label: "Kitchen", value: "kitchen" },
+            { label: "Travel", value: "travel" },
+            { label: "Home", value: "home" },
+            { label: "Cash Fund", value: "cash-fund" },
+            { label: "Other", value: "other" },
+          ],
+        }),
+        defineNumberField({
+          name: "price",
+          label: "Price / Funding Goal",
+          required: true,
+          admin: {
+            description: "For crowdfund items: set to the goal amount, or 0 for unlimited",
+            width: "75%",
+            format: {
+              type: "currency",
+              currency: "NGN",
+            },
+          },
+        }),
+        defineSelectField({
+          name: "fundingType",
+          label: "Funding Type",
+          defaultValue: "fixed",
+          options: [
+            { label: "Fixed (one person reserves the full item)", value: "fixed" },
+            { label: "Crowdfund (guests contribute partial amounts)", value: "crowdfund" },
+          ],
+          admin: { width: "50%" },
+        }),
+        defineNumberField({
+          name: "maxQuantity",
+          label: "Max Reservations",
+          required: true,
+          defaultValue: 1,
+          admin: {
+            description: "For crowdfund: leave at 1 (not used). For fixed: how many people can reserve.",
+            width: "50%",
+          },
+        }),
+        defineUrlField({
+          name: "link",
+          label: "Purchase Link",
+          admin: { description: "External purchase link (optional)" },
+        }),
+        defineBooleanField({ name: "isHidden", label: "Hidden", defaultValue: false }),
       ],
-      admin: { tab: "General" },
-    },
-    defineNumberField({
-      name: "price",
-      type: "number",
-      label: "Price / Funding Goal",
-      required: true,
-      admin: {
-        tab: "General",
-        description: "For crowdfund items: set to the goal amount, or 0 for unlimited",
-        width: "75%",
-        format: {
-          type: "currency",
-          currency: "NGN",
-        },
-      },
     }),
-    {
-      name: "fundingType",
-      type: "select",
-      label: "Funding Type",
-      defaultValue: "fixed",
-      options: [
-        { label: "Fixed (one person reserves the full item)", value: "fixed" },
-        { label: "Crowdfund (guests contribute partial amounts)", value: "crowdfund" },
-      ],
-      admin: { tab: "General", width: "50%" },
-    },
-    {
-      name: "maxQuantity",
-      type: "number",
-      label: "Max Reservations",
-      required: true,
-      defaultValue: 1,
-      admin: {
-        tab: "General",
-        description: "For crowdfund: leave at 1 (not used). For fixed: how many people can reserve.",
-        width: "50%",
-      },
-    },
-    {
-      name: "link",
-      type: "url",
-      label: "Purchase Link",
-      admin: { tab: "General", description: "External purchase link (optional)" },
-    },
-    { name: "isHidden", type: "boolean", label: "Hidden", defaultValue: false, admin: { tab: "General" } },
 
-    defineNumberField({
-      name: "amountRaised",
-      type: "number",
-      label: "Amount Raised",
-      defaultValue: 0,
-      admin: {
-        tab: "Reservations",
-        component: "wishlist_items.amountRaised",
-        readOnly: true,
-        width: "50%",
-        format: {
-          type: "currency",
-          currency: "NGN",
-        },
-      },
+    ...defineTab({
+      label: "Reservations",
+      fields: [
+        defineNumberField({
+          name: "amountRaised",
+          label: "Amount Raised",
+          defaultValue: 0,
+          admin: {
+            component: "wishlist_items.amountRaised",
+            readOnly: true,
+            width: "50%",
+            format: {
+              type: "currency",
+              currency: "NGN",
+            },
+          },
+        }),
+        defineNumberField({
+          name: "contributorCount",
+          label: "Contributors",
+          defaultValue: 0,
+          admin: { component: "wishlist_items.contributorCount", readOnly: true, width: "50%" },
+        }),
+        defineNumberField({
+          name: "reservedCount",
+          label: "Reserved Count",
+          defaultValue: 0,
+          admin: { component: "wishlist_items.reservedCount", readOnly: true, width: "50%" },
+        }),
+        defineJoinField({
+          name: "reservations",
+          label: "Reservations & Contributions",
+          collection: "reservations",
+          on: "item",
+        }),
+      ],
     }),
-    {
-      name: "contributorCount",
-      type: "number",
-      label: "Contributors",
-      defaultValue: 0,
-      admin: { tab: "Reservations", component: "wishlist_items.contributorCount", readOnly: true, width: "50%" },
-    },
-    {
-      name: "reservedCount",
-      type: "number",
-      label: "Reserved Count",
-      defaultValue: 0,
-      admin: { tab: "Reservations", component: "wishlist_items.reservedCount", readOnly: true, width: "50%" },
-    },
-    {
-      name: "reservations",
-      type: "join",
-      label: "Reservations & Contributions",
-      collection: "reservations",
-      on: "item",
-      admin: { tab: "Reservations" },
-    },
   ],
   access: {
     read: "true",
@@ -129,12 +140,9 @@ export const wishlistItems: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, operation }) => {
-        if (operation === "create") {
-          data.createdAt = new Date().toISOString();
-        }
+      async ({ data }) => {
         return data;
       },
     ],
   },
-};
+});

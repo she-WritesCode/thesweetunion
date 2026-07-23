@@ -3,6 +3,23 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
 
+  vite: {
+    resolve: {
+      alias: {
+        // attr-accept publishes a broken `module` entry that points to a CJS-shaped file.
+        // Force Vite to the CJS build so default-import interop works for DyrectedAdmin/react-dropzone.
+        "attr-accept": "attr-accept/dist/index.js",
+        "prop-types": "prop-types/index.js",
+      },
+    },
+    optimizeDeps: {
+      include: ["react-dropzone", "attr-accept", "prop-types", "file-selector"],
+    },
+    ssr: {
+      noExternal: ["react-dropzone", "attr-accept", "prop-types", "file-selector"],
+    },
+  },
+
   modules: ["@dyrected/nuxt"],
 
   dyrected: {
@@ -62,7 +79,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["~/assets/css/globals.css"],
+  css: ["~/assets/css/globals.css", "vue-tel-input/vue-tel-input.css"],
 
   postcss: {
     plugins: {

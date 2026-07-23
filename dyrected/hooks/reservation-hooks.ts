@@ -1,6 +1,7 @@
 import type { CollectionBeforeChangeHook, CollectionAfterDeleteHook } from "@dyrected/core";
+import type { Reservations } from "~/dyrected-types";
 
-export const reserveItem: CollectionBeforeChangeHook = async ({ data, operation }: any) => {
+export const reserveItem: CollectionBeforeChangeHook<Reservations> = async ({ data, operation }: any) => {
   if (operation === "create") {
     data.reservedAt = new Date().toISOString();
   }

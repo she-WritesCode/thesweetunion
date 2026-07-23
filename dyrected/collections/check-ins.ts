@@ -1,7 +1,16 @@
-import type { CollectionConfig } from "@dyrected/core";
+import {
+  defineCollection,
+  defineTab,
+  defineJsonField,
+  defineRelationshipField,
+  defineTextField,
+  defineNumberField,
+  defineDateField,
+  defineTextareaField,
+} from "@dyrected/core";
 import { stampCheckInTime } from "../hooks/check-in-hooks.ts";
 
-export const checkIns: CollectionConfig = {
+export const checkIns = defineCollection({
   slug: "check_ins",
   labels: { singular: "Check-in", plural: "Check-ins" },
   admin: {
@@ -11,69 +20,63 @@ export const checkIns: CollectionConfig = {
     group: "RSVP",
   },
   fields: [
-    // ── Scanner tab ───────────────────────────────────────────────────────────
-    // Staff open "Add New Check-in", land here, and scan. The component creates
-    // the check-in record via API — no need to click Save.
-    {
-      name: "checkInScanner",
-      type: "json",
-      label: "Check-in Scanner",
-      admin: {
-        tab: "Scanner",
-        component: "check_ins.checkInScanner",
-        description: "Scan a guest's QR code or enter the code manually to check them in.",
-      },
-    },
+    ...defineTab({
+      label: "Scanner",
+      fields: [
+        defineJsonField({
+          name: "checkInScanner",
+          label: "Check-in Scanner",
+          admin: {
+            component: "check_ins.checkInScanner",
+            description: "Scan a guest's QR code or enter the code manually to check them in.",
+          },
+        }),
+      ],
+    }),
 
-    // ── Record tab ────────────────────────────────────────────────────────────
-    // Auto-populated after a successful scan. Read-only fields show what was
-    // recorded; scannedBy and notes can be edited after the fact.
-    {
-      name: "rsvpRecord",
-      type: "relationship",
-      label: "RSVP Record",
-      relationTo: "rsvp_records",
-      required: true,
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "event",
-      type: "relationship",
-      label: "Event",
-      relationTo: "events",
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "guestName",
-      type: "text",
-      label: "Guest Name",
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "partySize",
-      type: "number",
-      label: "Party Size",
-      defaultValue: 1,
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "createdAt",
-      type: "date",
-      label: "Check-in Time",
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "scannedBy",
-      type: "text",
-      label: "Scanned By",
-      admin: { tab: "Record", readOnly: true, width: "50%" },
-    },
-    {
-      name: "notes",
-      type: "textarea",
-      label: "Staff Notes",
-      admin: { tab: "Record" },
-    },
+    ...defineTab({
+      label: "Record",
+      fields: [
+        defineRelationshipField({
+          name: "rsvpRecord",
+          label: "RSVP Record",
+          relationTo: "rsvp_records",
+          required: true,
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineRelationshipField({
+          name: "event",
+          label: "Event",
+          relationTo: "events",
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineTextField({
+          name: "guestName",
+          label: "Guest Name",
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineNumberField({
+          name: "partySize",
+          label: "Party Size",
+          defaultValue: 1,
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineDateField({
+          name: "createdAt",
+          label: "Check-in Time",
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineTextField({
+          name: "scannedBy",
+          label: "Scanned By",
+          admin: { readOnly: true, width: "50%" },
+        }),
+        defineTextareaField({
+          name: "notes",
+          label: "Staff Notes",
+        }),
+      ],
+    }),
   ],
   access: {
     read: "user != null",
@@ -82,6 +85,6 @@ export const checkIns: CollectionConfig = {
     delete: "user != null",
   },
   hooks: {
-    beforeChange: [stampCheckInTime],
+    beforeChange: [stampCheckInTime as any],
   },
-};
+});

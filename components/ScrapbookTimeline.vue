@@ -11,11 +11,11 @@ interface TimelineProps {
   items: TimelineItem[];
 }
 
-defineProps<TimelineProps>()
+defineProps<TimelineProps>();
 
 const emit = defineEmits<{
-  (e: 'imageClick', url: string): void
-}>()
+  (e: "imageClick", url: string): void;
+}>();
 
 const collageStyles = [
   {
@@ -42,7 +42,7 @@ const collageStyles = [
     tapeColor: "washi-tape-terracotta",
     marginOffset: "-translate-y-2 lg:-translate-x-2",
   },
-]
+];
 </script>
 
 <template>
@@ -55,28 +55,25 @@ const collageStyles = [
         class="relative z-10 w-full max-w-md mx-auto select-none transition-all duration-500 hover:z-20 hover:scale-[1.03]"
         :class="[
           collageStyles[index % collageStyles.length].rotation,
-          collageStyles[index % collageStyles.length].marginOffset
+          collageStyles[index % collageStyles.length].marginOffset,
         ]"
       >
         <!-- Piece of washi tape holding this Polaroid memory -->
-        <div 
-          class="washi-tape absolute" 
+        <div
+          class="washi-tape absolute"
           :class="[
             collageStyles[index % collageStyles.length].tapeRotation,
-            collageStyles[index % collageStyles.length].tapeColor
+            collageStyles[index % collageStyles.length].tapeColor,
           ]"
         />
 
         <!-- The Polaroid Card -->
         <div class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col">
           <!-- Photo frame -->
-          <div class="relative aspect-[4/3] w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in">
-            <img
-              :src="item.imageUrl"
-              :alt="item.title"
-              class="img-fill"
-              @click="emit('imageClick', item.imageUrl)"
-            />
+          <div
+            class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in"
+          >
+            <img :src="item.imageUrl" :alt="item.title" class="img-fill" @click="emit('imageClick', item.imageUrl)" />
             <!-- Subtle shadows & paper details on photo -->
             <div class="absolute inset-0 bg-gradient-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
           </div>
@@ -91,9 +88,7 @@ const collageStyles = [
                 {{ item.label }}
               </span>
             </div>
-            <p class="font-body text-base text-deep-espresso/80 leading-relaxed italic">
-              "{{ item.description }}"
-            </p>
+            <p class="font-body text-base text-deep-espresso/80 leading-relaxed italic">"{{ item.description }}"</p>
           </div>
         </div>
       </div>

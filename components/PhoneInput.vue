@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { VueTelInput } from "vue-tel-input";
-import "vue-tel-input/vue-tel-input.css";
 
 interface PhoneInputProps {
   modelValue: string;
