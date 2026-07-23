@@ -689,10 +689,10 @@ const progressPercent = (item: WishlistItem) => {
                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-gold/15 pb-4"
               >
                 <span class="font-heading text-xs font-bold text-amber-gold tracking-[0.25em] uppercase">
-                  [ {{ activeItem.category }} ]
+                  {{ activeItem.category }}
                 </span>
                 <span class="text-xs uppercase tracking-wider text-deep-espresso/60 font-semibold">
-                  {{ activeItem.fundingType === "crowdfund" ? "Cash Contribution Fund" : "Gift Item" }}
+                  {{ activeItem.fundingType === "crowdfund" ? "Cash Contribution" : "Gift Item" }}
                 </span>
               </div>
 

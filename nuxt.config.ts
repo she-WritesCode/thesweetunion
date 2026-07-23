@@ -1,7 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
-  devtools: { enabled: true },
+  build: {
+    transpile: [/@dyrected/],
+  },
 
   vite: {
     resolve: {
@@ -10,13 +12,31 @@ export default defineNuxtConfig({
         // Force Vite to the CJS build so default-import interop works for DyrectedAdmin/react-dropzone.
         "attr-accept": "attr-accept/dist/index.js",
         "prop-types": "prop-types/index.js",
+        "papaparse": "papaparse/papaparse.js",
+        "jexl": "jexl/dist/Jexl.js",
       },
     },
     optimizeDeps: {
-      include: ["react-dropzone", "attr-accept", "prop-types", "file-selector"],
+      include: [
+        "react-dropzone",
+        "attr-accept",
+        "prop-types",
+        "file-selector",
+        "papaparse",
+        "jexl",
+        "react-datasheet-grid",
+      ],
     },
     ssr: {
-      noExternal: ["react-dropzone", "attr-accept", "prop-types", "file-selector"],
+      noExternal: [
+        "react-dropzone",
+        "attr-accept",
+        "prop-types",
+        "file-selector",
+        "papaparse",
+        "jexl",
+        "react-datasheet-grid",
+      ],
     },
   },
 
