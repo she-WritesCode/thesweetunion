@@ -75,7 +75,7 @@ watch(
         { label: 'Seconds', value: timeLeft.seconds },
       ]"
       :key="block.label"
-      class="flex flex-col items-center justify-center min-w-[70px] sm:min-w-[90px] md:min-w-[110px] aspect-square rounded-2xl linen-card relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+      class="flex flex-col items-center justify-center min-w-[70px] sm:min-w-[90px] md:min-w-[110px] aspect-square rounded-2xl linen-card relative overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 motion-lift"
     >
       <!-- Accent decoration inside the card -->
       <div

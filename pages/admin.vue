@@ -8,6 +8,8 @@ import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButto
 
 definePageMeta({
   layout: false,
+  pageTransition: false,
+  layoutTransition: false,
 });
 useHead({
   bodyAttrs: {

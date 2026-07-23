@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from "vue";
+import { useReducedMotion } from "~/composables/useMotion";
 
 interface Stamp {
   id: number;
@@ -9,20 +10,23 @@ interface Stamp {
   rotation: number;
 }
 
-const isMounted = ref(false)
-const isHovering = ref(false)
-const stamps = ref<Stamp[]>([])
-const cursorRef = ref<HTMLDivElement | null>(null)
-const stampId = ref(0)
+const isMounted = ref(false);
+const isHovering = ref(false);
+const stamps = ref<Stamp[]>([]);
+const cursorRef = ref<HTMLDivElement | null>(null);
+const stampId = ref(0);
+const { prefersReducedMotion } = useReducedMotion();
 
 onMounted(() => {
-  isMounted.value = true
+  if (prefersReducedMotion.value) return;
+
+  isMounted.value = true;
 
   const handleMouseMove = (e: MouseEvent) => {
     if (cursorRef.value) {
-      cursorRef.value.style.transform = `translate3d(${e.clientX - 16}px, ${e.clientY - 16}px, 0)`
+      cursorRef.value.style.transform = `translate3d(${e.clientX - 16}px, ${e.clientY - 16}px, 0)`;
     }
-  }
+  };
 
   const handleMouseOver = (e: MouseEvent) => {
     const target = e.target as HTMLElement
@@ -37,51 +41,51 @@ onMounted(() => {
       target.classList.contains("cursor-zoom-in") ||
       target.classList.contains("cursor-zoom-out")
     
-    isHovering.value = !!isInteractive
-  }
+    isHovering.value = !!isInteractive;
+  };
 
   const handleMouseDown = () => {
     if (cursorRef.value) {
-      cursorRef.value.style.transform += " scale(0.85)"
+      cursorRef.value.style.transform += " scale(0.92)";
     }
-  }
+  };
 
   const handleMouseUp = () => {
     if (cursorRef.value) {
-      cursorRef.value.style.transform = cursorRef.value.style.transform.replace(" scale(0.85)", "")
+      cursorRef.value.style.transform = cursorRef.value.style.transform.replace(" scale(0.92)", "");
     }
-  }
+  };
 
   const handleClick = (e: MouseEvent) => {
     const newStamp: Stamp = {
       id: stampId.value++,
       x: e.clientX,
       y: e.clientY,
-      scale: 0.8 + Math.random() * 0.4,
-      rotation: (Math.random() - 0.5) * 30,
-    }
+      scale: 0.75 + Math.random() * 0.18,
+      rotation: (Math.random() - 0.5) * 18,
+    };
 
-    stamps.value.push(newStamp)
+    stamps.value.push(newStamp);
 
     setTimeout(() => {
-      stamps.value = stamps.value.filter((s) => s.id !== newStamp.id)
-    }, 700)
-  }
+      stamps.value = stamps.value.filter((s) => s.id !== newStamp.id);
+    }, 520);
+  };
 
-  window.addEventListener("mousemove", handleMouseMove)
-  window.addEventListener("mouseover", handleMouseOver)
-  window.addEventListener("mousedown", handleMouseDown)
-  window.addEventListener("mouseup", handleMouseUp)
-  window.addEventListener("click", handleClick)
+  window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("mouseover", handleMouseOver);
+  window.addEventListener("mousedown", handleMouseDown);
+  window.addEventListener("mouseup", handleMouseUp);
+  window.addEventListener("click", handleClick);
 
   onUnmounted(() => {
-    window.removeEventListener("mousemove", handleMouseMove)
-    window.removeEventListener("mouseover", handleMouseOver)
-    window.removeEventListener("mousedown", handleMouseDown)
-    window.removeEventListener("mouseup", handleMouseUp)
-    window.removeEventListener("click", handleClick)
-  })
-})
+    window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("mouseover", handleMouseOver);
+    window.removeEventListener("mousedown", handleMouseDown);
+    window.removeEventListener("mouseup", handleMouseUp);
+    window.removeEventListener("click", handleClick);
+  });
+});
 </script>
 
 <template>
@@ -90,7 +94,7 @@ onMounted(() => {
     <div
       v-for="stamp in stamps"
       :key="stamp.id"
-      class="pointer-events-none fixed z-[9999] text-burnt-orange/70 mix-blend-multiply animate-stamp-fade"
+      class="pointer-events-none fixed z-[9999] text-burnt-orange/45 mix-blend-multiply animate-stamp-fade"
       :style="{
         left: stamp.x + 'px',
         top: stamp.y + 'px',
@@ -99,8 +103,8 @@ onMounted(() => {
     >
       <!-- Heart Stamp Mark SVG -->
       <svg
-        width="28"
-        height="28"
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="currentColor"
         class="filter drop-shadow-[0_1px_2px_rgba(181,78,36,0.3)]"
@@ -112,7 +116,7 @@ onMounted(() => {
     <!-- Main Cursor Element -->
     <div
       ref="cursorRef"
-      class="pointer-events-none fixed top-0 left-0 w-8 h-8 z-[9999] transition-colors duration-200 select-none mix-blend-normal hidden md:block"
+      class="pointer-events-none fixed top-0 left-0 w-8 h-8 z-[9999] transition-colors duration-200 select-none mix-blend-normal hidden md:block opacity-80"
       :class="isHovering ? 'text-burnt-orange' : 'text-muted-mauve'"
       style="transform: translate3d(-100px, -100px, 0);"
     >

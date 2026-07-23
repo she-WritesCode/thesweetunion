@@ -3,6 +3,11 @@ import { ref, computed, watch, onUnmounted } from "vue";
 import { useRoute, useRouter, useAsyncData } from "#app";
 import { useDyrectedClient, useDyrectedGlobal } from "#imports";
 import PhoneInput from "~/components/PhoneInput.vue";
+import { publicPageTransition } from "~/composables/useMotion";
+
+definePageMeta({
+  pageTransition: publicPageTransition,
+});
 
 import type { Rsvp_records, Events as CMSEvent } from "~/dyrected-types";
 
@@ -184,10 +189,6 @@ const closeSuccessModal = () => {
   cancelRedirect();
   successModal.value = null;
 };
-
-onUnmounted(() => {
-  cancelRedirect();
-});
 
 const populateStates = (data: RSVPData) => {
   group.value = typeof data.group === "object" ? data.group?.name : data.group;
@@ -479,6 +480,19 @@ const getStepProgress = computed(() => {
 const isFormActive = computed(() => {
   return (!existingRSVP.value || isEditing.value) && !invalidLinkError.value && !groupFullError.value;
 });
+
+watch(successModal, (value) => {
+  if (import.meta.client) {
+    document.body.style.overflow = value ? "hidden" : "";
+  }
+});
+
+onUnmounted(() => {
+  cancelRedirect();
+  if (import.meta.client) {
+    document.body.style.overflow = "";
+  }
+});
 </script>
 
 <template>
@@ -488,7 +502,7 @@ const isFormActive = computed(() => {
     <main class="rsvp-main" :class="isFormActive ? 'rsvp-main--form-active' : 'rsvp-main--inactive'">
       <div class="rsvp-content">
         <!-- 1. INVALID DIRECT LINK BLOCKER -->
-        <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker">
+        <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker motion-reveal motion-reveal--scale-in motion-reveal--ready">
           <div class="rsvp-blocker__icon">✉️</div>
           <h2 class="rsvp-blocker__title">Your invitation holds the key.</h2>
           <p class="rsvp-blocker__body">
@@ -502,7 +516,7 @@ const isFormActive = computed(() => {
         </div>
 
         <!-- 2. CAPACITY ALLOCATION BLOCKER -->
-        <div v-if="groupFullError" class="rsvp-blocker rsvp-blocker--error">
+        <div v-if="groupFullError" class="rsvp-blocker rsvp-blocker--error motion-reveal motion-reveal--scale-in motion-reveal--ready">
           <div class="rsvp-blocker__icon">⚠️</div>
           <h3 class="rsvp-blocker__heading">We wish we could fit the whole world.</h3>
           <p class="rsvp-blocker__text">
@@ -524,7 +538,7 @@ const isFormActive = computed(() => {
         </div>
 
         <!-- 3. CONFIRMED RSVP SUMMARY -->
-        <div v-if="existingRSVP && !isEditing && !groupFullError" class="rsvp-summary">
+        <div v-if="existingRSVP && !isEditing && !groupFullError" class="rsvp-summary motion-reveal motion-reveal--fade-up motion-reveal--ready">
           <div class="rsvp-summary__header">
             <div>
               <span class="rsvp-summary__status-label">RSVP Status</span>
@@ -656,6 +670,8 @@ const isFormActive = computed(() => {
             <span v-else>RSVP Form</span>
           </div>
 
+          <Transition name="step-fade" mode="out-in">
+            <div :key="currentStep">
           <!-- STEP 2: ATTENDANCE -->
           <div v-if="currentStep === 2" class="rsvp-step">
             <div class="rsvp-step__header">
@@ -846,6 +862,8 @@ const isFormActive = computed(() => {
               </div>
             </div>
           </div>
+            </div>
+          </Transition>
 
           <!-- Form navigation — left: Exit (step 2) or Back (steps 3+) · right: Continue / Submit -->
           <div class="rsvp-form__nav">
@@ -960,80 +978,84 @@ const isFormActive = computed(() => {
     <Footer v-if="!isFormActive" :couples-photo="couplesPhoto" />
 
     <!-- Success modal -->
-    <div v-if="successModal" class="rsvp-success-overlay">
-      <div class="rsvp-success-card">
-        <div class="rsvp-success__icon">{{ successModal === "cancel" ? "🗑️" : "🎉" }}</div>
-        <h3 class="rsvp-success__title">
-          {{
-            successModal === "cancel"
-              ? "RSVP Removed"
-              : successModal === "edit"
-                ? "RSVP Changes Saved!"
-                : "Thank You So Much!"
-          }}
-        </h3>
-        <div class="rsvp-success__body">
-          <template v-if="successModal === 'cancel'">
-            <p>Your RSVP registration details have been successfully deleted from this browser session.</p>
-          </template>
-          <template v-else-if="successModal === 'edit'">
-            <p>Your details have been successfully updated. We look forward to celebrating together in Lagos.</p>
-          </template>
-          <template v-else-if="successModal === 'submit' && attending === true">
-            <p>
-              You're officially on the list! We cannot wait to celebrate our union with you. We have saved your
-              confirmation details.
-            </p>
-            <div
-              class="rsvp-success__redirect-box"
-              style="
-                margin-top: 20px;
-                padding: 16px;
-                border-radius: 12px;
-                background: rgba(134, 81, 114, 0.08);
-                border: 1px solid rgba(134, 81, 114, 0.15);
-                text-align: center;
-              "
-            >
-              <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500">
-                We know exactly what you should gift us for our wedding! <br />
-                We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our
-                wishlist.
-              </p>
-              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap">
-                <button
-                  type="button"
-                  @click="
-                    () => {
-                      cancelRedirect();
-                      router.push('/wishlist');
-                    }
+    <Transition name="overlay-fade">
+      <div v-if="successModal" class="rsvp-success-overlay">
+        <Transition name="dialog-pop" appear>
+          <div v-if="successModal" class="rsvp-success-card">
+            <div class="rsvp-success__icon">{{ successModal === "cancel" ? "🗑️" : "🎉" }}</div>
+            <h3 class="rsvp-success__title">
+              {{
+                successModal === "cancel"
+                  ? "RSVP Removed"
+                  : successModal === "edit"
+                    ? "RSVP Changes Saved!"
+                    : "Thank You So Much!"
+              }}
+            </h3>
+            <div class="rsvp-success__body">
+              <template v-if="successModal === 'cancel'">
+                <p>Your RSVP registration details have been successfully deleted from this browser session.</p>
+              </template>
+              <template v-else-if="successModal === 'edit'">
+                <p>Your details have been successfully updated. We look forward to celebrating together in Lagos.</p>
+              </template>
+              <template v-else-if="successModal === 'submit' && attending === true">
+                <p>
+                  You're officially on the list! We cannot wait to celebrate our union with you. We have saved your
+                  confirmation details.
+                </p>
+                <div
+                  class="rsvp-success__redirect-box"
+                  style="
+                    margin-top: 20px;
+                    padding: 16px;
+                    border-radius: 12px;
+                    background: rgba(134, 81, 114, 0.08);
+                    border: 1px solid rgba(134, 81, 114, 0.15);
+                    text-align: center;
                   "
-                  class="btn-primary"
-                  style="font-size: 0.8rem; padding: 6px 14px"
                 >
-                  Browse Registry Now
-                </button>
-                <button
-                  type="button"
-                  @click="cancelRedirectAndGoHome"
-                  class="btn-secondary"
-                  style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2)"
-                >
-                  Go to home page
-                </button>
-              </div>
+                  <p style="font-size: 0.85rem; color: #462137; line-height: 1.5; margin: 0 0 12px; font-weight: 500">
+                    We know exactly what you should gift us for our wedding! <br />
+                    We are redirecting you to our registry in <strong>{{ redirectCountdown }}s</strong> to browse our
+                    wishlist.
+                  </p>
+                  <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap">
+                    <button
+                      type="button"
+                      @click="
+                        () => {
+                          cancelRedirect();
+                          router.push('/wishlist');
+                        }
+                      "
+                      class="btn-primary"
+                      style="font-size: 0.8rem; padding: 6px 14px"
+                    >
+                      Browse Registry Now
+                    </button>
+                    <button
+                      type="button"
+                      @click="cancelRedirectAndGoHome"
+                      class="btn-secondary"
+                      style="font-size: 0.8rem; padding: 6px 14px; border: 1px solid rgba(134, 81, 114, 0.2)"
+                    >
+                      Go to home page
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="successModal === 'submit' && attending === false">
+                <p>
+                  Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and
+                  support!
+                </p>
+              </template>
             </div>
-          </template>
-          <template v-else-if="successModal === 'submit' && attending === false">
-            <p>
-              Thank you for letting us know. We will surely miss your presence, but we appreciate your thoughts and
-              support!
-            </p>
-          </template>
-        </div>
-        <button @click="closeSuccessModal" class="btn-primary mt-4">Close</button>
+            <button @click="closeSuccessModal" class="btn-primary mt-4">Close</button>
+          </div>
+        </Transition>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>

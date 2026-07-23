@@ -2,6 +2,11 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { siteConfig as fallbackConfig } from "~/config/site";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
+import { publicPageTransition, useReducedMotion } from "~/composables/useMotion";
+
+definePageMeta({
+  pageTransition: publicPageTransition,
+});
 
 const { data: siteSettings } = await useDyrectedGlobal("site_settings", { depth: 2 });
 const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2 });
@@ -102,6 +107,8 @@ const config = computed(() => {
 });
 
 const lightboxImage = ref<string | null>(null);
+const heroReady = ref(false);
+const { prefersReducedMotion } = useReducedMotion();
 
 const setLightboxImage = (src: string | null) => {
   lightboxImage.value = src;
@@ -114,6 +121,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 onMounted(() => {
+  heroReady.value = true;
   window.addEventListener("keydown", handleKeyDown);
 });
 
@@ -137,22 +145,24 @@ onUnmounted(() => {
     <section
       id="hero"
       class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16"
-      :style="
-        config.heroImage
-          ? {
-              backgroundImage: `url('${config.heroImage}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }
-          : {}
-      "
     >
+      <div
+        v-if="config.heroImage"
+        class="absolute inset-0 z-0 bg-center bg-cover bg-no-repeat hero-visual"
+        :style="{ backgroundImage: `url('${config.heroImage}')` }"
+      />
       <!-- Gradient overlay -->
       <div class="absolute inset-0 z-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
 
       <!-- Text Overlay -->
-      <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream space-y-6!">
+      <div
+        class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-auto mb-24 text-warm-cream space-y-6!"
+        :class="[
+          'motion-reveal motion-reveal--fade-up',
+          heroReady || prefersReducedMotion ? 'motion-reveal--ready' : '',
+        ]"
+        style="--motion-duration: 900ms; --motion-distance: 34px;"
+      >
         <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-white mb-3 drop-shadow">
           {{ config.heroSubtitle }}
         </p>
@@ -169,8 +179,8 @@ onUnmounted(() => {
     <section
       class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
-      <FadeInSection>
-        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <FadeInSection :distance="22">
+        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center motion-stagger">
           <!-- Left Column: Countdown Details -->
           <div class="text-center lg:text-left space-y-6!">
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
@@ -190,7 +200,7 @@ onUnmounted(() => {
             <!-- Photo 1 -->
             <div
               v-if="config.countdownPhotos[0]"
-              class="absolute left-[10%] top-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute left-[10%] top-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in floating-polaroid motion-lift"
               @click="setLightboxImage(config.countdownPhotos[0])"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
@@ -201,7 +211,7 @@ onUnmounted(() => {
             <!-- Photo 2 -->
             <div
               v-if="config.countdownPhotos[1]"
-              class="absolute right-[10%] bottom-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in"
+              class="absolute right-[10%] bottom-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in floating-polaroid floating-polaroid--alt motion-lift"
               @click="setLightboxImage(config.countdownPhotos[1])"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
@@ -220,8 +230,8 @@ onUnmounted(() => {
       class="paper-texture w-full flex items-center justify-center p-4 py-24 border-b border-amber-gold/10"
     >
       <div class="w-full max-w-6xl mx-auto flex flex-col justify-center">
-        <FadeInSection>
-          <div class="text-center mb-16 space-y-6!">
+        <FadeInSection :distance="24">
+          <div class="text-center mb-16 space-y-6! motion-stagger">
             <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-1">
               {{ config.storySubtitle }}
             </span>
@@ -232,8 +242,10 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
-          <ScrapbookTimeline :items="config.story" @image-click="setLightboxImage" />
         </FadeInSection>
+        <div class="w-full">
+          <ScrapbookTimeline :items="config.story" @image-click="setLightboxImage" />
+        </div>
       </div>
     </section>
 
@@ -244,8 +256,8 @@ onUnmounted(() => {
         :key="event.key"
         class="min-h-screen paper-texture w-full flex items-center justify-center p-4 py-24 border-b border-amber-gold/10"
       >
-        <FadeInSection>
-          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center">
+        <FadeInSection :distance="20">
+          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center motion-stagger">
             <!-- Left: Event details -->
             <div class="space-y-10!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
               <!-- Event number + name + date -->
@@ -313,7 +325,7 @@ onUnmounted(() => {
             >
               <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-2" />
               <div
-                class="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 -rotate-2 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
+                class="bg-white p-4 pb-10 rounded shadow-2xl border border-deep-espresso/5 -rotate-2 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in motion-lift"
                 @click="setLightboxImage(event.imageUrl)"
               >
                 <div class="relative aspect-[3/4] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
@@ -336,8 +348,8 @@ onUnmounted(() => {
       id="wishlist"
       class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
-      <FadeInSection>
-        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <FadeInSection :distance="20">
+        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center motion-stagger">
           <!-- Left Column: Polaroid Home Couple Photo — only shown when image is available -->
           <div
             v-if="config.wishlistTeaser.imageUrl"
@@ -345,7 +357,7 @@ onUnmounted(() => {
           >
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
             <div
-              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
+              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in motion-lift"
               @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
@@ -361,7 +373,7 @@ onUnmounted(() => {
 
           <!-- Right Column: Registry Teaser -->
           <div
-            class="linen-card p-8 sm:p-10 rounded-2xl flex flex-col justify-between items-start border border-amber-gold/15 transition-all duration-300 hover:shadow-lg order-1 lg:order-2"
+            class="linen-card p-8 sm:p-10 rounded-2xl flex flex-col justify-between items-start border border-amber-gold/15 transition-all duration-300 hover:shadow-lg order-1 lg:order-2 motion-lift"
           >
             <div class="mb-6">
               <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-2">
@@ -385,13 +397,13 @@ onUnmounted(() => {
       id="faqs"
       class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
     >
-      <FadeInSection>
-        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <FadeInSection :distance="20">
+        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center motion-stagger">
           <!-- Left Column: Polaroid Playful Couple Photo — only shown when image is available -->
           <div v-if="config.rsvpTeaser?.imageUrl" class="flex justify-center select-none relative order-2 lg:order-1">
             <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[4deg]" />
             <div
-              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[-4deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in"
+              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-[-4deg] max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in motion-lift"
               @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
@@ -429,26 +441,33 @@ onUnmounted(() => {
     />
 
     <!-- Lightbox Modal -->
-    <div
-      v-if="lightboxImage"
-      class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center cursor-zoom-out p-4 md:p-8 animate-fade-in animate-duration-300"
-      @click="setLightboxImage(null)"
-    >
-      <div class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full">
-        <img
-          :src="lightboxImage"
-          alt="Enlarged scrapbook photo"
-          class="max-w-full max-h-[90vh] w-auto h-auto object-contain"
-        />
-      </div>
-      <!-- Close button -->
-      <button
+    <Transition name="overlay-fade">
+      <div
+        v-if="lightboxImage"
+        class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center cursor-zoom-out p-4 md:p-8"
         @click="setLightboxImage(null)"
-        class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors text-3xl font-sans focus:outline-none cursor-pointer"
-        aria-label="Close lightbox"
       >
-        ✕
-      </button>
-    </div>
+        <Transition name="dialog-pop" appear>
+          <div
+            v-if="lightboxImage"
+            class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full"
+          >
+            <img
+              :src="lightboxImage"
+              alt="Enlarged scrapbook photo"
+              class="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+            />
+          </div>
+        </Transition>
+        <!-- Close button -->
+        <button
+          @click="setLightboxImage(null)"
+          class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors text-3xl font-sans focus:outline-none cursor-pointer"
+          aria-label="Close lightbox"
+        >
+          ✕
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>

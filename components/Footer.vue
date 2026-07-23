@@ -20,8 +20,8 @@ const props = withDefaults(defineProps<FooterProps>(), {
 
 <template>
   <footer class="bg-linen-white min-h-screen w-full flex flex-col items-center justify-center p-6 border-t border-amber-gold/15 text-center relative">
-    <FadeInSection>
-      <div class="max-w-md mx-auto space-y-4">
+    <FadeInSection variant="scale-in" :distance="18">
+      <div class="max-w-md mx-auto space-y-4 motion-stagger">
         <p class="text-4xl text-deep-espresso font-semibold font-display-cinzel">
           {{ hashtag }}
         </p>
@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<FooterProps>(), {
           Thank you for being part of our story. We can't wait to celebrate our union with you.
         </p>
         <div
-          class="relative w-[150px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-3 scale-90 select-none"
+          class="relative w-[150px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-3 scale-90 select-none motion-lift"
           :class="onImageClick && couplesPhoto ? 'cursor-zoom-in' : ''"
           @click="couplesPhoto && onImageClick?.(couplesPhoto)"
         >

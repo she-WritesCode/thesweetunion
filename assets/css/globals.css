@@ -135,21 +135,205 @@ body {
 /* Custom Cursor Pressed Stamp Animations & Overrides */
 @keyframes stampFade {
   0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.18);
   }
   30% {
-    opacity: 0.9;
+    opacity: 0.55;
     transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
+    transform: translate(-50%, -50%) scale(0.86);
   }
 }
 
 .animate-stamp-fade {
-  animation: stampFade 0.7s forwards cubic-bezier(0.215, 0.610, 0.355, 1);
+  animation: stampFade 0.52s forwards cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+@keyframes heroDrift {
+  0% {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.08) translate3d(0, -1.25%, 0);
+  }
+  100% {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes gentlePulseIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.page-soft-enter-active,
+.page-soft-leave-active {
+  transition:
+    opacity 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.page-soft-enter-from,
+.page-soft-leave-to {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+}
+
+.motion-reveal {
+  opacity: 0;
+  transform: translate3d(0, var(--motion-distance, 24px), 0);
+  transition:
+    opacity var(--motion-duration, 560ms) var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--motion-delay, 0ms),
+    transform var(--motion-duration, 560ms) var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--motion-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.motion-reveal--fade-in {
+  transform: none;
+}
+
+.motion-reveal--scale-in {
+  transform: scale(0.965);
+}
+
+.motion-reveal--ready {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.motion-stagger > * {
+  opacity: 0;
+  transform: translate3d(0, var(--motion-distance, 18px), 0);
+  transition:
+    opacity var(--motion-duration, 560ms) var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--motion-duration, 560ms) var(--motion-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.motion-reveal--ready .motion-stagger > *,
+.motion-stagger.motion-reveal--ready > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.motion-stagger > *:nth-child(1) { transition-delay: calc(var(--motion-delay, 0ms) + 20ms); }
+.motion-stagger > *:nth-child(2) { transition-delay: calc(var(--motion-delay, 0ms) + 90ms); }
+.motion-stagger > *:nth-child(3) { transition-delay: calc(var(--motion-delay, 0ms) + 160ms); }
+.motion-stagger > *:nth-child(4) { transition-delay: calc(var(--motion-delay, 0ms) + 230ms); }
+.motion-stagger > *:nth-child(5) { transition-delay: calc(var(--motion-delay, 0ms) + 300ms); }
+.motion-stagger > *:nth-child(6) { transition-delay: calc(var(--motion-delay, 0ms) + 370ms); }
+.motion-stagger > *:nth-child(7) { transition-delay: calc(var(--motion-delay, 0ms) + 440ms); }
+.motion-stagger > *:nth-child(8) { transition-delay: calc(var(--motion-delay, 0ms) + 510ms); }
+
+.hero-visual {
+  animation: heroDrift 20s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.floating-polaroid {
+  animation: floatCard 7s ease-in-out infinite;
+}
+
+.floating-polaroid--alt {
+  animation-duration: 8.5s;
+  animation-delay: -2.2s;
+}
+
+.motion-lift {
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.motion-lift:hover,
+.motion-lift:focus-visible {
+  transform: translate3d(0, -5px, 0);
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+
+.dialog-pop-enter-active,
+.dialog-pop-leave-active {
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dialog-pop-enter-from,
+.dialog-pop-leave-to {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(0.97);
+}
+
+.drawer-slide-enter-active,
+.drawer-slide-leave-active {
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawer-slide-enter-from,
+.drawer-slide-leave-to {
+  opacity: 0;
+  transform: translate3d(32px, 0, 0);
+}
+
+.nav-fade-enter-active,
+.nav-fade-leave-active {
+  transition:
+    opacity 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-fade-enter-from,
+.nav-fade-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -12px, 0);
+}
+
+.step-fade-enter-active,
+.step-fade-leave-active {
+  transition:
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.step-fade-enter-from {
+  opacity: 0;
+  transform: translate3d(14px, 0, 0);
+}
+
+.step-fade-leave-to {
+  opacity: 0;
+  transform: translate3d(-14px, 0, 0);
 }
 
 /* Explicitly restore browser cursor for CMS Admin page */
@@ -194,10 +378,15 @@ body {
 
 .accordion-content {
   @apply transition-all duration-300 ease-in-out overflow-hidden;
+  transition-property: max-height, opacity, transform, border-color;
+  opacity: 0;
+  transform: translate3d(0, -6px, 0);
 }
 
 .accordion-content--open {
   @apply max-h-[300px] border-t border-amber-gold/10;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 .accordion-content--closed {
@@ -517,6 +706,37 @@ body {
 .rsvp-attendance-btn__emoji      { @apply text-4xl; }
 .rsvp-attendance-btn__label      { @apply font-heading text-xl font-bold text-deep-espresso; }
 .rsvp-attendance-btn__hint       { @apply text-xs font-body text-deep-espresso/50 text-center; }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .motion-reveal,
+  .motion-stagger > *,
+  .page-soft-enter-from,
+  .page-soft-leave-to,
+  .overlay-fade-enter-from,
+  .overlay-fade-leave-to,
+  .dialog-pop-enter-from,
+  .dialog-pop-leave-to,
+  .drawer-slide-enter-from,
+  .drawer-slide-leave-to,
+  .step-fade-enter-from,
+  .step-fade-leave-to {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 
 /* Form inputs */
 .rsvp-input          { @apply w-full bg-soft-pearl/50 border border-amber-gold/25 rounded-xl px-4 py-3 text-sm text-deep-espresso focus:outline-none focus:border-deep-terracotta; }

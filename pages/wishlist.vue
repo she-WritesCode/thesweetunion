@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch, onUnmounted } from "vue";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
+import { publicPageTransition } from "~/composables/useMotion";
+
+definePageMeta({
+  pageTransition: publicPageTransition,
+});
 
 const SUGGESTED_AMOUNTS = [5000, 10000, 25000, 50000, 100000];
 const MIN_CONTRIBUTION = 5000;
@@ -128,7 +133,6 @@ const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
 
 // Modal Reservation State
 const activeItem = ref<WishlistItem | null>(null);
-const selectedDetailItem = ref<WishlistItem | null>(null);
 const isSubmitting = ref(false);
 const guestName = ref("");
 const fulfillmentMode = ref<"sent_money" | "bring_to_wedding" | "remind_later" | null>(null);
@@ -227,13 +231,6 @@ const handleReserveClick = (item: WishlistItem | null) => {
   selectedAmount.value = SUGGESTED_AMOUNTS[0];
   useCustomAmount.value = false;
   customAmount.value = "";
-};
-
-const handleDrawerAction = (item: WishlistItem | null) => {
-  if (!item) return;
-  const targetItem = item;
-  handleReserveClick(targetItem);
-  selectedDetailItem.value = null;
 };
 
 const handleConfirmReservation = async () => {
@@ -348,6 +345,18 @@ const progressPercent = (item: WishlistItem) => {
   if (item.fundingType !== "crowdfund" || item.price <= 0) return 0;
   return Math.min(100, Math.round(((item.amountRaised ?? 0) / item.price) * 100));
 };
+
+watch([activeItem, successItem], ([active, success]) => {
+  if (import.meta.client) {
+    document.body.style.overflow = active || success ? "hidden" : "";
+  }
+});
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    document.body.style.overflow = "";
+  }
+});
 </script>
 
 <template>
@@ -357,26 +366,30 @@ const progressPercent = (item: WishlistItem) => {
 
     <!-- Hero Header -->
     <section class="pt-32 pb-16 px-6 paper-texture border-b border-amber-gold/10 text-center relative overflow-hidden">
-      <div class="max-w-3xl mx-auto space-y-4!">
-        <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
-          Gift Registry
-        </span>
-        <h1 class="heading2-big md:text-6xl font-bold text-deep-espresso font-display-cinzel">Support Our Union</h1>
-        <div class="flex flex-col items-center">
-          <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
-            Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our
-            life together in Lagos, here is our registry.
-          </p>
+      <FadeInSection :distance="22">
+        <div class="max-w-3xl mx-auto space-y-4! motion-stagger">
+          <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block">
+            Gift Registry
+          </span>
+          <h1 class="heading2-big md:text-6xl font-bold text-deep-espresso font-display-cinzel">Support Our Union</h1>
+          <div class="flex flex-col items-center">
+            <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
+              Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our
+              life together in Lagos, here is our registry.
+            </p>
+          </div>
         </div>
-      </div>
+      </FadeInSection>
     </section>
 
     <!-- Grid, Filters and Controls -->
     <main class="flex-1 paper-texture py-12 px-6">
       <div class="max-w-7xl mx-auto space-y-8">
         <!-- Controls Panel -->
-        <div
+        <FadeInSection
           v-if="!isInitialLoading"
+          variant="fade-in"
+          :distance="12"
           class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-amber-gold/10 pb-6"
         >
           <!-- Filter buttons -->
@@ -401,7 +414,7 @@ const progressPercent = (item: WishlistItem) => {
               <option value="high-to-low">High to Low</option>
             </select>
           </div>
-        </div>
+        </FadeInSection>
 
         <!-- Loading state -->
         <div v-if="isInitialLoading" class="space-y-6">
@@ -467,11 +480,10 @@ const progressPercent = (item: WishlistItem) => {
 
         <!-- Registry Item Cards Grid -->
         <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          <div
+          <article
             v-for="item in filteredAndSortedItems"
             :key="item.id"
-            @click="selectedDetailItem = item"
-            class="linen-card rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-md group cursor-pointer"
+            class="linen-card rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-md group motion-lift motion-reveal motion-reveal--fade-up motion-reveal--ready"
             :class="
               item.fundingType === 'crowdfund'
                 ? 'hover:-translate-y-1 hover:shadow-lg border-amber-gold/15'
@@ -479,150 +491,149 @@ const progressPercent = (item: WishlistItem) => {
                   ? 'hover:-translate-y-1 hover:shadow-lg border-amber-gold/15'
                   : 'opacity-75 border-amber-gold/10 grayscale-15'
             "
+            :style="{
+              '--motion-delay': `${Math.min(filteredAndSortedItems.findIndex((candidate) => candidate.id === item.id), 8) * 55}ms`,
+              '--motion-duration': '460ms',
+              '--motion-distance': '18px',
+            }"
           >
-            <!-- Item Image -->
-            <div
-              class="relative aspect-4/3 w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden select-none"
+            <button
+              type="button"
+              @click="handleReserveClick(item)"
+              class="flex h-full flex-col text-left"
+              :disabled="item.fundingType !== 'crowdfund' && item.maxQuantity - item.reservedCount <= 0"
             >
-              <DyrectedMedia
-                v-if="item.imageUrl && item.imageUrl !== '/images/placeholder.png'"
-                :media="(item.image as any) || item.imageUrl"
-                :alt="item.name"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+              <!-- Item Image -->
               <div
-                v-else
-                class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
+                class="relative aspect-4/3 w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden select-none"
               >
-                No Image Placeholder
-              </div>
-              <!-- Badge Indicator -->
-              <div class="absolute top-4 right-4 z-10">
-                <span
-                  v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
-                  class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
-                >
-                  Fund Fully Raised
-                </span>
-                <span
-                  v-else-if="item.fundingType === 'crowdfund'"
-                  class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
-                >
-                  {{ item.price > 0 ? "Crowdfund" : "Open Fund" }}
-                </span>
-                <span
-                  v-else-if="item.maxQuantity - item.reservedCount <= 0"
-                  class="bg-red-950/80 border border-red-500/30 text-red-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
-                >
-                  Fully Claimed
-                </span>
-                <span
-                  v-else-if="item.reservedCount > 0"
-                  class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
-                >
-                  {{ item.maxQuantity - item.reservedCount }} Left
-                </span>
-                <span
+                <DyrectedMedia
+                  v-if="item.imageUrl && item.imageUrl !== '/images/placeholder.png'"
+                  :media="(item.image as any) || item.imageUrl"
+                  :alt="item.name"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div
                   v-else
-                  class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
                 >
-                  Available
-                </span>
-              </div>
-            </div>
-
-            <!-- Body Content -->
-            <div class="p-6 flex-1 flex flex-col justify-between gap-4">
-              <div class="space-y-2">
-                <div class="flex items-start justify-between gap-2">
-                  <span class="text-[10px] uppercase tracking-wider font-semibold text-amber-gold/80 block">
-                    {{ item.category }}
+                  No Image Placeholder
+                </div>
+                <!-- Badge Indicator -->
+                <div class="absolute top-4 right-4 z-10">
+                  <span
+                    v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
+                    class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  >
+                    Fund Fully Raised
                   </span>
-                  <span class="text-sm font-bold text-deep-espresso font-body">
-                    {{ item.fundingType === "crowdfund" && item.price > 0 ? "Goal: " : "" }}₦{{
-                      item.price.toLocaleString("en-US")
-                    }}
+                  <span
+                    v-else-if="item.fundingType === 'crowdfund'"
+                    class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  >
+                    {{ item.price > 0 ? "Crowdfund" : "Open Fund" }}
+                  </span>
+                  <span
+                    v-else-if="item.maxQuantity - item.reservedCount <= 0"
+                    class="bg-red-950/80 border border-red-500/30 text-red-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  >
+                    Fully Claimed
+                  </span>
+                  <span
+                    v-else-if="item.reservedCount > 0"
+                    class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  >
+                    {{ item.maxQuantity - item.reservedCount }} Left
+                  </span>
+                  <span
+                    v-else
+                    class="bg-emerald-950/80 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
+                  >
+                    Available
                   </span>
                 </div>
-                <h3
-                  class="font-heading text-lg font-bold text-deep-espresso leading-snug group-hover:text-deep-terracotta transition-colors"
-                >
-                  {{ item.name }}
-                </h3>
-                <p class="font-body text-sm text-deep-espresso/70 leading-relaxed line-clamp-2">
-                  {{ item.description }}
-                </p>
+              </div>
 
-                <!-- Crowdfund Progress -->
-                <div v-if="item.fundingType === 'crowdfund'" class="space-y-1.5">
-                  <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
-                    <div
-                      class="h-full rounded-full transition-all duration-500"
-                      :class="
-                        item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'
-                      "
-                      :style="{ width: `${progressPercent(item)}%` }"
-                    />
-                  </div>
-                  <p class="text-xs text-deep-espresso/60 font-body">
-                    <template v-if="item.price > 0">
-                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+              <!-- Body Content -->
+              <div class="p-6 flex-1 flex flex-col justify-between gap-4">
+                <div class="space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="text-[10px] uppercase tracking-wider font-semibold text-amber-gold/80 block">
+                      {{ item.category }}
+                    </span>
+                    <span class="text-sm font-bold text-deep-espresso font-body">
+                      {{ item.fundingType === "crowdfund" && item.price > 0 ? "Goal: " : "" }}₦{{
                         item.price.toLocaleString("en-US")
                       }}
-                      raised
-                    </template>
-                    <template v-else> ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
-                    · {{ item.contributorCount ?? 0 }}
-                    {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                    </span>
+                  </div>
+                  <h3
+                    class="font-heading text-lg font-bold text-deep-espresso leading-snug group-hover:text-deep-terracotta transition-colors"
+                  >
+                    {{ item.name }}
+                  </h3>
+                  <p class="font-body text-sm text-deep-espresso/70 leading-relaxed line-clamp-2">
+                    {{ item.description }}
                   </p>
+
+                  <!-- Crowdfund Progress -->
+                  <div v-if="item.fundingType === 'crowdfund'" class="space-y-1.5">
+                    <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
+                      <div
+                        class="h-full rounded-full transition-all duration-500"
+                        :class="
+                          item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'
+                        "
+                        :style="{ width: `${progressPercent(item)}%` }"
+                      />
+                    </div>
+                    <p class="text-xs text-deep-espresso/60 font-body">
+                      <template v-if="item.price > 0">
+                        ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+                          item.price.toLocaleString("en-US")
+                        }}
+                        raised
+                      </template>
+                      <template v-else> ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
+                      · {{ item.contributorCount ?? 0 }}
+                      {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3 pt-2">
+                  <span
+                    v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
+                    class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center"
+                  >
+                    Fund Fully Raised
+                  </span>
+                  <span v-else-if="item.fundingType === 'crowdfund'" class="flex-1 btn-secondary text-center">
+                    Open Full-Page View
+                  </span>
+                  <span
+                    v-else-if="item.maxQuantity - item.reservedCount > 0"
+                    class="flex-1 btn-primary text-center"
+                  >
+                    Open Full-Page View
+                  </span>
+                  <span
+                    v-else
+                    class="flex-1 px-4 py-2 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center"
+                  >
+                    Fully Reserved
+                  </span>
+                  <span
+                    v-if="item.link"
+                    class="px-4 py-2 rounded-xl border border-amber-gold/20 text-deep-espresso/60 font-semibold text-xs uppercase tracking-wider text-center"
+                  >
+                    Store Link Inside
+                  </span>
                 </div>
               </div>
-
-              <!-- Action Buttons -->
-              <div class="flex items-center gap-3 pt-2">
-                <button
-                  v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
-                  disabled
-                  class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
-                  @click.stop
-                >
-                  Fund Fully Raised
-                </button>
-                <button
-                  v-else-if="item.fundingType === 'crowdfund'"
-                  @click.stop="handleReserveClick(item)"
-                  class="flex-1 btn-secondary"
-                >
-                  See Contribution Options
-                </button>
-                <button
-                  v-else-if="item.maxQuantity - item.reservedCount > 0"
-                  @click.stop="handleReserveClick(item)"
-                  class="flex-1 btn-primary"
-                >
-                  See Gift Options
-                </button>
-                <button
-                  v-else
-                  disabled
-                  class="flex-1 px-4 py-2 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
-                  @click.stop
-                >
-                  Fully Reserved
-                </button>
-                <a
-                  v-if="item.link"
-                  :href="item.link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="px-4 py-2 rounded-xl border border-amber-gold/20 text-deep-espresso font-semibold text-xs uppercase tracking-wider hover:bg-soft-pearl transition-all duration-300 text-center"
-                  @click.stop
-                >
-                  View Link
-                </a>
-              </div>
-            </div>
-          </div>
+            </button>
+          </article>
         </div>
       </div>
     </main>
@@ -631,10 +642,11 @@ const progressPercent = (item: WishlistItem) => {
     <Footer :couples-photo="couplesPhoto" />
 
     <!-- Reservation Full-Page View -->
-    <div
-      v-if="activeItem"
-      class="fixed inset-0 z-50 bg-warm-cream overflow-y-auto min-h-screen flex flex-col transition-all duration-300 select-text"
-    >
+    <Transition name="overlay-fade">
+      <div
+        v-if="activeItem"
+        class="fixed inset-0 z-50 bg-warm-cream overflow-y-auto min-h-screen flex flex-col transition-all duration-300 select-text"
+      >
       <!-- Top Sticky Navigation Bar -->
       <header class="sticky top-0 z-40 bg-warm-cream/95 backdrop-blur-md border-b border-amber-gold/20 px-6 py-4">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
@@ -1058,16 +1070,17 @@ const progressPercent = (item: WishlistItem) => {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </Transition>
 
     <!-- Success Modal -->
-    <div
-      v-if="successItem"
-      class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-fade-in animate-duration-200"
-    >
-      <div
-        class="linen-card w-full max-w-md p-8 rounded-2xl border border-amber-gold/20 shadow-2xl text-center relative animate-scale-up animate-duration-200"
-      >
+    <Transition name="overlay-fade">
+      <div v-if="successItem" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <Transition name="dialog-pop" appear>
+          <div
+            v-if="successItem"
+            class="linen-card w-full max-w-md p-8 rounded-2xl border border-amber-gold/20 shadow-2xl text-center relative"
+          >
         <div
           class="w-16 h-16 mx-auto mb-4 text-emerald-600 flex items-center justify-center bg-emerald-50 rounded-full border border-emerald-200 shadow-xs"
         >
@@ -1125,162 +1138,10 @@ const progressPercent = (item: WishlistItem) => {
           </template>
         </p>
         <button @click="successItem = null" class="btn-primary">Back to Registry</button>
-      </div>
-    </div>
-
-    <!-- Detail Side Drawer -->
-    <Transition
-      enter-active-class="transition-opacity duration-300 ease-out"
-      leave-active-class="transition-opacity duration-200 ease-in"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="selectedDetailItem"
-        class="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs flex justify-end"
-        @click="selectedDetailItem = null"
-      >
-        <Transition
-          enter-active-class="transition-transform duration-300 ease-out"
-          leave-active-class="transition-transform duration-200 ease-in"
-          enter-from-class="translate-x-full"
-          leave-to-class="translate-x-full"
-          appear
-        >
-          <div
-            class="w-full max-w-md md:max-w-lg bg-warm-cream border-l border-amber-gold/20 h-full shadow-2xl flex flex-col justify-between overflow-hidden"
-            @click.stop
-          >
-            <!-- Drawer Header / Image -->
-            <div class="relative overflow-y-auto flex-1 select-text">
-              <button
-                @click="selectedDetailItem = null"
-                class="absolute top-4 right-4 z-10 text-deep-espresso/60 hover:text-deep-espresso text-xl font-sans bg-warm-cream/80 backdrop-blur-xs w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-pearl shadow-sm transition-all duration-200"
-              >
-                ✕
-              </button>
-
-              <div class="aspect-4/3 w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden relative">
-                <DyrectedMedia
-                  v-if="selectedDetailItem.imageUrl && selectedDetailItem.imageUrl !== '/images/placeholder.png'"
-                  :media="(selectedDetailItem.image as any) || selectedDetailItem.imageUrl"
-                  :alt="selectedDetailItem.name"
-                  class="w-full h-full object-cover"
-                />
-                <div
-                  v-else
-                  class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
-                >
-                  No Image Placeholder
-                </div>
-              </div>
-
-              <!-- Drawer Body Content -->
-              <div class="p-6 md:p-8 space-y-6">
-                <div class="space-y-2">
-                  <span class="text-[10px] md:text-xs uppercase tracking-widest font-semibold text-amber-gold block">
-                    {{ selectedDetailItem.category }}
-                  </span>
-                  <h2 class="font-heading text-2xl md:text-3xl font-bold text-deep-espresso leading-snug">
-                    {{ selectedDetailItem.name }}
-                  </h2>
-                  <p class="text-lg md:text-xl font-bold text-deep-espresso font-body">
-                    {{
-                      selectedDetailItem.fundingType === "crowdfund" && selectedDetailItem.price > 0 ? "Goal: " : ""
-                    }}₦{{ selectedDetailItem.price.toLocaleString("en-US") }}
-                  </p>
-                </div>
-
-                <!-- Crowdfund Progress in Drawer -->
-                <div
-                  v-if="selectedDetailItem.fundingType === 'crowdfund'"
-                  class="space-y-2.5 p-4 rounded-2xl border border-amber-gold/10 bg-soft-pearl/30"
-                >
-                  <div class="w-full h-2.5 bg-deep-espresso/10 rounded-full overflow-hidden">
-                    <div
-                      class="h-full rounded-full transition-all duration-500"
-                      :class="
-                        selectedDetailItem.price > 0 &&
-                        (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price
-                          ? 'bg-emerald-600'
-                          : 'bg-amber-gold'
-                      "
-                      :style="{ width: `${progressPercent(selectedDetailItem)}%` }"
-                    />
-                  </div>
-                  <p class="text-xs md:text-sm text-deep-espresso/70 font-body">
-                    <template v-if="selectedDetailItem.price > 0">
-                      <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> of ₦{{
-                        selectedDetailItem.price.toLocaleString("en-US")
-                      }}
-                      raised
-                    </template>
-                    <template v-else>
-                      <strong>₦{{ (selectedDetailItem.amountRaised ?? 0).toLocaleString("en-US") }}</strong> raised
-                    </template>
-                    · {{ selectedDetailItem.contributorCount ?? 0 }}
-                    {{ (selectedDetailItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
-                  </p>
-                </div>
-
-                <div class="space-y-3">
-                  <h4 class="font-heading text-xs font-semibold text-deep-espresso/50 uppercase tracking-wider">
-                    Description
-                  </h4>
-                  <p class="font-body text-base text-deep-espresso/80 leading-relaxed whitespace-pre-line">
-                    {{ selectedDetailItem.description }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Drawer Actions -->
-            <div class="p-6 md:p-8 bg-soft-pearl/30 border-t border-amber-gold/10 flex items-center gap-3">
-              <button
-                v-if="
-                  selectedDetailItem.fundingType === 'crowdfund' &&
-                  selectedDetailItem.price > 0 &&
-                  (selectedDetailItem.amountRaised ?? 0) >= selectedDetailItem.price
-                "
-                disabled
-                class="flex-1 px-4 py-3 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
-              >
-                Fund Fully Raised
-              </button>
-              <button
-                v-else-if="selectedDetailItem.fundingType === 'crowdfund'"
-                @click="handleDrawerAction(selectedDetailItem)"
-                class="flex-1 btn-secondary py-3 text-sm"
-              >
-                See Contribution Options
-              </button>
-              <button
-                v-else-if="selectedDetailItem.maxQuantity - selectedDetailItem.reservedCount > 0"
-                @click="handleDrawerAction(selectedDetailItem)"
-                class="flex-1 btn-primary py-3 text-sm"
-              >
-                See Gift Options
-              </button>
-              <button
-                v-else
-                disabled
-                class="flex-1 px-4 py-3 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center cursor-not-allowed"
-              >
-                Fully Reserved
-              </button>
-              <a
-                v-if="selectedDetailItem.link"
-                :href="selectedDetailItem.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="px-5 py-3 rounded-xl border border-amber-gold/20 text-deep-espresso font-semibold text-xs uppercase tracking-wider hover:bg-soft-pearl transition-all duration-300 text-center"
-              >
-                View Link
-              </a>
-            </div>
           </div>
         </Transition>
       </div>
     </Transition>
+
   </div>
 </template>

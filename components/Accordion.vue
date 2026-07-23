@@ -22,11 +22,7 @@ const toggle = (key: string) => {
 
 <template>
   <div class="accordion-container">
-    <div
-      v-for="item in items"
-      :key="item.key"
-      class="accordion-item linen-card"
-    >
+    <div v-for="item in items" :key="item.key" class="accordion-item linen-card motion-lift">
       <button
         @click="toggle(item.key)"
         :aria-expanded="openKey === item.key"

@@ -52,11 +52,14 @@ const collageStyles = [
       <div
         v-for="(item, index) in items"
         :key="item.key"
-        class="relative z-10 w-full max-w-md mx-auto select-none transition-all duration-500 hover:z-20 hover:scale-[1.03]"
+        class="relative z-10 w-full max-w-md mx-auto select-none transition-all duration-500 hover:z-20 hover:scale-[1.02]"
         :class="[
           collageStyles[index % collageStyles.length].rotation,
           collageStyles[index % collageStyles.length].marginOffset,
         ]"
+        :style="{
+          animation: `gentlePulseIn 520ms cubic-bezier(0.22, 1, 0.36, 1) ${index * 90}ms both`,
+        }"
       >
         <!-- Piece of washi tape holding this Polaroid memory -->
         <div
@@ -68,7 +71,7 @@ const collageStyles = [
         />
 
         <!-- The Polaroid Card -->
-        <div class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col">
+        <div class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col motion-lift">
           <!-- Photo frame -->
           <div
             class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in"
