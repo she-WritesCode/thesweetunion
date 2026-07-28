@@ -150,7 +150,10 @@ const formSectionRef = ref<HTMLElement | null>(null);
 const selectFulfillmentMode = (mode: "sent_money" | "bring_to_wedding" | "remind_later") => {
   fulfillmentMode.value = mode;
   nextTick(() => {
-    const target = accountSectionRef.value || formSectionRef.value;
+    const target =
+      mode === "bring_to_wedding"
+        ? formSectionRef.value
+        : (accountSectionRef.value || formSectionRef.value);
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -991,141 +994,164 @@ onUnmounted(() => {
           </div>
 
           <!-- 2. Dedicated Payment Details Card -->
-          <div
-            v-if="activeItem.bankDetails"
-            ref="accountSectionRef"
-            class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-4 scroll-mt-24"
-          >
-            <div class="flex items-center justify-between border-b border-amber-gold/15 pb-3">
-              <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-[0.2em]">
-                {{ activeItem.fundingType === "crowdfund" ? "Bank Transfer Account" : "Payment Account Details" }}
-              </p>
-              <span class="text-[10px] uppercase tracking-wider text-deep-espresso/50 font-bold">GTBank Direct</span>
-            </div>
+          <Transition name="card-fade">
+            <div
+              v-if="activeItem.bankDetails && fulfillmentMode !== 'bring_to_wedding'"
+              ref="accountSectionRef"
+              class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-4 scroll-mt-24"
+            >
+              <div class="border-b border-amber-gold/15 pb-3">
+                <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-[0.2em]">
+                  {{ activeItem.fundingType === "crowdfund" ? "Bank Transfer Account" : "Payment Account Details" }}
+                </p>
+              </div>
 
-            <div class="rounded-2xl border border-amber-gold/15 bg-white/95 p-5 space-y-4 shadow-xs">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-body">
-                <div>
-                  <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
-                    >Bank Name</span
-                  >
-                  <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.bankName }}</span>
+              <div class="rounded-2xl border border-amber-gold/15 bg-white/95 p-5 space-y-4 shadow-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-body">
+                  <div>
+                    <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
+                      >Bank Name</span
+                    >
+                    <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.bankName }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
+                      >Account Name</span
+                    >
+                    <span class="font-semibold text-deep-espresso text-base">{{
+                      activeItem.bankDetails.accountName
+                    }}</span>
+                  </div>
                 </div>
-                <div>
-                  <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
-                    >Account Name</span
+
+                <div
+                  class="border-t border-amber-gold/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div>
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-deep-espresso/45 font-semibold">
+                      Account Number
+                    </p>
+                    <p class="mt-1 font-mono text-3xl font-bold tracking-widest text-deep-terracotta select-all">
+                      {{ activeItem.bankDetails.accountNumber }}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
+                    class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
                   >
-                  <span class="font-semibold text-deep-espresso text-base">{{
-                    activeItem.bankDetails.accountName
-                  }}</span>
+                    {{ isCopied ? "✓ Copied" : "Copy Account Number" }}
+                  </button>
                 </div>
               </div>
 
-              <div
-                class="border-t border-amber-gold/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div>
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-deep-espresso/45 font-semibold">
-                    Account Number
-                  </p>
-                  <p class="mt-1 font-mono text-3xl font-bold tracking-widest text-deep-terracotta select-all">
-                    {{ activeItem.bankDetails.accountNumber }}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
-                  class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
+              <div v-if="activeItem.link" class="pt-2">
+                <p class="text-xs text-deep-espresso/60 mb-2 font-body">Or buy directly from store:</p>
+                <a
+                  :href="activeItem.link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-secondary w-full block text-center py-3 font-bold uppercase tracking-wider text-xs"
                 >
-                  {{ isCopied ? "✓ Copied" : "Copy Account Number" }}
+                  View Store Item ↗
+                </a>
+              </div>
+            </div>
+          </Transition>
+
+          <!-- 3. Dynamic Form Inputs Card -->
+          <Transition name="card-fade">
+            <div
+              v-if="fulfillmentMode"
+              ref="formSectionRef"
+              class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6 scroll-mt-24"
+            >
+              <div class="space-y-1">
+                <h3 class="font-heading text-lg font-bold text-deep-espresso">Guest Details & Confirmation</h3>
+                <p class="text-xs text-deep-espresso/65 font-body">
+                  Please enter your details to finalize your reservation.
+                </p>
+              </div>
+
+              <!-- Store Link Banner -->
+              <div
+                v-if="activeItem.link"
+                class="p-4 rounded-2xl bg-amber-gold/10 border border-amber-gold/20 space-y-2 text-center"
+              >
+                <p class="text-xs text-deep-espresso/80 font-body font-medium">
+                  Need to purchase this item online from the store?
+                </p>
+                <a
+                  :href="activeItem.link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-secondary w-full block text-center py-2.5 font-bold uppercase tracking-wider text-xs"
+                >
+                  View Store Item ↗
+                </a>
+              </div>
+
+              <div class="space-y-6">
+                <div class="space-y-1.5">
+                  <label class="input-label font-semibold text-deep-espresso text-xs uppercase tracking-wider block"
+                    >Your Name *</label
+                  >
+                  <input
+                    type="text"
+                    v-model="guestName"
+                    class="input-field py-3 text-base"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <!-- Additional Reminder Details for Option 3 -->
+                <Transition name="card-fade">
+                  <div
+                    v-if="fulfillmentMode === 'remind_later'"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 rounded-2xl bg-amber-gold/5 border border-amber-gold/15 space-y-3 md:space-y-0"
+                  >
+                    <div class="space-y-1.5">
+                      <label class="input-label">Reminder Date *</label>
+                      <input type="date" v-model="reminderDate" :min="todayIso" class="input-field py-2.5" />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="input-label">Reminder Channel *</label>
+                      <select v-model="reminderChannel" class="select-dropdown w-full py-2.5 text-sm">
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">Email</option>
+                      </select>
+                    </div>
+
+                    <div class="space-y-1.5 md:col-span-2">
+                      <label class="input-label">
+                        {{ reminderChannel === "whatsapp" ? "WhatsApp Contact *" : "Email Contact *" }}
+                      </label>
+                      <input
+                        v-model="reminderContact"
+                        :type="reminderChannel === 'email' ? 'email' : 'text'"
+                        class="input-field py-2.5"
+                        :placeholder="reminderChannel === 'email' ? 'name@example.com' : '0800 000 0000'"
+                      />
+                    </div>
+                  </div>
+                </Transition>
+
+                <!-- Submit Button -->
+                <button
+                  @click="handleConfirmReservation"
+                  class="w-full btn-primary py-4 font-bold tracking-wider text-base cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                  :disabled="!isFormValid || isSubmitting"
+                >
+                  <span
+                    v-if="isSubmitting"
+                    class="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
+                  ></span>
+                  <span>{{ finalCtaLabel }}</span>
                 </button>
               </div>
             </div>
-
-            <div v-if="activeItem.link" class="pt-2">
-              <p class="text-xs text-deep-espresso/60 mb-2 font-body">Or buy directly from store:</p>
-              <a
-                :href="activeItem.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-secondary w-full block text-center py-3 font-bold uppercase tracking-wider text-xs"
-              >
-                View Store Item ↗
-              </a>
-            </div>
-          </div>
-
-          <!-- 3. Dynamic Form Inputs Card -->
-          <div
-            v-if="fulfillmentMode"
-            ref="formSectionRef"
-            class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6 animate-fadeIn scroll-mt-24"
-          >
-            <div class="space-y-1">
-              <h3 class="font-heading text-lg font-bold text-deep-espresso">Guest Details & Confirmation</h3>
-              <p class="text-xs text-deep-espresso/65 font-body">
-                Please enter your details to finalize your reservation.
-              </p>
-            </div>
-
-            <div class="space-y-6">
-              <div class="space-y-1.5">
-                <label class="input-label font-semibold text-deep-espresso text-xs uppercase tracking-wider block"
-                  >Your Name *</label
-                >
-                <input
-                  type="text"
-                  v-model="guestName"
-                  class="input-field py-3 text-base"
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <!-- Additional Reminder Details for Option 3 -->
-              <div
-                v-if="fulfillmentMode === 'remind_later'"
-                class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 rounded-2xl bg-amber-gold/5 border border-amber-gold/15 space-y-3 md:space-y-0"
-              >
-                <div class="space-y-1.5">
-                  <label class="input-label">Reminder Date *</label>
-                  <input type="date" v-model="reminderDate" :min="todayIso" class="input-field py-2.5" />
-                </div>
-
-                <div class="space-y-1.5">
-                  <label class="input-label">Reminder Channel *</label>
-                  <select v-model="reminderChannel" class="select-dropdown w-full py-2.5 text-sm">
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="email">Email</option>
-                  </select>
-                </div>
-
-                <div class="space-y-1.5 md:col-span-2">
-                  <label class="input-label">
-                    {{ reminderChannel === "whatsapp" ? "WhatsApp Contact *" : "Email Contact *" }}
-                  </label>
-                  <input
-                    v-model="reminderContact"
-                    :type="reminderChannel === 'email' ? 'email' : 'text'"
-                    class="input-field py-2.5"
-                    :placeholder="reminderChannel === 'email' ? 'name@example.com' : '0800 000 0000'"
-                  />
-                </div>
-              </div>
-
-              <!-- Submit Button -->
-              <button
-                @click="handleConfirmReservation"
-                class="w-full btn-primary py-4 font-bold tracking-wider text-base cursor-pointer flex items-center justify-center gap-2 shadow-md"
-                :disabled="!isFormValid || isSubmitting"
-              >
-                <span
-                  v-if="isSubmitting"
-                  class="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
-                ></span>
-                <span>{{ finalCtaLabel }}</span>
-              </button>
-            </div>
-          </div>
+          </Transition>
         </main>
       </div>
     </Transition>
@@ -1176,28 +1202,42 @@ onUnmounted(() => {
               </template>
               <template v-else>
                 You have successfully claimed <strong>{{ successItem.name }}</strong> for the registry.
-                <div
-                  v-if="successItem.link && paymentOption === 'purchase_link'"
-                  class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center"
-                >
-                  <p class="text-xs text-deep-espresso/80 mb-2 font-body">
-                    If you have not opened the store yet, you can still purchase the item using the link below:
-                  </p>
-                  <a
-                    :href="successItem.link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]"
-                  >
-                    Buy from Store ↗
-                  </a>
-                </div>
               </template>
             </p>
-            <button @click="successItem = null" class="btn-primary">Back to Registry</button>
+
+            <div
+              v-if="successItem.link"
+              class="mb-6 p-4 rounded-xl border border-amber-gold/20 bg-amber-gold/10 text-center space-y-2"
+            >
+              <p class="text-xs text-deep-espresso/80 font-body">
+                You can purchase this item directly using the store link below:
+              </p>
+              <a
+                :href="successItem.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-secondary w-full block text-center py-2.5 font-bold uppercase tracking-wider text-[11px]"
+              >
+                Buy from Store ↗
+              </a>
+            </div>
+
+            <button @click="successItem = null" class="btn-primary w-full">Back to Registry</button>
           </div>
         </Transition>
       </div>
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.card-fade-enter-active,
+.card-fade-leave-active {
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-fade-enter-from,
+.card-fade-leave-to {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+}
+</style>
