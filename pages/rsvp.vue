@@ -47,7 +47,6 @@ interface RSVPData extends Omit<
   wantsAsoOke?: boolean;
   asoOkeMaleQty?: number;
   asoOkeFemaleQty?: number;
-  buyerGender?: "male" | "female";
 }
 
 interface GroupConfig {
@@ -158,7 +157,6 @@ const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
 const message = ref("");
-const buyerGender = ref<"male" | "female" | "">("");
 const wantsAsoebi = ref(false);
 const asoebiYards = ref("");
 const wantsAsoOke = ref(false);
@@ -235,7 +233,6 @@ const populateStates = (data: RSVPData) => {
   wantsAsoOke.value = data.wantsAsoOke || false;
   asoOkeMaleQty.value = data.asoOkeMaleQty || 0;
   asoOkeFemaleQty.value = data.asoOkeFemaleQty || 0;
-  buyerGender.value = data.buyerGender || "";
 };
 
 // Pre-populate form if SSR resolved an existing RSVP
@@ -372,7 +369,6 @@ const handleSubmit = async () => {
     wantsAsoOke: attending.value ? wantsAsoOke.value : false,
     asoOkeMaleQty: attending.value && wantsAsoOke.value ? asoOkeMaleQty.value : 0,
     asoOkeFemaleQty: attending.value && wantsAsoOke.value ? asoOkeFemaleQty.value : 0,
-    buyerGender: buyerGender.value || undefined,
   };
 
   try {
@@ -829,21 +825,6 @@ onUnmounted(() => {
             </div>
             <div class="rsvp-fields" style="display: flex; flex-direction: column; gap: 20px;">
               
-              <!-- Buyer Gender Selection -->
-              <div class="rsvp-field-group">
-                <label class="input-label">Buyer's Gender</label>
-                <div style="display: flex; gap: 20px; margin-top: 8px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" value="male" v-model="buyerGender" class="rsvp-checkbox" />
-                    <span>Male</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" value="female" v-model="buyerGender" class="rsvp-checkbox" />
-                    <span>Female</span>
-                  </label>
-                </div>
-              </div>
-
               <!-- Asoebi Fabric Section -->
               <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
                 <label class="input-label" style="font-weight: 700;">Asoebi Fabric</label>

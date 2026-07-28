@@ -54,7 +54,7 @@ watch(
     try {
       qrDataUrl.value = await QRCode.toDataURL(url, {
         color: {
-          dark: "#865172",  // Mauve primary color
+          dark: "#865172", // Mauve primary color
           light: "#FFFFFF", // Clean white background
         },
         margin: 2,
@@ -64,7 +64,7 @@ watch(
       console.error("Failed to generate Mauve QR code:", err);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 async function copyLink() {
@@ -94,9 +94,7 @@ async function copyQrCode() {
   try {
     const res = await fetch(qrDataUrl.value);
     const blob = await res.blob();
-    await navigator.clipboard.write([
-      new ClipboardItem({ [blob.type]: blob }),
-    ]);
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
     qrCopied.value = true;
     setTimeout(() => {
       qrCopied.value = false;
@@ -166,7 +164,7 @@ function downloadQrCode() {
         </button>
       </div>
 
-      <!-- Mauve QR Code Card -->
+      <!-- QR Code Card -->
       <div class="rsvp-qr-card">
         <div class="rsvp-qr-card__preview">
           <img v-if="qrDataUrl" :src="qrDataUrl" :alt="`RSVP QR Code for ${groupName}`" class="rsvp-qr-card__img" />
@@ -175,7 +173,7 @@ function downloadQrCode() {
 
         <div class="rsvp-qr-card__actions">
           <div class="rsvp-qr-card__meta">
-            <span class="rsvp-qr-card__badge">Mauve QR Code</span>
+            <span class="rsvp-qr-card__badge">QR Code</span>
             <span class="rsvp-qr-card__sub">Scan to open RSVP page</span>
           </div>
 
@@ -186,19 +184,35 @@ function downloadQrCode() {
               :class="{ 'rsvp-link-field__btn--copied': qrCopied }"
               @click="copyQrCode"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
               <span>{{ qrCopied ? "QR Copied!" : "Copy QR Image" }}</span>
             </button>
 
-            <button
-              type="button"
-              class="rsvp-link-field__btn rsvp-link-field__btn--download"
-              @click="downloadQrCode"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button type="button" class="rsvp-link-field__btn rsvp-link-field__btn--download" @click="downloadQrCode">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />

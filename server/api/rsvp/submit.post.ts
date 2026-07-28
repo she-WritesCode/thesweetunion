@@ -22,7 +22,6 @@ export default defineEventHandler(async (event) => {
     wantsAsoOke,
     asoOkeMaleQty,
     asoOkeFemaleQty,
-    buyerGender,
   } = body;
 
   if (!groupSlug) {
@@ -98,9 +97,6 @@ export default defineEventHandler(async (event) => {
       if (asoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${asoOkeMaleQty} set(s)`);
       if (asoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele/Ipele): ${asoOkeFemaleQty} set(s)`);
     }
-    if (buyerGender) {
-      detailsParts.push(`Buyer Gender: ${buyerGender}`);
-    }
     const asoebiDetailsStr = detailsParts.join(" | ");
 
     const record = await client.collection("rsvp_records").create({
@@ -119,7 +115,6 @@ export default defineEventHandler(async (event) => {
       wantsAsoOke: attending ? wantsAsoOke : false,
       asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
-      buyerGender: buyerGender || undefined,
       asoebiDetails: asoebiDetailsStr,
     });
 
@@ -165,7 +160,6 @@ export default defineEventHandler(async (event) => {
         wantsAsoOke: attending && wantsAsoOke,
         asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
         asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
-        buyerGender: buyerGender || undefined,
         asoebiDetails: asoebiDetailsStr,
         asoebiSettings,
         appUrl,

@@ -148,15 +148,6 @@ export const rsvpRecords = defineCollection({
             condition: (data: any) => data.wantsAsoOke === true,
           },
         }),
-        defineSelectField({
-          name: "buyerGender",
-          label: "Buyer Gender",
-          options: [
-            { label: "Male", value: "male" },
-            { label: "Female", value: "female" },
-          ],
-          admin: { width: "50%" },
-        }),
         defineTextareaField({
           name: "asoebiDetails",
           label: "Asoebi & Aso Oke Breakdown Summary",

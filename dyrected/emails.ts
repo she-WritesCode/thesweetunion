@@ -105,7 +105,6 @@ function asoebiSection(
   wantsAsoOke?: boolean,
   asoOkeMaleQty?: number,
   asoOkeFemaleQty?: number,
-  buyerGender?: string,
   asoebiDetails?: string,
   asoebiSettings?: any
 ): string {
@@ -146,10 +145,9 @@ function asoebiSection(
   const accountNumber = asoebiSettings.accountNumber || "";
   const accountName = asoebiSettings.accountName || "";
   const whatsAppContact = asoebiSettings.whatsAppContact || "";
-  const genderLabel = buyerGender ? ` (${buyerGender.charAt(0).toUpperCase() + buyerGender.slice(1)})` : "";
 
   return `${divider()}
-    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi &amp; Aso Oke Order Breakdown${genderLabel}</p>
+    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi &amp; Aso Oke Order Breakdown</p>
     
     <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:16px;background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:12px;">
       ${items.join("")}
@@ -231,7 +229,6 @@ export function rsvpConfirmationEmail({
   wantsAsoOke,
   asoOkeMaleQty,
   asoOkeFemaleQty,
-  buyerGender,
   asoebiDetails,
   asoebiSettings,
   appUrl,
@@ -248,7 +245,6 @@ export function rsvpConfirmationEmail({
   wantsAsoOke?: boolean;
   asoOkeMaleQty?: number;
   asoOkeFemaleQty?: number;
-  buyerGender?: string;
   asoebiDetails?: string;
   asoebiSettings?: any;
   appUrl: string;
@@ -280,7 +276,7 @@ export function rsvpConfirmationEmail({
     table(row("Guest", leadName), row("Party", partyLine), row("Asoebi Request", asoebiLabel)),
     sectionLabel("Events & Calendars"),
     eventListWithCalendars(events, appUrl),
-    asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
+    asoebiSection(wantsAsoebi, asoebiYards, wantsAsoOke, asoOkeMaleQty, asoOkeFemaleQty, asoebiDetails, asoebiSettings),
     divider(),
     paragraph(
       "Your personal invitation card will be sent closer to the wedding date. Need to make a change? Use the link below — it's your unique edit link, keep it safe.",
