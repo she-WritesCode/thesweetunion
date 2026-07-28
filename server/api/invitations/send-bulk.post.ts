@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
 
   for (const rsvpId of rsvpIds) {
     try {
-      const rsvp = await client.collection("rsvp_records").findOne(rsvpId);
+      const res = await client.collection("rsvp_records").find({ where: { id: { equals: rsvpId } }, limit: 1 });
+      const rsvp = res.docs?.[0] ?? null;
       if (!rsvp || !rsvp.leadPhone) {
         results.push({ id: rsvpId, success: false, error: "No phone number on record" });
         continue;
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
       await client.collection("rsvp_records").update(rsvpId, {
         invitationSent: true,
         invitationSentAt: new Date().toISOString(),
-        invitationSentVia: via,
+        invitationSentVia: via as any,
       });
 
       results.push({ id: rsvpId, success: true, guestName: rsvp.leadName });

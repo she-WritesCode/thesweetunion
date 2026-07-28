@@ -135,7 +135,13 @@ export const wishlistItems = defineCollection({
   access: {
     read: "true",
     create: "user != null",
-    update: "user != null",
+    update: ({ user, req }: any) => {
+      if (user != null) return true;
+      const apiKeyHeader = req?.headers?.get?.("x-api-key") || req?.headers?.["x-api-key"];
+      const authHeader = req?.headers?.get?.("authorization") || req?.headers?.authorization;
+      if (apiKeyHeader || (authHeader && authHeader.includes("Bearer "))) return true;
+      return false;
+    },
     delete: "user != null",
   },
   hooks: {

@@ -1,12 +1,17 @@
-import { defineEventHandler, readBody, createError } from "h3";
+import { defineEventHandler, readBody, createError, getRequestHost } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { adminWishlistNotificationEmail } from "~~/dyrected/emails";
 
 const MIN_CONTRIBUTION = 5000;
 
+async function findOne(client: any, slug: string, id: string) {
+  const res = await client.collection(slug).find({ where: { id: { equals: id } }, limit: 1 });
+  return res.docs?.[0] ?? null;
+}
+
 async function recomputeItemStats(client: any, itemId: string) {
-  const item = await client.findOne("wishlist_items", itemId);
+  const item = await findOne(client, "wishlist_items", itemId);
   const reservations = await client.collection("reservations").find({
     where: { item: { equals: itemId } },
     limit: 1000,
@@ -59,13 +64,21 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig();
+  const host = getRequestHost(event, { xForwardedHost: true });
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  const dyrectedUrl =
+    process.env.NUXT_PUBLIC_DYRECTED_URL ||
+    (config.dyrectedUrl && !config.dyrectedUrl.includes("localhost:3000")
+      ? config.dyrectedUrl
+      : `${protocol}://${host}/api/dyrected`);
+
   const client = createClient({
-    baseUrl: config.dyrectedUrl,
+    baseUrl: dyrectedUrl,
     apiKey: config.dyrectedApiKey,
   });
 
   // Fetch the wishlist item
-  const item = await client.findOne("wishlist_items", itemId);
+  const item = await findOne(client, "wishlist_items", itemId);
 
   if (!item) {
     throw createError({ statusCode: 404, message: "Wishlist item not found." });

@@ -74,7 +74,13 @@ export interface Reservations {
   guestName: string;
   guestEmail?: string;
   guestPhone?: string;
+  intent?: "reserve" | "contribute" | "reminder";
+  paymentTiming?: "now" | "later";
   contributionAmount?: number;
+  reminderAt?: string;
+  reminderChannel?: "whatsapp" | "email";
+  reminderContact?: string;
+  paymentOption?: "bank_transfer" | "purchase_link" | "bring_to_wedding";
   reservedAt?: string;
   message?: string;
   createdAt: string;
