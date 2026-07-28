@@ -179,6 +179,44 @@ const asoebiTotalCost = computed(() => {
   return total;
 });
 
+function selectFabricYards(yards: string) {
+  if (!yards) {
+    wantsAsoebi.value = false;
+    asoebiYards.value = "";
+  } else {
+    wantsAsoebi.value = true;
+    asoebiYards.value = yards;
+  }
+}
+
+function incMaleAsoOke() {
+  wantsAsoOke.value = true;
+  asoOkeMaleQty.value = Math.min(asoOkeMaleQty.value + 1, 10);
+}
+
+function decMaleAsoOke() {
+  if (asoOkeMaleQty.value > 0) {
+    asoOkeMaleQty.value -= 1;
+  }
+  if (asoOkeMaleQty.value === 0 && asoOkeFemaleQty.value === 0) {
+    wantsAsoOke.value = false;
+  }
+}
+
+function incFemaleAsoOke() {
+  wantsAsoOke.value = true;
+  asoOkeFemaleQty.value = Math.min(asoOkeFemaleQty.value + 1, 10);
+}
+
+function decFemaleAsoOke() {
+  if (asoOkeFemaleQty.value > 0) {
+    asoOkeFemaleQty.value -= 1;
+  }
+  if (asoOkeMaleQty.value === 0 && asoOkeFemaleQty.value === 0) {
+    wantsAsoOke.value = false;
+  }
+}
+
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
 const isSubmitting = ref(false);
@@ -827,74 +865,60 @@ onUnmounted(() => {
               
               <!-- Asoebi Fabric Section -->
               <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
-                <label class="input-label" style="font-weight: 700;">Asoebi Fabric</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
-                    <span>Yes, I want fabric</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" :value="false" v-model="wantsAsoebi" class="rsvp-checkbox" />
-                    <span>No fabric</span>
-                  </label>
+                <div style="margin-bottom: 12px;">
+                  <label class="input-label" style="font-weight: 700; margin: 0;">Asoebi Fabric</label>
+                  <div style="font-size: 0.8rem; color: #865172; margin-top: 2px;">₦{{ pricePerYard.toLocaleString() }} per yard</div>
                 </div>
 
-                <div v-if="wantsAsoebi" style="margin-top: 12px;">
-                  <label class="input-label">Select Fabric Quantity (Yards)</label>
-                  <select v-model="asoebiYards" class="rsvp-input">
-                    <option value="" disabled>-- Select yards --</option>
-                    <option value="2">2 Yards (₦{{ (2 * pricePerYard).toLocaleString() }})</option>
-                    <option value="3">3 Yards (₦{{ (3 * pricePerYard).toLocaleString() }})</option>
-                    <option value="4">4 Yards (₦{{ (4 * pricePerYard).toLocaleString() }})</option>
-                    <option value="5">5 Yards (₦{{ (5 * pricePerYard).toLocaleString() }})</option>
-                    <option value="6">6 Yards (₦{{ (6 * pricePerYard).toLocaleString() }})</option>
-                  </select>
+                <div class="fabric-pills">
+                  <button
+                    type="button"
+                    class="fabric-pill"
+                    :class="{ 'fabric-pill--selected': !wantsAsoebi || !asoebiYards }"
+                    @click="selectFabricYards('')"
+                  >
+                    <span class="fabric-pill__title">No fabric</span>
+                  </button>
+
+                  <button
+                    v-for="y in ['2', '3', '4', '5', '6']"
+                    :key="y"
+                    type="button"
+                    class="fabric-pill"
+                    :class="{ 'fabric-pill--selected': wantsAsoebi && asoebiYards === y }"
+                    @click="selectFabricYards(y)"
+                  >
+                    <span class="fabric-pill__title">{{ y }} Yards</span>
+                    <span class="fabric-pill__price">₦{{ (parseInt(y, 10) * pricePerYard).toLocaleString() }}</span>
+                  </button>
                 </div>
               </div>
 
               <!-- Aso Oke Section -->
-              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
-                <label class="input-label" style="font-weight: 700;">Aso Oke (Headwear / Cap)</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" :value="true" v-model="wantsAsoOke" class="rsvp-checkbox" />
-                    <span>Yes, I want Aso Oke</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="radio" :value="false" v-model="wantsAsoOke" class="rsvp-checkbox" />
-                    <span>No Aso Oke</span>
-                  </label>
+              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+                <label class="input-label" style="font-weight: 700; margin: 0;">Aso Oke (Headwear / Cap)</label>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Male Aso Oke (Fila / Cap)</div>
+                    <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeMalePrice.toLocaleString() }} per set</div>
+                  </div>
+                  <div class="stepper-box">
+                    <button type="button" class="stepper-btn" :disabled="asoOkeMaleQty <= 0" @click="decMaleAsoOke" aria-label="Decrease male Aso Oke quantity">−</button>
+                    <span class="stepper-val">{{ asoOkeMaleQty }}</span>
+                    <button type="button" class="stepper-btn" :disabled="asoOkeMaleQty >= 10" @click="incMaleAsoOke" aria-label="Increase male Aso Oke quantity">+</button>
+                  </div>
                 </div>
 
-                <div v-if="wantsAsoOke" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                    <div>
-                      <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Male Aso Oke (Fila / Cap)</div>
-                      <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeMalePrice.toLocaleString() }} per set</div>
-                    </div>
-                    <select v-model.number="asoOkeMaleQty" class="rsvp-input" style="width: 100px;">
-                      <option :value="0">0</option>
-                      <option :value="1">1</option>
-                      <option :value="2">2</option>
-                      <option :value="3">3</option>
-                      <option :value="4">4</option>
-                      <option :value="5">5</option>
-                    </select>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dashed rgba(134,81,114,0.2); padding-top: 12px;">
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Female Aso Oke (Gele / Ipele)</div>
+                    <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeFemalePrice.toLocaleString() }} per set</div>
                   </div>
-
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dashed rgba(134,81,114,0.2); padding-top: 12px;">
-                    <div>
-                      <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Female Aso Oke (Gele / Ipele)</div>
-                      <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeFemalePrice.toLocaleString() }} per set</div>
-                    </div>
-                    <select v-model.number="asoOkeFemaleQty" class="rsvp-input" style="width: 100px;">
-                      <option :value="0">0</option>
-                      <option :value="1">1</option>
-                      <option :value="2">2</option>
-                      <option :value="3">3</option>
-                      <option :value="4">4</option>
-                      <option :value="5">5</option>
-                    </select>
+                  <div class="stepper-box">
+                    <button type="button" class="stepper-btn" :disabled="asoOkeFemaleQty <= 0" @click="decFemaleAsoOke" aria-label="Decrease female Aso Oke quantity">−</button>
+                    <span class="stepper-val">{{ asoOkeFemaleQty }}</span>
+                    <button type="button" class="stepper-btn" :disabled="asoOkeFemaleQty >= 10" @click="incFemaleAsoOke" aria-label="Increase female Aso Oke quantity">+</button>
                   </div>
                 </div>
               </div>
@@ -1163,3 +1187,106 @@ onUnmounted(() => {
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.stepper-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #d9c9c4;
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 1px 3px rgba(134, 81, 114, 0.06);
+}
+
+.stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid #865172;
+  background: #faf7f5;
+  color: #865172;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: #865172;
+  color: #ffffff;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #d9c9c4;
+  color: #999999;
+  background: #ffffff;
+}
+
+.stepper-val {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #462137;
+}
+
+.fabric-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fabric-pill {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #d9c9c4;
+  background: #ffffff;
+  color: #462137;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex: 1 1 90px;
+  min-width: 80px;
+}
+
+.fabric-pill:hover:not(.fabric-pill--selected) {
+  border-color: #865172;
+  background: #faf7f5;
+}
+
+.fabric-pill--selected {
+  background: #865172 !important;
+  border-color: #865172 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(134, 81, 114, 0.25);
+}
+
+.fabric-pill__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.fabric-pill__price {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.fabric-pill--selected .fabric-pill__price {
+  color: #ffffff;
+  opacity: 0.9;
+}
+</style>
