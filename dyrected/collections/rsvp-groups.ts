@@ -21,18 +21,18 @@ export const rsvpGroups = defineCollection({
     group: "RSVP",
   },
   fields: [
-    defineTextField({
-      name: "rsvpLink",
-      label: "RSVP Link",
-      admin: {
-        readOnly: true,
-        description: "Share this link with the guest group so they can RSVP.",
-        component: "rsvp_groups.rsvpLink",
-      },
-    }),
     ...defineTab({
       label: "General",
       fields: [
+        defineTextField({
+          name: "rsvpLink",
+          label: "RSVP Link",
+          admin: {
+            readOnly: true,
+            description: "Share this link with the guest group so they can RSVP.",
+            component: "rsvp_groups.rsvpLink",
+          },
+        }),
         defineTextField({
           name: "name",
           label: "Group Name",
