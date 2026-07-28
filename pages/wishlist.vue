@@ -1075,7 +1075,7 @@ onUnmounted(() => {
 
               <!-- Store Link Banner -->
               <div
-                v-if="activeItem.link"
+                v-if="activeItem.link && fulfillmentMode === 'bring_to_wedding'"
                 class="p-4 rounded-2xl bg-amber-gold/10 border border-amber-gold/20 space-y-2 text-center"
               >
                 <p class="text-xs text-deep-espresso/80 font-body font-medium">
