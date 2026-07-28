@@ -11,30 +11,40 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   const client = createClient({
-    baseUrl: config.public.dyrectedUrl,
+    baseUrl: config.dyrectedUrl || config.public.dyrectedUrl,
     apiKey: config.dyrectedApiKey,
   });
 
-  const result = await client.collection("rsvp_groups").find({
-    where: { slug: { equals: slug } },
-    limit: 1,
-  });
+  try {
+    const result = await client.collection("rsvp_groups").find({
+      where: { slug: { equals: slug } },
+      limit: 1,
+    });
 
-  if (result.total === 0) {
-    throw createError({ statusCode: 404, message: "Group not found" });
+    if (!result.docs || result.docs.length === 0) {
+      throw createError({ statusCode: 404, message: "Group not found" });
+    }
+
+    const group = result.docs[0];
+
+    if (group.isActive === false || group.isActive === "false") {
+      throw createError({ statusCode: 404, message: "This RSVP group is no longer active" });
+    }
+
+    return {
+      id: group.id,
+      name: group.name,
+      slug: group.slug,
+      maxCapacity: group.maxCapacity || 1,
+      confirmedCount: group.confirmedCount || 0,
+      declinedCount: group.declinedCount || 0,
+    };
+  } catch (err: any) {
+    if (err.statusCode) throw err;
+    console.error(`[GET /api/rsvp/group] Error fetching group '${slug}':`, err);
+    throw createError({
+      statusCode: 500,
+      message: err.message || "Failed to fetch RSVP group",
+    });
   }
-
-  if (!result.docs[0].isActive) {
-    throw createError({ statusCode: 404, message: "This RSVP group is no longer active" });
-  }
-
-  const group = result.docs[0];
-  return {
-    id: group.id,
-    name: group.name,
-    slug: group.slug,
-    maxCapacity: group.maxCapacity,
-    confirmedCount: group.confirmedCount || 0,
-    declinedCount: group.declinedCount || 0,
-  };
 });
