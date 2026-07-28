@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onUnmounted } from "vue";
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useDyrectedCollection, useDyrectedGlobal } from "#imports";
 import { publicPageTransition } from "~/composables/useMotion";
 
@@ -143,6 +143,19 @@ const paymentOption = ref<"bank_transfer" | "purchase_link" | "bring_to_wedding"
 const successItem = ref<WishlistItem | null>(null);
 const successContributionAmount = ref<number>(0);
 const successMode = ref<"reserve-now" | "reserve-later" | "contribute-now" | "remind-later" | null>(null);
+
+const accountSectionRef = ref<HTMLElement | null>(null);
+const formSectionRef = ref<HTMLElement | null>(null);
+
+const selectFulfillmentMode = (mode: "sent_money" | "bring_to_wedding" | "remind_later") => {
+  fulfillmentMode.value = mode;
+  nextTick(() => {
+    const target = accountSectionRef.value || formSectionRef.value;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+};
 
 // Copy to Clipboard Utility
 const isCopied = ref(false);
@@ -492,16 +505,19 @@ onUnmounted(() => {
                   : 'opacity-75 border-amber-gold/10 grayscale-15'
             "
             :style="{
-              '--motion-delay': `${Math.min(filteredAndSortedItems.findIndex((candidate) => candidate.id === item.id), 8) * 55}ms`,
+              '--motion-delay': `${
+                Math.min(
+                  filteredAndSortedItems.findIndex((candidate) => candidate.id === item.id),
+                  8,
+                ) * 55
+              }ms`,
               '--motion-duration': '460ms',
               '--motion-distance': '18px',
             }"
           >
-            <button
-              type="button"
+            <div
               @click="handleReserveClick(item)"
-              class="flex h-full flex-col text-left"
-              :disabled="item.fundingType !== 'crowdfund' && item.maxQuantity - item.reservedCount <= 0"
+              class="flex h-full flex-col text-left cursor-pointer"
             >
               <!-- Item Image -->
               <div
@@ -602,37 +618,58 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex items-center gap-3 pt-2">
+                <div class="flex items-center gap-2.5 pt-2">
                   <span
                     v-if="item.fundingType === 'crowdfund' && item.price > 0 && (item.amountRaised ?? 0) >= item.price"
-                    class="flex-1 px-4 py-2 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600/20 text-emerald-800 font-semibold text-xs uppercase tracking-wider text-center"
                   >
                     Fund Fully Raised
                   </span>
-                  <span v-else-if="item.fundingType === 'crowdfund'" class="flex-1 btn-secondary text-center">
-                    Open Full-Page View
+                  <span
+                    v-else-if="item.fundingType === 'crowdfund'"
+                    class="flex-1 btn-secondary py-2.5 text-center text-xs font-bold uppercase tracking-wider"
+                  >
+                    Contribute to Fund
                   </span>
                   <span
                     v-else-if="item.maxQuantity - item.reservedCount > 0"
-                    class="flex-1 btn-primary text-center"
+                    class="flex-1 btn-primary py-2.5 text-center text-xs font-bold uppercase tracking-wider"
                   >
-                    Open Full-Page View
+                    Reserve Gift
                   </span>
                   <span
                     v-else
-                    class="flex-1 px-4 py-2 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-deep-espresso/10 text-deep-espresso/40 font-semibold text-xs uppercase tracking-wider text-center"
                   >
                     Fully Reserved
                   </span>
-                  <span
+                  <a
                     v-if="item.link"
-                    class="px-4 py-2 rounded-xl border border-amber-gold/20 text-deep-espresso/60 font-semibold text-xs uppercase tracking-wider text-center"
+                    :href="item.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    @click.stop
+                    class="w-10 h-10 rounded-xl border border-amber-gold/30 bg-amber-gold/5 hover:bg-amber-gold/15 text-deep-espresso flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                    title="View Store Item"
                   >
-                    Store Link Inside
-                  </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.8"
+                      stroke="currentColor"
+                      class="w-4.5 h-4.5 text-deep-terracotta"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      />
+                    </svg>
+                  </a>
                 </div>
               </div>
-            </button>
+            </div>
           </article>
         </div>
       </div>
@@ -647,429 +684,449 @@ onUnmounted(() => {
         v-if="activeItem"
         class="fixed inset-0 z-50 bg-warm-cream overflow-y-auto min-h-screen flex flex-col transition-all duration-300 select-text"
       >
-      <!-- Top Sticky Navigation Bar -->
-      <header class="sticky top-0 z-40 bg-warm-cream/95 backdrop-blur-md border-b border-amber-gold/20 px-6 py-4">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
-          <button
-            @click="activeItem = null"
-            class="flex items-center gap-2 text-deep-espresso hover:text-deep-terracotta font-semibold text-xs uppercase tracking-widest transition-colors cursor-pointer"
-          >
-            <span>←</span> Back to Registry
-          </button>
-
-          <span class="font-heading text-xs font-bold text-amber-gold tracking-[0.25em] uppercase hidden sm:block">
-            Uche & Adun Registry
-          </span>
-
-          <button
-            @click="activeItem = null"
-            class="w-9 h-9 rounded-full bg-deep-espresso/5 hover:bg-deep-espresso/10 text-deep-espresso flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
-            title="Close"
-          >
-            ✕
-          </button>
-        </div>
-      </header>
-
-      <!-- Full Page Body Content -->
-      <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8">
-        <!-- Item Header Card -->
-        <div class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md overflow-hidden">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
-            <!-- Side Item Image -->
-            <div
-              v-if="activeItem.imageUrl && activeItem.imageUrl !== '/images/placeholder.png'"
-              class="md:col-span-5 relative aspect-3/4 w-full bg-deep-espresso/5 border border-amber-gold/15 rounded-2xl overflow-hidden shadow-xs select-none"
-            >
-              <DyrectedMedia
-                :media="(activeItem.image as any) || activeItem.imageUrl"
-                :alt="activeItem.name"
-                class="w-full h-full object-cover"
-              />
-            </div>
-
-            <!-- Item Text Details -->
-            <div
-              class="space-y-4"
-              :class="
-                activeItem.imageUrl && activeItem.imageUrl !== '/images/placeholder.png'
-                  ? 'md:col-span-7'
-                  : 'md:col-span-12'
-              "
-            >
-              <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-gold/15 pb-4"
-              >
-                <span class="font-heading text-xs font-bold text-amber-gold tracking-[0.25em] uppercase">
-                  {{ activeItem.category }}
-                </span>
-                <span class="text-xs uppercase tracking-wider text-deep-espresso/60 font-semibold">
-                  {{ activeItem.fundingType === "crowdfund" ? "Cash Contribution" : "Gift Item" }}
-                </span>
-              </div>
-
-              <h2 class="font-heading text-xl md:text-2xl font-bold text-deep-espresso leading-tight">
-                {{ activeItem.name }}
-              </h2>
-
-              <div class="flex flex-wrap items-baseline gap-3 pt-1">
-                <template v-if="activeItem.fundingType === 'crowdfund'">
-                  <span class="font-heading text-2xl font-bold text-deep-espresso">
-                    ₦{{ activeItem.price > 0 ? activeItem.price.toLocaleString("en-US") + " goal" : "Open cash fund" }}
-                  </span>
-                  <span
-                    class="text-xs font-semibold uppercase tracking-wider text-deep-terracotta bg-deep-terracotta/10 px-3 py-1 rounded-full"
-                  >
-                    ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised so far
-                  </span>
-                </template>
-                <template v-else>
-                  <span class="font-heading text-2xl md:text-3xl font-bold text-deep-espresso">
-                    ₦{{ activeItem.price.toLocaleString("en-US") }}
-                  </span>
-                </template>
-              </div>
-
-              <p v-if="activeItem.description" class="font-body text-sm text-deep-espresso/75 leading-relaxed pt-1">
-                {{ activeItem.description }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crowdfund Amount Selection Card -->
-        <div
-          v-if="activeItem.fundingType === 'crowdfund'"
-          class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 bg-gradient-to-br from-[#fffdf9] via-[#f7f0ea] to-[#f2e4da] shadow-md space-y-6"
-        >
-          <div class="space-y-3">
-            <label class="input-label text-xs uppercase tracking-wider text-deep-espresso/70 font-semibold block">
-              Choose contribution amount:
-            </label>
-            <div class="modal-amount-grid">
-              <button
-                v-for="amount in [...SUGGESTED_AMOUNTS, ...(activeItem.price > 0 ? [activeItem.price] : [])]"
-                :key="amount"
-                type="button"
-                @click="
-                  selectedAmount = amount;
-                  useCustomAmount = false;
-                "
-                class="modal-amount-btn"
-                :class="
-                  !useCustomAmount && selectedAmount === amount
-                    ? 'modal-amount-btn--active'
-                    : 'modal-amount-btn--inactive'
-                "
-              >
-                ₦{{ amount.toLocaleString("en-US") }}
-              </button>
-            </div>
-            <div class="modal-custom-row">
-              <button
-                type="button"
-                @click="useCustomAmount = true"
-                class="modal-amount-btn"
-                :class="useCustomAmount ? 'modal-amount-btn--active' : 'modal-amount-btn--inactive'"
-              >
-                Custom Amount
-              </button>
-              <input
-                v-if="useCustomAmount"
-                v-model="customAmount"
-                type="number"
-                :min="MIN_CONTRIBUTION"
-                class="input-field flex-1"
-                placeholder="Enter custom amount"
-              />
-            </div>
-            <p v-if="!isAmountValid" class="modal-validation">
-              Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}
-            </p>
-          </div>
-
-          <div class="pt-4 border-t border-amber-gold/15 flex justify-between items-center">
-            <span class="text-xs uppercase tracking-[0.2em] text-deep-espresso/60 font-semibold"
-              >Your Contribution:</span
-            >
-            <span class="font-heading text-3xl sm:text-4xl font-bold text-deep-espresso"
-              >₦{{ activeAmountValue.toLocaleString("en-US") }}</span
-            >
-          </div>
-        </div>
-
-        <!-- Dedicated Payment Details Card -->
-        <div
-          v-if="activeItem.bankDetails"
-          class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-4"
-        >
-          <div class="flex items-center justify-between border-b border-amber-gold/15 pb-3">
-            <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-[0.2em]">
-              {{ activeItem.fundingType === "crowdfund" ? "Bank Transfer Account" : "Payment Account Details" }}
-            </p>
-            <span class="text-[10px] uppercase tracking-wider text-deep-espresso/50 font-bold">GTBank Direct</span>
-          </div>
-
-          <div class="rounded-2xl border border-amber-gold/15 bg-white/95 p-5 space-y-4 shadow-xs">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-body">
-              <div>
-                <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
-                  >Bank Name</span
-                >
-                <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.bankName }}</span>
-              </div>
-              <div>
-                <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
-                  >Account Name</span
-                >
-                <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.accountName }}</span>
-              </div>
-            </div>
-
-            <div
-              class="border-t border-amber-gold/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.2em] text-deep-espresso/45 font-semibold">Account Number</p>
-                <p class="mt-1 font-mono text-3xl font-bold tracking-widest text-deep-terracotta select-all">
-                  {{ activeItem.bankDetails.accountNumber }}
-                </p>
-              </div>
-              <button
-                type="button"
-                @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
-                class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
-              >
-                {{ isCopied ? "✓ Copied" : "Copy Account Number" }}
-              </button>
-            </div>
-          </div>
-
-          <div v-if="activeItem.link" class="pt-2">
-            <p class="text-xs text-deep-espresso/60 mb-2 font-body">Or buy directly from store:</p>
-            <a
-              :href="activeItem.link"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-secondary w-full block text-center py-3 font-bold uppercase tracking-wider text-xs"
-            >
-              View Store Item ↗
-            </a>
-          </div>
-        </div>
-
-        <!-- 3 Fulfillment Options Card -->
-        <div class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6">
-          <div class="space-y-1">
-            <h3 class="font-heading text-xl font-bold text-deep-espresso">Fulfillment Options</h3>
-            <p class="text-xs text-deep-espresso/65 font-body">How would you like to fulfill or confirm this gift?</p>
-          </div>
-
-          <div class="space-y-3">
-            <!-- Option 1: Sent Money -->
+        <!-- Top Sticky Navigation Bar -->
+        <header class="sticky top-0 z-40 bg-warm-cream/95 backdrop-blur-md border-b border-amber-gold/20 px-6 py-4">
+          <div class="max-w-4xl mx-auto flex items-center justify-between">
             <button
-              type="button"
-              @click="fulfillmentMode = 'sent_money'"
-              class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
-              :class="
-                fulfillmentMode === 'sent_money'
-                  ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
-                  : 'border-amber-gold/20 bg-white/70 hover:bg-white'
-              "
+              @click="activeItem = null"
+              class="flex items-center gap-2 text-deep-espresso hover:text-deep-terracotta font-semibold text-xs uppercase tracking-widest transition-colors cursor-pointer"
             >
-              <div
-                class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-6 h-6"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
-                  />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-bold text-base text-deep-espresso">1. I have sent the money</p>
-                <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
-                  I have made a direct bank transfer using the account details above.
-                </p>
-              </div>
-              <div
-                class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
-                :class="
-                  fulfillmentMode === 'sent_money'
-                    ? 'border-deep-terracotta bg-deep-terracotta text-white'
-                    : 'border-amber-gold/40'
-                "
-              >
-                <span v-if="fulfillmentMode === 'sent_money'" class="text-xs font-bold">✓</span>
-              </div>
+              <span>←</span> Back to Registry
             </button>
 
-            <!-- Option 2: Bring Gift to Wedding -->
-            <button
-              type="button"
-              @click="fulfillmentMode = 'bring_to_wedding'"
-              class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
-              :class="
-                fulfillmentMode === 'bring_to_wedding'
-                  ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
-                  : 'border-amber-gold/20 bg-white/70 hover:bg-white'
-              "
-            >
-              <div
-                class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-6 h-6"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H4.5a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m-9 0h18v3H3v-3Z"
-                  />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-bold text-base text-deep-espresso">2. I’ll be bringing the gift to the wedding</p>
-                <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
-                  Reserve this gift now and hand it to us in person on our big day.
-                </p>
-              </div>
-              <div
-                class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
-                :class="
-                  fulfillmentMode === 'bring_to_wedding'
-                    ? 'border-deep-terracotta bg-deep-terracotta text-white'
-                    : 'border-amber-gold/40'
-                "
-              >
-                <span v-if="fulfillmentMode === 'bring_to_wedding'" class="text-xs font-bold">✓</span>
-              </div>
-            </button>
+            <span class="font-heading text-xs font-bold text-amber-gold tracking-[0.25em] uppercase hidden sm:block">
+              Uche & Adun Registry
+            </span>
 
-            <!-- Option 3: Reserve & Remind Later -->
             <button
-              type="button"
-              @click="fulfillmentMode = 'remind_later'"
-              class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
-              :class="
-                fulfillmentMode === 'remind_later'
-                  ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
-                  : 'border-amber-gold/20 bg-white/70 hover:bg-white'
-              "
+              @click="activeItem = null"
+              class="w-9 h-9 rounded-full bg-deep-espresso/5 hover:bg-deep-espresso/10 text-deep-espresso flex items-center justify-center text-sm font-bold transition-all cursor-pointer"
+              title="Close"
             >
-              <div
-                class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-6 h-6"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-bold text-base text-deep-espresso">
-                  3. I’d like to reserve this gift and be reminded to pay/fulfill it
-                </p>
-                <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
-                  Hold this gift for me now and send me a friendly reminder to pay.
-                </p>
-              </div>
-              <div
-                class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
-                :class="
-                  fulfillmentMode === 'remind_later'
-                    ? 'border-deep-terracotta bg-deep-terracotta text-white'
-                    : 'border-amber-gold/40'
-                "
-              >
-                <span v-if="fulfillmentMode === 'remind_later'" class="text-xs font-bold">✓</span>
-              </div>
+              ✕
             </button>
           </div>
+        </header>
 
-          <!-- Dynamic Form Inputs -->
-          <div v-if="fulfillmentMode" class="space-y-6 pt-4 border-t border-amber-gold/15 animate-fadeIn">
-            <div class="space-y-1.5">
-              <label class="input-label font-semibold text-deep-espresso text-xs uppercase tracking-wider block"
-                >Your Name *</label
+        <!-- Full Page Body Content -->
+        <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 md:py-12 space-y-8 pb-32 md:pb-40">
+          <!-- Item Header Card -->
+          <div class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center">
+              <!-- Side Item Image -->
+              <div
+                v-if="activeItem.imageUrl && activeItem.imageUrl !== '/images/placeholder.png'"
+                class="md:col-span-5 relative aspect-3/4 w-full bg-deep-espresso/5 border border-amber-gold/15 rounded-2xl overflow-hidden shadow-xs select-none"
               >
-              <input
-                type="text"
-                v-model="guestName"
-                class="input-field py-3 text-base"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <!-- Additional Reminder Details for Option 3 -->
-            <div
-              v-if="fulfillmentMode === 'remind_later'"
-              class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 rounded-2xl bg-amber-gold/5 border border-amber-gold/15 space-y-3 md:space-y-0"
-            >
-              <div class="space-y-1.5">
-                <label class="input-label">Reminder Date *</label>
-                <input type="date" v-model="reminderDate" :min="todayIso" class="input-field py-2.5" />
-              </div>
-
-              <div class="space-y-1.5">
-                <label class="input-label">Reminder Channel *</label>
-                <select v-model="reminderChannel" class="select-dropdown w-full py-2.5 text-sm">
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="email">Email</option>
-                </select>
-              </div>
-
-              <div class="space-y-1.5 md:col-span-2">
-                <label class="input-label">
-                  {{ reminderChannel === "whatsapp" ? "WhatsApp Contact *" : "Email Contact *" }}
-                </label>
-                <input
-                  v-model="reminderContact"
-                  :type="reminderChannel === 'email' ? 'email' : 'text'"
-                  class="input-field py-2.5"
-                  :placeholder="reminderChannel === 'email' ? 'name@example.com' : '0800 000 0000'"
+                <DyrectedMedia
+                  :media="(activeItem.image as any) || activeItem.imageUrl"
+                  :alt="activeItem.name"
+                  class="w-full h-full object-cover"
                 />
               </div>
+
+              <!-- Item Text Details -->
+              <div
+                class="space-y-4"
+                :class="
+                  activeItem.imageUrl && activeItem.imageUrl !== '/images/placeholder.png'
+                    ? 'md:col-span-7'
+                    : 'md:col-span-12'
+                "
+              >
+                <div
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-gold/15 pb-4"
+                >
+                  <span class="font-heading text-xs font-bold text-amber-gold tracking-[0.25em] uppercase">
+                    {{ activeItem.category }}
+                  </span>
+                  <span class="text-xs uppercase tracking-wider text-deep-espresso/60 font-semibold">
+                    {{ activeItem.fundingType === "crowdfund" ? "Cash Contribution" : "Gift Item" }}
+                  </span>
+                </div>
+
+                <h2 class="font-heading text-xl md:text-2xl font-bold text-deep-espresso leading-tight">
+                  {{ activeItem.name }}
+                </h2>
+
+                <div class="flex flex-wrap items-baseline gap-3 pt-1">
+                  <template v-if="activeItem.fundingType === 'crowdfund'">
+                    <span class="font-heading text-2xl font-bold text-deep-espresso">
+                      ₦{{
+                        activeItem.price > 0 ? activeItem.price.toLocaleString("en-US") + " goal" : "Open cash fund"
+                      }}
+                    </span>
+                    <span
+                      class="text-xs font-semibold uppercase tracking-wider text-deep-terracotta bg-deep-terracotta/10 px-3 py-1 rounded-full"
+                    >
+                      ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised so far
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="font-heading text-2xl md:text-3xl font-bold text-deep-espresso">
+                      ₦{{ activeItem.price.toLocaleString("en-US") }}
+                    </span>
+                  </template>
+                </div>
+
+                <p v-if="activeItem.description" class="font-body text-sm text-deep-espresso/75 leading-relaxed pt-1">
+                  {{ activeItem.description }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crowdfund Amount Selection Card -->
+          <div
+            v-if="activeItem.fundingType === 'crowdfund'"
+            class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 bg-gradient-to-br from-[#fffdf9] via-[#f7f0ea] to-[#f2e4da] shadow-md space-y-6"
+          >
+            <div class="space-y-3">
+              <label class="input-label text-xs uppercase tracking-wider text-deep-espresso/70 font-semibold block">
+                Choose contribution amount:
+              </label>
+              <div class="modal-amount-grid">
+                <button
+                  v-for="amount in [...SUGGESTED_AMOUNTS, ...(activeItem.price > 0 ? [activeItem.price] : [])]"
+                  :key="amount"
+                  type="button"
+                  @click="
+                    selectedAmount = amount;
+                    useCustomAmount = false;
+                  "
+                  class="modal-amount-btn"
+                  :class="
+                    !useCustomAmount && selectedAmount === amount
+                      ? 'modal-amount-btn--active'
+                      : 'modal-amount-btn--inactive'
+                  "
+                >
+                  ₦{{ amount.toLocaleString("en-US") }}
+                </button>
+              </div>
+              <div class="modal-custom-row">
+                <button
+                  type="button"
+                  @click="useCustomAmount = true"
+                  class="modal-amount-btn"
+                  :class="useCustomAmount ? 'modal-amount-btn--active' : 'modal-amount-btn--inactive'"
+                >
+                  Custom Amount
+                </button>
+                <input
+                  v-if="useCustomAmount"
+                  v-model="customAmount"
+                  type="number"
+                  :min="MIN_CONTRIBUTION"
+                  class="input-field flex-1"
+                  placeholder="Enter custom amount"
+                />
+              </div>
+              <p v-if="!isAmountValid" class="modal-validation">
+                Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}
+              </p>
             </div>
 
-            <!-- Submit Button -->
-            <button
-              @click="handleConfirmReservation"
-              class="w-full btn-primary py-4 font-bold tracking-wider text-base cursor-pointer flex items-center justify-center gap-2 shadow-md"
-              :disabled="!isFormValid || isSubmitting"
-            >
-              <span
-                v-if="isSubmitting"
-                class="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
-              ></span>
-              <span>{{ finalCtaLabel }}</span>
-            </button>
+            <div class="pt-4 border-t border-amber-gold/15 flex justify-between items-center">
+              <span class="text-xs uppercase tracking-[0.2em] text-deep-espresso/60 font-semibold"
+                >Your Contribution:</span
+              >
+              <span class="font-heading text-3xl sm:text-4xl font-bold text-deep-espresso"
+                >₦{{ activeAmountValue.toLocaleString("en-US") }}</span
+              >
+            </div>
           </div>
-        </div>
-      </main>
+
+          <!-- 1. Fulfillment Options Card -->
+          <div class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6">
+            <div class="space-y-1">
+              <h3 class="font-heading text-xl font-bold text-deep-espresso">Fulfillment Options</h3>
+              <p class="text-xs text-deep-espresso/65 font-body">How would you like to fulfill or confirm this gift?</p>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Option 1: Sent Money -->
+              <button
+                type="button"
+                @click="selectFulfillmentMode('sent_money')"
+                class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
+                :class="
+                  fulfillmentMode === 'sent_money'
+                    ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
+                    : 'border-amber-gold/20 bg-white/70 hover:bg-white'
+                "
+              >
+                <div
+                  class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
+                    />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold text-base text-deep-espresso">1. I have sent the money</p>
+                  <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
+                    I have made a direct bank transfer using the account details below.
+                  </p>
+                </div>
+                <div
+                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+                  :class="
+                    fulfillmentMode === 'sent_money'
+                      ? 'border-deep-terracotta bg-deep-terracotta text-white'
+                      : 'border-amber-gold/40'
+                  "
+                >
+                  <span v-if="fulfillmentMode === 'sent_money'" class="text-xs font-bold">✓</span>
+                </div>
+              </button>
+
+              <!-- Option 2: Bring Gift to Wedding -->
+              <button
+                type="button"
+                @click="selectFulfillmentMode('bring_to_wedding')"
+                class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
+                :class="
+                  fulfillmentMode === 'bring_to_wedding'
+                    ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
+                    : 'border-amber-gold/20 bg-white/70 hover:bg-white'
+                "
+              >
+                <div
+                  class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H4.5a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m-9 0h18v3H3v-3Z"
+                    />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold text-base text-deep-espresso">2. I’ll be bringing the gift to the wedding</p>
+                  <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
+                    Reserve this gift now and hand it to us in person on our big day.
+                  </p>
+                </div>
+                <div
+                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+                  :class="
+                    fulfillmentMode === 'bring_to_wedding'
+                      ? 'border-deep-terracotta bg-deep-terracotta text-white'
+                      : 'border-amber-gold/40'
+                  "
+                >
+                  <span v-if="fulfillmentMode === 'bring_to_wedding'" class="text-xs font-bold">✓</span>
+                </div>
+              </button>
+
+              <!-- Option 3: Reserve & Remind Later -->
+              <button
+                type="button"
+                @click="selectFulfillmentMode('remind_later')"
+                class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
+                :class="
+                  fulfillmentMode === 'remind_later'
+                    ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
+                    : 'border-amber-gold/20 bg-white/70 hover:bg-white'
+                "
+              >
+                <div
+                  class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold text-base text-deep-espresso">
+                    3. I’d like to reserve this gift and be reminded to pay/fulfill it
+                  </p>
+                  <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
+                    Hold this gift for me now and send me a friendly reminder to pay.
+                  </p>
+                </div>
+                <div
+                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+                  :class="
+                    fulfillmentMode === 'remind_later'
+                      ? 'border-deep-terracotta bg-deep-terracotta text-white'
+                      : 'border-amber-gold/40'
+                  "
+                >
+                  <span v-if="fulfillmentMode === 'remind_later'" class="text-xs font-bold">✓</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Dedicated Payment Details Card -->
+          <div
+            v-if="activeItem.bankDetails"
+            ref="accountSectionRef"
+            class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-4 scroll-mt-24"
+          >
+            <div class="flex items-center justify-between border-b border-amber-gold/15 pb-3">
+              <p class="font-semibold text-deep-terracotta text-xs uppercase tracking-[0.2em]">
+                {{ activeItem.fundingType === "crowdfund" ? "Bank Transfer Account" : "Payment Account Details" }}
+              </p>
+              <span class="text-[10px] uppercase tracking-wider text-deep-espresso/50 font-bold">GTBank Direct</span>
+            </div>
+
+            <div class="rounded-2xl border border-amber-gold/15 bg-white/95 p-5 space-y-4 shadow-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-body">
+                <div>
+                  <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
+                    >Bank Name</span
+                  >
+                  <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.bankName }}</span>
+                </div>
+                <div>
+                  <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
+                    >Account Name</span
+                  >
+                  <span class="font-semibold text-deep-espresso text-base">{{
+                    activeItem.bankDetails.accountName
+                  }}</span>
+                </div>
+              </div>
+
+              <div
+                class="border-t border-amber-gold/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-deep-espresso/45 font-semibold">
+                    Account Number
+                  </p>
+                  <p class="mt-1 font-mono text-3xl font-bold tracking-widest text-deep-terracotta select-all">
+                    {{ activeItem.bankDetails.accountNumber }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
+                  class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
+                >
+                  {{ isCopied ? "✓ Copied" : "Copy Account Number" }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="activeItem.link" class="pt-2">
+              <p class="text-xs text-deep-espresso/60 mb-2 font-body">Or buy directly from store:</p>
+              <a
+                :href="activeItem.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-secondary w-full block text-center py-3 font-bold uppercase tracking-wider text-xs"
+              >
+                View Store Item ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 3. Dynamic Form Inputs Card -->
+          <div
+            v-if="fulfillmentMode"
+            ref="formSectionRef"
+            class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6 animate-fadeIn scroll-mt-24"
+          >
+            <div class="space-y-1">
+              <h3 class="font-heading text-lg font-bold text-deep-espresso">Guest Details & Confirmation</h3>
+              <p class="text-xs text-deep-espresso/65 font-body">
+                Please enter your details to finalize your reservation.
+              </p>
+            </div>
+
+            <div class="space-y-6">
+              <div class="space-y-1.5">
+                <label class="input-label font-semibold text-deep-espresso text-xs uppercase tracking-wider block"
+                  >Your Name *</label
+                >
+                <input
+                  type="text"
+                  v-model="guestName"
+                  class="input-field py-3 text-base"
+                  placeholder="Enter your full name"
+                />
+              </div>
+
+              <!-- Additional Reminder Details for Option 3 -->
+              <div
+                v-if="fulfillmentMode === 'remind_later'"
+                class="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 rounded-2xl bg-amber-gold/5 border border-amber-gold/15 space-y-3 md:space-y-0"
+              >
+                <div class="space-y-1.5">
+                  <label class="input-label">Reminder Date *</label>
+                  <input type="date" v-model="reminderDate" :min="todayIso" class="input-field py-2.5" />
+                </div>
+
+                <div class="space-y-1.5">
+                  <label class="input-label">Reminder Channel *</label>
+                  <select v-model="reminderChannel" class="select-dropdown w-full py-2.5 text-sm">
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">Email</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1.5 md:col-span-2">
+                  <label class="input-label">
+                    {{ reminderChannel === "whatsapp" ? "WhatsApp Contact *" : "Email Contact *" }}
+                  </label>
+                  <input
+                    v-model="reminderContact"
+                    :type="reminderChannel === 'email' ? 'email' : 'text'"
+                    class="input-field py-2.5"
+                    :placeholder="reminderChannel === 'email' ? 'name@example.com' : '0800 000 0000'"
+                  />
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                @click="handleConfirmReservation"
+                class="w-full btn-primary py-4 font-bold tracking-wider text-base cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                :disabled="!isFormValid || isSubmitting"
+              >
+                <span
+                  v-if="isSubmitting"
+                  class="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
+                ></span>
+                <span>{{ finalCtaLabel }}</span>
+              </button>
+            </div>
+          </div>
+        </main>
       </div>
     </Transition>
 
@@ -1081,67 +1138,66 @@ onUnmounted(() => {
             v-if="successItem"
             class="linen-card w-full max-w-md p-8 rounded-2xl border border-amber-gold/20 shadow-2xl text-center relative"
           >
-        <div
-          class="w-16 h-16 mx-auto mb-4 text-emerald-600 flex items-center justify-center bg-emerald-50 rounded-full border border-emerald-200 shadow-xs"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-9 h-9"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
-        </div>
-        <h3 class="font-heading text-2xl font-bold text-deep-espresso mb-2">Thank You So Much!</h3>
-        <p class="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
-          <template v-if="successMode === 'contribute-now'">
-            You have successfully contributed
-            <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to the
-            <strong>{{ successItem.name }}</strong
-            >. We will look out for the transfer.
-          </template>
-          <template v-else-if="successMode === 'reserve-later'">
-            We have reserved <strong>{{ successItem.name }}</strong> for you and scheduled your reminder for
-            <strong>{{ formattedReminderDate }}</strong
-            >.
-          </template>
-          <template v-else-if="successMode === 'remind-later'">
-            We have saved your reminder for <strong>{{ successItem.name }}</strong> on
-            <strong>{{ formattedReminderDate }}</strong
-            >.
-          </template>
-          <template v-else>
-            You have successfully claimed <strong>{{ successItem.name }}</strong> for the registry.
             <div
-              v-if="successItem.link && paymentOption === 'purchase_link'"
-              class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center"
+              class="w-16 h-16 mx-auto mb-4 text-emerald-600 flex items-center justify-center bg-emerald-50 rounded-full border border-emerald-200 shadow-xs"
             >
-              <p class="text-xs text-deep-espresso/80 mb-2 font-body">
-                If you have not opened the store yet, you can still purchase the item using the link below:
-              </p>
-              <a
-                :href="successItem.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-9 h-9"
               >
-                Buy from Store ↗
-              </a>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
             </div>
-          </template>
-        </p>
-        <button @click="successItem = null" class="btn-primary">Back to Registry</button>
+            <h3 class="font-heading text-2xl font-bold text-deep-espresso mb-2">Thank You So Much!</h3>
+            <p class="font-body text-deep-espresso/80 text-sm leading-relaxed mb-6">
+              <template v-if="successMode === 'contribute-now'">
+                You have successfully contributed
+                <strong>₦{{ successContributionAmount.toLocaleString("en-US") }}</strong> to the
+                <strong>{{ successItem.name }}</strong
+                >. We will look out for the transfer.
+              </template>
+              <template v-else-if="successMode === 'reserve-later'">
+                We have reserved <strong>{{ successItem.name }}</strong> for you and scheduled your reminder for
+                <strong>{{ formattedReminderDate }}</strong
+                >.
+              </template>
+              <template v-else-if="successMode === 'remind-later'">
+                We have saved your reminder for <strong>{{ successItem.name }}</strong> on
+                <strong>{{ formattedReminderDate }}</strong
+                >.
+              </template>
+              <template v-else>
+                You have successfully claimed <strong>{{ successItem.name }}</strong> for the registry.
+                <div
+                  v-if="successItem.link && paymentOption === 'purchase_link'"
+                  class="mt-4 p-4 rounded-xl border border-amber-gold/15 bg-amber-gold/5 text-center"
+                >
+                  <p class="text-xs text-deep-espresso/80 mb-2 font-body">
+                    If you have not opened the store yet, you can still purchase the item using the link below:
+                  </p>
+                  <a
+                    :href="successItem.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-secondary w-full block text-center py-2 font-bold uppercase tracking-wider text-[11px]"
+                  >
+                    Buy from Store ↗
+                  </a>
+                </div>
+              </template>
+            </p>
+            <button @click="successItem = null" class="btn-primary">Back to Registry</button>
           </div>
         </Transition>
       </div>
     </Transition>
-
   </div>
 </template>
