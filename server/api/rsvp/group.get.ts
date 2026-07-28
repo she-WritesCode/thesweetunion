@@ -21,13 +21,13 @@ export default defineEventHandler(async (event) => {
       limit: 1,
     });
 
-    if (!result.docs || result.docs.length === 0) {
+    const group = result.docs?.[0];
+
+    if (!group) {
       throw createError({ statusCode: 404, message: "Group not found" });
     }
 
-    const group = result.docs[0];
-
-    if (group.isActive === false || group.isActive === "false") {
+    if (group.isActive === false || String(group.isActive) === "false") {
       throw createError({ statusCode: 404, message: "This RSVP group is no longer active" });
     }
 
