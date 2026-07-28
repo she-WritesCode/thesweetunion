@@ -6,7 +6,24 @@ import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { groupSlug, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents, wantsAsoebi, asoebiYards } = body;
+  const {
+    groupSlug,
+    leadName,
+    leadEmail,
+    leadPhone,
+    attending,
+    hasSpouse,
+    spouseName,
+    dietaryNotes,
+    message,
+    selectedEvents,
+    wantsAsoebi,
+    asoebiYards,
+    wantsAsoOke,
+    asoOkeMaleQty,
+    asoOkeFemaleQty,
+    buyerGender,
+  } = body;
 
   if (!groupSlug) {
     throw createError({ statusCode: 400, message: "Missing group slug" });
@@ -24,7 +41,7 @@ export default defineEventHandler(async (event) => {
     limit: 1,
   });
 
-  if (groupSearch.total === 0 || !groupSearch.docs[0].isActive) {
+  if (groupSearch.total === 0 || !groupSearch?.docs?.[0].isActive) {
     throw createError({ statusCode: 404, message: "Group not found or inactive" });
   }
 
@@ -73,8 +90,21 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const detailsParts = [];
+    if (attending && wantsAsoebi && asoebiYards) {
+      detailsParts.push(`Asoebi Fabric: ${asoebiYards} Yards`);
+    }
+    if (attending && wantsAsoOke) {
+      if (asoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${asoOkeMaleQty} set(s)`);
+      if (asoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele/Ipele): ${asoOkeFemaleQty} set(s)`);
+    }
+    if (buyerGender) {
+      detailsParts.push(`Buyer Gender: ${buyerGender}`);
+    }
+    const asoebiDetailsStr = detailsParts.join(" | ");
+
     const record = await client.collection("rsvp_records").create({
-      group: group.id,
+      group: group?.id,
       leadName,
       leadEmail,
       leadPhone,
@@ -86,6 +116,11 @@ export default defineEventHandler(async (event) => {
       selectedEvents,
       wantsAsoebi: attending ? wantsAsoebi : false,
       asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
+      wantsAsoOke: attending ? wantsAsoOke : false,
+      asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
+      asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
+      buyerGender: buyerGender || undefined,
+      asoebiDetails: asoebiDetailsStr,
     });
 
     await syncGroupCounts(client, group.id);
@@ -103,9 +138,9 @@ export default defineEventHandler(async (event) => {
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
     const wishlistLink = `${appUrl}/wishlist`;
 
-    // Fetch Asoebi global settings if wantsAsoebi is true
+    // Fetch Asoebi global settings if wantsAsoebi or wantsAsoOke is true
     let asoebiSettings: any = null;
-    if (attending && wantsAsoebi) {
+    if (attending && (wantsAsoebi || wantsAsoOke)) {
       try {
         asoebiSettings = await $fetch("/api/globals/asoebi_settings");
       } catch (e) {
@@ -116,9 +151,7 @@ export default defineEventHandler(async (event) => {
     // Guest confirmation — fire and forget
     sendEmail({
       to: leadEmail,
-      subject: attending
-        ? `You're on the list, ${leadName}! 🎉`
-        : `We'll miss you, ${leadName}`,
+      subject: attending ? `You're on the list, ${leadName}! 🎉` : `We'll miss you, ${leadName}`,
       html: rsvpConfirmationEmail({
         leadName,
         attending,
@@ -129,6 +162,11 @@ export default defineEventHandler(async (event) => {
         wishlistLink,
         wantsAsoebi: attending && wantsAsoebi,
         asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
+        wantsAsoOke: attending && wantsAsoOke,
+        asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
+        asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
+        buyerGender: buyerGender || undefined,
+        asoebiDetails: asoebiDetailsStr,
         asoebiSettings,
         appUrl,
       }),

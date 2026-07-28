@@ -23,11 +23,13 @@ const leadPhone = computed(() => (props.context?.siblingData?.leadPhone as strin
 const wantsAsoebi = computed(() => (props.context?.siblingData?.wantsAsoebi as boolean) ?? false);
 const asoebiYards = computed(() => (props.context?.siblingData?.asoebiYards as string) ?? "");
 
+const { data: asoebiSettings } = await useDyrectedGlobal("asoebi_settings");
+
 const totalAmount = computed(() => {
   const yards = parseInt(asoebiYards.value, 10);
-  return isNaN(yards) ? 0 : yards * 10000;
+  const ppy = (asoebiSettings.value as any)?.pricePerYard || 10000;
+  return isNaN(yards) ? 0 : yards * ppy;
 });
-const { data: asoebiSettings } = await useDyrectedGlobal("asoebi_settings");
 
 async function sendReminder() {
   if (loading.value) return;
@@ -35,13 +37,13 @@ async function sendReminder() {
   error.value = "";
 
   try {
-    if (!asoebiSettings) {
+    if (!asoebiSettings.value) {
       throw new Error("Could not load Asoebi Settings from the database.");
     }
 
-    const bankName = asoebiSettings.bankName || "";
-    const accountNumber = asoebiSettings.accountNumber || "";
-    const accountName = asoebiSettings.accountName || "";
+    const bankName = asoebiSettings.value.bankName || "";
+    const accountNumber = asoebiSettings.value.accountNumber || "";
+    const accountName = asoebiSettings.value.accountName || "";
 
     const text = `Hi ${leadName.value}, gentle reminder for the ${asoebiYards.value} yards of Asoebi you ordered for #TheSweetUnion. Please pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
 

@@ -109,11 +109,17 @@ export interface Rsvp_records {
   leadPhone: string;
   hasSpouse?: boolean;
   spouseName?: string;
+  dietaryNotes?: string;
   attending: boolean;
   group: Rsvp_groups | string;
   selectedEvents?: Array<Events | string>;
   wantsAsoebi?: boolean;
-  asoebiYards?: "2" | "3" | "4" | "5" | "6";
+  asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  buyerGender?: "male" | "female";
+  asoebiDetails?: string;
   asoebiReminder?: Record<string, unknown>;
   message?: string;
   submittedAt?: string;
@@ -192,6 +198,9 @@ export interface Site_settingsGlobal {
 }
 
 export interface Asoebi_settingsGlobal {
+  pricePerYard?: number;
+  asoOkeMalePrice?: number;
+  asoOkeFemalePrice?: number;
   bankName: string;
   accountNumber: string;
   accountName: string;

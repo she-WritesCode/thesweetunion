@@ -98,23 +98,68 @@ function layout(...body: string[]): string {
 
 // ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
 
-// Helper to render Asoebi payment details
-function asoebiSection(wantsAsoebi?: boolean, asoebiYards?: string, asoebiSettings?: any): string {
-  if (!wantsAsoebi || !asoebiYards || !asoebiSettings) return "";
+// Helper to render Asoebi & Aso Oke payment details
+function asoebiSection(
+  wantsAsoebi?: boolean,
+  asoebiYards?: string,
+  wantsAsoOke?: boolean,
+  asoOkeMaleQty?: number,
+  asoOkeFemaleQty?: number,
+  buyerGender?: string,
+  asoebiDetails?: string,
+  asoebiSettings?: any
+): string {
+  if ((!wantsAsoebi && !wantsAsoOke) || !asoebiSettings) return "";
 
-  const yards = parseInt(asoebiYards, 10);
-  const amount = isNaN(yards) ? 0 : yards * 10000;
+  const pricePerYard = asoebiSettings.pricePerYard || 10000;
+  const malePrice = asoebiSettings.asoOkeMalePrice || 15000;
+  const femalePrice = asoebiSettings.asoOkeFemalePrice || 25000;
+
+  let totalAmount = 0;
+  const items: string[] = [];
+
+  if (wantsAsoebi && asoebiYards) {
+    const yards = parseInt(asoebiYards, 10);
+    if (!isNaN(yards) && yards > 0) {
+      const cost = yards * pricePerYard;
+      totalAmount += cost;
+      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Asoebi Fabric</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${yards} Yards (₦${cost.toLocaleString()})</td></tr>`);
+    }
+  }
+
+  if (wantsAsoOke) {
+    if (asoOkeMaleQty && asoOkeMaleQty > 0) {
+      const cost = asoOkeMaleQty * malePrice;
+      totalAmount += cost;
+      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Male Aso Oke (Fila/Cap)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeMaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`);
+    }
+    if (asoOkeFemaleQty && asoOkeFemaleQty > 0) {
+      const cost = asoOkeFemaleQty * femalePrice;
+      totalAmount += cost;
+      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Female Aso Oke (Gele/Ipele)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeFemaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`);
+    }
+  }
+
+  if (items.length === 0) return "";
 
   const bankName = asoebiSettings.bankName || "";
   const accountNumber = asoebiSettings.accountNumber || "";
   const accountName = asoebiSettings.accountName || "";
   const whatsAppContact = asoebiSettings.whatsAppContact || "";
+  const genderLabel = buyerGender ? ` (${buyerGender.charAt(0).toUpperCase() + buyerGender.slice(1)})` : "";
 
   return `${divider()}
-    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi Purchase Details</p>
-    <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
-      You have requested <strong>${asoebiYards} yards</strong> of our wedding Asoebi. Please transfer the total amount of <strong>₦${amount.toLocaleString("en-US")}</strong> to the account below to secure your order:
-    </p>
+    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi &amp; Aso Oke Order Breakdown${genderLabel}</p>
+    
+    <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:16px;background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:12px;">
+      ${items.join("")}
+      <tr style="border-top:1px solid ${BORDER};">
+        <td style="padding:10px 0 4px;font-size:13px;color:${TEXT};font-weight:bold;font-family:Georgia,serif;">Grand Total</td>
+        <td style="padding:10px 0 4px;font-size:14px;color:${TEXT};font-weight:bold;text-align:right;font-family:Georgia,serif;">₦${totalAmount.toLocaleString()}</td>
+      </tr>
+    </table>
+
+    <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Payment Details</p>
     <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:16px;background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:12px;">
       <tr>
         <td style="padding:6px 0;font-size:12px;color:${MUTED};width:120px;font-family:Georgia,serif;">Bank</td>
@@ -134,8 +179,6 @@ function asoebiSection(wantsAsoebi?: boolean, asoebiYards?: string, asoebiSettin
     </p>`;
 }
 
-// ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
-
 // Helper to format ISO dates to Google Calendar basic date format (YYYYMMDDTHHMMSSZ)
 function formatGoogleDate(isoString: string): string {
   try {
@@ -148,45 +191,32 @@ function formatGoogleDate(isoString: string): string {
 
 // Helper to generate a Google Calendar link
 function getGoogleCalendarUrl(event: any): string {
-  const title = encodeURIComponent("Adun & Uche's " + event.name || "Wedding Event");
-  const start = formatGoogleDate(event.date);
-  // Default end time to +5 hours
-  const endD = new Date(new Date(event.date).getTime() + 5 * 60 * 60 * 1000);
-  const end = formatGoogleDate(endD.toISOString());
-  const location = encodeURIComponent(`${event.venueName || ""}, ${event.venueAddress || ""}`);
+  const title = encodeURIComponent(`${event.name} - #TheSweetUnion`);
+  const dates = `${formatGoogleDate(event.date)}/${formatGoogleDate(event.date)}`;
   const details = encodeURIComponent(
-    `Dress Code: ${event.dressCode || "Strictly Formal"}\n\nThank you for RSVPing to our wedding! See you there.`,
+    `Wedding event for Adun & Uche.\nVenue: ${event.venueName}, ${event.venueAddress}\nDress Code: ${event.dressCode || "Formal"}`
   );
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+  const location = encodeURIComponent(`${event.venueName}, ${event.venueAddress}`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
 }
 
-// Renders list of events with Calendar links
+// Helper to render events with Google Calendar links
 function eventListWithCalendars(events: any[], appUrl: string): string {
   if (!events || !events.length) return "";
-
   const items = events
     .map((e) => {
-      const gCalUrl = getGoogleCalendarUrl(e);
-      const icsUrl = `${appUrl}/api/rsvp/calendar?eventId=${e.id}`;
-      return `<li style="padding:10px 0;border-bottom:1px solid ${BORDER};font-family:Georgia,serif;list-style:none;">
-        <span style="font-size:14px;color:${TEXT};font-weight:600;display:block;">✓ Adun & Uche's ${e.name}</span>
-        <span style="font-size:12px;color:${MUTED};display:block;margin-top:2px;">
-          ${new Date(e.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-        </span>
-        <span style="font-size:11px;color:${MUTED};display:block;margin-top:2px;">
-          Venue: ${e.venueName || "To Be Announced"}
-        </span>
-        <span style="font-size:11px;display:block;margin-top:6px;">
-          <a href="${gCalUrl}" target="_blank" style="color:${ACCENT};text-decoration:underline;margin-right:12px;">+ Google Calendar</a>
-          <a href="${icsUrl}" style="color:${ACCENT};text-decoration:underline;">+ Apple / Outlook (.ics)</a>
-        </span>
+      const calUrl = getGoogleCalendarUrl(e);
+      return `<li style="padding:8px 0;font-size:13px;color:${TEXT};font-family:Georgia,serif;border-bottom:1px dashed ${BORDER};">
+        <div style="font-weight:600;color:${TEXT};">${e.name}</div>
+        <div style="font-size:12px;color:${MUTED};margin-top:2px;">${e.venueName} &bull; ${e.venueAddress}</div>
+        <div style="margin-top:4px;">
+          <a href="${calUrl}" target="_blank" style="font-size:11px;color:${ACCENT};text-decoration:underline;">+ Add to Google Calendar</a>
+        </div>
       </li>`;
     })
     .join("");
   return `<ul style="margin:0;padding:0;list-style:none;">${items}</ul>`;
 }
-
-// ─── Guest: RSVP Submitted ────────────────────────────────────────────────────
 
 export function rsvpConfirmationEmail({
   leadName,
@@ -198,6 +228,11 @@ export function rsvpConfirmationEmail({
   wishlistLink,
   wantsAsoebi,
   asoebiYards,
+  wantsAsoOke,
+  asoOkeMaleQty,
+  asoOkeFemaleQty,
+  buyerGender,
+  asoebiDetails,
   asoebiSettings,
   appUrl,
 }: {
@@ -210,6 +245,11 @@ export function rsvpConfirmationEmail({
   wishlistLink?: string;
   wantsAsoebi?: boolean;
   asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  buyerGender?: string;
+  asoebiDetails?: string;
   asoebiSettings?: any;
   appUrl: string;
 }): string {
@@ -225,7 +265,13 @@ export function rsvpConfirmationEmail({
   }
 
   const partyLine = hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance";
-  const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
+  const orderSummary = [];
+  if (wantsAsoebi && asoebiYards) orderSummary.push(`${asoebiYards} Yards Fabric`);
+  if (wantsAsoOke) {
+    if (asoOkeMaleQty) orderSummary.push(`${asoOkeMaleQty} Male Aso Oke`);
+    if (asoOkeFemaleQty) orderSummary.push(`${asoOkeFemaleQty} Female Aso Oke`);
+  }
+  const asoebiLabel = orderSummary.length > 0 ? orderSummary.join(", ") : "None";
 
   return layout(
     heading("You're on the list! 🎉"),

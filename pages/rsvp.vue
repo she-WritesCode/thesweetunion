@@ -41,9 +41,13 @@ interface RSVPData extends Omit<
   spouseName: string;
   dietaryNotes: string;
   message: string;
-  submittedAt: string;
+  submittedAt?: string;
   wantsAsoebi?: boolean;
   asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  buyerGender?: "male" | "female";
 }
 
 interface GroupConfig {
@@ -62,6 +66,9 @@ const router = useRouter();
 
 const client = useDyrectedClient();
 const { data: siteSettings } = await useDyrectedGlobal("site_settings");
+const { data: asoebiSettings } = await useDyrectedGlobal("asoebi_settings");
+const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
+
 const couplesPhoto = computed(() => {
   const img = siteSettings.value?.rsvpTeaserImage;
   return typeof img === "object" && img !== null ? img.url : img || null;
@@ -151,8 +158,28 @@ const hasSpouse = ref(false);
 const spouseName = ref("");
 const dietaryNotes = ref("");
 const message = ref("");
+const buyerGender = ref<"male" | "female" | "">("");
 const wantsAsoebi = ref(false);
 const asoebiYards = ref("");
+const wantsAsoOke = ref(false);
+const asoOkeMaleQty = ref(0);
+const asoOkeFemaleQty = ref(0);
+
+const asoOkeMalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeMalePrice || 15000);
+const asoOkeFemalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeFemalePrice || 25000);
+
+const asoebiTotalCost = computed(() => {
+  let total = 0;
+  if (wantsAsoebi.value && asoebiYards.value) {
+    const y = parseInt(asoebiYards.value, 10);
+    if (!isNaN(y)) total += y * pricePerYard.value;
+  }
+  if (wantsAsoOke.value) {
+    if (asoOkeMaleQty.value > 0) total += asoOkeMaleQty.value * asoOkeMalePrice.value;
+    if (asoOkeFemaleQty.value > 0) total += asoOkeFemaleQty.value * asoOkeFemalePrice.value;
+  }
+  return total;
+});
 
 // Modals / Flow states
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
@@ -205,6 +232,10 @@ const populateStates = (data: RSVPData) => {
   message.value = data.message || "";
   wantsAsoebi.value = data.wantsAsoebi || false;
   asoebiYards.value = data.asoebiYards || "";
+  wantsAsoOke.value = data.wantsAsoOke || false;
+  asoOkeMaleQty.value = data.asoOkeMaleQty || 0;
+  asoOkeFemaleQty.value = data.asoOkeFemaleQty || 0;
+  buyerGender.value = data.buyerGender || "";
 };
 
 // Pre-populate form if SSR resolved an existing RSVP
@@ -338,6 +369,10 @@ const handleSubmit = async () => {
     message: message.value,
     wantsAsoebi: attending.value ? wantsAsoebi.value : false,
     asoebiYards: attending.value && wantsAsoebi.value ? asoebiYards.value : "",
+    wantsAsoOke: attending.value ? wantsAsoOke.value : false,
+    asoOkeMaleQty: attending.value && wantsAsoOke.value ? asoOkeMaleQty.value : 0,
+    asoOkeFemaleQty: attending.value && wantsAsoOke.value ? asoOkeFemaleQty.value : 0,
+    buyerGender: buyerGender.value || undefined,
   };
 
   try {
@@ -609,7 +644,7 @@ onUnmounted(() => {
                 <h4 class="rsvp-summary__section-heading">Asoebi Choice</h4>
                 <p v-if="existingRSVP.wantsAsoebi" class="rsvp-spouse-note">
                   Yes, requested <strong>{{ existingRSVP.asoebiYards }} Yards</strong> (₦{{
-                    (parseInt(existingRSVP.asoebiYards, 10) * 10000).toLocaleString()
+                    (parseInt(existingRSVP.asoebiYards, 10) * pricePerYard).toLocaleString()
                   }})
                 </p>
                 <p v-else class="rsvp-spouse-none">No Asoebi requested</p>
@@ -786,41 +821,129 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- STEP 4: ASOEBI -->
+          <!-- STEP 4: ASOEBI & ASO OKE -->
           <div v-if="currentStep === 4" class="rsvp-step">
             <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Would you like our Asoebi?</h2>
-              <p class="rsvp-step__subtitle">Our beautiful wedding fabric is available for guests to purchase.</p>
+              <h2 class="rsvp-step__title">Asoebi &amp; Aso Oke Options</h2>
+              <p class="rsvp-step__subtitle">Choose your wedding attire &amp; headwear options below.</p>
             </div>
-            <div class="rsvp-fields">
+            <div class="rsvp-fields" style="display: flex; flex-direction: column; gap: 20px;">
+              
+              <!-- Buyer Gender Selection -->
               <div class="rsvp-field-group">
-                <label class="input-label">Would you like to purchase the Asoebi?</label>
-                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px">
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
-                    <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
-                    <span>Yes, I want to purchase</span>
+                <label class="input-label">Buyer's Gender</label>
+                <div style="display: flex; gap: 20px; margin-top: 8px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" value="male" v-model="buyerGender" class="rsvp-checkbox" />
+                    <span>Male</span>
                   </label>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer">
-                    <input type="radio" :value="false" v-model="wantsAsoebi" class="rsvp-checkbox" />
-                    <span>No, thank you</span>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" value="female" v-model="buyerGender" class="rsvp-checkbox" />
+                    <span>Female</span>
                   </label>
                 </div>
               </div>
 
-              <div v-if="wantsAsoebi" class="rsvp-field-group" style="margin-top: 16px">
-                <label class="input-label">Select Quantity (Yards)</label>
-                <select v-model="asoebiYards" class="rsvp-input">
-                  <option value="" disabled>-- Select yards --</option>
-                  <option value="2">2 Yards (₦20,000)</option>
-                  <option value="3">3 Yards (₦30,000)</option>
-                  <option value="4">4 Yards (₦40,000)</option>
-                  <option value="5">5 Yards (₦50,000)</option>
-                  <option value="6">6 Yards (₦60,000)</option>
-                </select>
-                <p v-if="asoebiYards" style="margin-top: 8px; font-size: 0.9rem; font-weight: 600; color: #462137">
-                  Total: ₦{{ (parseInt(asoebiYards, 10) * 10000).toLocaleString() }}
+              <!-- Asoebi Fabric Section -->
+              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
+                <label class="input-label" style="font-weight: 700;">Asoebi Fabric</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="true" v-model="wantsAsoebi" class="rsvp-checkbox" />
+                    <span>Yes, I want fabric</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="false" v-model="wantsAsoebi" class="rsvp-checkbox" />
+                    <span>No fabric</span>
+                  </label>
+                </div>
+
+                <div v-if="wantsAsoebi" style="margin-top: 12px;">
+                  <label class="input-label">Select Fabric Quantity (Yards)</label>
+                  <select v-model="asoebiYards" class="rsvp-input">
+                    <option value="" disabled>-- Select yards --</option>
+                    <option value="2">2 Yards (₦{{ (2 * pricePerYard).toLocaleString() }})</option>
+                    <option value="3">3 Yards (₦{{ (3 * pricePerYard).toLocaleString() }})</option>
+                    <option value="4">4 Yards (₦{{ (4 * pricePerYard).toLocaleString() }})</option>
+                    <option value="5">5 Yards (₦{{ (5 * pricePerYard).toLocaleString() }})</option>
+                    <option value="6">6 Yards (₦{{ (6 * pricePerYard).toLocaleString() }})</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Aso Oke Section -->
+              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
+                <label class="input-label" style="font-weight: 700;">Aso Oke (Headwear / Cap)</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="true" v-model="wantsAsoOke" class="rsvp-checkbox" />
+                    <span>Yes, I want Aso Oke</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" :value="false" v-model="wantsAsoOke" class="rsvp-checkbox" />
+                    <span>No Aso Oke</span>
+                  </label>
+                </div>
+
+                <div v-if="wantsAsoOke" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Male Aso Oke (Fila / Cap)</div>
+                      <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeMalePrice.toLocaleString() }} per set</div>
+                    </div>
+                    <select v-model.number="asoOkeMaleQty" class="rsvp-input" style="width: 100px;">
+                      <option :value="0">0</option>
+                      <option :value="1">1</option>
+                      <option :value="2">2</option>
+                      <option :value="3">3</option>
+                      <option :value="4">4</option>
+                      <option :value="5">5</option>
+                    </select>
+                  </div>
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dashed rgba(134,81,114,0.2); padding-top: 12px;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Female Aso Oke (Gele / Ipele)</div>
+                      <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeFemalePrice.toLocaleString() }} per set</div>
+                    </div>
+                    <select v-model.number="asoOkeFemaleQty" class="rsvp-input" style="width: 100px;">
+                      <option :value="0">0</option>
+                      <option :value="1">1</option>
+                      <option :value="2">2</option>
+                      <option :value="3">3</option>
+                      <option :value="4">4</option>
+                      <option :value="5">5</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Summary Breakdown -->
+              <div v-if="asoebiTotalCost > 0" style="background: #FAF7F5; border: 1px solid #D9C9C4; border-radius: 12px; padding: 16px;">
+                <h4 style="font-weight: 700; font-size: 0.9rem; color: #462137; margin-bottom: 8px;">Order Summary</h4>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: #462137;">
+                  <div v-if="wantsAsoebi && asoebiYards" style="display: flex; justify-content: space-between;">
+                    <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
+                    <span>₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span>
+                  </div>
+                  <div v-if="wantsAsoOke && asoOkeMaleQty > 0" style="display: flex; justify-content: space-between;">
+                    <span>Male Aso Oke ({{ asoOkeMaleQty }} set{{ asoOkeMaleQty > 1 ? 's' : '' }})</span>
+                    <span>₦{{ (asoOkeMaleQty * asoOkeMalePrice).toLocaleString() }}</span>
+                  </div>
+                  <div v-if="wantsAsoOke && asoOkeFemaleQty > 0" style="display: flex; justify-content: space-between;">
+                    <span>Female Aso Oke ({{ asoOkeFemaleQty }} set{{ asoOkeFemaleQty > 1 ? 's' : '' }})</span>
+                    <span>₦{{ (asoOkeFemaleQty * asoOkeFemalePrice).toLocaleString() }}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1rem; border-top: 1px solid #D9C9C4; padding-top: 8px; margin-top: 4px;">
+                    <span>Estimated Total</span>
+                    <span>₦{{ asoebiTotalCost.toLocaleString() }}</span>
+                  </div>
+                </div>
+                <p style="margin-top: 8px; font-size: 0.75rem; color: #865172;">
+                  * A full breakdown and payment instructions will be sent to your email.
                 </p>
               </div>
+
             </div>
           </div>
 

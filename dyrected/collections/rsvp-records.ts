@@ -9,6 +9,7 @@ import {
   defineJsonField,
   defineTextareaField,
   defineDateField,
+  defineNumberField,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
@@ -120,8 +121,46 @@ export const rsvpRecords = defineCollection({
           label: "Asoebi Reminder",
           admin: {
             component: "rsvp_records.asoebiReminder",
-            condition: (data: any) => data.attending === true && data.wantsAsoebi === true,
+            condition: (data: any) => data.attending === true && (data.wantsAsoebi === true || data.wantsAsoOke === true),
           },
+        }),
+        defineBooleanField({
+          name: "wantsAsoOke",
+          label: "Wants Aso Oke",
+          defaultValue: false,
+          admin: { width: "50%" },
+        }),
+        defineNumberField({
+          name: "asoOkeMaleQty",
+          label: "Male Aso Oke (Fila/Cap) Quantity",
+          defaultValue: 0,
+          admin: {
+            width: "50%",
+            condition: (data: any) => data.wantsAsoOke === true,
+          },
+        }),
+        defineNumberField({
+          name: "asoOkeFemaleQty",
+          label: "Female Aso Oke (Gele/Ipele) Quantity",
+          defaultValue: 0,
+          admin: {
+            width: "50%",
+            condition: (data: any) => data.wantsAsoOke === true,
+          },
+        }),
+        defineSelectField({
+          name: "buyerGender",
+          label: "Buyer Gender",
+          options: [
+            { label: "Male", value: "male" },
+            { label: "Female", value: "female" },
+          ],
+          admin: { width: "50%" },
+        }),
+        defineTextareaField({
+          name: "asoebiDetails",
+          label: "Asoebi & Aso Oke Breakdown Summary",
+          admin: { description: "Full breakdown of requested fabric and Aso Oke items" },
         }),
         defineTextareaField({
           name: "message",
