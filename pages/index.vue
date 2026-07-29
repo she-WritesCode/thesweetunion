@@ -8,8 +8,8 @@ definePageMeta({
   pageTransition: publicPageTransition,
 });
 
-const { data: siteSettings } = await useDyrectedGlobal("site_settings", { depth: 2 });
-const { data: eventsResult } = await useDyrectedCollection("events", { limit: 100, depth: 2 });
+const { data: siteSettings } = useCachedDyrectedGlobal("site_settings", { depth: 2 });
+const { data: eventsResult } = useCachedDyrectedCollection("events", { limit: 100, depth: 2 });
 
 const config = computed(() => {
   const db = siteSettings.value as any;

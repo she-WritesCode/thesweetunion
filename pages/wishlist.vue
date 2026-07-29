@@ -44,16 +44,18 @@ const {
   data: wishlistData,
   pending: wishlistPending,
   refresh,
-} = await useDyrectedCollection("wishlist_items", {
+} = useCachedDyrectedCollection("wishlist_items", {
   limit: 100,
 });
-const { data: siteSettings, pending: siteSettingsPending } = await useDyrectedGlobal("site_settings");
+const { data: siteSettings, pending: siteSettingsPending } = useCachedDyrectedGlobal("site_settings");
 
 onMounted(async () => {
-  try {
-    await refresh();
-  } catch (e) {
-    console.error("Failed to refresh wishlist items on mount:", e);
+  if (!wishlistData.value) {
+    try {
+      await refresh();
+    } catch (e) {
+      console.error("Failed to refresh wishlist items on mount:", e);
+    }
   }
 });
 

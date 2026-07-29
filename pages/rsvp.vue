@@ -64,8 +64,8 @@ const route = useRoute();
 const router = useRouter();
 
 const client = useDyrectedClient();
-const { data: siteSettings } = await useDyrectedGlobal("site_settings");
-const { data: asoebiSettings } = await useDyrectedGlobal("asoebi_settings");
+const { data: siteSettings } = useCachedDyrectedGlobal("site_settings");
+const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
 const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
 
 const couplesPhoto = computed(() => {
@@ -74,18 +74,15 @@ const couplesPhoto = computed(() => {
 });
 
 // Fetch RSVP events from CMS; filter collectsRsvp in JS (boolean column workaround)
-const { data: cmsEventsRaw } = await useAsyncData("rsvp-events", async () => {
-  const res = await client.collection("events").find({ limit: 20 });
-  return res;
-});
+const { data: cmsEventsRaw } = useCachedDyrectedCollection("events", { limit: 20 });
 const rsvpEvents = computed<CMSEvent[]>(() => {
   const docs = (cmsEventsRaw.value as any)?.docs || [];
   return docs.filter((e: any) => e.collectsRsvp);
 });
 
-// ─── SSR: resolve group / token from URL before first render ─────────────────
-const { data: initData } = await useAsyncData(
-  "rsvp-init",
+// ─── Resolve group / token from URL ─────────────────
+const { data: initData } = useAsyncData(
+  `rsvp-init:${route.query.token || ""}:${route.query.group || ""}`,
   async () => {
     const tokenQuery = route.query.token as string | undefined;
     const groupQuery = route.query.group as string | undefined;
@@ -116,11 +113,15 @@ const { data: initData } = await useAsyncData(
     // No token, no group → invalid
     return { type: "invalid" as const };
   },
-  { watch: [() => route.query.token, () => route.query.group] },
+  {
+    lazy: true,
+    watch: [() => route.query.token, () => route.query.group],
+    getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
+  },
 );
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Derive reactive state from SSR-resolved initData
+// Derive reactive state from initData
 const existingRSVP = ref<any>(initData.value?.type === "existing" ? initData.value.record : null);
 const groupInfo = ref<any>(initData.value?.type === "group" ? initData.value.groupInfo : null);
 const editToken = ref<string>(initData.value?.type === "existing" ? initData.value.editToken : "");
@@ -129,6 +130,26 @@ const groupFullError = ref<string | null>(
   initData.value?.type === "group" && initData.value.isFull ? initData.value.groupInfo.name : null,
 );
 const isEditing = ref(initData.value?.type === "existing");
+
+watch(
+  initData,
+  (val) => {
+    if (!val) return;
+    if (val.type === "existing") {
+      existingRSVP.value = val.record;
+      editToken.value = val.editToken;
+      isEditing.value = true;
+    } else if (val.type === "group") {
+      groupInfo.value = val.groupInfo;
+      if (val.isFull) {
+        groupFullError.value = val.groupInfo.name;
+      }
+    } else if (val.type === "invalid") {
+      invalidLinkError.value = true;
+    }
+  },
+  { immediate: true },
+);
 
 // Flow State
 const currentStep = ref(2);
