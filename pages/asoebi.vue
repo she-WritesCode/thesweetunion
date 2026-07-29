@@ -260,7 +260,9 @@ const waPaymentLink = computed(() => {
       <p class="text-xs uppercase tracking-widest text-deep-terracotta mb-2 font-sans font-bold">
         #TheSweetUnion Celebration
       </p>
-      <h1 class="text-3xl md:text-5xl font-bold font-display-cinzel text-deep-espresso mb-4">Aso Ebi & Headwear Selection</h1>
+      <h1 class="text-3xl md:text-5xl font-bold font-display-cinzel text-deep-espresso mb-4">
+        Aso Ebi & Headwear Selection
+      </h1>
       <p class="text-base md:text-lg text-deep-espresso/70 max-w-2xl mx-auto font-light leading-relaxed mb-6">
         Join us in celebrating our traditional union in style! Look up your current selection, make updates, or place a
         new Aso Ebi order below.
@@ -393,7 +395,7 @@ const waPaymentLink = computed(() => {
       <!-- Quick Lookup Bar -->
       <section class="bg-white/90 rounded-2xl p-6 md:p-8 border border-amber-gold/20 shadow-md">
         <div class="max-w-2xl mx-auto text-center">
-          <h2 class="text-lg md:text-xl font-display-cinzel text-deep-espresso mb-2">
+          <h2 class="text-lg md:text-xl font-display-cinzel text-deep-espresso font-bold mb-2">
             Already RSVP'd or Ordered Aso Ebi?
           </h2>
           <p class="text-xs md:text-sm text-deep-espresso/70 font-sans mb-6">
@@ -434,7 +436,7 @@ const waPaymentLink = computed(() => {
       <section class="bg-white rounded-2xl p-6 md:p-10 border border-amber-gold/20 shadow-lg">
         <form @submit.prevent="submitAsoebiForm" class="space-y-8">
           <div class="border-b border-amber-gold/15 pb-4">
-            <h2 class="text-2xl font-display-cinzel text-deep-espresso">
+            <h2 class="text-2xl font-display-cinzel text-deep-espresso font-bold">
               {{ isUpdate ? "Update Your Aso Ebi Order" : "Place Aso Ebi Order" }}
             </h2>
             <p class="text-xs text-deep-espresso/60 font-sans mt-1">
