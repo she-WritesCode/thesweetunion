@@ -29,7 +29,7 @@ onMounted(() => {
         </NuxtLink>
         
         <!-- Desktop Navigation -->
-        <nav class="hidden md:flex items-center gap-8 text-sm font-semibold uppercase tracking-wider">
+        <nav class="hidden md:flex items-center gap-8 text-sm font-semibold font-sans uppercase tracking-wider">
           <NuxtLink to="/" class="hover:text-deep-terracotta transition-colors cursor-pointer">
             Home
           </NuxtLink>
@@ -74,7 +74,7 @@ onMounted(() => {
         <Transition name="dialog-pop" appear>
           <nav
             v-if="isMobileMenuOpen"
-            class="flex flex-col items-center gap-8 text-xl font-bold uppercase tracking-widest text-deep-espresso"
+            class="flex flex-col items-center gap-8 text-xl font-bold font-sans uppercase tracking-widest text-deep-espresso"
           >
             <NuxtLink
               to="/"

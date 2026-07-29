@@ -150,7 +150,9 @@ function asoebiSection(
   const bankName = asoebiSettings.bankName || "";
   const accountNumber = asoebiSettings.accountNumber || "";
   const accountName = asoebiSettings.accountName || "";
-  const whatsAppContact = asoebiSettings.whatsAppContact || "";
+  const whatsAppContact = asoebiSettings.whatsAppContact || "+234 913 697 6965";
+  const cleanWaPhone = whatsAppContact.replace(/\D/g, "");
+  const waPaymentUrl = `https://wa.me/${cleanWaPhone}?text=${encodeURIComponent("Hi, here is my proof of payment for my Aso Ebi order.")}`;
 
   return `${divider()}
     <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Asoebi &amp; Aso Oke Order Breakdown</p>
@@ -179,7 +181,7 @@ function asoebiSection(
       </tr>
     </table>
     <p style="margin:0 0 8px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
-      Once done, kindly send proof of payment on WhatsApp to: <strong>${whatsAppContact}</strong>.
+      Once done, kindly send proof of payment on WhatsApp to: <a href="${waPaymentUrl}" target="_blank" style="color:${ACCENT};font-weight:bold;text-decoration:underline;">${whatsAppContact}</a>.
     </p>`;
 }
 

@@ -16,7 +16,7 @@ const asoOkeFemalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeFe
 const bankName = computed(() => (asoebiSettings.value as any)?.bankName || "Access Bank");
 const accountNumber = computed(() => (asoebiSettings.value as any)?.accountNumber || "0123456789");
 const accountName = computed(() => (asoebiSettings.value as any)?.accountName || "Adun & Uche Union");
-const whatsAppContact = computed(() => (asoebiSettings.value as any)?.whatsAppContact || "+2348000000000");
+const whatsAppContact = computed(() => (asoebiSettings.value as any)?.whatsAppContact || "+234 913 697 6965");
 
 // State
 const lookupQuery = ref("");
@@ -144,7 +144,11 @@ async function performLookup() {
       populateRecord(res.record);
       lookupSuccess.value = true;
       isUpdate.value = true;
-      lookupMessage.value = `Record found for ${res.record.leadName}! Your current selection has been pre-filled below.`;
+      if (res.record.attending) {
+        lookupMessage.value = `✓ RSVP Confirmed for ${res.record.leadName}! Your seat is secure and your current Aso Ebi selection has been pre-filled below.`;
+      } else {
+        lookupMessage.value = `Record found for ${res.record.leadName}! Your current selection has been pre-filled below.`;
+      }
     } else {
       lookupSuccess.value = false;
       lookupMessage.value = res.message || "No record found. You can place a new order below.";
@@ -239,7 +243,7 @@ const waPaymentLink = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-warm-cream font-serif text-deep-espresso pb-20">
+  <div class="min-h-screen bg-warm-cream text-deep-espresso flex flex-col relative select-text pb-20">
     <Navigation />
 
     <!-- Hero Header -->
@@ -256,11 +260,14 @@ const waPaymentLink = computed(() => {
 
       <!-- Disclaimer Banner -->
       <div class="bg-amber-50/90 border border-amber-gold/40 text-amber-950 rounded-2xl p-4 md:p-5 max-w-2xl mx-auto flex items-start gap-3.5 font-sans text-xs md:text-sm text-left shadow-sm">
-        <span class="text-xl shrink-0">⚠️</span>
-        <div>
-          <p class="font-bold uppercase tracking-wider text-[11px] text-amber-900 mb-0.5">Important Disclaimer</p>
+        <span class="text-xl shrink-0">💡</span>
+        <div class="space-y-1.5">
+          <p class="font-bold uppercase tracking-wider text-[11px] text-amber-900 mb-0.5">Note for Guests</p>
           <p class="leading-relaxed">
-            Buying or booking Aso Ebi does <strong>not</strong> automatically mean you have RSVP'd for the wedding. Please request your official RSVP invitation link from the bride or groom and submit your RSVP to reserve your seat.
+            <strong>Already submitted your RSVP?</strong> You have nothing to worry about—your seat is secure! You can use this page to view or update your Aso Ebi fabric choices anytime.
+          </p>
+          <p class="leading-relaxed text-amber-900/80 text-[11px] sm:text-xs">
+            <em>First time ordering?</em> Buying Aso Ebi fabric alone does not count as a wedding seat reservation. If you haven't RSVP'd yet, please request your official invitation link from the bride or groom.
           </p>
         </div>
       </div>
@@ -312,8 +319,16 @@ const waPaymentLink = computed(() => {
               </div>
               <p class="text-xs text-deep-espresso/70 font-sans">{{ accountName }}</p>
             </div>
-            <p class="text-xs text-deep-espresso/60 font-sans mt-3 italic">
-              Proof of payment can be sent on WhatsApp to {{ whatsAppContact }}.
+            <p class="text-xs text-deep-espresso/70 font-sans mt-3 italic">
+              Proof of payment can be sent on WhatsApp to
+              <a
+                :href="waPaymentLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-semibold text-deep-terracotta underline hover:text-deep-terracotta/80 cursor-pointer"
+              >
+                {{ whatsAppContact }} ↗
+              </a>.
             </p>
           </div>
         </div>
@@ -590,22 +605,25 @@ const waPaymentLink = computed(() => {
           </p>
         </div>
 
-        <div class="bg-warm-cream/50 p-4 rounded-xl border border-amber-gold/20 text-sm font-sans space-y-2">
-          <div class="flex justify-between">
-            <span class="text-deep-espresso/70">Total Amount:</span>
-            <span class="font-bold font-mono text-deep-terracotta">₦{{ totalCost.toLocaleString() }}</span>
+        <div class="bg-warm-cream/60 p-4 md:p-5 rounded-xl border border-amber-gold/30 text-sm font-sans space-y-3">
+          <div class="flex justify-between items-center pb-2 border-b border-amber-gold/15">
+            <span class="text-deep-espresso/70 font-medium">Grand Total</span>
+            <span class="font-bold font-mono text-lg text-deep-terracotta">₦{{ totalCost.toLocaleString() }}</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-deep-espresso/70">Bank:</span>
-            <span class="font-semibold">{{ bankName }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-deep-espresso/70">Account Number:</span>
-            <span class="font-mono font-semibold">{{ accountNumber }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-deep-espresso/70">Account Name:</span>
-            <span class="font-semibold">{{ accountName }}</span>
+          <div class="space-y-1">
+            <p class="text-xs font-semibold text-deep-espresso/60 uppercase tracking-wider">Bank Transfer Details</p>
+            <p class="font-semibold text-deep-espresso text-sm">{{ bankName }}</p>
+            <div class="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-amber-gold/30 my-1">
+              <span class="font-mono font-bold text-lg text-deep-terracotta tracking-wider">{{ accountNumber }}</span>
+              <button
+                type="button"
+                @click="copyAccount"
+                class="text-xs px-3 py-1.5 bg-warm-cream hover:bg-amber-gold/20 border border-amber-gold/40 rounded-md text-deep-espresso font-sans transition-colors cursor-pointer font-semibold"
+              >
+                {{ copiedBank ? "Copied! ✓" : "Copy Account" }}
+              </button>
+            </div>
+            <p class="text-xs text-deep-espresso/70 font-medium">{{ accountName }}</p>
           </div>
         </div>
 
@@ -616,7 +634,7 @@ const waPaymentLink = computed(() => {
             rel="noopener noreferrer"
             class="w-full py-3 bg-emerald-600 text-white font-sans text-xs uppercase tracking-wider font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all cursor-pointer"
           >
-            <span>Send Proof of Payment on WhatsApp</span>
+            <span>Send Proof of Payment on WhatsApp ({{ whatsAppContact }})</span>
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
             </svg>

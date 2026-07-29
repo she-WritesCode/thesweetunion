@@ -880,9 +880,9 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div class="flex-1">
-                  <p class="font-bold text-base text-deep-espresso">1. I have sent the money</p>
+                  <p class="font-bold text-base text-deep-espresso">1. I am gifting/paying now</p>
                   <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
-                    I have made a direct bank transfer using the account details below.
+                    I am making a direct bank transfer or gift payment now using the details below.
                   </p>
                 </div>
                 <div
