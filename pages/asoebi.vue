@@ -301,18 +301,20 @@ const waPaymentLink = computed(() => {
           </p>
         </div>
 
-        <!-- Dynamic Grid depending on 1, 2, 3, or 4 images -->
+        <!-- Dynamic Grid depending on photo count -->
         <div
           class="grid gap-6 justify-center items-center select-none pt-2"
           :class="{
             'grid-cols-1 max-w-md mx-auto': fabricPhotos.length === 1,
             'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto': fabricPhotos.length === 2,
             'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto': fabricPhotos.length === 3,
-            'grid-cols-2 sm:grid-cols-4 max-w-4xl mx-auto': fabricPhotos.length >= 4,
+            'grid-cols-2 sm:grid-cols-4 max-w-4xl mx-auto': fabricPhotos.length === 4,
+            'grid-cols-2 sm:grid-cols-3 md:grid-cols-5 max-w-5xl mx-auto': fabricPhotos.length === 5,
+            'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 max-w-5xl mx-auto': fabricPhotos.length >= 6,
           }"
         >
           <div
-            v-for="(photo, idx) in fabricPhotos.slice(0, 4)"
+            v-for="(photo, idx) in fabricPhotos"
             :key="idx"
             class="bg-white p-3 pb-6 rounded-xl shadow-md border border-deep-espresso/5 transition-all duration-300 hover:rotate-0 hover:scale-105 cursor-zoom-in motion-lift relative group"
             :class="idx % 2 === 0 ? '-rotate-2' : 'rotate-2'"

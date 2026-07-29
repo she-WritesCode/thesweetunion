@@ -10,7 +10,7 @@ export const asoebiSettings = defineGlobal({
       relationTo: "media",
       hasMany: true,
       admin: {
-        description: "Photos of the Aso Ebi fabric and headwear (1 to 4 photos). Displayed on the Aso Ebi page.",
+        description: "Photos of the Aso Ebi fabric and headwear. All photos will be displayed in an interactive gallery on the Aso Ebi page.",
       },
     }),
     defineNumberField({
