@@ -273,7 +273,12 @@ const waPaymentLink = computed(() => {
         class="bg-amber-50/90 border border-amber-gold/40 text-amber-950 rounded-2xl p-4 md:p-5 max-w-2xl mx-auto flex items-start gap-3.5 font-sans text-xs md:text-sm text-left shadow-sm"
       >
         <svg class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
         </svg>
         <div class="space-y-2">
           <p class="font-bold uppercase tracking-wider text-xs text-amber-900 mb-0.5">Important Notice</p>
@@ -293,18 +298,6 @@ const waPaymentLink = computed(() => {
     <main class="max-w-4xl mx-auto px-4 md:px-6 space-y-10">
       <!-- Fabric Showcase Gallery (1 to 4 images) -->
       <section v-if="fabricPhotos.length > 0" class="space-y-4 text-center">
-        <div class="space-y-1">
-          <span class="text-xs uppercase tracking-widest text-amber-gold font-sans font-bold block">
-            Our Traditional Attire
-          </span>
-          <h2 class="text-2xl md:text-3xl font-bold font-display-cinzel text-deep-espresso">
-            Aso Ebi & Headwear Gallery
-          </h2>
-          <p class="text-xs md:text-sm text-deep-espresso/70 font-sans max-w-xl mx-auto">
-            Click any photo to enlarge and inspect our official fabric & headwear colors.
-          </p>
-        </div>
-
         <!-- Dynamic Grid depending on photo count -->
         <div
           class="grid gap-6 justify-center items-center select-none pt-2"
@@ -330,7 +323,12 @@ const waPaymentLink = computed(() => {
             <div class="mt-3 text-center flex items-center justify-center gap-1 text-deep-espresso/80">
               <span class="font-display-cormorant text-sm font-semibold">#TheSweetUnion</span>
               <svg class="w-3.5 h-3.5 text-amber-gold inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                />
               </svg>
             </div>
           </div>
@@ -343,7 +341,12 @@ const waPaymentLink = computed(() => {
           <div>
             <h2 class="text-xl font-bold font-display-cinzel text-deep-espresso mb-4 flex items-center gap-2">
               <svg class="w-5 h-5 text-amber-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                />
               </svg>
               <span>Pricing & Packages</span>
             </h2>
@@ -670,9 +673,16 @@ const waPaymentLink = computed(() => {
         class="bg-white/90 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-amber-gold/20 shadow-md flex flex-col md:flex-row items-center justify-between gap-6 mb-12"
       >
         <div class="space-y-2 text-center md:text-left">
-          <span class="text-xs uppercase tracking-widest text-deep-terracotta font-sans font-bold flex items-center justify-center md:justify-start gap-1.5">
+          <span
+            class="text-xs uppercase tracking-widest text-deep-terracotta font-sans font-bold flex items-center justify-center md:justify-start gap-1.5"
+          >
             <svg class="w-4 h-4 text-deep-terracotta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z"
+              />
             </svg>
             <span>Wedding Registry</span>
           </span>
@@ -738,7 +748,13 @@ const waPaymentLink = computed(() => {
                 class="text-xs px-3 py-1.5 bg-warm-cream hover:bg-amber-gold/20 border border-amber-gold/40 rounded-md text-deep-espresso font-sans transition-colors cursor-pointer font-semibold inline-flex items-center gap-1"
               >
                 <span>{{ copiedBank ? "Copied!" : "Copy Account" }}</span>
-                <svg v-if="copiedBank" class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  v-if="copiedBank"
+                  class="w-3.5 h-3.5 text-emerald-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
               </button>
@@ -751,7 +767,12 @@ const waPaymentLink = computed(() => {
         <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans">
           <p class="text-deep-espresso/80 inline-flex items-center justify-center gap-1 flex-wrap">
             <svg class="w-4 h-4 text-deep-terracotta inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z"
+              />
             </svg>
             <span>Want to bless the couple further?</span>
             <NuxtLink
