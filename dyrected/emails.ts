@@ -106,7 +106,7 @@ function asoebiSection(
   asoOkeMaleQty?: number,
   asoOkeFemaleQty?: number,
   asoebiDetails?: string,
-  asoebiSettings?: any
+  asoebiSettings?: any,
 ): string {
   if ((!wantsAsoebi && !wantsAsoOke) || !asoebiSettings) return "";
 
@@ -122,7 +122,9 @@ function asoebiSection(
     if (!isNaN(yards) && yards > 0) {
       const cost = yards * pricePerYard;
       totalAmount += cost;
-      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Asoebi Fabric</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${yards} Yards (₦${cost.toLocaleString()})</td></tr>`);
+      items.push(
+        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Asoebi Fabric</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${yards} Yards (₦${cost.toLocaleString()})</td></tr>`,
+      );
     }
   }
 
@@ -130,12 +132,16 @@ function asoebiSection(
     if (asoOkeMaleQty && asoOkeMaleQty > 0) {
       const cost = asoOkeMaleQty * malePrice;
       totalAmount += cost;
-      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Male Aso Oke (Fila/Cap)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeMaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`);
+      items.push(
+        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Male Aso Oke (Fila/Cap)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeMaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`,
+      );
     }
     if (asoOkeFemaleQty && asoOkeFemaleQty > 0) {
       const cost = asoOkeFemaleQty * femalePrice;
       totalAmount += cost;
-      items.push(`<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Female Aso Oke (Gele/Ipele)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeFemaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`);
+      items.push(
+        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Female Aso Oke (Gele/Ipele)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeFemaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`,
+      );
     }
   }
 
@@ -192,7 +198,7 @@ function getGoogleCalendarUrl(event: any): string {
   const title = encodeURIComponent(`${event.name} - #TheSweetUnion`);
   const dates = `${formatGoogleDate(event.date)}/${formatGoogleDate(event.date)}`;
   const details = encodeURIComponent(
-    `Wedding event for Adun & Uche.\nVenue: ${event.venueName}, ${event.venueAddress}\nDress Code: ${event.dressCode || "Formal"}`
+    `Wedding event for Adun & Uche.\nVenue: ${event.venueName}, ${event.venueAddress}\nDress Code: ${event.dressCode || "Formal"}`,
   );
   const location = encodeURIComponent(`${event.venueName}, ${event.venueAddress}`);
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
@@ -307,6 +313,10 @@ export function rsvpUpdatedEmail({
   wishlistLink,
   wantsAsoebi,
   asoebiYards,
+  wantsAsoOke,
+  asoOkeMaleQty,
+  asoOkeFemaleQty,
+  asoebiDetails,
   asoebiSettings,
   appUrl,
 }: {
@@ -319,23 +329,33 @@ export function rsvpUpdatedEmail({
   wishlistLink?: string;
   wantsAsoebi?: boolean;
   asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  asoebiDetails?: string;
   asoebiSettings?: any;
   appUrl: string;
 }): string {
   const partyLine = attending ? (hasSpouse && spouseName ? `You &amp; ${spouseName}` : "Solo attendance") : "Declined";
-  const asoebiLabel = wantsAsoebi ? `${asoebiYards} Yards` : "No";
+  const orderSummary = [];
+  if (wantsAsoebi && asoebiYards) orderSummary.push(`${asoebiYards} Yards Fabric`);
+  if (wantsAsoOke) {
+    if (asoOkeMaleQty) orderSummary.push(`${asoOkeMaleQty} Male Aso Oke`);
+    if (asoOkeFemaleQty) orderSummary.push(`${asoOkeFemaleQty} Female Aso Oke`);
+  }
+  const asoebiLabel = orderSummary.length > 0 ? orderSummary.join(", ") : "None";
 
   return layout(
     heading(`RSVP updated, ${leadName}.`),
     paragraph("Here's a summary of your updated RSVP."),
     divider(),
     table(
-      row("Status", attending ? "Attending ✓" : "Declined"),
+      row("Status", attending ? "Attending ✓" : "Not Attending"),
       row("Party", partyLine),
-      attending ? row("Asoebi Request", asoebiLabel) : "",
+      row("Asoebi Request", asoebiLabel),
     ),
     attending && events.length ? sectionLabel("Events & Calendars") + eventListWithCalendars(events, appUrl) : "",
-    asoebiSection(wantsAsoebi, asoebiYards, asoebiSettings),
+    asoebiSection(wantsAsoebi, asoebiYards, wantsAsoOke, asoOkeMaleQty, asoOkeFemaleQty, asoebiDetails, asoebiSettings),
     divider(),
     paragraph("Need to change something again? Use your edit link below."),
     ctaButton("Edit My RSVP", editLink),
@@ -563,7 +583,12 @@ export function adminWishlistNotificationEmail({
         ? "Bank transfer"
         : "Not specified";
   const reminderDateLabel = reminderAt
-    ? new Date(reminderAt).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })
+    ? new Date(reminderAt).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
     : "Not set";
 
   return layout(

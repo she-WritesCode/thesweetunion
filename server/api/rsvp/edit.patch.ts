@@ -6,7 +6,23 @@ import { syncGroupCounts } from "./_counts";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { editToken, leadName, leadEmail, leadPhone, attending, hasSpouse, spouseName, dietaryNotes, message, selectedEvents, wantsAsoebi, asoebiYards } = body;
+  const {
+    editToken,
+    leadName,
+    leadEmail,
+    leadPhone,
+    attending,
+    hasSpouse,
+    spouseName,
+    dietaryNotes,
+    message,
+    selectedEvents,
+    wantsAsoebi,
+    asoebiYards,
+    wantsAsoOke,
+    asoOkeMaleQty,
+    asoOkeFemaleQty,
+  } = body;
 
   if (!editToken) {
     throw createError({ statusCode: 400, message: "Missing edit token" });
@@ -34,20 +50,37 @@ export default defineEventHandler(async (event) => {
   const newAttending = attending !== undefined ? attending : record.attending;
   const newWantsAsoebi = wantsAsoebi !== undefined ? wantsAsoebi : record.wantsAsoebi;
   const newAsoebiYards = asoebiYards !== undefined ? asoebiYards : record.asoebiYards;
+  const newWantsAsoOke = wantsAsoOke !== undefined ? wantsAsoOke : record.wantsAsoOke;
+  const newAsoOkeMaleQty = asoOkeMaleQty !== undefined ? asoOkeMaleQty : record.asoOkeMaleQty;
+  const newAsoOkeFemaleQty = asoOkeFemaleQty !== undefined ? asoOkeFemaleQty : record.asoOkeFemaleQty;
+
+  const detailsParts = [];
+  if (newWantsAsoebi && newAsoebiYards) {
+    detailsParts.push(`Asoebi Fabric: ${newAsoebiYards} Yards`);
+  }
+  if (newWantsAsoOke) {
+    if (newAsoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${newAsoOkeMaleQty} set(s)`);
+    if (newAsoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele/Ipele): ${newAsoOkeFemaleQty} set(s)`);
+  }
+  const asoebiDetailsStr = detailsParts.join(" | ");
 
   try {
     const updated = await client.collection("rsvp_records").update(record.id, {
       leadName,
       leadEmail,
       leadPhone,
-      attending,
+      attending: newAttending,
       hasSpouse,
       spouseName,
       dietaryNotes,
       message,
       selectedEvents,
-      wantsAsoebi: newAttending ? newWantsAsoebi : false,
-      asoebiYards: newAttending && newWantsAsoebi ? newAsoebiYards : "",
+      wantsAsoebi: newWantsAsoebi,
+      asoebiYards: newWantsAsoebi ? newAsoebiYards : "",
+      wantsAsoOke: newWantsAsoOke,
+      asoOkeMaleQty: newWantsAsoOke ? newAsoOkeMaleQty || 0 : 0,
+      asoOkeFemaleQty: newWantsAsoOke ? newAsoOkeFemaleQty || 0 : 0,
+      asoebiDetails: asoebiDetailsStr,
     });
 
     await syncGroupCounts(client, groupId);
@@ -65,9 +98,9 @@ export default defineEventHandler(async (event) => {
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
     const wishlistLink = `${appUrl}/wishlist`;
 
-    // Fetch Asoebi global settings if wantsAsoebi is true
+    // Fetch Asoebi global settings if wantsAsoebi or wantsAsoOke is true
     let asoebiSettings: any = null;
-    if (newAttending && newWantsAsoebi) {
+    if (newWantsAsoebi || newWantsAsoOke) {
       try {
         asoebiSettings = await $fetch("/api/globals/asoebi_settings");
       } catch (e) {
@@ -86,8 +119,12 @@ export default defineEventHandler(async (event) => {
         events: rsvpEvents,
         editLink,
         wishlistLink,
-        wantsAsoebi: newAttending && newWantsAsoebi,
-        asoebiYards: newAttending && newWantsAsoebi ? newAsoebiYards : "",
+        wantsAsoebi: newWantsAsoebi,
+        asoebiYards: newWantsAsoebi ? newAsoebiYards : "",
+        wantsAsoOke: newWantsAsoOke,
+        asoOkeMaleQty: newWantsAsoOke ? newAsoOkeMaleQty || 0 : 0,
+        asoOkeFemaleQty: newWantsAsoOke ? newAsoOkeFemaleQty || 0 : 0,
+        asoebiDetails: asoebiDetailsStr,
         asoebiSettings,
         appUrl,
       }),

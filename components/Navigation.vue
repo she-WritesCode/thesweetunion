@@ -39,6 +39,9 @@ onMounted(() => {
           <NuxtLink to="/#events" class="hover:text-deep-terracotta transition-colors cursor-pointer">
             Events
           </NuxtLink>
+          <NuxtLink to="/asoebi" class="hover:text-deep-terracotta transition-colors cursor-pointer">
+            Aso Ebi
+          </NuxtLink>
           <NuxtLink to="/wishlist" class="hover:text-deep-terracotta transition-colors cursor-pointer">
             Wishlist
           </NuxtLink>
@@ -93,6 +96,13 @@ onMounted(() => {
               class="hover:text-deep-terracotta transition-colors cursor-pointer"
             >
               Events
+            </NuxtLink>
+            <NuxtLink
+              to="/asoebi"
+              @click="isMobileMenuOpen = false"
+              class="hover:text-deep-terracotta transition-colors cursor-pointer"
+            >
+              Aso Ebi
             </NuxtLink>
             <NuxtLink
               to="/wishlist"

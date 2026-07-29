@@ -90,10 +90,10 @@ export default defineEventHandler(async (event) => {
 
   try {
     const detailsParts = [];
-    if (attending && wantsAsoebi && asoebiYards) {
+    if (wantsAsoebi && asoebiYards) {
       detailsParts.push(`Asoebi Fabric: ${asoebiYards} Yards`);
     }
-    if (attending && wantsAsoOke) {
+    if (wantsAsoOke) {
       if (asoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${asoOkeMaleQty} set(s)`);
       if (asoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele/Ipele): ${asoOkeFemaleQty} set(s)`);
     }
@@ -110,11 +110,11 @@ export default defineEventHandler(async (event) => {
       dietaryNotes,
       message,
       selectedEvents,
-      wantsAsoebi: attending ? wantsAsoebi : false,
-      asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
-      wantsAsoOke: attending ? wantsAsoOke : false,
-      asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
-      asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
+      wantsAsoebi: wantsAsoebi ?? false,
+      asoebiYards: wantsAsoebi ? asoebiYards : "",
+      wantsAsoOke: wantsAsoOke ?? false,
+      asoOkeMaleQty: wantsAsoOke ? asoOkeMaleQty || 0 : 0,
+      asoOkeFemaleQty: wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
     });
 
@@ -135,7 +135,7 @@ export default defineEventHandler(async (event) => {
 
     // Fetch Asoebi global settings if wantsAsoebi or wantsAsoOke is true
     let asoebiSettings: any = null;
-    if (attending && (wantsAsoebi || wantsAsoOke)) {
+    if (wantsAsoebi || wantsAsoOke) {
       try {
         asoebiSettings = await $fetch("/api/globals/asoebi_settings");
       } catch (e) {
