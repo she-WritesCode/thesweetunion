@@ -8,9 +8,22 @@ import Navigation from "~/components/Navigation.vue";
 const route = useRoute();
 
 // Global settings
-const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
+const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings", { depth: 2 });
 const { data: siteSettings } = useCachedDyrectedGlobal("site_settings", { depth: 2 });
 const couplesPhoto = computed(() => (siteSettings.value as any)?.footerImage?.url || null);
+
+const fabricPhotos = computed<string[]>(() => {
+  const images = (asoebiSettings.value as any)?.fabricImages;
+  if (!images || !Array.isArray(images)) return [];
+  return images
+    .map((img: any) => (typeof img === "object" && img?.url ? img.url : null))
+    .filter((url): url is string => Boolean(url));
+});
+
+const lightboxImage = ref<string | null>(null);
+function setLightboxImage(url: string | null) {
+  lightboxImage.value = url;
+}
 
 const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
 const asoOkeMalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeMalePrice || 15000);
@@ -244,10 +257,10 @@ const waPaymentLink = computed(() => {
 
     <!-- Hero Header -->
     <header class="pt-28 pb-8 px-6 text-center max-w-4xl mx-auto">
-      <p class="text-xs uppercase tracking-widest text-deep-terracotta mb-2 font-sans font-semibold">
+      <p class="text-xs uppercase tracking-widest text-deep-terracotta mb-2 font-sans font-bold">
         #TheSweetUnion Celebration
       </p>
-      <h1 class="text-3xl md:text-5xl font-display-cinzel text-deep-espresso mb-4">Aso Ebi & Headwear Selection</h1>
+      <h1 class="text-3xl md:text-5xl font-bold font-display-cinzel text-deep-espresso mb-4">Aso Ebi & Headwear Selection</h1>
       <p class="text-base md:text-lg text-deep-espresso/70 max-w-2xl mx-auto font-light leading-relaxed mb-6">
         Join us in celebrating our traditional union in style! Look up your current selection, make updates, or place a
         new Aso Ebi order below.
@@ -274,11 +287,53 @@ const waPaymentLink = computed(() => {
     </header>
 
     <main class="max-w-4xl mx-auto px-4 md:px-6 space-y-10">
+      <!-- Fabric Showcase Gallery (1 to 4 images) -->
+      <section v-if="fabricPhotos.length > 0" class="space-y-4 text-center">
+        <div class="space-y-1">
+          <span class="text-xs uppercase tracking-widest text-amber-gold font-sans font-bold block">
+            Our Traditional Attire
+          </span>
+          <h2 class="text-2xl md:text-3xl font-bold font-display-cinzel text-deep-espresso">
+            Aso Ebi & Headwear Gallery
+          </h2>
+          <p class="text-xs md:text-sm text-deep-espresso/70 font-sans max-w-xl mx-auto">
+            Click any photo to enlarge and inspect our official fabric & headwear colors.
+          </p>
+        </div>
+
+        <!-- Dynamic Grid depending on 1, 2, 3, or 4 images -->
+        <div
+          class="grid gap-6 justify-center items-center select-none pt-2"
+          :class="{
+            'grid-cols-1 max-w-md mx-auto': fabricPhotos.length === 1,
+            'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto': fabricPhotos.length === 2,
+            'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto': fabricPhotos.length === 3,
+            'grid-cols-2 sm:grid-cols-4 max-w-4xl mx-auto': fabricPhotos.length >= 4,
+          }"
+        >
+          <div
+            v-for="(photo, idx) in fabricPhotos.slice(0, 4)"
+            :key="idx"
+            class="bg-white p-3 pb-6 rounded-xl shadow-md border border-deep-espresso/5 transition-all duration-300 hover:rotate-0 hover:scale-105 cursor-zoom-in motion-lift relative group"
+            :class="idx % 2 === 0 ? '-rotate-2' : 'rotate-2'"
+            @click="setLightboxImage(photo)"
+          >
+            <div class="relative aspect-4/3 sm:aspect-square w-full overflow-hidden bg-deep-espresso/5 rounded-md">
+              <img :src="photo" alt="Aso Ebi Fabric & Headwear" class="img-fill object-cover" />
+            </div>
+            <div class="mt-3 text-center flex items-center justify-center gap-1 text-deep-espresso/80">
+              <span class="font-display-cormorant text-sm font-semibold">#TheSweetUnion</span>
+              <span class="text-[10px] text-amber-gold">🔍</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Live Pricing & Bank Info Banner -->
       <section class="bg-white/80 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-amber-gold/20 shadow-md">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
-            <h2 class="text-xl font-display-cinzel text-deep-espresso mb-4 flex items-center gap-2">
+            <h2 class="text-xl font-bold font-display-cinzel text-deep-espresso mb-4 flex items-center gap-2">
               <span>✨</span> Pricing & Packages
             </h2>
             <ul class="space-y-3 text-sm text-deep-espresso/80 font-sans">
@@ -709,6 +764,35 @@ const waPaymentLink = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Lightbox Modal -->
+    <Transition name="overlay-fade">
+      <div
+        v-if="lightboxImage"
+        class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center cursor-zoom-out p-4 md:p-8"
+        @click="setLightboxImage(null)"
+      >
+        <Transition name="dialog-pop" appear>
+          <div
+            v-if="lightboxImage"
+            class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full"
+          >
+            <img
+              :src="lightboxImage"
+              alt="Enlarged fabric photo"
+              class="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </Transition>
+        <button
+          @click="setLightboxImage(null)"
+          class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors text-3xl font-sans focus:outline-none cursor-pointer"
+          aria-label="Close lightbox"
+        >
+          ✕
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 
