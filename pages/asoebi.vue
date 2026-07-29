@@ -660,7 +660,7 @@ const waPaymentLink = computed(() => {
 
       <!-- Wishlist Registry Upsell Section -->
       <section
-        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-amber-gold/20 shadow-md flex flex-col md:flex-row items-center justify-between gap-6"
+        class="bg-white/90 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-amber-gold/20 shadow-md flex flex-col md:flex-row items-center justify-between gap-6 mb-12"
       >
         <div class="space-y-2 text-center md:text-left">
           <span class="text-xs uppercase tracking-widest text-deep-terracotta font-sans font-bold block">
@@ -731,7 +731,7 @@ const waPaymentLink = computed(() => {
         </div>
 
         <!-- Gentle Wishlist Upsell in Modal -->
-        <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans mb-12">
+        <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans">
           <p class="text-deep-espresso/80">
             Want to bless the couple further? 🎁
             <NuxtLink
