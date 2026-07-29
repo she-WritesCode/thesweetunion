@@ -9,6 +9,8 @@ const route = useRoute();
 
 // Global settings
 const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
+const { data: siteSettings } = useCachedDyrectedGlobal("site_settings", { depth: 2 });
+const couplesPhoto = computed(() => (siteSettings.value as any)?.footerImage?.url || null);
 
 const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
 const asoOkeMalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeMalePrice || 15000);
@@ -585,7 +587,32 @@ const waPaymentLink = computed(() => {
           </div>
         </form>
       </section>
+
+      <!-- Wishlist Registry Upsell Section -->
+      <section class="bg-white/90 backdrop-blur-md rounded-2xl p-6 md:p-10 border border-amber-gold/20 shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-2 text-center md:text-left">
+          <span class="text-xs uppercase tracking-widest text-deep-terracotta font-sans font-bold block">
+            Wedding Registry 🎁
+          </span>
+          <h2 class="text-xl md:text-2xl font-display-cinzel text-deep-espresso">
+            Bless Our Home & New Journey
+          </h2>
+          <p class="text-xs md:text-sm text-deep-espresso/70 font-sans max-w-xl leading-relaxed">
+            Your love, presence, and prayers mean everything to us! If you'd like to help us build our home as we begin our life together, check out our wedding registry for curated gifts and cash funds.
+          </p>
+        </div>
+        <NuxtLink
+          to="/wishlist"
+          class="shrink-0 px-6 py-3.5 bg-deep-espresso text-warm-cream font-sans text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-deep-espresso/90 shadow transition-all cursor-pointer inline-flex items-center gap-2"
+        >
+          <span>Browse Registry</span>
+          <span>→</span>
+        </NuxtLink>
+      </section>
     </main>
+
+    <!-- Footer Component -->
+    <Footer :couples-photo="couplesPhoto" />
 
     <!-- Success Confirmation Modal -->
     <div
@@ -625,6 +652,16 @@ const waPaymentLink = computed(() => {
             </div>
             <p class="text-xs text-deep-espresso/70 font-medium">{{ accountName }}</p>
           </div>
+        </div>
+
+        <!-- Gentle Wishlist Upsell in Modal -->
+        <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans">
+          <p class="text-deep-espresso/80">
+            Want to bless the couple further? 🎁
+            <NuxtLink to="/wishlist" class="font-bold text-deep-terracotta underline hover:text-deep-terracotta/80 ml-1">
+              Browse Wedding Registry
+            </NuxtLink>
+          </p>
         </div>
 
         <div class="space-y-3">
