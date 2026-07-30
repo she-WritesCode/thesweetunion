@@ -247,6 +247,59 @@ onUnmounted(() => {
       </div>
     </section>
 
+    <!-- Registry Teaser Section -->
+    <section
+      id="wishlist"
+      class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
+    >
+      <FadeInSection :distance="20">
+        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center motion-stagger">
+          <!-- Left Column: Polaroid Home Couple Photo — only shown when image is available -->
+          <div
+            v-if="config.wishlistTeaser.imageUrl"
+            class="flex justify-center select-none relative order-2 lg:order-1"
+          >
+            <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
+            <div
+              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in motion-lift"
+              @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
+            >
+              <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
+                <DyrectedMedia
+                  :media="config.wishlistTeaser.image || config.wishlistTeaser.imageUrl"
+                  alt="Building our home"
+                  class="img-fill"
+                />
+              </div>
+              <div class="mt-4 text-center">
+                <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
+                  {{ config.couple.hashtag }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Registry Teaser -->
+          <div
+            class="linen-card p-8 sm:p-10 rounded-2xl flex flex-col justify-between items-start border border-amber-gold/15 transition-all duration-300 hover:shadow-lg order-1 lg:order-2 motion-lift"
+          >
+            <div class="mb-6">
+              <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-2">
+                Registry
+              </span>
+              <h3 class="heading2-small text-deep-espresso mb-3 font-display-cinzel">
+                {{ config.wishlistTeaser.title }}
+              </h3>
+              <p class="font-body text-deep-espresso/80 text-base sm:text-lg leading-relaxed">
+                {{ config.wishlistTeaser.description }}
+              </p>
+            </div>
+            <NuxtLink to="/wishlist" class="btn-primary"> Browse Wishlist </NuxtLink>
+          </div>
+        </div>
+      </FadeInSection>
+    </section>
+
     <!-- Dynamic Wedding Events Sections -->
     <div id="events">
       <section
@@ -342,59 +395,6 @@ onUnmounted(() => {
         </FadeInSection>
       </section>
     </div>
-
-    <!-- Registry Teaser Section -->
-    <section
-      id="wishlist"
-      class="min-h-screen paper-texture w-full flex items-center justify-center p-4 border-b border-amber-gold/10"
-    >
-      <FadeInSection :distance="20">
-        <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center motion-stagger">
-          <!-- Left Column: Polaroid Home Couple Photo — only shown when image is available -->
-          <div
-            v-if="config.wishlistTeaser.imageUrl"
-            class="flex justify-center select-none relative order-2 lg:order-1"
-          >
-            <div class="washi-tape washi-tape-gold top-[-10px] left-1/2 ml-[-55px] rotate-[-4deg]" />
-            <div
-              class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 rotate-3 max-w-sm sm:max-w-md w-full transition-transform duration-300 hover:rotate-0 cursor-zoom-in motion-lift"
-              @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
-            >
-              <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <DyrectedMedia
-                  :media="config.wishlistTeaser.image || config.wishlistTeaser.imageUrl"
-                  alt="Building our home"
-                  class="img-fill"
-                />
-              </div>
-              <div class="mt-4 text-center">
-                <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
-                  {{ config.couple.hashtag }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Column: Registry Teaser -->
-          <div
-            class="linen-card p-8 sm:p-10 rounded-2xl flex flex-col justify-between items-start border border-amber-gold/15 transition-all duration-300 hover:shadow-lg order-1 lg:order-2 motion-lift"
-          >
-            <div class="mb-6">
-              <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase block mb-2">
-                Registry
-              </span>
-              <h3 class="heading2-small text-deep-espresso mb-3 font-display-cinzel">
-                {{ config.wishlistTeaser.title }}
-              </h3>
-              <p class="font-body text-deep-espresso/80 text-base sm:text-lg leading-relaxed">
-                {{ config.wishlistTeaser.description }}
-              </p>
-            </div>
-            <NuxtLink to="/wishlist" class="btn-primary"> Browse Wishlist </NuxtLink>
-          </div>
-        </div>
-      </FadeInSection>
-    </section>
 
     <!-- FAQs & Playful Couple Photo -->
     <section
