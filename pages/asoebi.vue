@@ -303,8 +303,8 @@ const waPaymentLink = computed(() => {
           class="grid gap-6 justify-center items-center select-none pt-2"
           :class="{
             'grid-cols-1 max-w-md mx-auto': fabricPhotos.length === 1,
-            'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto': fabricPhotos.length === 2,
-            'grid-cols-1 sm:grid-cols-3 max-w-4xl mx-auto': fabricPhotos.length === 3,
+            'grid-cols-2 sm:grid-cols-2 max-w-2xl mx-auto': fabricPhotos.length === 2,
+            'grid-cols-2 sm:grid-cols-3 max-w-4xl mx-auto': fabricPhotos.length === 3,
             'grid-cols-2 sm:grid-cols-4 max-w-4xl mx-auto': fabricPhotos.length === 4,
             'grid-cols-2 sm:grid-cols-3 md:grid-cols-5 max-w-5xl mx-auto': fabricPhotos.length === 5,
             'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 max-w-5xl mx-auto': fabricPhotos.length >= 6,
