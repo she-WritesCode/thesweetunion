@@ -592,7 +592,10 @@ onUnmounted(() => {
     <main class="rsvp-main" :class="isFormActive ? 'rsvp-main--form-active' : 'rsvp-main--inactive'">
       <div class="rsvp-content">
         <!-- 1. INVALID DIRECT LINK BLOCKER -->
-        <div v-if="invalidLinkError && !existingRSVP" class="rsvp-blocker motion-reveal motion-reveal--scale-in motion-reveal--ready">
+        <div
+          v-if="invalidLinkError && !existingRSVP"
+          class="rsvp-blocker motion-reveal motion-reveal--scale-in motion-reveal--ready"
+        >
           <div class="rsvp-blocker__icon">✉️</div>
           <h2 class="rsvp-blocker__title">Your invitation holds the key.</h2>
           <p class="rsvp-blocker__body">
@@ -606,7 +609,10 @@ onUnmounted(() => {
         </div>
 
         <!-- 2. CAPACITY ALLOCATION BLOCKER -->
-        <div v-if="groupFullError" class="rsvp-blocker rsvp-blocker--error motion-reveal motion-reveal--scale-in motion-reveal--ready">
+        <div
+          v-if="groupFullError"
+          class="rsvp-blocker rsvp-blocker--error motion-reveal motion-reveal--scale-in motion-reveal--ready"
+        >
           <div class="rsvp-blocker__icon">⚠️</div>
           <h3 class="rsvp-blocker__heading">We wish we could fit the whole world.</h3>
           <p class="rsvp-blocker__text">
@@ -628,7 +634,10 @@ onUnmounted(() => {
         </div>
 
         <!-- 3. CONFIRMED RSVP SUMMARY -->
-        <div v-if="existingRSVP && !isEditing && !groupFullError" class="rsvp-summary motion-reveal motion-reveal--fade-up motion-reveal--ready">
+        <div
+          v-if="existingRSVP && !isEditing && !groupFullError"
+          class="rsvp-summary motion-reveal motion-reveal--fade-up motion-reveal--ready"
+        >
           <div class="rsvp-summary__header">
             <div>
               <span class="rsvp-summary__status-label">RSVP Status</span>
@@ -762,255 +771,343 @@ onUnmounted(() => {
 
           <Transition name="step-fade" mode="out-in">
             <div :key="currentStep">
-          <!-- STEP 2: ATTENDANCE -->
-          <div v-if="currentStep === 2" class="rsvp-step">
-            <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Will you be joining us?</h2>
-              <p class="rsvp-step__subtitle">We hope you can make the trip to celebrate our marriage vows with us.</p>
-            </div>
-            <div class="rsvp-notice">
-              <span class="rsvp-notice__icon">⚠️</span>
-              <p class="rsvp-notice__text">
-                Please only RSVP <strong>Yes</strong> if you are certain you will be attending. Once submitted, your
-                spot is reserved and cannot be transferred. If your plans change, you can cancel from your confirmation.
-              </p>
-            </div>
-            <div class="rsvp-attendance-grid">
-              <button
-                type="button"
-                @click="handleAttendanceSelect(true)"
-                class="rsvp-attendance-btn"
-                :class="attending === true ? 'rsvp-attendance-btn--active-yes' : 'rsvp-attendance-btn--idle'"
-              >
-                <span class="rsvp-attendance-btn__emoji">🎉</span>
-                <span class="rsvp-attendance-btn__label">Yes, I will be there</span>
-                <span class="rsvp-attendance-btn__hint">We will set a plate for you!</span>
-              </button>
-              <button
-                type="button"
-                @click="handleAttendanceSelect(false)"
-                class="rsvp-attendance-btn"
-                :class="attending === false ? 'rsvp-attendance-btn--active-no' : 'rsvp-attendance-btn--idle'"
-              >
-                <span class="rsvp-attendance-btn__emoji">✉️</span>
-                <span class="rsvp-attendance-btn__label">Sadly, I cannot make it</span>
-                <span class="rsvp-attendance-btn__hint">We will miss you.</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- STEP 3: DETAILS -->
-          <div v-if="currentStep === 3" class="rsvp-step">
-            <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Tell us about yourself</h2>
-              <p class="rsvp-step__subtitle">Please enter your contact information. This is an adult-only wedding.</p>
-            </div>
-            <div class="rsvp-fields">
-              <div class="rsvp-field-group">
-                <label class="input-label">Full Name (Required)</label>
-                <input
-                  type="text"
-                  required
-                  v-model="leadName"
-                  class="rsvp-input"
-                  placeholder="Enter your first and last name"
-                />
-              </div>
-              <div class="rsvp-field-group">
-                <PhoneInput
-                  v-model="leadPhone"
-                  required
-                  placeholder="WhatsApp number"
-                  label="WhatsApp Number (Required)"
-                />
-              </div>
-              <div class="rsvp-field-group">
-                <label class="input-label">Email Address (Required)</label>
-                <input
-                  type="text"
-                  required
-                  v-model="leadEmail"
-                  @input="emailError = ''"
-                  class="rsvp-input"
-                  :class="emailError ? 'rsvp-input--error' : ''"
-                  placeholder="name@example.com"
-                />
-                <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
-              </div>
-              <div class="rsvp-spouse-section">
-                <div class="rsvp-spouse-row">
-                  <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
-                  <label for="hasSpouse" class="rsvp-spouse-label"> I am attending with my spouse</label>
+              <!-- STEP 2: ATTENDANCE -->
+              <div v-if="currentStep === 2" class="rsvp-step">
+                <div class="rsvp-step__header">
+                  <h2 class="rsvp-step__title">Will you be joining us?</h2>
+                  <p class="rsvp-step__subtitle">
+                    We hope you can make the trip to celebrate our marriage vows with us.
+                  </p>
                 </div>
-                <div v-if="hasSpouse" class="rsvp-spouse-field">
-                  <label class="input-label">Spouse / Partner Name (Required)</label>
-                  <input
-                    type="text"
-                    required
-                    v-model="spouseName"
-                    class="rsvp-input"
-                    placeholder="Enter partner's name"
-                  />
+                <div class="rsvp-notice">
+                  <span class="rsvp-notice__icon">⚠️</span>
+                  <p class="rsvp-notice__text">
+                    Please only RSVP <strong>Yes</strong> if you are certain you will be attending. Once submitted, your
+                    spot is reserved and cannot be transferred. If your plans change, you can cancel from your
+                    confirmation.
+                  </p>
                 </div>
-              </div>
-              <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box">
-                <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
-                <div class="rsvp-events-options">
-                  <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
-                    <span class="rsvp-event-info-display__check">✓</span>
-                    <span class="rsvp-event-info-display__text">
-                      <strong>{{ event.name }}</strong> <br />
-                      {{
-                        new Date(event.date).toLocaleDateString("en-NG", {
-                          dateStyle: "full",
-                        })
-                      }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
-                🔒 Your information is used only to manage your RSVP, invitation, and wedding-day check-in. It will not
-                be shared or used for marketing.
-              </p>
-            </div>
-          </div>
-
-          <!-- STEP 4: ASOEBI & ASO OKE -->
-          <div v-if="currentStep === 4" class="rsvp-step">
-            <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Asoebi &amp; Aso Oke Options</h2>
-              <p class="rsvp-step__subtitle">Choose your wedding attire &amp; headwear options below.</p>
-            </div>
-            <div class="rsvp-fields" style="display: flex; flex-direction: column; gap: 20px;">
-              
-              <!-- Asoebi Fabric Section -->
-              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px;">
-                <div style="margin-bottom: 12px;">
-                  <label class="input-label" style="font-weight: 700; margin: 0;">Asoebi Fabric</label>
-                  <div style="font-size: 0.8rem; color: #865172; margin-top: 2px;">₦{{ pricePerYard.toLocaleString() }} per yard</div>
-                </div>
-
-                <div class="fabric-pills">
+                <div class="rsvp-attendance-grid">
                   <button
                     type="button"
-                    class="fabric-pill"
-                    :class="{ 'fabric-pill--selected': !wantsAsoebi || !asoebiYards }"
-                    @click="selectFabricYards('')"
+                    @click="handleAttendanceSelect(true)"
+                    class="rsvp-attendance-btn"
+                    :class="attending === true ? 'rsvp-attendance-btn--active-yes' : 'rsvp-attendance-btn--idle'"
                   >
-                    <span class="fabric-pill__title">No fabric</span>
+                    <span class="rsvp-attendance-btn__emoji">🎉</span>
+                    <span class="rsvp-attendance-btn__label">Yes, I will be there</span>
+                    <span class="rsvp-attendance-btn__hint">We will set a plate for you!</span>
                   </button>
-
                   <button
-                    v-for="y in ['2', '3', '4', '5', '6']"
-                    :key="y"
                     type="button"
-                    class="fabric-pill"
-                    :class="{ 'fabric-pill--selected': wantsAsoebi && asoebiYards === y }"
-                    @click="selectFabricYards(y)"
+                    @click="handleAttendanceSelect(false)"
+                    class="rsvp-attendance-btn"
+                    :class="attending === false ? 'rsvp-attendance-btn--active-no' : 'rsvp-attendance-btn--idle'"
                   >
-                    <span class="fabric-pill__title">{{ y }} Yards</span>
-                    <span class="fabric-pill__price">₦{{ (parseInt(y, 10) * pricePerYard).toLocaleString() }}</span>
+                    <span class="rsvp-attendance-btn__emoji">✉️</span>
+                    <span class="rsvp-attendance-btn__label">Sadly, I cannot make it</span>
+                    <span class="rsvp-attendance-btn__hint">We will miss you.</span>
                   </button>
                 </div>
               </div>
 
-              <!-- Aso Oke Section -->
-              <div class="rsvp-field-group" style="background: rgba(134, 81, 114, 0.04); border: 1px solid rgba(134, 81, 114, 0.15); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px;">
-                <label class="input-label" style="font-weight: 700; margin: 0;">Aso Oke (Headwear / Cap)</label>
-
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                  <div>
-                    <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Male Aso Oke (Fila / Cap)</div>
-                    <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeMalePrice.toLocaleString() }} per set</div>
+              <!-- STEP 3: DETAILS -->
+              <div v-if="currentStep === 3" class="rsvp-step">
+                <div class="rsvp-step__header">
+                  <h2 class="rsvp-step__title">Tell us about yourself</h2>
+                  <p class="rsvp-step__subtitle">
+                    Please enter your contact information. This is an adult-only wedding.
+                  </p>
+                </div>
+                <div class="rsvp-fields">
+                  <div class="rsvp-field-group">
+                    <label class="input-label">Full Name (Required)</label>
+                    <input
+                      type="text"
+                      required
+                      v-model="leadName"
+                      class="rsvp-input"
+                      placeholder="Enter your first and last name"
+                    />
                   </div>
-                  <div class="stepper-box">
-                    <button type="button" class="stepper-btn" :disabled="asoOkeMaleQty <= 0" @click="decMaleAsoOke" aria-label="Decrease male Aso Oke quantity">−</button>
-                    <span class="stepper-val">{{ asoOkeMaleQty }}</span>
-                    <button type="button" class="stepper-btn" :disabled="asoOkeMaleQty >= 10" @click="incMaleAsoOke" aria-label="Increase male Aso Oke quantity">+</button>
+                  <div class="rsvp-field-group">
+                    <PhoneInput
+                      v-model="leadPhone"
+                      required
+                      placeholder="WhatsApp number"
+                      label="WhatsApp Number (Required)"
+                    />
+                  </div>
+                  <div class="rsvp-field-group">
+                    <label class="input-label">Email Address (Required)</label>
+                    <input
+                      type="text"
+                      required
+                      v-model="leadEmail"
+                      @input="emailError = ''"
+                      class="rsvp-input"
+                      :class="emailError ? 'rsvp-input--error' : ''"
+                      placeholder="name@example.com"
+                    />
+                    <p v-if="emailError" class="rsvp-field-error">{{ emailError }}</p>
+                  </div>
+                  <div class="rsvp-spouse-section">
+                    <div class="rsvp-spouse-row">
+                      <input type="checkbox" id="hasSpouse" v-model="hasSpouse" class="rsvp-checkbox" />
+                      <label for="hasSpouse" class="rsvp-spouse-label"> I am attending with my spouse</label>
+                    </div>
+                    <div v-if="hasSpouse" class="rsvp-spouse-field">
+                      <label class="input-label">Spouse / Partner Name (Required)</label>
+                      <input
+                        type="text"
+                        required
+                        v-model="spouseName"
+                        class="rsvp-input"
+                        placeholder="Enter partner's name"
+                      />
+                    </div>
+                  </div>
+                  <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box">
+                    <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
+                    <div class="rsvp-events-options">
+                      <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
+                        <span class="rsvp-event-info-display__check">✓</span>
+                        <span class="rsvp-event-info-display__text">
+                          <strong>{{ event.name }}</strong> <br />
+                          {{
+                            new Date(event.date).toLocaleDateString("en-NG", {
+                              dateStyle: "full",
+                            })
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="md:col-span-2 font-body text-xs leading-relaxed text-deep-espresso/60">
+                    🔒 Your information is used only to manage your RSVP, invitation, and wedding-day check-in. It will
+                    not be shared or used for marketing.
+                  </p>
+                </div>
+              </div>
+
+              <!-- STEP 4: ASOEBI & ASO OKE -->
+              <div v-if="currentStep === 4" class="rsvp-step">
+                <div class="rsvp-step__header">
+                  <h2 class="rsvp-step__title">Asoebi &amp; Aso Oke Options</h2>
+                  <p class="rsvp-step__subtitle">Choose your wedding attire &amp; headwear options below.</p>
+                </div>
+                <div class="rsvp-fields" style="display: flex; flex-direction: column; gap: 20px">
+                  <!-- Asoebi Fabric Section -->
+                  <div
+                    class="rsvp-field-group"
+                    style="
+                      background: rgba(134, 81, 114, 0.04);
+                      border: 1px solid rgba(134, 81, 114, 0.15);
+                      border-radius: 12px;
+                      padding: 16px;
+                    "
+                  >
+                    <div style="margin-bottom: 12px">
+                      <label class="input-label" style="font-weight: 700; margin: 0">Asoebi Fabric</label>
+                      <div style="font-size: 0.8rem; color: #865172; margin-top: 2px">
+                        ₦{{ pricePerYard.toLocaleString() }} per yard
+                      </div>
+                    </div>
+
+                    <div class="fabric-pills">
+                      <button
+                        type="button"
+                        class="fabric-pill"
+                        :class="{ 'fabric-pill--selected': !wantsAsoebi || !asoebiYards }"
+                        @click="selectFabricYards('')"
+                      >
+                        <span class="fabric-pill__title">No fabric</span>
+                      </button>
+
+                      <button
+                        v-for="y in ['2', '3', '4', '5', '6']"
+                        :key="y"
+                        type="button"
+                        class="fabric-pill"
+                        :class="{ 'fabric-pill--selected': wantsAsoebi && asoebiYards === y }"
+                        @click="selectFabricYards(y)"
+                      >
+                        <span class="fabric-pill__title">{{ y }} Yards</span>
+                        <span class="fabric-pill__price">₦{{ (parseInt(y, 10) * pricePerYard).toLocaleString() }}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Aso Oke Section -->
+                  <div
+                    class="rsvp-field-group"
+                    style="
+                      background: rgba(134, 81, 114, 0.04);
+                      border: 1px solid rgba(134, 81, 114, 0.15);
+                      border-radius: 12px;
+                      padding: 16px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 16px;
+                    "
+                  >
+                    <label class="input-label" style="font-weight: 700; margin: 0">Aso Oke (Headwear / Cap)</label>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                      <div>
+                        <div style="font-weight: 600; font-size: 0.9rem; color: #462137">Male Aso Oke (Fila / Cap)</div>
+                        <div style="font-size: 0.8rem; color: #865172">₦{{ asoOkeMalePrice.toLocaleString() }}</div>
+                      </div>
+                      <div class="stepper-box">
+                        <button
+                          type="button"
+                          class="stepper-btn"
+                          :disabled="asoOkeMaleQty <= 0"
+                          @click="decMaleAsoOke"
+                          aria-label="Decrease male Aso Oke quantity"
+                        >
+                          −
+                        </button>
+                        <span class="stepper-val">{{ asoOkeMaleQty }}</span>
+                        <button
+                          type="button"
+                          class="stepper-btn"
+                          :disabled="asoOkeMaleQty >= 10"
+                          @click="incMaleAsoOke"
+                          aria-label="Increase male Aso Oke quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 12px;
+                        border-top: 1px dashed rgba(134, 81, 114, 0.2);
+                        padding-top: 12px;
+                      "
+                    >
+                      <div>
+                        <div style="font-weight: 600; font-size: 0.9rem; color: #462137">
+                          Female Aso Oke (Gele / Ipele)
+                        </div>
+                        <div style="font-size: 0.8rem; color: #865172">₦{{ asoOkeFemalePrice.toLocaleString() }}</div>
+                      </div>
+                      <div class="stepper-box">
+                        <button
+                          type="button"
+                          class="stepper-btn"
+                          :disabled="asoOkeFemaleQty <= 0"
+                          @click="decFemaleAsoOke"
+                          aria-label="Decrease female Aso Oke quantity"
+                        >
+                          −
+                        </button>
+                        <span class="stepper-val">{{ asoOkeFemaleQty }}</span>
+                        <button
+                          type="button"
+                          class="stepper-btn"
+                          :disabled="asoOkeFemaleQty >= 10"
+                          @click="incFemaleAsoOke"
+                          aria-label="Increase female Aso Oke quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Order Summary Breakdown -->
+                  <div
+                    v-if="asoebiTotalCost > 0"
+                    style="background: #faf7f5; border: 1px solid #d9c9c4; border-radius: 12px; padding: 16px"
+                  >
+                    <h4 style="font-weight: 700; font-size: 0.9rem; color: #462137; margin-bottom: 8px">
+                      Order Summary
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: #462137">
+                      <div v-if="wantsAsoebi && asoebiYards" style="display: flex; justify-content: space-between">
+                        <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
+                        <span>₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span>
+                      </div>
+                      <div
+                        v-if="wantsAsoOke && asoOkeMaleQty > 0"
+                        style="display: flex; justify-content: space-between"
+                      >
+                        <span>Male Aso Oke ({{ asoOkeMaleQty }} set{{ asoOkeMaleQty > 1 ? "s" : "" }})</span>
+                        <span>₦{{ (asoOkeMaleQty * asoOkeMalePrice).toLocaleString() }}</span>
+                      </div>
+                      <div
+                        v-if="wantsAsoOke && asoOkeFemaleQty > 0"
+                        style="display: flex; justify-content: space-between"
+                      >
+                        <span>Female Aso Oke ({{ asoOkeFemaleQty }} set{{ asoOkeFemaleQty > 1 ? "s" : "" }})</span>
+                        <span>₦{{ (asoOkeFemaleQty * asoOkeFemalePrice).toLocaleString() }}</span>
+                      </div>
+                      <div
+                        style="
+                          display: flex;
+                          justify-content: space-between;
+                          font-weight: 700;
+                          font-size: 1rem;
+                          border-top: 1px solid #d9c9c4;
+                          padding-top: 8px;
+                          margin-top: 4px;
+                        "
+                      >
+                        <span>Estimated Total</span>
+                        <span>₦{{ asoebiTotalCost.toLocaleString() }}</span>
+                      </div>
+                    </div>
+                    <p style="margin-top: 8px; font-size: 0.75rem; color: #865172">
+                      * A full breakdown and payment instructions will be sent to your email.
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dashed rgba(134,81,114,0.2); padding-top: 12px;">
-                  <div>
-                    <div style="font-weight: 600; font-size: 0.9rem; color: #462137;">Female Aso Oke (Gele / Ipele)</div>
-                    <div style="font-size: 0.8rem; color: #865172;">₦{{ asoOkeFemalePrice.toLocaleString() }} per set</div>
-                  </div>
-                  <div class="stepper-box">
-                    <button type="button" class="stepper-btn" :disabled="asoOkeFemaleQty <= 0" @click="decFemaleAsoOke" aria-label="Decrease female Aso Oke quantity">−</button>
-                    <span class="stepper-val">{{ asoOkeFemaleQty }}</span>
-                    <button type="button" class="stepper-btn" :disabled="asoOkeFemaleQty >= 10" @click="incFemaleAsoOke" aria-label="Increase female Aso Oke quantity">+</button>
+              <!-- STEP 5: MESSAGE -->
+              <div v-if="currentStep === 5" class="rsvp-step">
+                <div class="rsvp-step__header">
+                  <h2 class="rsvp-step__title">Greetings for the couple</h2>
+                  <p class="rsvp-step__subtitle">
+                    Leave a congratulatory message or prayer for Uche &amp; Adun (Optional).
+                  </p>
+                </div>
+                <div class="rsvp-step__content">
+                  <div class="rsvp-field-group">
+                    <label class="input-label">Message</label>
+                    <textarea
+                      v-model="message"
+                      rows="6"
+                      class="rsvp-textarea"
+                      placeholder="Share your congrats message..."
+                    />
                   </div>
                 </div>
               </div>
 
-              <!-- Order Summary Breakdown -->
-              <div v-if="asoebiTotalCost > 0" style="background: #FAF7F5; border: 1px solid #D9C9C4; border-radius: 12px; padding: 16px;">
-                <h4 style="font-weight: 700; font-size: 0.9rem; color: #462137; margin-bottom: 8px;">Order Summary</h4>
-                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: #462137;">
-                  <div v-if="wantsAsoebi && asoebiYards" style="display: flex; justify-content: space-between;">
-                    <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
-                    <span>₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span>
-                  </div>
-                  <div v-if="wantsAsoOke && asoOkeMaleQty > 0" style="display: flex; justify-content: space-between;">
-                    <span>Male Aso Oke ({{ asoOkeMaleQty }} set{{ asoOkeMaleQty > 1 ? 's' : '' }})</span>
-                    <span>₦{{ (asoOkeMaleQty * asoOkeMalePrice).toLocaleString() }}</span>
-                  </div>
-                  <div v-if="wantsAsoOke && asoOkeFemaleQty > 0" style="display: flex; justify-content: space-between;">
-                    <span>Female Aso Oke ({{ asoOkeFemaleQty }} set{{ asoOkeFemaleQty > 1 ? 's' : '' }})</span>
-                    <span>₦{{ (asoOkeFemaleQty * asoOkeFemalePrice).toLocaleString() }}</span>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1rem; border-top: 1px solid #D9C9C4; padding-top: 8px; margin-top: 4px;">
-                    <span>Estimated Total</span>
-                    <span>₦{{ asoebiTotalCost.toLocaleString() }}</span>
+              <!-- STEP 6: Confirmation -->
+              <div v-if="currentStep === 6" class="rsvp-step">
+                <div class="rsvp-step__header">
+                  <h2 class="rsvp-step__title">Confirmation</h2>
+                  <p class="rsvp-step__subtitle">Are you sure you would be attending this wedding?</p>
+                </div>
+                <div class="rsvp-step__content">
+                  <div class="rsvp-notice">
+                    <span class="rsvp-notice__icon">⚠️</span>
+                    <p class="rsvp-notice__text">
+                      Kindly check your calendars and be sure you would be attending this wedding. This is important as
+                      it will help us better prepare and allocate resources. Thank you for your cooperation and we look
+                      forward to celebrating with you!
+                    </p>
                   </div>
                 </div>
-                <p style="margin-top: 8px; font-size: 0.75rem; color: #865172;">
-                  * A full breakdown and payment instructions will be sent to your email.
-                </p>
               </div>
-
-            </div>
-          </div>
-
-          <!-- STEP 5: MESSAGE -->
-          <div v-if="currentStep === 5" class="rsvp-step">
-            <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Greetings for the couple</h2>
-              <p class="rsvp-step__subtitle">
-                Leave a congratulatory message or prayer for Uche &amp; Adun (Optional).
-              </p>
-            </div>
-            <div class="rsvp-step__content">
-              <div class="rsvp-field-group">
-                <label class="input-label">Message</label>
-                <textarea
-                  v-model="message"
-                  rows="6"
-                  class="rsvp-textarea"
-                  placeholder="Share your congrats message..."
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- STEP 6: Confirmation -->
-          <div v-if="currentStep === 6" class="rsvp-step">
-            <div class="rsvp-step__header">
-              <h2 class="rsvp-step__title">Confirmation</h2>
-              <p class="rsvp-step__subtitle">Are you sure you would be attending this wedding?</p>
-            </div>
-            <div class="rsvp-step__content">
-              <div class="rsvp-notice">
-                <span class="rsvp-notice__icon">⚠️</span>
-                <p class="rsvp-notice__text">
-                  Kindly check your calendars and be sure you would be attending this wedding. This is important as it
-                  will help us better prepare and allocate resources. Thank you for your cooperation and we look forward
-                  to celebrating with you!
-                </p>
-              </div>
-            </div>
-          </div>
             </div>
           </Transition>
 
