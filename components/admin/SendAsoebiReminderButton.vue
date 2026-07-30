@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 
 const props = defineProps<{
@@ -18,6 +18,7 @@ const props = defineProps<{
 
 const loading = ref(false);
 const error = ref("");
+const customMessage = ref("");
 
 const leadName = computed(() => (props.context?.siblingData?.leadName as string) ?? "");
 const leadPhone = computed(() => (props.context?.siblingData?.leadPhone as string) ?? "");
@@ -67,39 +68,58 @@ const summaryText = computed(() => {
   return parts.join(" + ");
 });
 
+const defaultMessage = computed(() => {
+  const bankName = (asoebiSettings.value as any)?.bankName || "";
+  const accountNumber = (asoebiSettings.value as any)?.accountNumber || "";
+  const accountName = (asoebiSettings.value as any)?.accountName || "";
+
+  const items: string[] = [];
+  if (wantsAsoebi.value && asoebiYards.value) {
+    items.push(`${asoebiYards.value} yards of Asoebi fabric`);
+  }
+  if (wantsAsoOke.value && asoOkeMaleQty.value > 0) {
+    items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
+  }
+  if (wantsAsoOke.value && asoOkeFemaleQty.value > 0) {
+    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele / Ipele)`);
+  }
+
+  const itemsStr = items.length > 0 ? items.join(" + ") : "Aso Ebi";
+  return `Hi ${leadName.value || "there"}, gentle reminder for your ${itemsStr} order for #TheSweetUnion. Please pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
+});
+
+// Auto-fill message when data changes
+watch(
+  defaultMessage,
+  (newVal) => {
+    if (!customMessage.value) {
+      customMessage.value = newVal;
+    }
+  },
+  { immediate: true }
+);
+
+function resetToDefault() {
+  customMessage.value = defaultMessage.value;
+}
+
 function sendReminder() {
   if (loading.value) return;
   loading.value = true;
   error.value = "";
 
   try {
-    if (!asoebiSettings.value) {
-      throw new Error("Could not load Asoebi Settings from database.");
-    }
-
-    const bankName = (asoebiSettings.value as any).bankName || "";
-    const accountNumber = (asoebiSettings.value as any).accountNumber || "";
-    const accountName = (asoebiSettings.value as any).accountName || "";
-
-    const items: string[] = [];
-    if (wantsAsoebi.value && asoebiYards.value) {
-      items.push(`${asoebiYards.value} yards of Asoebi fabric`);
-    }
-    if (wantsAsoOke.value && asoOkeMaleQty.value > 0) {
-      items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
-    }
-    if (wantsAsoOke.value && asoOkeFemaleQty.value > 0) {
-      items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele / Ipele)`);
-    }
-
-    const text = `Hi ${leadName.value}, gentle reminder for your ${items.join(" + ")} order for #TheSweetUnion. Please pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
-
+    const textToSend = customMessage.value.trim() || defaultMessage.value;
     const cleanPhone = leadPhone.value.replace(/\+/g, "").replace(/[\s-()]/g, "");
 
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+    if (!cleanPhone) {
+      throw new Error("No phone number found for this guest.");
+    }
+
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textToSend)}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
   } catch (err: any) {
-    error.value = err.message || "Failed to generate reminder link.";
+    error.value = err.message || "Failed to generate WhatsApp reminder link.";
   } finally {
     loading.value = false;
   }
@@ -115,8 +135,21 @@ function sendReminder() {
       <p class="error-text">No WhatsApp phone number available for this guest.</p>
     </template>
     <template v-else>
+      <div class="message-box space-y-2">
+        <div class="flex-header">
+          <label class="widget-label">Customize WhatsApp Message</label>
+          <button type="button" class="btn-reset" @click="resetToDefault">Reset Message</button>
+        </div>
+        <textarea
+          v-model="customMessage"
+          rows="3"
+          class="wa-textarea"
+          placeholder="Enter custom reminder message to send on WhatsApp..."
+        ></textarea>
+      </div>
+
       <div class="row">
-        <button type="button" class="btn-wa" :disabled="loading" @click="sendReminder">
+        <button type="button" class="btn-wa" :disabled="loading || !customMessage.trim()" @click="sendReminder">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -129,7 +162,7 @@ function sendReminder() {
               d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
             />
           </svg>
-          Send WhatsApp Payment Reminder
+          Send WhatsApp Reminder
         </button>
         <span class="order-summary-badge" v-if="summaryText">
           {{ summaryText }} (₦{{ totalAmount.toLocaleString() }})
@@ -144,8 +177,8 @@ function sendReminder() {
 .asoebi-reminder-widget {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 12px;
+  padding: 6px 0;
 }
 
 .hint-text {
@@ -159,6 +192,56 @@ function sendReminder() {
   font-size: 0.85rem;
   color: #c0514a;
   margin: 0;
+}
+
+.flex-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.widget-label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #4a3746;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-reset {
+  background: none;
+  border: none;
+  color: #865172;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-reset:hover {
+  color: #5c354e;
+}
+
+.wa-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d4c5cf;
+  background: #fdfafc;
+  color: #2b1c28;
+  resize: vertical;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.wa-textarea:focus {
+  border-color: #865172;
+  background: #ffffff;
 }
 
 .row {
@@ -182,7 +265,7 @@ function sendReminder() {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
