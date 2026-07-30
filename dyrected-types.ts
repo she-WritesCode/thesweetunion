@@ -120,6 +120,9 @@ export interface Rsvp_records {
   asoOkeFemaleQty?: number;
   buyerGender?: "male" | "female";
   asoebiDetails?: string;
+  asoebiPaymentStatus?: "pending" | "received" | "partial" | "waived";
+  asoebiOrderStatus?: "unfulfilled" | "ready" | "delivered";
+  asoebiPaymentNotes?: string;
   asoebiReminder?: Record<string, unknown>;
   message?: string;
   submittedAt?: string;

@@ -21,13 +21,11 @@ export const rsvpRecords = defineCollection({
     useAsTitle: "leadName",
     defaultColumns: [
       "leadName",
-      "leadEmail",
-      "leadPhone",
       "group",
       "attending",
-      "spouseName",
-      "selectedEvents",
-      "checkedIn",
+      "wantsAsoebi",
+      "asoebiPaymentStatus",
+      "asoebiOrderStatus",
       "invitationSent",
       "submittedAt",
     ],
@@ -165,13 +163,58 @@ export const rsvpRecords = defineCollection({
         defineTextareaField({
           name: "asoebiDetails",
           label: "Asoebi & Aso Oke Breakdown Summary",
-          admin: { description: "Full breakdown of requested fabric and Aso Oke items" },
+          admin: {
+            description: "Full breakdown of requested fabric and Aso Oke items",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
+        }),
+        defineSelectField({
+          name: "asoebiPaymentStatus",
+          label: "Payment Status",
+          defaultValue: "pending",
+          options: [
+            { label: "Pending Payment ⏳", value: "pending" },
+            { label: "Payment Received ✓", value: "received" },
+            { label: "Partial Payment 💳", value: "partial" },
+            { label: "Gift / Waived 🎁", value: "waived" },
+          ],
+          admin: {
+            width: "50%",
+            description: "Track whether the guest has completed payment for their order.",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
+        }),
+        defineSelectField({
+          name: "asoebiOrderStatus",
+          label: "Fulfillment Status",
+          defaultValue: "unfulfilled",
+          options: [
+            { label: "Unfulfilled / Processing 📦", value: "unfulfilled" },
+            { label: "Ready for Pickup / Delivery 🛍️", value: "ready" },
+            { label: "Delivered / Handed Over ✅", value: "delivered" },
+          ],
+          admin: {
+            width: "50%",
+            description: "Track physical packaging and delivery of fabric & headwear items.",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
+        }),
+        defineTextareaField({
+          name: "asoebiPaymentNotes",
+          label: "Payment & Delivery Notes",
+          admin: {
+            placeholder: "e.g. Received ₦40,000 via bank transfer on July 30th. Handed over at bridal shower.",
+            description: "Private notes for admin to track bank transfer receipts or delivery arrangements.",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
         }),
         defineJsonField({
           name: "asoebiReminder",
           label: "Asoebi WhatsApp Reminder",
           admin: {
             component: "rsvp_records.asoebiReminder",
+            description:
+              "Generate and send a personalized WhatsApp payment reminder for Aso Ebi fabric & headwear orders.",
             condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
           },
         }),
@@ -188,18 +231,27 @@ export const rsvpRecords = defineCollection({
           admin: {
             component: "rsvp_records.accessCardPreview",
             description: "Live preview of the access card that will be sent to this guest.",
+            condition: (data: any) => data.attending === true,
           },
         }),
         defineBooleanField({
           name: "invitationSent",
           label: "Invitation Sent",
           defaultValue: false,
-          admin: { readOnly: true, width: "33%" },
+          admin: {
+            readOnly: true,
+            width: "33%",
+            condition: (data: any) => data.attending === true,
+          },
         }),
         defineDateField({
           name: "invitationSentAt",
           label: "Invitation Sent At",
-          admin: { readOnly: true, width: "33%" },
+          admin: {
+            readOnly: true,
+            width: "33%",
+            condition: (data: any) => data.attending === true,
+          },
         }),
         defineSelectField({
           name: "invitationSentVia",
@@ -208,7 +260,11 @@ export const rsvpRecords = defineCollection({
             { label: "WhatsApp", value: "whatsapp" },
             { label: "Email", value: "email" },
           ],
-          admin: { readOnly: true, width: "33%" },
+          admin: {
+            readOnly: true,
+            width: "33%",
+            condition: (data: any) => data.attending === true,
+          },
         }),
       ],
     }),
@@ -221,13 +277,21 @@ export const rsvpRecords = defineCollection({
           name: "checkedIn",
           label: "Checked In",
           defaultValue: false,
-          admin: { readOnly: true, width: "50%" },
+          admin: {
+            readOnly: true,
+            width: "50%",
+            condition: (data: any) => data.attending === true,
+          },
         }),
         defineRelationshipField({
           name: "checkIn",
           label: "Check-in Record",
           relationTo: "check_ins",
-          admin: { readOnly: true, width: "50%" },
+          admin: {
+            readOnly: true,
+            width: "50%",
+            condition: (data: any) => data.attending === true,
+          },
         }),
       ],
     }),

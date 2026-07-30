@@ -242,6 +242,7 @@ async function sendEmail() {
 <template>
   <div class="acp-wrap">
     <p v-if="!rsvpId" class="acp-empty">Save this record first to generate the access card.</p>
+    <p v-else-if="!attending" class="acp-empty">This guest declined attendance (Attending: No). Access card invitation is not generated.</p>
 
     <template v-else>
       <!-- ─── Card + overlay wrapper ───────────────────────── -->
