@@ -7,7 +7,7 @@ export const media = defineCollection({
     group: "Content",
   },
   upload: {
-    allowedMimeTypes: ["image/*"],
+    allowedMimeTypes: ["image/*", "video/*"],
     maxFileSize: 30_000_000,
     imageSizes: [
       { name: "thumbnail", width: 300, height: 300, crop: "center" },
