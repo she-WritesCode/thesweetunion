@@ -1243,7 +1243,7 @@ onUnmounted(() => {
                 <p>Your RSVP registration details have been successfully deleted from this browser session.</p>
               </template>
               <template v-else-if="successModal === 'edit'">
-                <p>Your details have been successfully updated. We look forward to celebrating together in Lagos.</p>
+                <p>Your details have been successfully updated. We look forward to celebrating together.</p>
               </template>
               <template v-else-if="successModal === 'submit' && attending === true">
                 <p>

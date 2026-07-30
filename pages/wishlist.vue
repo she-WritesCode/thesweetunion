@@ -152,10 +152,7 @@ const formSectionRef = ref<HTMLElement | null>(null);
 const selectFulfillmentMode = (mode: "sent_money" | "bring_to_wedding" | "remind_later") => {
   fulfillmentMode.value = mode;
   nextTick(() => {
-    const target =
-      mode === "bring_to_wedding"
-        ? formSectionRef.value
-        : (accountSectionRef.value || formSectionRef.value);
+    const target = mode === "bring_to_wedding" ? formSectionRef.value : accountSectionRef.value || formSectionRef.value;
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -393,7 +390,7 @@ onUnmounted(() => {
           <div class="flex flex-col items-center">
             <p class="font-body text-deep-espresso/70 text-lg leading-relaxed max-w-xl mx-auto">
               Your presence, love, and prayers are all we could ask for. If you wish to bless our home as we build our
-              life together in Lagos, here is our registry.
+              life together, here is our registry.
             </p>
           </div>
         </div>
@@ -520,10 +517,7 @@ onUnmounted(() => {
               '--motion-distance': '18px',
             }"
           >
-            <div
-              @click="handleReserveClick(item)"
-              class="flex h-full flex-col text-left cursor-pointer"
-            >
+            <div @click="handleReserveClick(item)" class="flex h-full flex-col text-left cursor-pointer">
               <!-- Item Image -->
               <div
                 class="relative aspect-4/3 w-full bg-deep-espresso/5 border-b border-amber-gold/10 overflow-hidden select-none"
@@ -1014,7 +1008,9 @@ onUnmounted(() => {
                     <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
                       >Bank Name</span
                     >
-                    <span class="font-semibold text-deep-espresso text-base">{{ activeItem.bankDetails.bankName }}</span>
+                    <span class="font-semibold text-deep-espresso text-base">{{
+                      activeItem.bankDetails.bankName
+                    }}</span>
                   </div>
                   <div>
                     <span class="text-xs uppercase tracking-wider text-deep-espresso/50 font-semibold block"
@@ -1235,7 +1231,9 @@ onUnmounted(() => {
 <style scoped>
 .card-fade-enter-active,
 .card-fade-leave-active {
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .card-fade-enter-from,
 .card-fade-leave-to {

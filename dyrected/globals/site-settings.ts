@@ -72,7 +72,9 @@ export const siteSettings = defineGlobal({
           label: "Countdown Photos",
           relationTo: "media",
           hasMany: true,
-          admin: { description: "Photos shown in the scrapbook collage beside the countdown. Upload 2 for best results." },
+          admin: {
+            description: "Photos shown in the scrapbook collage beside the countdown. Upload 2 for best results.",
+          },
         }),
         defineRelationshipField({
           name: "wishlistTeaserImage",
@@ -90,7 +92,7 @@ export const siteSettings = defineGlobal({
           name: "wishlistTeaserDescription",
           label: "Registry Section Text",
           defaultValue:
-            "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together in Lagos.",
+            "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together.",
           admin: { description: "Body text on the wishlist/registry card." },
         }),
         defineRelationshipField({
@@ -119,9 +121,7 @@ export const siteSettings = defineGlobal({
         defineSelectField({
           name: "storyFormat",
           label: "Story Format",
-          options: [
-            { label: "Timeline", value: "timeline" },
-          ],
+          options: [{ label: "Timeline", value: "timeline" }],
           defaultValue: "timeline",
         }),
         defineTextField({

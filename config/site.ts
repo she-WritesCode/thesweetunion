@@ -226,7 +226,7 @@ export const siteConfig: SiteConfig = {
   wishlistTeaser: {
     title: "Support Our Union",
     description:
-      "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together in Lagos.",
+      "Your presence and prayers are everything we could ask for. If you wish to bless our home, we have put together a registry of items we'll need as we set up our life together.",
     imageUrl: "/images/home_couple.png",
   },
   wishlistUrl: "/wishlist",
