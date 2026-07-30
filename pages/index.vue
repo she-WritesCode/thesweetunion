@@ -200,23 +200,23 @@ onUnmounted(() => {
             <!-- Photo 1 -->
             <div
               v-if="config.countdownPhotos[0]"
-              class="absolute left-[10%] top-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 -rotate-6 hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in floating-polaroid motion-lift"
-              @click="setLightboxImage(config.countdownPhotos[0])"
+              class="absolute left-[10%] top-[10%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[-6deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in floating-polaroid motion-lift"
+              @click="setLightboxImage(config.countdownPhotos[0].url)"
             >
               <div class="washi-tape washi-tape-terracotta top-[-10px] left-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill" />
+                <DyrectedMedia :media="config.countdownPhotos[0]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
             <!-- Photo 2 -->
             <div
               v-if="config.countdownPhotos[1]"
               class="absolute right-[10%] bottom-[5%] w-[160px] sm:w-[220px] countdown-aspect bg-white p-2.5 pb-6 rounded shadow-lg border border-deep-espresso/5 rotate-[4deg] hover:rotate-0 hover:z-20 transition-all duration-300 cursor-zoom-in floating-polaroid floating-polaroid--alt motion-lift"
-              @click="setLightboxImage(config.countdownPhotos[1])"
+              @click="setLightboxImage(config.countdownPhotos[1].url)"
             >
               <div class="washi-tape washi-tape-gold top-[-10px] right-10" />
               <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill" />
+                <DyrectedMedia :media="config.countdownPhotos[1]" alt="Countdown photo" class="img-fill" />
               </div>
             </div>
           </div>
@@ -329,7 +329,7 @@ onUnmounted(() => {
                 @click="setLightboxImage(event.imageUrl)"
               >
                 <div class="relative aspect-[3/4] w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                  <img :src="event.imageUrl" alt="Event Photo" class="img-fill" />
+                  <DyrectedMedia :media="event.photo || event.imageUrl" alt="Event Photo" class="img-fill" />
                 </div>
                 <div class="mt-4 text-center">
                   <span class="font-display-cormorant text-xl font-semibold text-deep-espresso">
@@ -361,7 +361,7 @@ onUnmounted(() => {
               @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.wishlistTeaser.imageUrl" alt="Building our home" class="img-fill" />
+                <DyrectedMedia :media="config.wishlistTeaser.imageUrl" alt="Building our home" class="img-fill" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -407,7 +407,7 @@ onUnmounted(() => {
               @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <img :src="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="img-fill" />
+                <DyrectedMedia :media="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="img-fill" />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -452,8 +452,8 @@ onUnmounted(() => {
             v-if="lightboxImage"
             class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full"
           >
-            <img
-              :src="lightboxImage"
+            <DyrectedMedia
+              :media="lightboxImage"
               alt="Enlarged scrapbook photo"
               class="max-w-full max-h-[90vh] w-auto h-auto object-contain"
             />

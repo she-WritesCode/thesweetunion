@@ -322,7 +322,7 @@ const waPaymentLink = computed(() => {
             @click="setLightboxImage(photo)"
           >
             <div class="relative aspect-4/3 sm:aspect-square w-full overflow-hidden bg-deep-espresso/5 rounded-md">
-              <img :src="photo" alt="Aso Ebi Fabric & Headwear" class="img-fill object-cover" />
+              <DyrectedMedia :media="photo" alt="Aso Ebi Fabric & Headwear" class="img-fill object-cover" />
             </div>
             <div class="mt-3 text-center flex items-center justify-center gap-1 text-deep-espresso/80">
               <span class="font-display-cormorant text-sm font-semibold">#TheSweetUnion</span>
@@ -844,8 +844,8 @@ const waPaymentLink = computed(() => {
             v-if="lightboxImage"
             class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full"
           >
-            <img
-              :src="lightboxImage"
+            <DyrectedMedia
+              :media="lightboxImage"
               alt="Enlarged fabric photo"
               class="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
             />

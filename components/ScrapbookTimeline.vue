@@ -76,7 +76,12 @@ const collageStyles = [
           <div
             class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in"
           >
-            <img :src="item.imageUrl" :alt="item.title" class="img-fill" @click="emit('imageClick', item.imageUrl)" />
+            <DyrectedMedia
+              :media="(item as any).photo || item.imageUrl"
+              :alt="item.title"
+              class="img-fill"
+              @click="emit('imageClick', item.imageUrl)"
+            />
             <!-- Subtle shadows & paper details on photo -->
             <div class="absolute inset-0 bg-gradient-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
           </div>

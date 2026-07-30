@@ -56,8 +56,8 @@ const hoveredIndex = ref<number | null>(null);
         >
           <!-- Polaroid Image Wrapper -->
           <div class="relative w-full aspect-4/3 overflow-hidden bg-deep-espresso/5 border-b border-amber-gold/10">
-            <img
-              :src="item.imageUrl"
+            <DyrectedMedia
+              :media="(item as any).photo || item.imageUrl"
               :alt="item.title"
               class="w-full h-full object-cover transition-transform duration-700 ease-out"
               :class="hoveredIndex === index ? 'scale-105' : 'scale-100'"

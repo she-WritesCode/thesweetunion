@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<FooterProps>(), {
           @click="couplesPhoto && onImageClick?.(couplesPhoto)"
         >
           <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-            <img v-if="couplesPhoto" :src="couplesPhoto" alt="Memory" class="img-fill" />
+            <DyrectedMedia v-if="couplesPhoto" :media="couplesPhoto" alt="Memory" class="img-fill" />
           </div>
         </div>
         <p class="font-body text-xs text-deep-espresso/60 pt-4">
