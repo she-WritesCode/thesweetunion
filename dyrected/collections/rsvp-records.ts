@@ -34,9 +34,9 @@ export const rsvpRecords = defineCollection({
     group: "RSVP",
   },
   fields: [
-    // ── Response tab ─────────────────────────────────────────────────────────
+    // ── RSVP Response tab ───────────────────────────────────────────────────
     ...defineTab({
-      label: "Response",
+      label: "RSVP Response",
       fields: [
         defineTextField({
           name: "rsvpEditLink",
@@ -95,15 +95,37 @@ export const rsvpRecords = defineCollection({
           relationTo: "events",
           hasMany: true,
         }),
+        defineTextareaField({
+          name: "message",
+          label: "Message to Couple",
+          admin: { placeholder: "Message to the couple (optional)" },
+        }),
+        defineDateField({
+          name: "submittedAt",
+          label: "Submitted At",
+          admin: { readOnly: true },
+        }),
+        defineTextField({
+          name: "editToken",
+          label: "Edit Token",
+          admin: { readOnly: true, hidden: true },
+        }),
+      ],
+    }),
+
+    // ── Aso Ebi & Aso Oke tab ───────────────────────────────────────────────
+    ...defineTab({
+      label: "Aso Ebi / Aso Oke",
+      fields: [
         defineBooleanField({
           name: "wantsAsoebi",
-          label: "Wants Asoebi",
+          label: "Wants Asoebi Fabric",
           defaultValue: false,
           admin: { width: "50%" },
         }),
         defineSelectField({
           name: "asoebiYards",
-          label: "Asoebi Yards",
+          label: "Asoebi Fabric Yards",
           options: [
             { label: "2 Yards (₦20,000)", value: "2" },
             { label: "3 Yards (₦30,000)", value: "3" },
@@ -116,17 +138,9 @@ export const rsvpRecords = defineCollection({
             condition: (data: any) => data.wantsAsoebi === true,
           },
         }),
-        defineJsonField({
-          name: "asoebiReminder",
-          label: "Asoebi Reminder",
-          admin: {
-            component: "rsvp_records.asoebiReminder",
-            condition: (data: any) => data.attending === true && (data.wantsAsoebi === true || data.wantsAsoOke === true),
-          },
-        }),
         defineBooleanField({
           name: "wantsAsoOke",
-          label: "Wants Aso Oke",
+          label: "Wants Aso Oke Headwear",
           defaultValue: false,
           admin: { width: "50%" },
         }),
@@ -153,20 +167,13 @@ export const rsvpRecords = defineCollection({
           label: "Asoebi & Aso Oke Breakdown Summary",
           admin: { description: "Full breakdown of requested fabric and Aso Oke items" },
         }),
-        defineTextareaField({
-          name: "message",
-          label: "Message to Couple",
-          admin: { placeholder: "Message to the couple (optional)" },
-        }),
-        defineDateField({
-          name: "submittedAt",
-          label: "Submitted At",
-          admin: { readOnly: true },
-        }),
-        defineTextField({
-          name: "editToken",
-          label: "Edit Token",
-          admin: { readOnly: true, hidden: true },
+        defineJsonField({
+          name: "asoebiReminder",
+          label: "Asoebi WhatsApp Reminder",
+          admin: {
+            component: "rsvp_records.asoebiReminder",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
         }),
       ],
     }),
