@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { siteConfig } from "~/config/site";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
+import { publicPageTransition } from "~/composables/useMotion";
 import Navigation from "~/components/Navigation.vue";
+
+definePageMeta({
+  pageTransition: publicPageTransition,
+});
 
 const route = useRoute();
 
@@ -428,17 +432,19 @@ const waPaymentLink = computed(() => {
             </button>
           </form>
 
-          <p
-            v-if="lookupMessage"
-            class="mt-4 text-xs md:text-sm font-sans font-medium px-4 py-2 rounded-lg"
-            :class="
-              lookupSuccess
-                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                : 'bg-amber-50 text-amber-900 border border-amber-200'
-            "
-          >
-            {{ lookupMessage }}
-          </p>
+          <Transition name="dialog-pop">
+            <p
+              v-if="lookupMessage"
+              class="mt-4 text-xs md:text-sm font-sans font-medium px-4 py-2 rounded-lg"
+              :class="
+                lookupSuccess
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-900 border border-amber-200'
+              "
+            >
+              {{ lookupMessage }}
+            </p>
+          </Transition>
         </div>
       </section>
 
@@ -595,39 +601,41 @@ const waPaymentLink = computed(() => {
           </div>
 
           <!-- Order Summary Breakdown Card (Exact RSVP Form UI) -->
-          <div
-            v-if="totalCost > 0"
-            class="p-5 rounded-2xl bg-warm-cream/60 border border-amber-gold/30 text-sm font-sans space-y-2"
-          >
-            <h4 class="font-bold text-sm text-deep-espresso">Order Summary</h4>
-            <div class="space-y-1.5 text-xs md:text-sm text-deep-espresso">
-              <div v-if="wantsAsoebi && asoebiYards" class="flex justify-between">
-                <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
-                <span class="font-semibold font-mono"
-                  >₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span
+          <Transition name="dialog-pop">
+            <div
+              v-if="totalCost > 0"
+              class="p-5 rounded-2xl bg-warm-cream/60 border border-amber-gold/30 text-sm font-sans space-y-2"
+            >
+              <h4 class="font-bold text-sm text-deep-espresso">Order Summary</h4>
+              <div class="space-y-1.5 text-xs md:text-sm text-deep-espresso">
+                <div v-if="wantsAsoebi && asoebiYards" class="flex justify-between">
+                  <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
+                  <span class="font-semibold font-mono"
+                    >₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span
+                  >
+                </div>
+                <div v-if="wantsAsoOke && asoOkeMaleQty > 0" class="flex justify-between">
+                  <span>Male Aso Oke ({{ asoOkeMaleQty }} set{{ asoOkeMaleQty > 1 ? "s" : "" }})</span>
+                  <span class="font-semibold font-mono">₦{{ (asoOkeMaleQty * asoOkeMalePrice).toLocaleString() }}</span>
+                </div>
+                <div v-if="wantsAsoOke && asoOkeFemaleQty > 0" class="flex justify-between">
+                  <span>Female Aso Oke ({{ asoOkeFemaleQty }} set{{ asoOkeFemaleQty > 1 ? "s" : "" }})</span>
+                  <span class="font-semibold font-mono"
+                    >₦{{ (asoOkeFemaleQty * asoOkeFemalePrice).toLocaleString() }}</span
+                  >
+                </div>
+                <div
+                  class="flex justify-between font-bold text-sm md:text-base border-t border-amber-gold/20 pt-2 text-deep-terracotta"
                 >
+                  <span>Estimated Total</span>
+                  <span class="font-mono">₦{{ totalCost.toLocaleString() }}</span>
+                </div>
               </div>
-              <div v-if="wantsAsoOke && asoOkeMaleQty > 0" class="flex justify-between">
-                <span>Male Aso Oke ({{ asoOkeMaleQty }} set{{ asoOkeMaleQty > 1 ? "s" : "" }})</span>
-                <span class="font-semibold font-mono">₦{{ (asoOkeMaleQty * asoOkeMalePrice).toLocaleString() }}</span>
-              </div>
-              <div v-if="wantsAsoOke && asoOkeFemaleQty > 0" class="flex justify-between">
-                <span>Female Aso Oke ({{ asoOkeFemaleQty }} set{{ asoOkeFemaleQty > 1 ? "s" : "" }})</span>
-                <span class="font-semibold font-mono"
-                  >₦{{ (asoOkeFemaleQty * asoOkeFemalePrice).toLocaleString() }}</span
-                >
-              </div>
-              <div
-                class="flex justify-between font-bold text-sm md:text-base border-t border-amber-gold/20 pt-2 text-deep-terracotta"
-              >
-                <span>Estimated Total</span>
-                <span class="font-mono">₦{{ totalCost.toLocaleString() }}</span>
-              </div>
+              <p class="text-[11px] text-deep-espresso/60 pt-1">
+                * A full breakdown and payment instructions will be sent to your email.
+              </p>
             </div>
-            <p class="text-[11px] text-deep-espresso/60 pt-1">
-              * A full breakdown and payment instructions will be sent to your email.
-            </p>
-          </div>
+          </Transition>
 
           <!-- Question / Notes Textarea -->
           <div>
@@ -644,12 +652,14 @@ const waPaymentLink = computed(() => {
 
           <!-- Submit Action -->
           <div class="pt-2">
-            <p
-              v-if="submitError"
-              class="mb-4 text-xs font-sans text-rose-700 bg-rose-50 p-3 rounded-lg border border-rose-200"
-            >
-              {{ submitError }}
-            </p>
+            <Transition name="dialog-pop">
+              <p
+                v-if="submitError"
+                class="mb-4 text-xs font-sans text-rose-700 bg-rose-50 p-3 rounded-lg border border-rose-200"
+              >
+                {{ submitError }}
+              </p>
+            </Transition>
 
             <button
               type="submit"
@@ -708,107 +718,119 @@ const waPaymentLink = computed(() => {
     <Footer :couples-photo="couplesPhoto" />
 
     <!-- Success Confirmation Modal -->
-    <div
-      v-if="submitSuccess"
-      class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-    >
-      <div class="bg-white rounded-2xl max-w-lg w-full p-6 md:p-8 border border-amber-gold/30 shadow-2xl space-y-6">
-        <div class="text-center">
+    <Transition name="overlay-fade">
+      <div
+        v-if="submitSuccess"
+        class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        @click.self="submitSuccess = false"
+      >
+        <Transition name="dialog-pop" appear>
           <div
-            class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold"
+            v-if="submitSuccess"
+            class="bg-white rounded-2xl max-w-lg w-full p-6 md:p-8 border border-amber-gold/30 shadow-2xl space-y-6"
           >
-            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 class="text-2xl font-display-cinzel text-deep-espresso">
-            {{ isUpdate ? "Selection Updated!" : "Order Recorded!" }}
-          </h3>
-          <p class="text-sm text-deep-espresso/70 font-sans mt-1">
-            Thank you, {{ leadName }}. We have sent a confirmation email to <strong>{{ leadEmail }}</strong
-            >.
-          </p>
-        </div>
-
-        <div class="bg-warm-cream/60 p-4 md:p-5 rounded-xl border border-amber-gold/30 text-sm font-sans space-y-3">
-          <div class="flex justify-between items-center pb-2 border-b border-amber-gold/15">
-            <span class="text-deep-espresso/70 font-medium">Grand Total</span>
-            <span class="font-bold font-mono text-lg text-deep-terracotta">₦{{ totalCost.toLocaleString() }}</span>
-          </div>
-          <div class="space-y-1">
-            <p class="text-xs font-semibold text-deep-espresso/60 uppercase tracking-wider">Bank Transfer Details</p>
-            <p class="font-semibold text-deep-espresso text-sm">{{ bankName }}</p>
-            <div
-              class="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-amber-gold/30 my-1"
-            >
-              <span class="font-mono font-bold text-lg text-deep-terracotta tracking-wider">{{ accountNumber }}</span>
-              <button
-                type="button"
-                @click="copyAccount"
-                class="text-xs px-3 py-1.5 bg-warm-cream hover:bg-amber-gold/20 border border-amber-gold/40 rounded-md text-deep-espresso font-sans transition-colors cursor-pointer font-semibold inline-flex items-center gap-1"
+            <div class="text-center">
+              <div
+                class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold"
               >
-                <span>{{ copiedBank ? "Copied!" : "Copy Account" }}</span>
-                <svg
-                  v-if="copiedBank"
-                  class="w-3.5 h-3.5 text-emerald-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
+              </div>
+              <h3 class="text-2xl font-display-cinzel text-deep-espresso font-bold">
+                {{ isUpdate ? "Selection Updated!" : "Order Recorded!" }}
+              </h3>
+              <p class="text-sm text-deep-espresso/70 font-sans mt-1">
+                Thank you, {{ leadName }}. We have sent a confirmation email to <strong>{{ leadEmail }}</strong
+                >.
+              </p>
+            </div>
+
+            <div class="bg-warm-cream/60 p-4 md:p-5 rounded-xl border border-amber-gold/30 text-sm font-sans space-y-3">
+              <div class="flex justify-between items-center pb-2 border-b border-amber-gold/15">
+                <span class="text-deep-espresso/70 font-medium">Grand Total</span>
+                <span class="font-bold font-mono text-lg text-deep-terracotta">₦{{ totalCost.toLocaleString() }}</span>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-semibold text-deep-espresso/60 uppercase tracking-wider">
+                  Bank Transfer Details
+                </p>
+                <p class="font-semibold text-deep-espresso text-sm">{{ bankName }}</p>
+                <div
+                  class="flex items-center justify-between bg-white px-3 py-2.5 rounded-lg border border-amber-gold/30 my-1"
+                >
+                  <span class="font-mono font-bold text-lg text-deep-terracotta tracking-wider">{{
+                    accountNumber
+                  }}</span>
+                  <button
+                    type="button"
+                    @click="copyAccount"
+                    class="text-xs px-3 py-1.5 bg-warm-cream hover:bg-amber-gold/20 border border-amber-gold/40 rounded-md text-deep-espresso font-sans transition-colors cursor-pointer font-semibold inline-flex items-center gap-1"
+                  >
+                    <span>{{ copiedBank ? "Copied!" : "Copy Account" }}</span>
+                    <svg
+                      v-if="copiedBank"
+                      class="w-3.5 h-3.5 text-emerald-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="text-xs text-deep-espresso/70 font-medium">{{ accountName }}</p>
+              </div>
+            </div>
+
+            <!-- Gentle Wishlist Upsell in Modal -->
+            <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans">
+              <p class="text-deep-espresso/80 inline-flex items-center justify-center gap-1 flex-wrap">
+                <svg class="w-4 h-4 text-deep-terracotta inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z"
+                  />
+                </svg>
+                <span>Want to bless the couple further?</span>
+                <NuxtLink
+                  to="/wishlist"
+                  class="font-bold text-deep-terracotta underline hover:text-deep-terracotta/80 ml-1"
+                >
+                  Browse Wedding Registry
+                </NuxtLink>
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <a
+                :href="waPaymentLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full py-3 bg-emerald-600 text-white font-sans text-xs uppercase tracking-wider font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all cursor-pointer"
+              >
+                <span>Send Proof of Payment on WhatsApp</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"
+                  />
+                </svg>
+              </a>
+
+              <button
+                type="button"
+                @click="submitSuccess = false"
+                class="w-full py-3 bg-warm-cream text-deep-espresso font-sans text-xs uppercase tracking-wider font-semibold rounded-xl hover:bg-warm-cream/80 transition-colors cursor-pointer"
+              >
+                Close Window
               </button>
             </div>
-            <p class="text-xs text-deep-espresso/70 font-medium">{{ accountName }}</p>
           </div>
-        </div>
-
-        <!-- Gentle Wishlist Upsell in Modal -->
-        <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-gold/25 text-center text-xs font-sans">
-          <p class="text-deep-espresso/80 inline-flex items-center justify-center gap-1 flex-wrap">
-            <svg class="w-4 h-4 text-deep-terracotta inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm9 2H3v11a2 2 0 002 2h14a2 2 0 002-2V10z"
-              />
-            </svg>
-            <span>Want to bless the couple further?</span>
-            <NuxtLink
-              to="/wishlist"
-              class="font-bold text-deep-terracotta underline hover:text-deep-terracotta/80 ml-1"
-            >
-              Browse Wedding Registry
-            </NuxtLink>
-          </p>
-        </div>
-
-        <div class="space-y-3">
-          <a
-            :href="waPaymentLink"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full py-3 bg-emerald-600 text-white font-sans text-xs uppercase tracking-wider font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all cursor-pointer"
-          >
-            <span>Send Proof of Payment on WhatsApp ({{ whatsAppContact }})</span>
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"
-              />
-            </svg>
-          </a>
-
-          <button
-            type="button"
-            @click="submitSuccess = false"
-            class="w-full py-3 bg-warm-cream text-deep-espresso font-sans text-xs uppercase tracking-wider font-semibold rounded-xl hover:bg-warm-cream/80 transition-colors cursor-pointer"
-          >
-            Close Window
-          </button>
-        </div>
+        </Transition>
       </div>
-    </div>
+    </Transition>
 
     <!-- Lightbox Modal -->
     <Transition name="overlay-fade">
