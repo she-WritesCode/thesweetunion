@@ -36,10 +36,11 @@ const config = computed(() => {
             label: p.label || `Chapter ${i + 1}`,
             title: p.title || `Memory ${i + 1}`,
             description: p.description || "",
-            // Only use the DB image — no local fallback
+            // DB image and full media object
+            photo: p.photo || null,
             imageUrl: p.photo?.url || null,
           }))
-        : fallbackConfig.story.map((s) => ({ ...s, imageUrl: null })),
+        : fallbackConfig.story.map((s) => ({ ...s, photo: null, imageUrl: null })),
     events: ((eventsResult.value as any)?.docs && (eventsResult.value as any).docs.length > 0
       ? (eventsResult.value as any).docs.map((e: any) => ({
           key: e.id,
@@ -66,7 +67,8 @@ const config = computed(() => {
             title: s.title,
             description: s.description,
           })),
-          // Only use the DB image — no local fallback
+          // Full media object + URL fallback
+          photo: e.photo || null,
           imageUrl: e.photo?.url || null,
           collectsRsvp: e.collectsRsvp !== false,
           rsvpTeaser:
@@ -78,7 +80,7 @@ const config = computed(() => {
               : undefined,
           rsvpLink: e.collectsRsvp !== false ? "/rsvp" : undefined,
         }))
-      : fallbackConfig.events.map((e) => ({ ...e, imageUrl: null }))
+      : fallbackConfig.events.map((e) => ({ ...e, photo: null, imageUrl: null }))
     ).sort((a: any, b: any) => (a.order ?? 999) - (b.order ?? 999)) as any[],
     faqs:
       db?.faqs && db.faqs.length > 0
@@ -91,17 +93,16 @@ const config = computed(() => {
     wishlistTeaser: {
       title: db?.wishlistTeaserTitle || fallbackConfig.wishlistTeaser.title,
       description: db?.wishlistTeaserDescription || fallbackConfig.wishlistTeaser.description,
-      // Only use the DB image — no local fallback
+      image: db?.wishlistTeaserImage || null,
       imageUrl: db?.wishlistTeaserImage?.url || null,
     },
     rsvpTeaser: {
+      image: db?.rsvpTeaserImage || null,
       imageUrl: db?.rsvpTeaserImage?.url || null,
     },
-    countdownPhotos: Array.isArray(db?.countdownPhotos)
-      ? db.countdownPhotos.map((p: any) => p?.url || null).filter(Boolean)
-      : [],
-    footerImage: db?.footerImage?.url || null,
-    heroImage: db?.heroImage?.url || null,
+    countdownPhotos: Array.isArray(db?.countdownPhotos) ? db.countdownPhotos.filter(Boolean) : [],
+    footerImage: db?.footerImage || null,
+    heroImage: db?.heroImage || null,
     heroSubtitle: db?.heroSubtitle || "Celebrate Our Sweet Union",
   };
 });
@@ -142,14 +143,11 @@ onUnmounted(() => {
       background-image approach is used as a quick fix for landscape images on portrait
       mobile viewports where h-full on <img> was not resolving correctly.
     -->
-    <section
-      id="hero"
-      class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16"
-    >
+    <section id="hero" class="min-h-screen w-full flex items-center justify-center relative overflow-hidden pt-16">
       <div
         v-if="config.heroImage"
         class="absolute inset-0 z-0 bg-center bg-cover bg-no-repeat hero-visual"
-        :style="{ backgroundImage: `url('${config.heroImage}')` }"
+        :style="{ backgroundImage: `url('${config.heroImage.url || config.heroImage}')` }"
       />
       <!-- Gradient overlay -->
       <div class="absolute inset-0 z-0 bg-linear-to-t from-deep-espresso/50 via-deep-espresso/25 to-deep-espresso/15" />
@@ -161,7 +159,7 @@ onUnmounted(() => {
           'motion-reveal motion-reveal--fade-up',
           heroReady || prefersReducedMotion ? 'motion-reveal--ready' : '',
         ]"
-        style="--motion-duration: 900ms; --motion-distance: 34px;"
+        style="--motion-duration: 900ms; --motion-distance: 34px"
       >
         <p class="text-xs sm:text-sm uppercase tracking-[0.25em] font-semibold text-white mb-3 drop-shadow">
           {{ config.heroSubtitle }}
@@ -257,7 +255,9 @@ onUnmounted(() => {
         class="min-h-screen paper-texture w-full flex items-center justify-center p-4 py-24 border-b border-amber-gold/10"
       >
         <FadeInSection :distance="20">
-          <div class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center motion-stagger">
+          <div
+            class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12! lg:gap-20! items-center motion-stagger"
+          >
             <!-- Left: Event details -->
             <div class="space-y-10!" :class="index % 2 === 0 ? 'order-1' : 'order-1 lg:order-2'">
               <!-- Event number + name + date -->
@@ -361,7 +361,11 @@ onUnmounted(() => {
               @click="setLightboxImage(config.wishlistTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <DyrectedMedia :media="config.wishlistTeaser.imageUrl" alt="Building our home" class="img-fill" />
+                <DyrectedMedia
+                  :media="config.wishlistTeaser.image || config.wishlistTeaser.imageUrl"
+                  alt="Building our home"
+                  class="img-fill"
+                />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
@@ -407,7 +411,11 @@ onUnmounted(() => {
               @click="setLightboxImage(config.rsvpTeaser.imageUrl)"
             >
               <div class="relative aspect-auto w-full overflow-hidden bg-deep-espresso/5 rounded-sm">
-                <DyrectedMedia :media="config.rsvpTeaser.imageUrl" alt="Adun and Uche" class="img-fill" />
+                <DyrectedMedia
+                  :media="config.rsvpTeaser.image || config.rsvpTeaser.imageUrl"
+                  alt="Adun and Uche"
+                  class="img-fill"
+                />
               </div>
               <div class="mt-4 text-center">
                 <span class="font-display-cormorant text-lg font-semibold text-deep-espresso">
