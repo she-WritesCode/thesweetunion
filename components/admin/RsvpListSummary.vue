@@ -21,7 +21,10 @@ const fetchSummary = async () => {
     loading.value = true;
     const [rsvpRes, asoebiGlobalRes] = await Promise.all([
       props.client.collection("rsvp_records").find({ limit: 1000 }),
-      props.client.global("asoebi_settings").get().catch(() => null),
+      props.client
+        .global("asoebi_settings")
+        .get()
+        .catch(() => null),
     ]);
 
     const docs = rsvpRes?.docs || [];
@@ -103,7 +106,11 @@ const fetchSummary = async () => {
   }
 };
 
-watch(() => props.client, () => fetchSummary(), { immediate: true });
+watch(
+  () => props.client,
+  () => fetchSummary(),
+  { immediate: true },
+);
 onMounted(() => fetchSummary());
 </script>
 
@@ -111,17 +118,14 @@ onMounted(() => fetchSummary());
   <div class="mb-6 p-5 bg-white rounded-xl shadow-xs border border-gray-200">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>👥</span> Guest Responses &amp; Asoebi Summary
-        </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Complete attendance headcount, fabric orders, and revenue metrics calculated directly in-browser</p>
+        <h4 class="text-xs text-gray-500 mt-0.5">Complete attendance headcount, fabric orders, and revenue metrics</h4>
       </div>
       <button
         @click="fetchSummary"
         type="button"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
       >
-        <span>🔄</span> Refresh Stats
+        Refresh Stats
       </button>
     </div>
 
@@ -138,8 +142,12 @@ onMounted(() => fetchSummary());
           <span class="text-xs text-purple-700 font-medium">Headcount</span>
         </div>
         <div class="mt-2 text-xs text-purple-600 flex items-center justify-between border-t border-purple-100 pt-1.5">
-          <span>Leads: <strong>{{ summary.leadAttendingCount }}</strong></span>
-          <span>Spouses: <strong>{{ summary.spouseAttendingCount }}</strong></span>
+          <span
+            >Leads: <strong>{{ summary.leadAttendingCount }}</strong></span
+          >
+          <span
+            >Spouses: <strong>{{ summary.spouseAttendingCount }}</strong></span
+          >
         </div>
       </div>
 
@@ -151,8 +159,12 @@ onMounted(() => fetchSummary());
           <span class="text-xs text-emerald-700 font-medium">Confirmed Yes</span>
         </div>
         <div class="mt-2 text-xs text-emerald-600 flex items-center justify-between border-t border-emerald-100 pt-1.5">
-          <span>Declined: <strong>{{ summary.totalDeclined }}</strong></span>
-          <span>Total Submissions: <strong>{{ summary.totalSubmitted }}</strong></span>
+          <span
+            >Declined: <strong>{{ summary.totalDeclined }}</strong></span
+          >
+          <span
+            >Total Submissions: <strong>{{ summary.totalSubmitted }}</strong></span
+          >
         </div>
       </div>
 
@@ -160,12 +172,18 @@ onMounted(() => fetchSummary());
       <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Asoebi Fabric &amp; Headwear</span>
         <div class="mt-2 flex items-baseline justify-between">
-          <span class="text-3xl font-black text-amber-900">{{ summary.asoebi?.totalYards || 0 }} <span class="text-base font-normal">Yards</span></span>
+          <span class="text-3xl font-black text-amber-900"
+            >{{ summary.asoebi?.totalYards || 0 }} <span class="text-base font-normal">Yards</span></span
+          >
           <span class="text-xs text-amber-800 font-medium">{{ summary.asoebi?.orderCount || 0 }} orders</span>
         </div>
         <div class="mt-2 text-xs text-amber-700 flex items-center justify-between border-t border-amber-100 pt-1.5">
-          <span>Male Caps: <strong>{{ summary.asoebi?.maleQty || 0 }}</strong></span>
-          <span>Female Gele: <strong>{{ summary.asoebi?.femaleQty || 0 }}</strong></span>
+          <span
+            >Male Caps: <strong>{{ summary.asoebi?.maleQty || 0 }}</strong></span
+          >
+          <span
+            >Female Gele: <strong>{{ summary.asoebi?.femaleQty || 0 }}</strong></span
+          >
         </div>
       </div>
 
@@ -173,7 +191,9 @@ onMounted(() => fetchSummary());
       <div class="p-4 bg-rose-50/60 rounded-xl border border-rose-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-rose-800">Total Asoebi Revenue</span>
         <div class="mt-2">
-          <span class="text-2xl font-black text-rose-950">₦{{ (summary.asoebi?.grandRevenue || 0).toLocaleString() }}</span>
+          <span class="text-2xl font-black text-rose-950"
+            >₦{{ (summary.asoebi?.grandRevenue || 0).toLocaleString() }}</span
+          >
         </div>
         <div class="mt-2 text-xs text-rose-700 flex items-center justify-between border-t border-rose-100 pt-1.5">
           <span>Fabric: ₦{{ (summary.asoebi?.fabricRevenue || 0).toLocaleString() }}</span>

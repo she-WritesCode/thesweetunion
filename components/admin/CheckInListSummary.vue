@@ -33,8 +33,7 @@ const fetchSummary = async () => {
       }
 
       const checkedInCount = checkInDocs.length;
-      const checkInPct =
-        totalGuestHeadcount > 0 ? Math.round((checkedInCount / totalGuestHeadcount) * 100) : 0;
+      const checkInPct = totalGuestHeadcount > 0 ? Math.round((checkedInCount / totalGuestHeadcount) * 100) : 0;
 
       summary.value = {
         totalCheckedIn: checkedInCount,
@@ -63,17 +62,16 @@ onMounted(() => {
   <div class="mb-6 p-5 bg-white rounded-xl shadow-xs border border-gray-200">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>🎟️</span> Live Door Check-In Analytics
-        </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Real-time venue check-in rate vs expected attending guests across all records</p>
+        <h4 class="text-xs text-gray-500 mt-0.5">
+          Real-time venue check-in rate vs expected attending guests across all records
+        </h4>
       </div>
       <button
         @click="fetchSummary"
         type="button"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
       >
-        <span>🔄</span> Refresh Scans
+        Refresh Scans
       </button>
     </div>
 

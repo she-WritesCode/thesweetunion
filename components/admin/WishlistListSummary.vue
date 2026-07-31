@@ -44,9 +44,7 @@ const fetchSummary = async () => {
       }
 
       const registryFulfillmentPct =
-        totalRegistryTarget > 0
-          ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100))
-          : 0;
+        totalRegistryTarget > 0 ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100)) : 0;
 
       summary.value = {
         totalItems: docs.length,
@@ -79,10 +77,9 @@ onMounted(() => {
   <div class="mb-6 p-5 bg-white rounded-xl shadow-xs border border-gray-200">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>🎁</span> Gift Registry Summary
-        </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Overall wishlist target, total raised, and item reservation progress across all items</p>
+        <h4 class="text-xs text-gray-500 mt-0.5">
+          Overall wishlist target, total raised, and item reservation progress across all items
+        </h4>
       </div>
       <button
         @click="fetchSummary"
@@ -111,8 +108,12 @@ onMounted(() => {
           ></div>
         </div>
         <div class="mt-2 flex items-center justify-between text-xs text-amber-800 font-medium">
-          <span>Raised / Reserved: <strong>₦{{ (summary.totalAmountRaised || 0).toLocaleString() }}</strong></span>
-          <span>Total Goal: <strong>₦{{ (summary.totalRegistryTarget || 0).toLocaleString() }}</strong></span>
+          <span
+            >Raised / Reserved: <strong>₦{{ (summary.totalAmountRaised || 0).toLocaleString() }}</strong></span
+          >
+          <span
+            >Total Goal: <strong>₦{{ (summary.totalRegistryTarget || 0).toLocaleString() }}</strong></span
+          >
         </div>
       </div>
 

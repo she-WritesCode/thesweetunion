@@ -70,7 +70,7 @@ onMounted(() => {
         type="button"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
       >
-        <span>🔄</span> Refresh Stats
+        Refresh Stats
       </button>
     </div>
 
