@@ -18,7 +18,7 @@ export const rsvpGroups = defineCollection({
     icon: "ListMusic",
     useAsTitle: "name",
     components: {
-      beforeList: ["GroupListSummary"],
+      beforeListTable: ["GroupListSummary"],
     },
     defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
     group: "RSVP",

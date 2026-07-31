@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
 
   const client = createClient({
-    baseUrl: config.dyrectedUrl || "http://localhost:3005",
+    baseUrl: config.public.dyrectedUrl || config.dyrectedUrl,
     apiKey: config.dyrectedApiKey,
   });
 

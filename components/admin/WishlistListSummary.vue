@@ -1,15 +1,67 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
+const props = defineProps<{
+  client?: any;
+  documents?: any[];
+  pagination?: any;
+  isLoading?: boolean;
+}>();
+
 const loading = ref(true);
 const summary = ref<any>(null);
 
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    const res = await $fetch<any>("/api/admin/wishlist-summary");
-    if (res?.success) {
-      summary.value = res.data;
+    if (props.client) {
+      const res = await props.client.collection("wishlist_items").find({ limit: 1000 });
+      const docs = res?.docs || [];
+
+      let totalRegistryTarget = 0;
+      let totalAmountRaised = 0;
+      let fullyReservedCount = 0;
+      let partiallyFundedCount = 0;
+      let unclaimedCount = 0;
+
+      for (const item of docs) {
+        const price = Number(item.price) || 0;
+        const raised = Number(item.amountRaised) || 0;
+        const reservedCount = Number(item.reservedCount) || 0;
+        const maxQty = Number(item.maxQuantity) || 1;
+
+        if (price > 0) totalRegistryTarget += price * maxQty;
+        totalAmountRaised += raised;
+
+        if (item.fundingType === "full") {
+          if (reservedCount >= maxQty) fullyReservedCount++;
+          else unclaimedCount++;
+        } else {
+          if (raised >= price && price > 0) fullyReservedCount++;
+          else if (raised > 0) partiallyFundedCount++;
+          else unclaimedCount++;
+        }
+      }
+
+      const registryFulfillmentPct =
+        totalRegistryTarget > 0
+          ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100))
+          : 0;
+
+      summary.value = {
+        totalItems: docs.length,
+        totalRegistryTarget,
+        totalAmountRaised,
+        registryFulfillmentPct,
+        fullyReservedCount,
+        partiallyFundedCount,
+        unclaimedCount,
+      };
+    } else {
+      const res = await $fetch<any>("/api/admin/wishlist-summary");
+      if (res?.success) {
+        summary.value = res.data;
+      }
     }
   } catch (err) {
     console.error("Failed to fetch Wishlist summary:", err);
@@ -28,9 +80,9 @@ onMounted(() => {
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>🎁</span> Gift Registry Executive Summary
+          <span>🎁</span> Gift Registry Summary
         </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Overall wishlist target, total raised, and item reservation progress</p>
+        <p class="text-xs text-gray-500 mt-0.5">Overall wishlist target, total raised, and item reservation progress across all items</p>
       </div>
       <button
         @click="fetchSummary"

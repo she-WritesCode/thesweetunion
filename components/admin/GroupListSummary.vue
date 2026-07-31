@@ -1,15 +1,44 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
+const props = defineProps<{
+  client?: any;
+  documents?: any[];
+  pagination?: any;
+  isLoading?: boolean;
+}>();
+
 const loading = ref(true);
 const summary = ref<any>(null);
 
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    const res = await $fetch<any>("/api/admin/group-summary");
-    if (res?.success) {
-      summary.value = res.data;
+    if (props.client) {
+      const res = await props.client.collection("rsvp_groups").find({ limit: 1000 });
+      const docs = res?.docs || [];
+
+      let totalCapacity = 0;
+      let respondedCount = 0;
+
+      for (const g of docs) {
+        totalCapacity += Number(g.allowedGuests) || 0;
+        if (g.hasSubmitted) respondedCount++;
+      }
+
+      const responsePct = docs.length > 0 ? Math.round((respondedCount / docs.length) * 100) : 0;
+
+      summary.value = {
+        totalGroups: docs.length,
+        totalCapacity,
+        respondedCount,
+        responsePct,
+      };
+    } else {
+      const res = await $fetch<any>("/api/admin/group-summary");
+      if (res?.success) {
+        summary.value = res.data;
+      }
     }
   } catch (err) {
     console.error("Failed to fetch Group summary:", err);
@@ -30,14 +59,14 @@ onMounted(() => {
         <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
           <span>👥</span> Invitation Group Capacity &amp; Response Rate
         </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Assigned guest seats and response progress across invitation groups</p>
+        <p class="text-xs text-gray-500 mt-0.5">Assigned guest seats and response progress across all invitation groups</p>
       </div>
       <button
         @click="fetchSummary"
         type="button"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
       >
-        <span>🔄</span> Refresh Groups
+        <span>🔄</span> Refresh Stats
       </button>
     </div>
 

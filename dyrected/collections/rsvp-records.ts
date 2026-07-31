@@ -20,7 +20,7 @@ export const rsvpRecords = defineCollection({
     icon: "ReceiptText",
     useAsTitle: "leadName",
     components: {
-      beforeList: ["RsvpListSummary"],
+      beforeListTable: ["RsvpListSummary"],
     },
     defaultColumns: [
       "leadName",

@@ -16,6 +16,9 @@ export const reservations = defineCollection({
   admin: {
     icon: "Gift",
     useAsTitle: "guestName",
+    components: {
+      beforeListTable: ["WishlistListSummary"],
+    },
     defaultColumns: ["guestName", "item", "intent", "paymentTiming", "reminderAt", "reservedAt"],
     group: "Wishlist",
   },

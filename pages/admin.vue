@@ -43,11 +43,11 @@ const adminComponents = {
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
   },
-  components: {
-    RsvpListSummary,
-    WishlistListSummary,
-    CheckInListSummary,
-    GroupListSummary,
+  collectionList: {
+    "RsvpListSummary": RsvpListSummary,
+    "WishlistListSummary": WishlistListSummary,
+    "CheckInListSummary": CheckInListSummary,
+    "GroupListSummary": GroupListSummary,
   },
 };
 </script>

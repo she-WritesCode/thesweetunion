@@ -1,15 +1,92 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
+const props = defineProps<{
+  client?: any;
+  documents?: any[];
+  pagination?: any;
+  isLoading?: boolean;
+}>();
+
 const loading = ref(true);
 const summary = ref<any>(null);
 
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    const res = await $fetch<any>("/api/admin/rsvp-summary");
-    if (res?.success) {
-      summary.value = res.data;
+    if (props.client) {
+      const res = await props.client.collection("rsvp_records").find({ limit: 1000 });
+      const docs = res?.docs || [];
+      const asoebiGlobalRes = await props.client
+        .global("asoebi_settings")
+        .get()
+        .catch(() => null);
+      const asoebiGlobal = asoebiGlobalRes || {};
+
+      const pricePerYard = Number(asoebiGlobal?.pricePerYard) || 10000;
+      const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 15000;
+      const asoOkeFemalePrice = Number(asoebiGlobal?.asoOkeFemalePrice) || 25000;
+
+      let totalSubmitted = docs.length;
+      let totalAttending = 0;
+      let totalDeclined = 0;
+      let leadAttendingCount = 0;
+      let spouseAttendingCount = 0;
+      let totalAsoebiYards = 0;
+      let asoebiOrderCount = 0;
+      let totalAsoOkeMaleQty = 0;
+      let totalAsoOkeFemaleQty = 0;
+
+      for (const record of docs) {
+        if (record.attending === true || record.attending === "true") {
+          totalAttending++;
+          leadAttendingCount++;
+          if (record.hasSpouse && record.spouseName) {
+            spouseAttendingCount++;
+          }
+          if (record.wantsAsoebi) {
+            asoebiOrderCount++;
+            const yards = parseInt(record.asoebiYards, 10);
+            if (!isNaN(yards) && yards > 0) totalAsoebiYards += yards;
+          }
+          if (record.wantsAsoOke) {
+            if (record.asoOkeMaleQty) totalAsoOkeMaleQty += Number(record.asoOkeMaleQty);
+            if (record.asoOkeFemaleQty) totalAsoOkeFemaleQty += Number(record.asoOkeFemaleQty);
+          }
+        } else {
+          totalDeclined++;
+        }
+      }
+
+      const totalGuestHeadcount = leadAttendingCount + spouseAttendingCount;
+      const fabricRevenue = totalAsoebiYards * pricePerYard;
+      const asoOkeMaleRevenue = totalAsoOkeMaleQty * asoOkeMalePrice;
+      const asoOkeFemaleRevenue = totalAsoOkeFemaleQty * asoOkeFemalePrice;
+      const totalAsoOkeRevenue = asoOkeMaleRevenue + asoOkeFemaleRevenue;
+      const grandRevenue = fabricRevenue + totalAsoOkeRevenue;
+
+      summary.value = {
+        totalSubmitted,
+        totalAttending,
+        totalDeclined,
+        leadAttendingCount,
+        spouseAttendingCount,
+        totalGuestHeadcount,
+        asoebi: {
+          orderCount: asoebiOrderCount,
+          totalYards: totalAsoebiYards,
+          fabricRevenue,
+          maleQty: totalAsoOkeMaleQty,
+          femaleQty: totalAsoOkeFemaleQty,
+          totalAsoOkeRevenue,
+          grandRevenue,
+        },
+      };
+    } else {
+      const res = await $fetch<any>("/api/admin/rsvp-summary");
+      if (res?.success) {
+        summary.value = res.data;
+      }
     }
   } catch (err) {
     console.error("Failed to fetch RSVP summary:", err);
@@ -28,16 +105,18 @@ onMounted(() => {
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>👥</span> Guest Responses &amp; Asoebi Executive Summary
+          <span>👥</span> Guest Responses &amp; Asoebi Summary
         </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Real-time attendance headcount, fabric orders, and revenue metrics</p>
+        <p class="text-xs text-gray-500 mt-0.5">
+          Complete attendance headcount, fabric orders, and revenue metrics across all records
+        </p>
       </div>
       <button
         @click="fetchSummary"
         type="button"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
       >
-        <span>🔄</span> Refresh Stats
+        Refresh Stats
       </button>
     </div>
 
@@ -54,8 +133,12 @@ onMounted(() => {
           <span class="text-xs text-purple-700 font-medium">Headcount</span>
         </div>
         <div class="mt-2 text-xs text-purple-600 flex items-center justify-between border-t border-purple-100 pt-1.5">
-          <span>Leads: <strong>{{ summary.leadAttendingCount }}</strong></span>
-          <span>Spouses: <strong>{{ summary.spouseAttendingCount }}</strong></span>
+          <span
+            >Leads: <strong>{{ summary.leadAttendingCount }}</strong></span
+          >
+          <span
+            >Spouses: <strong>{{ summary.spouseAttendingCount }}</strong></span
+          >
         </div>
       </div>
 
@@ -67,8 +150,12 @@ onMounted(() => {
           <span class="text-xs text-emerald-700 font-medium">Confirmed Yes</span>
         </div>
         <div class="mt-2 text-xs text-emerald-600 flex items-center justify-between border-t border-emerald-100 pt-1.5">
-          <span>Declined: <strong>{{ summary.totalDeclined }}</strong></span>
-          <span>Total Submissions: <strong>{{ summary.totalSubmitted }}</strong></span>
+          <span
+            >Declined: <strong>{{ summary.totalDeclined }}</strong></span
+          >
+          <span
+            >Total Submissions: <strong>{{ summary.totalSubmitted }}</strong></span
+          >
         </div>
       </div>
 
@@ -76,12 +163,18 @@ onMounted(() => {
       <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Asoebi Fabric &amp; Headwear</span>
         <div class="mt-2 flex items-baseline justify-between">
-          <span class="text-3xl font-black text-amber-900">{{ summary.asoebi?.totalYards || 0 }} <span class="text-base font-normal">Yards</span></span>
+          <span class="text-3xl font-black text-amber-900"
+            >{{ summary.asoebi?.totalYards || 0 }} <span class="text-base font-normal">Yards</span></span
+          >
           <span class="text-xs text-amber-800 font-medium">{{ summary.asoebi?.orderCount || 0 }} orders</span>
         </div>
         <div class="mt-2 text-xs text-amber-700 flex items-center justify-between border-t border-amber-100 pt-1.5">
-          <span>Male Caps: <strong>{{ summary.asoebi?.maleQty || 0 }}</strong></span>
-          <span>Female Gele: <strong>{{ summary.asoebi?.femaleQty || 0 }}</strong></span>
+          <span
+            >Male Caps: <strong>{{ summary.asoebi?.maleQty || 0 }}</strong></span
+          >
+          <span
+            >Female Gele: <strong>{{ summary.asoebi?.femaleQty || 0 }}</strong></span
+          >
         </div>
       </div>
 
@@ -89,7 +182,9 @@ onMounted(() => {
       <div class="p-4 bg-rose-50/60 rounded-xl border border-rose-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-rose-800">Total Asoebi Revenue</span>
         <div class="mt-2">
-          <span class="text-2xl font-black text-rose-950">₦{{ (summary.asoebi?.grandRevenue || 0).toLocaleString() }}</span>
+          <span class="text-2xl font-black text-rose-950"
+            >₦{{ (summary.asoebi?.grandRevenue || 0).toLocaleString() }}</span
+          >
         </div>
         <div class="mt-2 text-xs text-rose-700 flex items-center justify-between border-t border-rose-100 pt-1.5">
           <span>Fabric: ₦{{ (summary.asoebi?.fabricRevenue || 0).toLocaleString() }}</span>
