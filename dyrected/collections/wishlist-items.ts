@@ -17,6 +17,9 @@ export const wishlistItems = defineCollection({
   admin: {
     icon: "ClipboardList",
     useAsTitle: "name",
+    components: {
+      beforeList: ["WishlistListSummary"],
+    },
     defaultColumns: [
       "name",
       "category",

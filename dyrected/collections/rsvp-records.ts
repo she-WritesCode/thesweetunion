@@ -19,6 +19,9 @@ export const rsvpRecords = defineCollection({
   admin: {
     icon: "ReceiptText",
     useAsTitle: "leadName",
+    components: {
+      beforeList: ["RsvpListSummary"],
+    },
     defaultColumns: [
       "leadName",
       "group",

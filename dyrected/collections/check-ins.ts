@@ -16,6 +16,9 @@ export const checkIns = defineCollection({
   admin: {
     icon: "TicketCheck",
     useAsTitle: "guestName",
+    components: {
+      beforeList: ["CheckInListSummary"],
+    },
     defaultColumns: ["guestName", "partySize", "event", "scannedBy", "createdAt"],
     group: "RSVP",
   },

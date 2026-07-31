@@ -5,6 +5,10 @@ import CountField from "~/components/admin/CountField.vue";
 import CheckInScanner from "~/components/admin/CheckInScanner.vue";
 import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
 import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButton.vue";
+import RsvpListSummary from "~/components/admin/RsvpListSummary.vue";
+import WishlistListSummary from "~/components/admin/WishlistListSummary.vue";
+import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
+import GroupListSummary from "~/components/admin/GroupListSummary.vue";
 
 definePageMeta({
   layout: false,
@@ -18,13 +22,10 @@ useHead({
 });
 
 /**
- * Custom field components injected into the Dyrected Admin UI.
+ * Custom components injected into the Dyrected Admin UI.
  *
- * Key format:  "<collection-slug>.<fieldName>"
- * This must match the `admin.component` value in the collection schema.
- *
- * The Vue bridge in @dyrected/vue automatically wraps each component
- * so it can render inside the React-based Admin UI (no extra work needed).
+ * `fields`: Field-level components ("<collection-slug>.<fieldName>")
+ * `components`: List & View components referenced in `collection.admin.components.beforeList`
  */
 const adminComponents = {
   fields: {
@@ -41,6 +42,12 @@ const adminComponents = {
     // rsvp_records collection — invitation tools
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
+  },
+  components: {
+    RsvpListSummary,
+    WishlistListSummary,
+    CheckInListSummary,
+    GroupListSummary,
   },
 };
 </script>

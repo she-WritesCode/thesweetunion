@@ -20,98 +20,88 @@ const emit = defineEmits<{
 
 const collageStyles = [
   {
-    rotation: "rotate-[-2deg]",
-    tapeRotation: "rotate-[-8deg] left-8 -top-3.5",
+    rotation: "rotate-[-3deg]",
+    tapeRotation: "rotate-[-10deg] left-[25%] top-[-14px]",
     tapeColor: "washi-tape-terracotta",
+    marginOffset: "translate-y-2 lg:translate-x-4",
   },
   {
-    rotation: "rotate-[2.5deg]",
-    tapeRotation: "rotate-[9deg] right-8 -top-3",
+    rotation: "rotate-[4deg]",
+    tapeRotation: "rotate-[8deg] right-[25%] top-[-12px]",
     tapeColor: "washi-tape-gold",
+    marginOffset: "-translate-y-4 lg:-translate-x-4",
   },
   {
-    rotation: "rotate-[-1.5deg]",
-    tapeRotation: "rotate-[-5deg] left-12 -top-4",
+    rotation: "rotate-[-2deg]",
+    tapeRotation: "rotate-[-5deg] left-[30%] top-[-16px]",
     tapeColor: "washi-tape",
+    marginOffset: "translate-y-4 lg:translate-x-2",
   },
   {
     rotation: "rotate-[3deg]",
-    tapeRotation: "rotate-[10deg] right-12 -top-3.5",
+    tapeRotation: "rotate-[12deg] right-[30%] top-[-10px]",
     tapeColor: "washi-tape-terracotta",
+    marginOffset: "-translate-y-2 lg:-translate-x-2",
   },
 ];
 </script>
 
 <template>
-  <div class="w-full max-w-4xl mx-auto py-6 px-4 select-text relative">
-    <!-- Tall scroll container that controls the stack leave timing -->
-    <div
-      class="relative w-full"
-      :style="{ height: `${Math.max(items.length, 1) * 75}vh` }"
-    >
-      <!-- Each story card track -->
+  <div class="w-full max-w-6xl mx-auto py-12 px-4 select-text">
+    <!-- Scattered overlapping grid of Polaroid memories -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 relative">
       <div
         v-for="(item, index) in items"
         :key="item.key"
-        class="absolute top-0 left-0 right-0 w-full pointer-events-none"
+        class="relative z-10 w-full max-w-md mx-auto select-none transition-all duration-500 hover:z-20 hover:scale-[1.02]"
+        :class="[
+          collageStyles[index % collageStyles.length].rotation,
+          collageStyles[index % collageStyles.length].marginOffset,
+        ]"
         :style="{
-          height: `${(index + 1) * 75}vh`,
-          zIndex: items.length - index,
+          animation: `gentlePulseIn 520ms cubic-bezier(0.22, 1, 0.36, 1) ${index * 90}ms both`,
         }"
       >
-        <!-- Sticky card inside track -->
+        <!-- Piece of washi tape holding this Polaroid memory -->
         <div
-          class="sticky w-full max-w-lg mx-auto transition-all duration-300 motion-lift pointer-events-auto"
-          :style="{
-            top: `calc(6.5rem + ${(items.length - 1 - index) * 4}px)`,
-          }"
-        >
-          <!-- Washi tape accent holding the polaroid card -->
-          <div
-            class="washi-tape absolute z-30 pointer-events-none"
-            :class="[
-              collageStyles[index % collageStyles.length].tapeRotation,
-              collageStyles[index % collageStyles.length].tapeColor,
-            ]"
-          />
+          class="washi-tape absolute"
+          :class="[
+            collageStyles[index % collageStyles.length].tapeRotation,
+            collageStyles[index % collageStyles.length].tapeColor,
+          ]"
+        />
 
-          <!-- Polaroid Card -->
+        <!-- The Polaroid Card -->
+        <div class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col motion-lift">
+          <!-- Photo frame -->
           <div
-            class="bg-white p-4 sm:p-5 pb-7 sm:pb-8 rounded-lg shadow-2xl border border-deep-espresso/10 flex flex-col transform hover:scale-[1.02] hover:rotate-0 transition-transform duration-300 cursor-default"
-            :class="collageStyles[index % collageStyles.length].rotation"
+            class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in group"
+            @click="emit('imageClick', item.imageUrl)"
           >
-            <!-- Photo Frame -->
-            <div
-              class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in group"
-              @click="emit('imageClick', item.imageUrl)"
-            >
-              <DyrectedMedia
-                :media="(item as any).photo || item.imageUrl"
-                :alt="item.title"
-                class="img-fill transition-transform duration-500 group-hover:scale-105"
-              />
-              <!-- Subtle gradient overlay -->
-              <div class="absolute inset-0 bg-gradient-to-t from-deep-espresso/15 via-transparent to-transparent pointer-events-none" />
-              <!-- Zoom hint badge -->
-              <div class="absolute bottom-2 right-2 bg-deep-espresso/60 backdrop-blur-xs text-warm-cream text-[10px] uppercase tracking-wider px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Zoom
-              </div>
+            <DyrectedMedia
+              :media="(item as any).photo || item.imageUrl"
+              :alt="item.title"
+              class="img-fill transition-transform duration-500 group-hover:scale-105"
+            />
+            <!-- Subtle shadows & paper details on photo -->
+            <div class="absolute inset-0 bg-gradient-to-t from-deep-espresso/10 to-transparent pointer-events-none" />
+            <!-- Zoom hint badge -->
+            <div class="absolute bottom-2 right-2 bg-deep-espresso/60 backdrop-blur-xs text-warm-cream text-[10px] uppercase tracking-wider px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+              Zoom
             </div>
+          </div>
 
-            <!-- Handwritten style story entry -->
-            <div class="mt-4 space-y-2 text-deep-espresso text-left select-text">
-              <div class="flex items-center justify-between border-b border-amber-gold/20 pb-1.5">
-                <span class="font-display-cormorant text-2xl sm:text-3xl font-bold text-deep-terracotta">
-                  {{ item.title }}
-                </span>
-                <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase">
-                  {{ item.label }}
-                </span>
-              </div>
-              <p class="font-body text-base sm:text-lg text-deep-espresso/85 leading-relaxed italic">
-                "{{ item.description }}"
-              </p>
+          <!-- Handwritten diary entry description -->
+          <div class="mt-5 space-y-2.5 text-deep-espresso text-left select-text">
+            <div class="flex items-center justify-between border-b border-amber-gold/15 pb-1">
+              <span class="font-display-cormorant text-2xl font-bold text-deep-terracotta">
+                {{ item.title }}
+              </span>
+              <span class="font-heading text-xs font-semibold text-amber-gold tracking-widest uppercase">
+                {{ item.label }}
+              </span>
             </div>
+            <p class="font-body text-base text-deep-espresso/80 leading-relaxed italic">"{{ item.description }}"</p>
           </div>
         </div>
       </div>
