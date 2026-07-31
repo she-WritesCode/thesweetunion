@@ -19,11 +19,15 @@ const fetchSummary = async () => {
       const docs = res?.docs || [];
 
       let totalCapacity = 0;
+      let totalConfirmedSeats = 0;
       let respondedCount = 0;
 
       for (const g of docs) {
-        totalCapacity += Number(g.allowedGuests) || 0;
-        if (g.hasSubmitted) respondedCount++;
+        totalCapacity += Number(g.maxCapacity) || 0;
+        totalConfirmedSeats += Number(g.confirmedCount) || 0;
+        if (g.hasSubmitted || (g.confirmedCount || 0) > 0 || (g.declinedCount || 0) > 0) {
+          respondedCount++;
+        }
       }
 
       const responsePct = docs.length > 0 ? Math.round((respondedCount / docs.length) * 100) : 0;
@@ -31,6 +35,7 @@ const fetchSummary = async () => {
       summary.value = {
         totalGroups: docs.length,
         totalCapacity,
+        totalConfirmedSeats,
         respondedCount,
         responsePct,
       };
@@ -56,10 +61,9 @@ onMounted(() => {
   <div class="mb-6 p-5 bg-white rounded-xl shadow-xs border border-gray-200">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span>👥</span> Invitation Group Capacity &amp; Response Rate
-        </h3>
-        <p class="text-xs text-gray-500 mt-0.5">Assigned guest seats and response progress across all invitation groups</p>
+        <h4 class="text-xs text-gray-500 mt-0.5">
+          Max allowed capacity, confirmed attending headcounts (leads + spouses), and group response rates
+        </h4>
       </div>
       <button
         @click="fetchSummary"
@@ -74,12 +78,20 @@ onMounted(() => {
       <div class="h-16 bg-gray-100 rounded-lg"></div>
     </div>
 
-    <div v-else-if="summary" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div v-else-if="summary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-4 bg-purple-50/60 rounded-xl border border-purple-100 flex flex-col justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-purple-700">Confirmed Guest Headcount</span>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span class="text-3xl font-black text-purple-950">{{ summary.totalConfirmedSeats || 0 }}</span>
+          <span class="text-xs text-purple-700 font-medium">Attending Seats</span>
+        </div>
+      </div>
+
       <div class="p-4 bg-sky-50/60 rounded-xl border border-sky-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-sky-800">Total Group Capacity</span>
         <div class="mt-2 flex items-baseline justify-between">
           <span class="text-3xl font-black text-sky-950">{{ summary.totalCapacity || 0 }}</span>
-          <span class="text-xs text-sky-700 font-medium">Assigned Seats</span>
+          <span class="text-xs text-sky-700 font-medium">Max Allowed</span>
         </div>
       </div>
 
@@ -91,11 +103,11 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="p-4 bg-violet-50/60 rounded-xl border border-violet-100 flex flex-col justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-violet-800">Response Rate</span>
+      <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100 flex flex-col justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Group Response Rate</span>
         <div class="mt-2 flex items-baseline justify-between">
-          <span class="text-3xl font-black text-violet-950">{{ summary.responsePct || 0 }}%</span>
-          <span class="text-xs text-violet-700 font-medium">Completed</span>
+          <span class="text-3xl font-black text-emerald-950">{{ summary.responsePct || 0 }}%</span>
+          <span class="text-xs text-emerald-700 font-medium">Completed</span>
         </div>
       </div>
     </div>
