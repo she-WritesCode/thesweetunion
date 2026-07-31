@@ -53,18 +53,17 @@ const collageStyles = [
       <div
         v-for="(item, index) in items"
         :key="item.key"
-        class="absolute left-0 right-0 w-full"
+        class="absolute top-0 left-0 right-0 w-full pointer-events-none"
         :style="{
-          top: `${index * 75}vh`,
-          height: `${items.length === 1 ? 75 : index === items.length - 1 ? 75 : 75}vh`,
+          height: `${(index + 1) * 75}vh`,
           zIndex: items.length - index,
         }"
       >
         <!-- Sticky card inside track -->
         <div
-          class="sticky w-full max-w-lg mx-auto transition-all duration-300 motion-lift"
+          class="sticky w-full max-w-lg mx-auto transition-all duration-300 motion-lift pointer-events-auto"
           :style="{
-            top: `calc(7rem + ${(items.length - 1 - index) * 4}px)`,
+            top: `calc(6.5rem + ${(items.length - 1 - index) * 4}px)`,
           }"
         >
           <!-- Washi tape accent holding the polaroid card -->
