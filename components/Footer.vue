@@ -3,7 +3,7 @@ import { siteConfig } from "~/config/site";
 
 interface FooterProps {
   onImageClick?: (src: string) => void;
-  couplesPhoto?: string | null;
+  couplesPhoto?: string | Record<string, any> | null;
   hashtag?: string;
   person1?: string;
   person2?: string;
@@ -14,7 +14,11 @@ const props = withDefaults(defineProps<FooterProps>(), {
   hashtag: siteConfig.couple.hashtag,
   person1: siteConfig.couple.person1,
   person2: siteConfig.couple.person2,
-  wishlistUrl: siteConfig.wishlistUrl,
+  wishlistUrl: "/wishlist",
+});
+const photoUrl = computed(() => {
+  if (!props.couplesPhoto) return null;
+  return typeof props.couplesPhoto === "string" ? props.couplesPhoto : props.couplesPhoto.url || null;
 });
 </script>
 
@@ -33,7 +37,7 @@ const props = withDefaults(defineProps<FooterProps>(), {
         <div
           class="relative w-[250px] aspect-square mx-auto bg-white p-2 pb-6 rounded shadow border border-deep-espresso/5 rotate-3 scale-90 select-none motion-lift"
           :class="onImageClick && couplesPhoto ? 'cursor-zoom-in' : ''"
-          @click="couplesPhoto && onImageClick?.(couplesPhoto)"
+          @click="photoUrl && onImageClick?.(photoUrl)"
         >
           <div class="relative w-full h-full overflow-hidden bg-deep-espresso/5 rounded-sm">
             <DyrectedMedia v-if="couplesPhoto" :media="couplesPhoto" alt="Memory" class="img-fill" />
