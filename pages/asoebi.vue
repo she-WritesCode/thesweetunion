@@ -505,7 +505,7 @@ const waPaymentLink = computed(() => {
           <!-- Fabric Selection Section (Exact RSVP Form UI) -->
           <div class="p-5 rounded-2xl bg-warm-cream/40 border border-amber-gold/20 space-y-3 font-sans">
             <div>
-              <label class="block text-sm font-bold text-deep-espresso">Asoebi Fabric</label>
+              <label class="block text-sm font-bold text-deep-espresso">Customised Adire Asoebi Fabric</label>
               <div class="text-xs text-deep-terracotta font-medium mt-0.5">
                 ₦{{ pricePerYard.toLocaleString() }} per yard
               </div>
@@ -605,7 +605,7 @@ const waPaymentLink = computed(() => {
               <h4 class="font-bold text-sm text-deep-espresso">Order Summary</h4>
               <div class="space-y-1.5 text-xs md:text-sm text-deep-espresso">
                 <div v-if="wantsAsoebi && asoebiYards" class="flex justify-between">
-                  <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
+                  <span>Customised Adire Fabric ({{ asoebiYards }} Yards)</span>
                   <span class="font-semibold font-mono"
                     >₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span
                   >

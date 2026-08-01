@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   // Construct asoebiDetails summary
   const detailsParts = [];
   if (wantsAsoebi && asoebiYards) {
-    detailsParts.push(`Asoebi Fabric: ${asoebiYards} Yards`);
+    detailsParts.push(`Customised Adire Fabric: ${asoebiYards} Yards`);
   }
   if (wantsAsoOke) {
     if (asoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${asoOkeMaleQty} set(s)`);

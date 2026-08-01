@@ -959,7 +959,7 @@ onUnmounted(() => {
                     "
                   >
                     <div style="margin-bottom: 12px">
-                      <label class="input-label" style="font-weight: 700; margin: 0">Asoebi Fabric</label>
+                      <label class="input-label" style="font-weight: 700; margin: 0">Customised Adire Asoebi Fabric</label>
                       <div style="font-size: 0.8rem; color: #865172; margin-top: 2px">
                         ₦{{ pricePerYard.toLocaleString() }} per yard
                       </div>
@@ -1082,7 +1082,7 @@ onUnmounted(() => {
                     </h4>
                     <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; color: #462137">
                       <div v-if="wantsAsoebi && asoebiYards" style="display: flex; justify-content: space-between">
-                        <span>Asoebi Fabric ({{ asoebiYards }} Yards)</span>
+                        <span>Customised Adire Fabric ({{ asoebiYards }} Yards)</span>
                         <span>₦{{ (parseInt(asoebiYards, 10) * pricePerYard).toLocaleString() }}</span>
                       </div>
                       <div

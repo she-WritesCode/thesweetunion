@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     limit: 1,
   });
 
-  if (groupSearch.total === 0 || !groupSearch?.docs?.[0].isActive) {
+  if (groupSearch.total === 0 || !groupSearch?.docs?.[0]?.isActive) {
     throw createError({ statusCode: 404, message: "Group not found or inactive" });
   }
 
@@ -91,7 +91,7 @@ export default defineEventHandler(async (event) => {
   try {
     const detailsParts = [];
     if (wantsAsoebi && asoebiYards) {
-      detailsParts.push(`Asoebi Fabric: ${asoebiYards} Yards`);
+      detailsParts.push(`Customised Adire Fabric: ${asoebiYards} Yards`);
     }
     if (wantsAsoOke) {
       if (asoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${asoOkeMaleQty} set(s)`);

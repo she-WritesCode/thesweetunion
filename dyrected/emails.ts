@@ -123,7 +123,7 @@ function asoebiSection(
       const cost = yards * pricePerYard;
       totalAmount += cost;
       items.push(
-        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Asoebi Fabric</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${yards} Yards (₦${cost.toLocaleString()})</td></tr>`,
+        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Customised Adire Fabric</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${yards} Yards (₦${cost.toLocaleString()})</td></tr>`,
       );
     }
   }

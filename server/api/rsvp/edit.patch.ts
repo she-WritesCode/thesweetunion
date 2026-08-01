@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
 
   const detailsParts = [];
   if (newWantsAsoebi && newAsoebiYards) {
-    detailsParts.push(`Asoebi Fabric: ${newAsoebiYards} Yards`);
+    detailsParts.push(`Customised Adire Fabric: ${newAsoebiYards} Yards`);
   }
   if (newWantsAsoOke) {
     if (newAsoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${newAsoOkeMaleQty} set(s)`);
