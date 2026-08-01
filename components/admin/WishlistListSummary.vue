@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 
 const props = defineProps<{
   client?: any;
@@ -15,8 +15,12 @@ const fetchSummary = async () => {
   try {
     loading.value = true;
     if (props.client) {
-      const res = await props.client.collection("wishlist_items").find({ limit: 1000 });
-      const docs = res?.docs || [];
+      const [itemsRes, reservationsRes] = await Promise.all([
+        props.client.collection("wishlist_items").find({ limit: 1000 }),
+        props.client.collection("reservations").find({ limit: 1000 }).catch(() => ({ docs: [] })),
+      ]);
+      const docs = itemsRes?.docs || [];
+      const reservationDocs = reservationsRes?.docs || [];
 
       let totalRegistryTarget = 0;
       let totalAmountRaised = 0;
@@ -26,20 +30,51 @@ const fetchSummary = async () => {
 
       for (const item of docs) {
         const price = Number(item.price) || 0;
-        const raised = Number(item.amountRaised) || 0;
-        const reservedCount = Number(item.reservedCount) || 0;
         const maxQty = Number(item.maxQuantity) || 1;
+        const isCrowdfund = item.fundingType === "crowdfund";
 
-        if (price > 0) totalRegistryTarget += price * maxQty;
-        totalAmountRaised += raised;
+        // Find matching reservation records for this wishlist item
+        const itemReservations = reservationDocs.filter((r: any) => {
+          const rItemId = typeof r.item === "object" && r.item !== null ? r.item.id : r.item;
+          return rItemId === item.id;
+        });
 
-        if (item.fundingType === "full") {
-          if (reservedCount >= maxQty) fullyReservedCount++;
-          else unclaimedCount++;
+        // Sum explicit contribution amounts from reservations
+        const reservationContribSum = itemReservations.reduce(
+          (sum: number, r: any) => sum + (Number(r.contributionAmount) || 0),
+          0,
+        );
+        const raised = Math.max(Number(item.amountRaised) || 0, reservationContribSum);
+
+        // Reserved headcount / slot count
+        const reservationDocsCount = itemReservations.length;
+        const reservedCount = Math.max(Number(item.reservedCount) || 0, reservationDocsCount);
+
+        if (price > 0) {
+          totalRegistryTarget += price * maxQty;
+        }
+
+        if (isCrowdfund) {
+          totalAmountRaised += raised;
+          if (price > 0 && raised >= price) {
+            fullyReservedCount++;
+          } else if (raised > 0 || reservationDocsCount > 0) {
+            partiallyFundedCount++;
+          } else {
+            unclaimedCount++;
+          }
         } else {
-          if (raised >= price && price > 0) fullyReservedCount++;
-          else if (raised > 0) partiallyFundedCount++;
-          else unclaimedCount++;
+          // Fixed item (one person or multiple quantity reservations)
+          const reservedValue = reservedCount > 0 ? Math.min(reservedCount, maxQty) * price : 0;
+          totalAmountRaised += reservedValue;
+
+          if (reservedCount >= maxQty) {
+            fullyReservedCount++;
+          } else if (reservedCount > 0) {
+            partiallyFundedCount++;
+          } else {
+            unclaimedCount++;
+          }
         }
       }
 
@@ -48,6 +83,7 @@ const fetchSummary = async () => {
 
       summary.value = {
         totalItems: docs.length,
+        totalReservations: reservationDocs.length,
         totalRegistryTarget,
         totalAmountRaised,
         registryFulfillmentPct,
@@ -55,11 +91,6 @@ const fetchSummary = async () => {
         partiallyFundedCount,
         unclaimedCount,
       };
-    } else {
-      const res = await $fetch<any>("/api/admin/wishlist-summary");
-      if (res?.success) {
-        summary.value = res.data;
-      }
     }
   } catch (err) {
     console.error("Failed to fetch Wishlist summary:", err);
@@ -67,6 +98,12 @@ const fetchSummary = async () => {
     loading.value = false;
   }
 };
+
+watch(
+  () => props.client,
+  () => fetchSummary(),
+  { immediate: true },
+);
 
 onMounted(() => {
   fetchSummary();

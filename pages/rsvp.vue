@@ -65,8 +65,21 @@ const router = useRouter();
 
 const client = useDyrectedClient();
 const { data: siteSettings } = useCachedDyrectedGlobal("site_settings");
-const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
+const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings", { depth: 2 });
 const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
+
+const fabricPhotos = computed<string[]>(() => {
+  const images = (asoebiSettings.value as any)?.fabricImages;
+  if (!images || !Array.isArray(images)) return [];
+  return images
+    .map((img: any) => (typeof img === "object" && img?.url ? img.url : null))
+    .filter((url): url is string => Boolean(url));
+});
+
+const lightboxImage = ref<string | null>(null);
+function setLightboxImage(url: string | null) {
+  lightboxImage.value = url;
+}
 
 const couplesPhoto = computed(() => {
   const img = siteSettings.value?.rsvpTeaserImage;
@@ -897,6 +910,44 @@ onUnmounted(() => {
                   <p class="rsvp-step__subtitle">Choose your wedding attire &amp; headwear options below.</p>
                 </div>
                 <div class="rsvp-fields" style="display: flex; flex-direction: column; gap: 20px">
+                  <!-- Fabric Showcase Gallery -->
+                  <div v-if="fabricPhotos.length > 0" class="mb-2">
+                    <div class="text-xs font-semibold uppercase tracking-wider text-deep-espresso/60 mb-2">
+                      Fabric &amp; Style Preview (Click image to expand)
+                    </div>
+                    <div
+                      class="grid gap-3 select-none"
+                      :class="{
+                        'grid-cols-1 max-w-xs mx-auto': fabricPhotos.length === 1,
+                        'grid-cols-2 max-w-md mx-auto': fabricPhotos.length === 2,
+                        'grid-cols-2 sm:grid-cols-3 max-w-xl mx-auto': fabricPhotos.length === 3,
+                        'grid-cols-2 sm:grid-cols-4 max-w-2xl mx-auto': fabricPhotos.length >= 4,
+                      }"
+                    >
+                      <div
+                        v-for="(photo, idx) in fabricPhotos"
+                        :key="idx"
+                        class="bg-white p-2 pb-4 rounded-xl shadow-sm border border-deep-espresso/10 transition-all duration-300 hover:rotate-0 hover:scale-105 cursor-zoom-in relative group"
+                        :class="idx % 2 === 0 ? '-rotate-1' : 'rotate-1'"
+                        @click="setLightboxImage(photo)"
+                      >
+                        <div class="relative aspect-4/3 sm:aspect-square w-full overflow-hidden bg-deep-espresso/5 rounded-md">
+                          <DyrectedMedia :media="photo" alt="Aso Ebi Fabric Preview" class="img-fill object-cover" />
+                        </div>
+                        <div class="mt-2 text-center flex items-center justify-center gap-1 text-deep-espresso/80">
+                          <span class="font-display-cormorant text-xs font-semibold">#TheSweetUnion</span>
+                          <svg class="w-3 h-3 text-amber-gold inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <!-- Asoebi Fabric Section -->
                   <div
                     class="rsvp-field-group"
@@ -1301,6 +1352,35 @@ onUnmounted(() => {
             <button @click="closeSuccessModal" class="btn-primary mt-4">Close</button>
           </div>
         </Transition>
+      </div>
+    </Transition>
+
+    <!-- Lightbox Modal -->
+    <Transition name="overlay-fade">
+      <div
+        v-if="lightboxImage"
+        class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center cursor-zoom-out p-4 md:p-8"
+        @click="setLightboxImage(null)"
+      >
+        <Transition name="dialog-pop" appear>
+          <div
+            v-if="lightboxImage"
+            class="relative flex items-center justify-center max-w-5xl max-h-[90vh] w-full h-full"
+          >
+            <DyrectedMedia
+              :media="lightboxImage"
+              alt="Enlarged fabric photo"
+              class="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </Transition>
+        <button
+          @click="setLightboxImage(null)"
+          class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors text-3xl font-sans focus:outline-none cursor-pointer"
+          aria-label="Close lightbox"
+        >
+          ✕
+        </button>
       </div>
     </Transition>
   </div>

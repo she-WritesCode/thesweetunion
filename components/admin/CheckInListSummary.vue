@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 
 const props = defineProps<{
   client?: any;
@@ -52,6 +52,12 @@ const fetchSummary = async () => {
     loading.value = false;
   }
 };
+
+watch(
+  () => props.client,
+  () => fetchSummary(),
+  { immediate: true },
+);
 
 onMounted(() => {
   fetchSummary();
