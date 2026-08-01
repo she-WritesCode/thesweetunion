@@ -4,95 +4,114 @@ import type { Wishlist_items, Reservations } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
+  context?: any;
   documents?: any[];
   pagination?: any;
   isLoading?: boolean;
 }>();
 
 const loading = ref(true);
-const summary = ref<any>(null);
+const summary = ref<any>({
+  totalItems: 0,
+  totalReservations: 0,
+  totalRegistryTarget: 0,
+  totalAmountRaised: 0,
+  registryFulfillmentPct: 0,
+  fullyReservedCount: 0,
+  partiallyFundedCount: 0,
+  unclaimedCount: 0,
+});
 
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    if (props.client) {
+    let docs: Wishlist_items[] = [];
+    let reservationDocs: Reservations[] = [];
+
+    const sdkClient = props.client || props.context?.client;
+
+    if (sdkClient && typeof sdkClient.collection === "function") {
       const [itemsRes, reservationsRes] = await Promise.all([
-        props.client.collection("wishlist_items").find({ limit: 1000 }),
-        props.client.collection("reservations").find({ limit: 1000 }).catch(() => ({ docs: [] })),
+        sdkClient.collection("wishlist_items").find({ limit: 1000 }).catch(() => ({ docs: [] })),
+        sdkClient.collection("reservations").find({ limit: 1000 }).catch(() => ({ docs: [] })),
       ]);
-      const docs: Wishlist_items[] = itemsRes?.docs || [];
-      const reservationDocs: Reservations[] = reservationsRes?.docs || [];
+      docs = itemsRes?.docs || [];
+      reservationDocs = reservationsRes?.docs || [];
+    } else {
+      const [itemsRes, reservationsRes] = await Promise.all([
+        $fetch<any>("/api/dyrected/wishlist_items?limit=1000").catch(() => ({ docs: [] })),
+        $fetch<any>("/api/dyrected/reservations?limit=1000").catch(() => ({ docs: [] })),
+      ]);
+      docs = itemsRes?.docs || [];
+      reservationDocs = reservationsRes?.docs || [];
+    }
 
-      let totalRegistryTarget = 0;
-      let totalAmountRaised = 0;
-      let fullyReservedCount = 0;
-      let partiallyFundedCount = 0;
-      let unclaimedCount = 0;
+    let totalRegistryTarget = 0;
+    let totalAmountRaised = 0;
+    let fullyReservedCount = 0;
+    let partiallyFundedCount = 0;
+    let unclaimedCount = 0;
 
-      for (const item of docs) {
-        const price = Number(item.price) || 0;
-        const maxQty = Number(item.maxQuantity) || 1;
-        const isCrowdfund = item.fundingType === "crowdfund";
+    for (const item of docs) {
+      const price = Number(item.price) || 0;
+      const maxQty = Number(item.maxQuantity) || 1;
+      const isCrowdfund = item.fundingType === "crowdfund";
 
-        // Find matching reservation records for this wishlist item
-        const itemReservations = reservationDocs.filter((r: any) => {
-          const rItemId = typeof r.item === "object" && r.item !== null ? r.item.id : r.item;
-          return rItemId === item.id;
-        });
+      // Find matching reservation records for this wishlist item
+      const itemReservations = reservationDocs.filter((r: any) => {
+        const rItemId = typeof r.item === "object" && r.item !== null ? r.item.id : r.item;
+        return rItemId === item.id;
+      });
 
-        // Sum explicit contribution amounts from reservations
-        const reservationContribSum = itemReservations.reduce(
-          (sum: number, r: any) => sum + (Number(r.contributionAmount) || 0),
-          0,
-        );
-        const raised = Math.max(Number(item.amountRaised) || 0, reservationContribSum);
+      const reservationContribSum = itemReservations.reduce(
+        (sum: number, r: any) => sum + (Number(r.contributionAmount) || 0),
+        0,
+      );
+      const raised = Math.max(Number(item.amountRaised) || 0, reservationContribSum);
 
-        // Reserved headcount / slot count
-        const reservationDocsCount = itemReservations.length;
-        const reservedCount = Math.max(Number(item.reservedCount) || 0, reservationDocsCount);
+      const reservationDocsCount = itemReservations.length;
+      const reservedCount = Math.max(Number(item.reservedCount) || 0, reservationDocsCount);
 
-        if (price > 0) {
-          totalRegistryTarget += price * maxQty;
-        }
-
-        if (isCrowdfund) {
-          totalAmountRaised += raised;
-          if (price > 0 && raised >= price) {
-            fullyReservedCount++;
-          } else if (raised > 0 || reservationDocsCount > 0) {
-            partiallyFundedCount++;
-          } else {
-            unclaimedCount++;
-          }
-        } else {
-          // Fixed item (one person or multiple quantity reservations)
-          const reservedValue = reservedCount > 0 ? Math.min(reservedCount, maxQty) * price : 0;
-          totalAmountRaised += reservedValue;
-
-          if (reservedCount >= maxQty) {
-            fullyReservedCount++;
-          } else if (reservedCount > 0) {
-            partiallyFundedCount++;
-          } else {
-            unclaimedCount++;
-          }
-        }
+      if (price > 0) {
+        totalRegistryTarget += price * maxQty;
       }
 
-      const registryFulfillmentPct =
-        totalRegistryTarget > 0 ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100)) : 0;
+      if (isCrowdfund) {
+        totalAmountRaised += raised;
+        if (price > 0 && raised >= price) {
+          fullyReservedCount++;
+        } else if (raised > 0 || reservationDocsCount > 0) {
+          partiallyFundedCount++;
+        } else {
+          unclaimedCount++;
+        }
+      } else {
+        const reservedValue = reservedCount > 0 ? Math.min(reservedCount, maxQty) * price : 0;
+        totalAmountRaised += reservedValue;
 
-      summary.value = {
-        totalItems: docs.length,
-        totalReservations: reservationDocs.length,
-        totalRegistryTarget,
-        totalAmountRaised,
-        registryFulfillmentPct,
-        fullyReservedCount,
-        partiallyFundedCount,
-        unclaimedCount,
-      };
+        if (reservedCount >= maxQty) {
+          fullyReservedCount++;
+        } else if (reservedCount > 0) {
+          partiallyFundedCount++;
+        } else {
+          unclaimedCount++;
+        }
+      }
     }
+
+    const registryFulfillmentPct =
+      totalRegistryTarget > 0 ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100)) : 0;
+
+    summary.value = {
+      totalItems: docs.length,
+      totalReservations: reservationDocs.length,
+      totalRegistryTarget,
+      totalAmountRaised,
+      registryFulfillmentPct,
+      fullyReservedCount,
+      partiallyFundedCount,
+      unclaimedCount,
+    };
   } catch (err) {
     console.error("Failed to fetch Wishlist summary:", err);
   } finally {
@@ -101,7 +120,7 @@ const fetchSummary = async () => {
 };
 
 watch(
-  () => props.client,
+  () => [props.client, props.context?.client],
   () => fetchSummary(),
   { immediate: true },
 );
@@ -122,7 +141,7 @@ onMounted(() => {
         type="button"
         title="Refresh stats"
         aria-label="Refresh stats"
-        class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors cursor-pointer flex items-center justify-center"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
       >
         <svg
           class="w-4 h-4"
@@ -146,7 +165,7 @@ onMounted(() => {
       <div class="h-16 bg-gray-100 rounded-lg"></div>
     </div>
 
-    <div v-else-if="summary" class="space-y-4">
+    <div v-else class="space-y-4">
       <!-- Fulfillment Progress Bar -->
       <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-200/60">
         <div class="flex items-center justify-between text-xs font-bold text-amber-900 mb-1.5">

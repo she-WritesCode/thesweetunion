@@ -1,50 +1,60 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import type { Rsvp_groups } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
+  context?: any;
   documents?: any[];
   pagination?: any;
   isLoading?: boolean;
 }>();
 
 const loading = ref(true);
-const summary = ref<any>(null);
+const summary = ref<any>({
+  totalGroups: 0,
+  totalCapacity: 0,
+  totalConfirmedSeats: 0,
+  respondedCount: 0,
+  responsePct: 0,
+});
 
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    if (props.client) {
-      const res = await props.client.collection("rsvp_groups").find({ limit: 1000 });
-      const docs = res?.docs || [];
+    let docs: Rsvp_groups[] = [];
 
-      let totalCapacity = 0;
-      let totalConfirmedSeats = 0;
-      let respondedCount = 0;
+    const sdkClient = props.client || props.context?.client;
 
-      for (const g of docs) {
-        totalCapacity += Number(g.maxCapacity) || 0;
-        totalConfirmedSeats += Number(g.confirmedCount) || 0;
-        if (g.hasSubmitted || (g.confirmedCount || 0) > 0 || (g.declinedCount || 0) > 0) {
-          respondedCount++;
-        }
-      }
-
-      const responsePct = docs.length > 0 ? Math.round((respondedCount / docs.length) * 100) : 0;
-
-      summary.value = {
-        totalGroups: docs.length,
-        totalCapacity,
-        totalConfirmedSeats,
-        respondedCount,
-        responsePct,
-      };
+    if (sdkClient && typeof sdkClient.collection === "function") {
+      const res = await sdkClient.collection("rsvp_groups").find({ limit: 1000 }).catch(() => ({ docs: [] }));
+      docs = res?.docs || [];
     } else {
-      const res = await $fetch<any>("/api/admin/group-summary");
-      if (res?.success) {
-        summary.value = res.data;
+      const res = await $fetch<any>("/api/dyrected/rsvp_groups?limit=1000").catch(() => ({ docs: [] }));
+      docs = res?.docs || [];
+    }
+
+    let totalCapacity = 0;
+    let totalConfirmedSeats = 0;
+    let respondedCount = 0;
+
+    for (const g of docs) {
+      totalCapacity += Number(g.maxCapacity) || 0;
+      totalConfirmedSeats += Number(g.confirmedCount) || 0;
+      if (g.confirmedCount || g.declinedCount) {
+        respondedCount++;
       }
     }
+
+    const responsePct = docs.length > 0 ? Math.round((respondedCount / docs.length) * 100) : 0;
+
+    summary.value = {
+      totalGroups: docs.length,
+      totalCapacity,
+      totalConfirmedSeats,
+      respondedCount,
+      responsePct,
+    };
   } catch (err) {
     console.error("Failed to fetch Group summary:", err);
   } finally {
@@ -53,7 +63,7 @@ const fetchSummary = async () => {
 };
 
 watch(
-  () => props.client,
+  () => [props.client, props.context?.client],
   () => fetchSummary(),
   { immediate: true },
 );
@@ -74,7 +84,7 @@ onMounted(() => {
         type="button"
         title="Refresh stats"
         aria-label="Refresh stats"
-        class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors cursor-pointer flex items-center justify-center"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
       >
         <svg
           class="w-4 h-4"
@@ -98,7 +108,7 @@ onMounted(() => {
       <div class="h-16 bg-gray-100 rounded-lg"></div>
     </div>
 
-    <div v-else-if="summary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="p-4 bg-purple-50/60 rounded-xl border border-purple-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-purple-700">Confirmed Guest Headcount</span>
         <div class="mt-2 flex items-baseline justify-between">

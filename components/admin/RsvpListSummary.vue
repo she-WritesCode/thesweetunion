@@ -4,32 +4,54 @@ import type { Rsvp_records, Asoebi_settingsGlobal } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
+  context?: any;
   documents?: any[];
   pagination?: any;
   isLoading?: boolean;
 }>();
 
 const loading = ref(true);
-const summary = ref<any>(null);
+const summary = ref<any>({
+  totalSubmitted: 0,
+  totalAttending: 0,
+  totalDeclined: 0,
+  leadAttendingCount: 0,
+  spouseAttendingCount: 0,
+  totalGuestHeadcount: 0,
+  asoebi: {
+    orderCount: 0,
+    totalYards: 0,
+    fabricRevenue: 0,
+    maleQty: 0,
+    femaleQty: 0,
+    totalAsoOkeRevenue: 0,
+    grandRevenue: 0,
+  },
+});
 
 const fetchSummary = async () => {
-  if (!props.client) {
-    loading.value = false;
-    return;
-  }
-
   try {
     loading.value = true;
-    const [rsvpRes, asoebiGlobalRes] = await Promise.all([
-      props.client.collection("rsvp_records").find({ limit: 1000 }),
-      props.client
-        .global("asoebi_settings")
-        .get()
-        .catch(() => null),
-    ]);
+    let docs: Rsvp_records[] = [];
+    let asoebiGlobal: Partial<Asoebi_settingsGlobal> = {};
 
-    const docs: Rsvp_records[] = rsvpRes?.docs || [];
-    const asoebiGlobal: Partial<Asoebi_settingsGlobal> = (asoebiGlobalRes as any) || {};
+    const sdkClient = props.client || props.context?.client;
+
+    if (sdkClient && typeof sdkClient.collection === "function") {
+      const [rsvpRes, asoebiGlobalRes] = await Promise.all([
+        sdkClient.collection("rsvp_records").find({ limit: 1000 }).catch(() => ({ docs: [] })),
+        sdkClient.global("asoebi_settings").get().catch(() => null),
+      ]);
+      docs = rsvpRes?.docs || [];
+      asoebiGlobal = (asoebiGlobalRes as any) || {};
+    } else {
+      const [rsvpRes, asoebiGlobalRes] = await Promise.all([
+        $fetch<any>("/api/dyrected/rsvp_records?limit=1000").catch(() => ({ docs: [] })),
+        $fetch<any>("/api/globals/asoebi_settings").catch(() => null),
+      ]);
+      docs = rsvpRes?.docs || [];
+      asoebiGlobal = (asoebiGlobalRes as any) || {};
+    }
 
     const pricePerYard = Number(asoebiGlobal?.pricePerYard) || 10000;
     const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 15000;
@@ -109,7 +131,7 @@ const fetchSummary = async () => {
 };
 
 watch(
-  () => props.client,
+  () => [props.client, props.context?.client],
   () => fetchSummary(),
   { immediate: true },
 );
@@ -127,7 +149,7 @@ onMounted(() => fetchSummary());
         type="button"
         title="Refresh stats"
         aria-label="Refresh stats"
-        class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors cursor-pointer flex items-center justify-center"
+        class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-colors cursor-pointer"
       >
         <svg
           class="w-4 h-4"
@@ -151,7 +173,7 @@ onMounted(() => fetchSummary());
       <div class="h-16 bg-gray-100 rounded-lg"></div>
     </div>
 
-    <div v-else-if="summary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Total Attendance Headcount -->
       <div class="p-4 bg-purple-50/60 rounded-xl border border-purple-100 flex flex-col justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-purple-700">Attending Guests</span>
