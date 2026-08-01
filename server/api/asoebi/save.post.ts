@@ -1,7 +1,13 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
-import { rsvpConfirmationEmail, rsvpUpdatedEmail, adminRsvpNotificationEmail } from "~~/dyrected/emails";
+import {
+  rsvpConfirmationEmail,
+  rsvpUpdatedEmail,
+  asoebiOrderEmail,
+  asoebiOrderUpdatedEmail,
+  adminRsvpNotificationEmail,
+} from "~~/dyrected/emails";
 
 function cleanPhone(phone: string): string {
   return phone.replace(/\D/g, "");
@@ -122,26 +128,43 @@ export default defineEventHandler(async (event) => {
       rsvpEvents = evRes.docs.filter((e: any) => eventIds.includes(e.id));
     }
 
+    const emailHtml =
+      existingRecord.attending === true
+        ? rsvpUpdatedEmail({
+            leadName: updated.leadName,
+            attending: updatedAttending,
+            hasSpouse: updated.hasSpouse || false,
+            spouseName: updated.spouseName,
+            events: rsvpEvents,
+            editLink,
+            wishlistLink,
+            wantsAsoebi: updated.wantsAsoebi,
+            asoebiYards: updated.asoebiYards,
+            wantsAsoOke: updated.wantsAsoOke,
+            asoOkeMaleQty: updated.asoOkeMaleQty,
+            asoOkeFemaleQty: updated.asoOkeFemaleQty,
+            asoebiDetails: asoebiDetailsStr,
+            asoebiSettings,
+            appUrl,
+          })
+        : asoebiOrderUpdatedEmail({
+            leadName: updated.leadName,
+            editLink,
+            wishlistLink,
+            wantsAsoebi: updated.wantsAsoebi,
+            asoebiYards: updated.asoebiYards,
+            wantsAsoOke: updated.wantsAsoOke,
+            asoOkeMaleQty: updated.asoOkeMaleQty,
+            asoOkeFemaleQty: updated.asoOkeFemaleQty,
+            asoebiDetails: asoebiDetailsStr,
+            asoebiSettings,
+            appUrl,
+          });
+
     sendEmail({
       to: updated.leadEmail,
       subject: `Your Aso Ebi Selection Updated, ${updated.leadName}! ✨`,
-      html: rsvpUpdatedEmail({
-        leadName: updated.leadName,
-        attending: updatedAttending,
-        hasSpouse: updated.hasSpouse || false,
-        spouseName: updated.spouseName,
-        events: rsvpEvents,
-        editLink,
-        wishlistLink,
-        wantsAsoebi: updated.wantsAsoebi,
-        asoebiYards: updated.asoebiYards,
-        wantsAsoOke: updated.wantsAsoOke,
-        asoOkeMaleQty: updated.asoOkeMaleQty,
-        asoOkeFemaleQty: updated.asoOkeFemaleQty,
-        asoebiDetails: asoebiDetailsStr,
-        asoebiSettings,
-        appUrl,
-      }),
+      html: emailHtml,
     }).catch(console.error);
 
     return { success: true, isNew: false, record: updated };
@@ -180,11 +203,8 @@ export default defineEventHandler(async (event) => {
     sendEmail({
       to: leadEmail,
       subject: `Aso Ebi Booking Confirmed, ${leadName}! 🎉`,
-      html: rsvpConfirmationEmail({
+      html: asoebiOrderEmail({
         leadName,
-        attending: created.attending,
-        hasSpouse: false,
-        events: [],
         editLink,
         wishlistLink,
         wantsAsoebi: created.wantsAsoebi,

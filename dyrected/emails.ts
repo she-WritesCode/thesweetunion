@@ -374,6 +374,102 @@ export function rsvpUpdatedEmail({
   );
 }
 
+// ─── Guest: Standalone Asoebi Order Confirmed ────────────────────────────────
+
+export function asoebiOrderEmail({
+  leadName,
+  editLink,
+  wishlistLink,
+  wantsAsoebi,
+  asoebiYards,
+  wantsAsoOke,
+  asoOkeMaleQty,
+  asoOkeFemaleQty,
+  asoebiDetails,
+  asoebiSettings,
+  appUrl,
+}: {
+  leadName: string;
+  editLink: string;
+  wishlistLink?: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  asoebiDetails?: string;
+  asoebiSettings?: any;
+  appUrl: string;
+}): string {
+  return layout(
+    heading(`Aso Ebi Booking Confirmed, ${leadName}! 🎉`),
+    paragraph(
+      `Thank you for ordering your wedding attire for #TheSweetUnion, ${leadName}. Below are your order details and payment instructions to complete your booking.`,
+    ),
+    asoebiSection(wantsAsoebi, asoebiYards, wantsAsoOke, asoOkeMaleQty, asoOkeFemaleQty, asoebiDetails, asoebiSettings),
+    divider(),
+    paragraph("Need to update your fabric yards or headwear? Use your unique link below anytime."),
+    ctaButton("Manage My Aso Ebi Order", editLink),
+    wishlistLink
+      ? `${divider()}
+         <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Our Registry</p>
+         <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+           Your love, presence, and prayers are our greatest gifts. However, if you'd like to help us bless our new home as we begin our life together, we have curated a wishlist of items we need.
+         </p>
+         <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
+           <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
+         </div>`
+      : "",
+  );
+}
+
+// ─── Guest: Standalone Asoebi Order Updated ──────────────────────────────────
+
+export function asoebiOrderUpdatedEmail({
+  leadName,
+  editLink,
+  wishlistLink,
+  wantsAsoebi,
+  asoebiYards,
+  wantsAsoOke,
+  asoOkeMaleQty,
+  asoOkeFemaleQty,
+  asoebiDetails,
+  asoebiSettings,
+  appUrl,
+}: {
+  leadName: string;
+  editLink: string;
+  wishlistLink?: string;
+  wantsAsoebi?: boolean;
+  asoebiYards?: string;
+  wantsAsoOke?: boolean;
+  asoOkeMaleQty?: number;
+  asoOkeFemaleQty?: number;
+  asoebiDetails?: string;
+  asoebiSettings?: any;
+  appUrl: string;
+}): string {
+  return layout(
+    heading(`Aso Ebi Selection Updated, ${leadName}! ✨`),
+    paragraph(`Here is a summary of your updated Aso Ebi order for #TheSweetUnion.`),
+    asoebiSection(wantsAsoebi, asoebiYards, wantsAsoOke, asoOkeMaleQty, asoOkeFemaleQty, asoebiDetails, asoebiSettings),
+    divider(),
+    paragraph("Need to make further changes? You can use your edit link below anytime."),
+    ctaButton("Manage My Aso Ebi Order", editLink),
+    wishlistLink
+      ? `${divider()}
+         <p style="margin:16px 0 6px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-family:Georgia,serif;text-align:center;">Our Registry</p>
+         <p style="margin:0 0 16px;font-size:13px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;text-align:center;">
+           Your love, presence, and prayers are our greatest gifts. However, if you'd like to help us bless our new home as we begin our life together, we have curated a wishlist of items we need.
+         </p>
+         <div style="text-align:center;margin-top:16px;margin-bottom:8px;">
+           <a href="${wishlistLink}" style="display:inline-block;padding:12px 28px;background:${ACCENT};color:#fff;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:1px;text-transform:uppercase;font-family:Georgia,serif;">Browse Our Wishlist</a>
+         </div>`
+      : "",
+  );
+}
+
 // ─── Guest: RSVP Cancelled ───────────────────────────────────────────────────
 
 export function rsvpCancelledEmail({ leadName }: { leadName: string }): string {
