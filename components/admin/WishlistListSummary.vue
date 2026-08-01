@@ -22,29 +22,30 @@ const summary = ref<any>({
   unclaimedCount: 0,
 });
 
+async function safeFetchCollection(sdkClient: any, collectionName: string) {
+  if (sdkClient && typeof sdkClient.collection === "function") {
+    try {
+      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
+      if (res) return res;
+    } catch (e) {
+      console.warn(`[WishlistSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+}
+
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    let docs: Wishlist_items[] = [];
-    let reservationDocs: Reservations[] = [];
-
     const sdkClient = props.client || props.context?.client;
 
-    if (sdkClient && typeof sdkClient.collection === "function") {
-      const [itemsRes, reservationsRes] = await Promise.all([
-        sdkClient.collection("wishlist_items").find({ limit: 1000 }).catch(() => ({ docs: [] })),
-        sdkClient.collection("reservations").find({ limit: 1000 }).catch(() => ({ docs: [] })),
-      ]);
-      docs = itemsRes?.docs || [];
-      reservationDocs = reservationsRes?.docs || [];
-    } else {
-      const [itemsRes, reservationsRes] = await Promise.all([
-        $fetch<any>("/api/dyrected/wishlist_items?limit=1000").catch(() => ({ docs: [] })),
-        $fetch<any>("/api/dyrected/reservations?limit=1000").catch(() => ({ docs: [] })),
-      ]);
-      docs = itemsRes?.docs || [];
-      reservationDocs = reservationsRes?.docs || [];
-    }
+    const [itemsRes, reservationsRes] = await Promise.all([
+      safeFetchCollection(sdkClient, "wishlist_items"),
+      safeFetchCollection(sdkClient, "reservations"),
+    ]);
+
+    const docs: Wishlist_items[] = itemsRes?.docs || [];
+    const reservationDocs: Reservations[] = reservationsRes?.docs || [];
 
     let totalRegistryTarget = 0;
     let totalAmountRaised = 0;

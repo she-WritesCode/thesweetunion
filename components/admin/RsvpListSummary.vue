@@ -29,29 +29,42 @@ const summary = ref<any>({
   },
 });
 
+async function safeFetchCollection(sdkClient: any, collectionName: string) {
+  if (sdkClient && typeof sdkClient.collection === "function") {
+    try {
+      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
+      if (res) return res;
+    } catch (e) {
+      console.warn(`[RsvpSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+}
+
+async function safeFetchGlobal(sdkClient: any, globalName: string) {
+  if (sdkClient && typeof sdkClient.global === "function") {
+    try {
+      const res = await sdkClient.global(globalName).get();
+      if (res) return res;
+    } catch (e) {
+      console.warn(`[RsvpSummary] SDK global get failed for ${globalName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/globals/${globalName}`).catch(() => ({}));
+}
+
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    let docs: Rsvp_records[] = [];
-    let asoebiGlobal: Partial<Asoebi_settingsGlobal> = {};
-
     const sdkClient = props.client || props.context?.client;
 
-    if (sdkClient && typeof sdkClient.collection === "function") {
-      const [rsvpRes, asoebiGlobalRes] = await Promise.all([
-        sdkClient.collection("rsvp_records").find({ limit: 1000 }).catch(() => ({ docs: [] })),
-        sdkClient.global("asoebi_settings").get().catch(() => null),
-      ]);
-      docs = rsvpRes?.docs || [];
-      asoebiGlobal = (asoebiGlobalRes as any) || {};
-    } else {
-      const [rsvpRes, asoebiGlobalRes] = await Promise.all([
-        $fetch<any>("/api/dyrected/rsvp_records?limit=1000").catch(() => ({ docs: [] })),
-        $fetch<any>("/api/globals/asoebi_settings").catch(() => null),
-      ]);
-      docs = rsvpRes?.docs || [];
-      asoebiGlobal = (asoebiGlobalRes as any) || {};
-    }
+    const [rsvpRes, asoebiGlobalRes] = await Promise.all([
+      safeFetchCollection(sdkClient, "rsvp_records"),
+      safeFetchGlobal(sdkClient, "asoebi_settings"),
+    ]);
+
+    const docs: Rsvp_records[] = rsvpRes?.docs || [];
+    const asoebiGlobal: Partial<Asoebi_settingsGlobal> = (asoebiGlobalRes as any) || {};
 
     const pricePerYard = Number(asoebiGlobal?.pricePerYard) || 10000;
     const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 15000;

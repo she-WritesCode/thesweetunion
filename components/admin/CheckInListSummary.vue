@@ -17,29 +17,30 @@ const summary = ref<any>({
   checkInPct: 0,
 });
 
+async function safeFetchCollection(sdkClient: any, collectionName: string) {
+  if (sdkClient && typeof sdkClient.collection === "function") {
+    try {
+      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
+      if (res) return res;
+    } catch (e) {
+      console.warn(`[CheckInSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+}
+
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    let checkInDocs: Check_ins[] = [];
-    let rsvpDocs: Rsvp_records[] = [];
-
     const sdkClient = props.client || props.context?.client;
 
-    if (sdkClient && typeof sdkClient.collection === "function") {
-      const [checkInRes, rsvpRes] = await Promise.all([
-        sdkClient.collection("check_ins").find({ limit: 1000 }).catch(() => ({ docs: [] })),
-        sdkClient.collection("rsvp_records").find({ limit: 1000 }).catch(() => ({ docs: [] })),
-      ]);
-      checkInDocs = checkInRes?.docs || [];
-      rsvpDocs = rsvpRes?.docs || [];
-    } else {
-      const [checkInRes, rsvpRes] = await Promise.all([
-        $fetch<any>("/api/dyrected/check_ins?limit=1000").catch(() => ({ docs: [] })),
-        $fetch<any>("/api/dyrected/rsvp_records?limit=1000").catch(() => ({ docs: [] })),
-      ]);
-      checkInDocs = checkInRes?.docs || [];
-      rsvpDocs = rsvpRes?.docs || [];
-    }
+    const [checkInRes, rsvpRes] = await Promise.all([
+      safeFetchCollection(sdkClient, "check_ins"),
+      safeFetchCollection(sdkClient, "rsvp_records"),
+    ]);
+
+    const checkInDocs: Check_ins[] = checkInRes?.docs || [];
+    const rsvpDocs: Rsvp_records[] = rsvpRes?.docs || [];
 
     let totalGuestHeadcount = 0;
     for (const record of rsvpDocs) {

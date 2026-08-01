@@ -19,20 +19,25 @@ const summary = ref<any>({
   responsePct: 0,
 });
 
+async function safeFetchCollection(sdkClient: any, collectionName: string) {
+  if (sdkClient && typeof sdkClient.collection === "function") {
+    try {
+      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
+      if (res) return res;
+    } catch (e) {
+      console.warn(`[GroupSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+}
+
 const fetchSummary = async () => {
   try {
     loading.value = true;
-    let docs: Rsvp_groups[] = [];
-
     const sdkClient = props.client || props.context?.client;
 
-    if (sdkClient && typeof sdkClient.collection === "function") {
-      const res = await sdkClient.collection("rsvp_groups").find({ limit: 1000 }).catch(() => ({ docs: [] }));
-      docs = res?.docs || [];
-    } else {
-      const res = await $fetch<any>("/api/dyrected/rsvp_groups?limit=1000").catch(() => ({ docs: [] }));
-      docs = res?.docs || [];
-    }
+    const res = await safeFetchCollection(sdkClient, "rsvp_groups");
+    const docs: Rsvp_groups[] = res?.docs || [];
 
     let totalCapacity = 0;
     let totalConfirmedSeats = 0;
