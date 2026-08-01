@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import type { Wishlist_items, Reservations } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -19,8 +20,8 @@ const fetchSummary = async () => {
         props.client.collection("wishlist_items").find({ limit: 1000 }),
         props.client.collection("reservations").find({ limit: 1000 }).catch(() => ({ docs: [] })),
       ]);
-      const docs = itemsRes?.docs || [];
-      const reservationDocs = reservationsRes?.docs || [];
+      const docs: Wishlist_items[] = itemsRes?.docs || [];
+      const reservationDocs: Reservations[] = reservationsRes?.docs || [];
 
       let totalRegistryTarget = 0;
       let totalAmountRaised = 0;

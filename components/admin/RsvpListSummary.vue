@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import type { Rsvp_records, Asoebi_settingsGlobal } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -27,8 +28,8 @@ const fetchSummary = async () => {
         .catch(() => null),
     ]);
 
-    const docs = rsvpRes?.docs || [];
-    const asoebiGlobal = (asoebiGlobalRes as any) || {};
+    const docs: Rsvp_records[] = rsvpRes?.docs || [];
+    const asoebiGlobal: Partial<Asoebi_settingsGlobal> = (asoebiGlobalRes as any) || {};
 
     const pricePerYard = Number(asoebiGlobal?.pricePerYard) || 10000;
     const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 15000;
@@ -46,17 +47,18 @@ const fetchSummary = async () => {
     let totalAsoOkeFemaleQty = 0;
 
     for (const record of docs) {
-      if (record.attending === true || record.attending === "true") {
+      const isAttending = record.attending === true || (record.attending as any) === "true";
+      if (isAttending) {
         totalAttending++;
         leadAttendingCount++;
 
-        if (record.hasSpouse && record.spouseName) {
+        if (record.hasSpouse) {
           spouseAttendingCount++;
         }
 
         if (record.wantsAsoebi) {
           asoebiOrderCount++;
-          const yards = parseInt(record.asoebiYards, 10);
+          const yards = parseInt(record.asoebiYards || "0", 10);
           if (!isNaN(yards) && yards > 0) {
             totalAsoebiYards += yards;
           }
