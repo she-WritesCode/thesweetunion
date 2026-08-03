@@ -81,7 +81,7 @@ const items = computed<WishlistItem[]>(() => {
 
   const bankDetailsObj = {
     bankName: (siteSettings.value as any)?.bankName || "Guaranty Trust Bank (GTBank)",
-    accountNumber: (siteSettings.value as any)?.accountNumber || "0123456789",
+    accountNumber: (siteSettings.value as any)?.accountNumber || "0101087193",
     accountName: (siteSettings.value as any)?.accountName || "Uche & Adun Wedding Account",
     noteFixed: "Please transfer the equivalent amount or your support directly using your banking app.",
     noteCrowdfund: "Please transfer your contribution directly using your banking app, then confirm details below.",

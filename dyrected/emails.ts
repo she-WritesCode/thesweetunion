@@ -148,9 +148,9 @@ function asoebiSection(
 
   if (items.length === 0) return "";
 
-  const bankName = settings.bankName || "Access Bank";
-  const accountNumber = settings.accountNumber || "0123456789";
-  const accountName = settings.accountName || "Adun & Uche Union";
+  const bankName = settings.bankName || "Premium Trust Bank";
+  const accountNumber = settings.accountNumber || "0101087193";
+  const accountName = settings.accountName || "Uchechukwu Ndu";
   const whatsAppContact = settings.whatsAppContact || "+234 913 697 6965";
   const cleanWaPhone = whatsAppContact.replace(/\D/g, "");
   const waPaymentUrl = `https://wa.me/${cleanWaPhone}?text=${encodeURIComponent("Hi, here is my proof of payment for my Aso Ebi order.")}`;

@@ -136,18 +136,51 @@ async function seed() {
   }
 
   // Upload all renamed local photos
-  uploadedMediaMap["bride_sitting_coral"] = await uploadToCloudinary("bride_sitting_coral.jpg", "Bride sitting in coral outfit");
-  uploadedMediaMap["bride_close_up_coral"] = await uploadToCloudinary("bride_close_up_coral.jpg", "Bride close up portrait in coral outfit");
-  uploadedMediaMap["groom_close_up_bw"] = await uploadToCloudinary("groom_close_up_bw.jpg", "Groom black and white portrait");
+  uploadedMediaMap["bride_sitting_coral"] = await uploadToCloudinary(
+    "bride_sitting_coral.jpg",
+    "Bride sitting in coral outfit",
+  );
+  uploadedMediaMap["bride_close_up_coral"] = await uploadToCloudinary(
+    "bride_close_up_coral.jpg",
+    "Bride close up portrait in coral outfit",
+  );
+  uploadedMediaMap["groom_close_up_bw"] = await uploadToCloudinary(
+    "groom_close_up_bw.jpg",
+    "Groom black and white portrait",
+  );
   uploadedMediaMap["groom_portrait_navy"] = await uploadToCloudinary("groom_portrait_navy.jpg", "Groom in navy suit");
-  uploadedMediaMap["groom_sitting_navy"] = await uploadToCloudinary("groom_sitting_navy.jpg", "Groom sitting in navy suit");
-  uploadedMediaMap["couple_sitting_coral_navy"] = await uploadToCloudinary("couple_sitting_coral_navy.jpg", "Adun and Uche together in traditional wear");
-  uploadedMediaMap["bride_portrait_brown"] = await uploadToCloudinary("bride_portrait_brown.jpg", "Bride portrait in brown dress");
-  uploadedMediaMap["groom_standing_sage"] = await uploadToCloudinary("groom_standing_sage.jpg", "Groom in sage green shirt");
-  uploadedMediaMap["couple_sitting_sage_brown"] = await uploadToCloudinary("couple_sitting_sage_brown.jpg", "Adun and Uche sitting together in smart casuals");
-  uploadedMediaMap["couple_laughing_sage_brown"] = await uploadToCloudinary("couple_laughing_sage_brown.jpg", "Adun and Uche laughing in smart casuals");
-  uploadedMediaMap["bride_close_up_brown"] = await uploadToCloudinary("bride_close_up_brown.jpg", "Bride close up in brown dress");
-  uploadedMediaMap["bride_close_up_bw"] = await uploadToCloudinary("bride_close_up_bw.jpg", "Bride black and white close up portrait");
+  uploadedMediaMap["groom_sitting_navy"] = await uploadToCloudinary(
+    "groom_sitting_navy.jpg",
+    "Groom sitting in navy suit",
+  );
+  uploadedMediaMap["couple_sitting_coral_navy"] = await uploadToCloudinary(
+    "couple_sitting_coral_navy.jpg",
+    "Adun and Uche together in traditional wear",
+  );
+  uploadedMediaMap["bride_portrait_brown"] = await uploadToCloudinary(
+    "bride_portrait_brown.jpg",
+    "Bride portrait in brown dress",
+  );
+  uploadedMediaMap["groom_standing_sage"] = await uploadToCloudinary(
+    "groom_standing_sage.jpg",
+    "Groom in sage green shirt",
+  );
+  uploadedMediaMap["couple_sitting_sage_brown"] = await uploadToCloudinary(
+    "couple_sitting_sage_brown.jpg",
+    "Adun and Uche sitting together in smart casuals",
+  );
+  uploadedMediaMap["couple_laughing_sage_brown"] = await uploadToCloudinary(
+    "couple_laughing_sage_brown.jpg",
+    "Adun and Uche laughing in smart casuals",
+  );
+  uploadedMediaMap["bride_close_up_brown"] = await uploadToCloudinary(
+    "bride_close_up_brown.jpg",
+    "Bride close up in brown dress",
+  );
+  uploadedMediaMap["bride_close_up_bw"] = await uploadToCloudinary(
+    "bride_close_up_bw.jpg",
+    "Bride black and white close up portrait",
+  );
 
   // 1. Seed Admin User
   console.log("Seeding default admin...");
@@ -389,7 +422,7 @@ async function seed() {
       rsvpCutoffDate: "2026-09-22",
       rsvpCutoffTime: "23:59",
       bankName: "Guaranty Trust Bank (GTB)",
-      accountNumber: "0123456789",
+      accountNumber: "0101087193",
       accountName: "Adun & Uche Wedding Account",
       adminEmail: "obadofinadun@gmail.com,busolaokemoney@gmail.com",
     },
