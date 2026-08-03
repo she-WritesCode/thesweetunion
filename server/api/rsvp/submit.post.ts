@@ -137,7 +137,7 @@ export default defineEventHandler(async (event) => {
     let asoebiSettings: any = null;
     if (wantsAsoebi || wantsAsoOke) {
       try {
-        asoebiSettings = await $fetch("/api/globals/asoebi_settings");
+        asoebiSettings = await client.global("asoebi_settings").get();
       } catch (e) {
         console.error("Failed to fetch asoebi settings in submit.post.ts:", e);
       }

@@ -108,11 +108,12 @@ function asoebiSection(
   asoebiDetails?: string,
   asoebiSettings?: any,
 ): string {
-  if ((!wantsAsoebi && !wantsAsoOke) || !asoebiSettings) return "";
+  if (!wantsAsoebi && !wantsAsoOke) return "";
 
-  const pricePerYard = asoebiSettings.pricePerYard || 10000;
-  const malePrice = asoebiSettings.asoOkeMalePrice || 15000;
-  const femalePrice = asoebiSettings.asoOkeFemalePrice || 25000;
+  const settings = asoebiSettings || {};
+  const pricePerYard = settings.pricePerYard || 10000;
+  const malePrice = settings.asoOkeMalePrice || 15000;
+  const femalePrice = settings.asoOkeFemalePrice || 25000;
 
   let totalAmount = 0;
   const items: string[] = [];
@@ -147,10 +148,10 @@ function asoebiSection(
 
   if (items.length === 0) return "";
 
-  const bankName = asoebiSettings.bankName || "";
-  const accountNumber = asoebiSettings.accountNumber || "";
-  const accountName = asoebiSettings.accountName || "";
-  const whatsAppContact = asoebiSettings.whatsAppContact || "+234 913 697 6965";
+  const bankName = settings.bankName || "Access Bank";
+  const accountNumber = settings.accountNumber || "0123456789";
+  const accountName = settings.accountName || "Adun & Uche Union";
+  const whatsAppContact = settings.whatsAppContact || "+234 913 697 6965";
   const cleanWaPhone = whatsAppContact.replace(/\D/g, "");
   const waPaymentUrl = `https://wa.me/${cleanWaPhone}?text=${encodeURIComponent("Hi, here is my proof of payment for my Aso Ebi order.")}`;
 
