@@ -33,7 +33,7 @@ const asoOkeFemaleQty = computed(() => (props.context?.siblingData?.asoOkeFemale
 const hasOrder = computed(
   () =>
     (wantsAsoebi.value && Boolean(asoebiYards.value)) ||
-    (wantsAsoOke.value && (asoOkeMaleQty.value > 0 || asoOkeFemaleQty.value > 0))
+    (wantsAsoOke.value && (asoOkeMaleQty.value > 0 || asoOkeFemaleQty.value > 0)),
 );
 
 const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
@@ -85,7 +85,7 @@ const defaultMessage = computed(() => {
   }
 
   const itemsStr = items.length > 0 ? items.join(" + ") : "Aso Ebi";
-  return `Hi ${leadName.value || "there"}, gentle reminder for your ${itemsStr} order for #TheSweetUnion. Please pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
+  return `Hi ${leadName.value || "there"}, my name is Ololade a representative of the couple\n\nThank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day.\n\nKindly confirm your Asoebi request of; ${itemsStr} order for #TheSweetUnion.\n\nPlease pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
 });
 
 // Auto-fill message when data changes
@@ -96,7 +96,7 @@ watch(
       customMessage.value = newVal;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function resetToDefault() {
