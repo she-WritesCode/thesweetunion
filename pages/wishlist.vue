@@ -110,6 +110,7 @@ const items = computed<WishlistItem[]>(() => {
       link: typeof doc.link === "object" && doc.link !== null ? (doc.link as any).url : doc.link,
       price: doc.price,
       maxQuantity: doc.maxQuantity,
+      isFeatured: Boolean(doc.isFeatured),
       reservedCount: (local?.reservedCount ?? doc.reservedCount) || 0,
       category: mapCategory(doc.category),
       fundingType: doc.fundingType || "fixed",
@@ -124,6 +125,12 @@ const items = computed<WishlistItem[]>(() => {
     });
   }
   return result;
+});
+
+const featuredItems = computed<WishlistItem[]>(() => {
+  const marked = items.value.filter((item) => item.isFeatured);
+  if (marked.length > 0) return marked;
+  return items.value.slice(0, 2);
 });
 
 const isInitialLoading = computed(() => {
@@ -410,7 +417,110 @@ onUnmounted(() => {
 
     <!-- Grid, Filters and Controls -->
     <main class="flex-1 paper-texture py-12 px-6">
-      <div class="max-w-7xl mx-auto space-y-8">
+      <div class="max-w-7xl mx-auto space-y-10">
+        <!-- Top Spotlight Showcase Section (Unique wide card layout, NO "Featured" label) -->
+        <FadeInSection v-if="!isInitialLoading && featuredItems.length > 0" :distance="16">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 pb-4">
+            <div
+              v-for="item in featuredItems"
+              :key="item.id"
+              @click="handleReserveClick(item)"
+              class="group relative bg-gradient-to-br from-[#fffdfa] via-[#f9f2eb] to-[#f3e6da] rounded-3xl border border-amber-gold/25 shadow-lg hover:shadow-xl hover:border-amber-gold/45 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col sm:flex-row motion-lift"
+            >
+              <!-- Image Frame -->
+              <div
+                class="sm:w-5/12 relative aspect-4/3 sm:aspect-auto bg-deep-espresso/5 border-b sm:border-b-0 sm:border-r border-amber-gold/15 overflow-hidden shrink-0"
+              >
+                <DyrectedMedia
+                  v-if="item.imageUrl && item.imageUrl !== '/images/placeholder.png'"
+                  :media="(item.image as any) || item.imageUrl"
+                  :alt="item.name"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div
+                  v-else
+                  class="absolute inset-0 flex items-center justify-center text-deep-espresso/20 text-xs font-semibold tracking-wider font-display-cinzel"
+                >
+                  No Image Placeholder
+                </div>
+                <div class="absolute top-3 left-3 z-10">
+                  <span
+                    v-if="item.fundingType === 'crowdfund'"
+                    class="bg-amber-950/85 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs shadow-xs"
+                  >
+                    Cash Fund
+                  </span>
+                  <span
+                    v-else-if="item.maxQuantity - item.reservedCount <= 0"
+                    class="bg-red-950/85 border border-red-500/30 text-red-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs shadow-xs"
+                  >
+                    Fully Claimed
+                  </span>
+                  <span
+                    v-else
+                    class="bg-emerald-950/85 border border-emerald-500/30 text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs shadow-xs"
+                  >
+                    Available Gift
+                  </span>
+                </div>
+              </div>
+
+              <!-- Content & Action -->
+              <div class="sm:w-7/12 p-6 flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-gold">
+                      {{ item.category }}
+                    </span>
+                    <span class="font-heading font-bold text-base md:text-lg text-deep-espresso">
+                      ₦{{ item.price.toLocaleString("en-US") }}
+                    </span>
+                  </div>
+
+                  <h3
+                    class="font-heading text-lg md:text-xl font-bold text-deep-espresso leading-snug group-hover:text-deep-terracotta transition-colors"
+                  >
+                    {{ item.name }}
+                  </h3>
+
+                  <p class="font-body text-xs text-deep-espresso/75 leading-relaxed line-clamp-2">
+                    {{ item.description }}
+                  </p>
+
+                  <!-- Crowdfund Progress -->
+                  <div v-if="item.fundingType === 'crowdfund'" class="space-y-1 pt-1">
+                    <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-amber-gold rounded-full transition-all duration-500"
+                        :style="{ width: `${progressPercent(item)}%` }"
+                      />
+                    </div>
+                    <p class="text-[11px] text-deep-espresso/60 font-body">
+                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised · {{ item.contributorCount ?? 0 }}
+                      contributors
+                    </p>
+                  </div>
+                </div>
+
+                <!-- CTA Action -->
+                <div class="pt-1">
+                  <span
+                    class="w-full btn-primary py-2.5 text-center text-xs font-bold uppercase tracking-wider block"
+                  >
+                    {{
+                      item.fundingType === "crowdfund"
+                        ? "Contribute to Fund"
+                        : item.maxQuantity - item.reservedCount > 0
+                          ? "Reserve Gift"
+                          : "Fully Reserved"
+                    }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeInSection>
+
         <!-- Controls Panel -->
         <FadeInSection
           v-if="!isInitialLoading"

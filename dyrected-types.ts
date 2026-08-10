@@ -60,6 +60,7 @@ export interface Wishlist_items {
   fundingType?: "fixed" | "crowdfund";
   maxQuantity: number;
   link?: UrlField;
+  isFeatured?: boolean;
   isHidden?: boolean;
   amountRaised?: number;
   contributorCount?: number;

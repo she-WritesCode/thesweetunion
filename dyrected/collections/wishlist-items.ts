@@ -93,6 +93,12 @@ export const wishlistItems = defineCollection({
           label: "Purchase Link",
           admin: { description: "External purchase link (optional)" },
         }),
+        defineBooleanField({
+          name: "isFeatured",
+          label: "Special Highlight",
+          defaultValue: false,
+          admin: { description: "Show in the top showcase section on the registry page." },
+        }),
         defineBooleanField({ name: "isHidden", label: "Hidden", defaultValue: false }),
       ],
     }),
