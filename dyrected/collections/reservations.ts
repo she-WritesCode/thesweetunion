@@ -64,12 +64,21 @@ export const reservations = defineCollection({
           name: "contributionAmount",
           label: "Contribution Amount",
           admin: {
-            description: "Required for crowdfund items (min ₦5,000)",
+            description: "Required for crowdfund items or partial payments (min ₦5,000)",
             width: "50%",
             format: {
               type: "currency",
               currency: "NGN",
             },
+          },
+        }),
+        defineNumberField({
+          name: "quantity",
+          label: "Quantity Reserved",
+          defaultValue: 1,
+          admin: {
+            description: "Number of items reserved by this guest",
+            width: "50%",
           },
         }),
         defineDateField({

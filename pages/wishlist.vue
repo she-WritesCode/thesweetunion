@@ -170,10 +170,19 @@ const copyToClipboard = (text: string) => {
   });
 };
 
-// Crowdfund amount selection
+// Crowdfund & Fixed Payment / Quantity state
 const selectedAmount = ref<number>(SUGGESTED_AMOUNTS[0]);
 const useCustomAmount = ref(false);
 const customAmount = ref<string>("");
+
+const reserveQuantity = ref<number>(1);
+const isCustomFixedPayment = ref(false);
+const customFixedPaymentAmount = ref<string>("");
+
+const availableQty = computed(() => {
+  if (!activeItem.value) return 0;
+  return Math.max(0, activeItem.value.maxQuantity - activeItem.value.reservedCount);
+});
 
 const effectiveAmount = computed(() => {
   if (useCustomAmount.value) {
@@ -188,10 +197,20 @@ const isAmountValid = computed(() => {
   return effectiveAmount.value >= MIN_CONTRIBUTION;
 });
 
+const isFixedAmountValid = computed(() => {
+  if (!activeItem.value || activeItem.value.fundingType !== "fixed" || fulfillmentMode.value !== "sent_money")
+    return true;
+  if (!isCustomFixedPayment.value) return true;
+  return (parseInt(customFixedPaymentAmount.value) || 0) >= MIN_CONTRIBUTION;
+});
+
 const isFormValid = computed(() => {
   if (!activeItem.value || !fulfillmentMode.value) return false;
   if (!guestName.value.trim()) return false;
   if (fulfillmentMode.value === "sent_money" && activeItem.value.fundingType === "crowdfund" && !isAmountValid.value) {
+    return false;
+  }
+  if (fulfillmentMode.value === "sent_money" && activeItem.value.fundingType === "fixed" && !isFixedAmountValid.value) {
     return false;
   }
   if (fulfillmentMode.value === "remind_later") {
@@ -213,7 +232,13 @@ const formattedReminderDate = computed(() => {
 
 const activeAmountValue = computed(() => {
   if (!activeItem.value) return 0;
-  return activeItem.value.fundingType === "crowdfund" ? effectiveAmount.value : activeItem.value.price;
+  if (activeItem.value.fundingType === "crowdfund") {
+    return effectiveAmount.value;
+  }
+  if (fulfillmentMode.value === "sent_money" && isCustomFixedPayment.value) {
+    return parseInt(customFixedPaymentAmount.value) || 0;
+  }
+  return activeItem.value.price * reserveQuantity.value;
 });
 
 const finalCtaLabel = computed(() => {
@@ -246,6 +271,9 @@ const handleReserveClick = (item: WishlistItem | null) => {
   selectedAmount.value = SUGGESTED_AMOUNTS[0];
   useCustomAmount.value = false;
   customAmount.value = "";
+  reserveQuantity.value = 1;
+  isCustomFixedPayment.value = false;
+  customFixedPaymentAmount.value = "";
 };
 
 const handleConfirmReservation = async () => {
@@ -265,6 +293,8 @@ const handleConfirmReservation = async () => {
         : "reminder"
       : "reserve";
 
+  const currentQty = activeItem.value.fundingType === "fixed" ? reserveQuantity.value : 1;
+
   isSubmitting.value = true;
   try {
     const isDbItem = wishlistData.value?.docs?.some((d: any) => d.id === activeItem.value?.id);
@@ -276,10 +306,8 @@ const handleConfirmReservation = async () => {
           guestName: guestName.value.trim(),
           paymentTiming: currentTiming,
           intent,
-          contributionAmount:
-            activeItem.value.fundingType === "crowdfund" && currentMode === "sent_money"
-              ? effectiveAmount.value
-              : undefined,
+          quantity: currentQty,
+          contributionAmount: currentMode === "sent_money" ? activeAmountValue.value : undefined,
           reminderAt:
             currentMode === "remind_later" && reminderDate.value
               ? new Date(`${reminderDate.value}T12:00:00`).toISOString()
@@ -289,7 +317,7 @@ const handleConfirmReservation = async () => {
           paymentOption: currentOption,
         },
       });
-      successContributionAmount.value = currentMode === "sent_money" ? effectiveAmount.value : 0;
+      successContributionAmount.value = currentMode === "sent_money" ? activeAmountValue.value : 0;
 
       // Update local items with fresh stats from backend
       if (result?.stats && wishlistData.value?.docs) {
@@ -311,7 +339,7 @@ const handleConfirmReservation = async () => {
           item.reservedCount < item.maxQuantity &&
           intent === "reserve"
         ) {
-          return { ...item, reservedCount: item.reservedCount + 1 };
+          return { ...item, reservedCount: item.reservedCount + currentQty };
         }
         return item;
       });
@@ -836,6 +864,40 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- Quantity Selection Card (for Fixed Items with Available Quantity > 1) -->
+          <div
+            v-if="activeItem.fundingType === 'fixed' && availableQty > 1"
+            class="linen-card p-6 sm:p-7 rounded-3xl border border-amber-gold/20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <div class="space-y-1 text-center sm:text-left">
+              <label class="font-heading font-bold text-base text-deep-espresso block">Quantity to Reserve</label>
+              <p class="text-xs text-deep-espresso/65 font-body">
+                You can reserve up to {{ availableQty }} units of this gift item.
+              </p>
+            </div>
+            <div class="flex items-center gap-3 bg-warm-cream/90 border border-amber-gold/30 rounded-2xl p-2 shadow-inner">
+              <button
+                type="button"
+                @click="reserveQuantity = Math.max(1, reserveQuantity - 1)"
+                :disabled="reserveQuantity <= 1"
+                class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <span class="font-heading font-bold text-xl text-deep-espresso min-w-[32px] text-center">{{ reserveQuantity }}</span>
+              <button
+                type="button"
+                @click="reserveQuantity = Math.min(availableQty, reserveQuantity + 1)"
+                :disabled="reserveQuantity >= availableQty"
+                class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           <!-- 1. Fulfillment Options Card -->
           <div class="linen-card p-6 sm:p-8 rounded-3xl border border-amber-gold/20 shadow-md space-y-6">
             <div class="space-y-1">
@@ -845,51 +907,92 @@ onUnmounted(() => {
 
             <div class="space-y-3">
               <!-- Option 1: Sent Money -->
-              <button
-                type="button"
-                @click="selectFulfillmentMode('sent_money')"
-                class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
-                :class="
-                  fulfillmentMode === 'sent_money'
-                    ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
-                    : 'border-amber-gold/20 bg-white/70 hover:bg-white'
-                "
-              >
-                <div
-                  class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-6 h-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
-                    />
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <p class="font-bold text-base text-deep-espresso">1. I am gifting/paying now</p>
-                  <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
-                    I am making a direct bank transfer or gift payment now using the details below.
-                  </p>
-                </div>
-                <div
-                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+              <div class="space-y-2">
+                <button
+                  type="button"
+                  @click="selectFulfillmentMode('sent_money')"
+                  class="w-full p-5 rounded-2xl border transition-all text-left flex items-start gap-4 cursor-pointer"
                   :class="
                     fulfillmentMode === 'sent_money'
-                      ? 'border-deep-terracotta bg-deep-terracotta text-white'
-                      : 'border-amber-gold/40'
+                      ? 'border-amber-gold bg-amber-gold/15 shadow-sm'
+                      : 'border-amber-gold/20 bg-white/70 hover:bg-white'
                   "
                 >
-                  <span v-if="fulfillmentMode === 'sent_money'" class="text-xs font-bold">✓</span>
+                  <div
+                    class="mt-0.5 text-deep-terracotta shrink-0 p-2.5 rounded-xl bg-amber-gold/10 border border-amber-gold/20"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-6 h-6"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-base text-deep-espresso">1. I am gifting/paying now</p>
+                    <p class="text-xs text-deep-espresso/65 font-body mt-0.5">
+                      I am making a direct bank transfer or gift payment now using the details below.
+                    </p>
+                  </div>
+                  <div
+                    class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+                    :class="
+                      fulfillmentMode === 'sent_money'
+                        ? 'border-deep-terracotta bg-deep-terracotta text-white'
+                        : 'border-amber-gold/40'
+                    "
+                  >
+                    <span v-if="fulfillmentMode === 'sent_money'" class="text-xs font-bold">✓</span>
+                  </div>
+                </button>
+
+                <!-- Custom Payment Amount for Fixed Items when Paying Now -->
+                <div
+                  v-if="activeItem.fundingType === 'fixed' && fulfillmentMode === 'sent_money'"
+                  class="p-4 rounded-2xl bg-warm-cream/60 border border-amber-gold/25 space-y-3"
+                >
+                  <div class="flex items-center justify-between text-xs font-bold text-deep-espresso uppercase tracking-wider">
+                    <span>Choose Payment Amount:</span>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      @click="isCustomFixedPayment = false"
+                      class="py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer text-center"
+                      :class="!isCustomFixedPayment ? 'bg-deep-terracotta text-white border-deep-terracotta shadow-xs' : 'bg-white text-deep-espresso border-amber-gold/30 hover:bg-amber-gold/10'"
+                    >
+                      Full Amount (₦{{ (activeItem.price * reserveQuantity).toLocaleString("en-US") }})
+                    </button>
+                    <button
+                      type="button"
+                      @click="isCustomFixedPayment = true"
+                      class="py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer text-center"
+                      :class="isCustomFixedPayment ? 'bg-deep-terracotta text-white border-deep-terracotta shadow-xs' : 'bg-white text-deep-espresso border-amber-gold/30 hover:bg-amber-gold/10'"
+                    >
+                      Custom Contribution
+                    </button>
+                  </div>
+                  <div v-if="isCustomFixedPayment" class="space-y-1.5 pt-1">
+                    <label class="text-xs text-deep-espresso/70 font-semibold block">Enter contribution amount (min ₦{{ MIN_CONTRIBUTION.toLocaleString() }}):</label>
+                    <input
+                      v-model="customFixedPaymentAmount"
+                      type="number"
+                      :min="MIN_CONTRIBUTION"
+                      class="input-field py-2.5"
+                      placeholder="e.g. 20000"
+                    />
+                    <p v-if="!isFixedAmountValid" class="text-xs text-rose-700 font-semibold">Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}</p>
+                  </div>
                 </div>
-              </button>
+              </div>
 
               <!-- Option 2: Bring Gift to Wedding -->
               <button

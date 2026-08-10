@@ -77,6 +77,7 @@ export interface Reservations {
   intent?: "reserve" | "contribute" | "reminder";
   paymentTiming?: "now" | "later";
   contributionAmount?: number;
+  quantity?: number;
   reminderAt?: string;
   reminderChannel?: "whatsapp" | "email";
   reminderContact?: string;

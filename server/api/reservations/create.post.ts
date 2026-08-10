@@ -22,11 +22,14 @@ async function recomputeItemStats(client: any, itemId: string) {
   let reservedCount = 0;
 
   for (const r of reservations.docs) {
-    if (r.intent === "contribute" && r.contributionAmount && r.contributionAmount > 0) {
+    const qty = Math.max(1, Number((r as any).quantity) || 1);
+    if (r.contributionAmount && r.contributionAmount > 0) {
       amountRaised += r.contributionAmount;
+    }
+    if (r.intent === "contribute") {
       contributorCount += 1;
     } else if ((item?.fundingType || "fixed") === "fixed" && r.intent === "reserve") {
-      reservedCount += 1;
+      reservedCount += qty;
     }
   }
 
@@ -47,6 +50,7 @@ export default defineEventHandler(async (event) => {
     paymentTiming,
     intent,
     contributionAmount,
+    quantity = 1,
     reminderAt,
     reminderChannel,
     reminderContact,
@@ -87,6 +91,7 @@ export default defineEventHandler(async (event) => {
   const isCrowdfund = item.fundingType === "crowdfund";
   const normalizedIntent = intent || (isCrowdfund ? (paymentTiming === "now" ? "contribute" : "reminder") : "reserve");
   const trimmedReminderContact = reminderContact?.trim() || "";
+  const reqQty = Math.max(1, parseInt(String(quantity), 10) || 1);
 
   if (paymentTiming === "later" && paymentOption !== "bring_to_wedding") {
     if (!reminderAt) {
@@ -109,8 +114,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: "This fund has been fully raised. Thank you!" });
     }
   } else {
-    if (currentStats.reservedCount >= item.maxQuantity) {
+    const availableQty = item.maxQuantity - currentStats.reservedCount;
+    if (availableQty <= 0) {
       throw createError({ statusCode: 400, message: "Sorry, this gift was just taken. Please choose another." });
+    }
+    if (reqQty > availableQty) {
+      throw createError({ statusCode: 400, message: `Only ${availableQty} item(s) available to reserve.` });
     }
   }
 
@@ -120,11 +129,12 @@ export default defineEventHandler(async (event) => {
     guestName: guestName.trim(),
     intent: normalizedIntent,
     paymentTiming,
+    quantity: reqQty,
     reminderAt: paymentTiming === "later" ? reminderAt : undefined,
     reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
     reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
     paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
-    contributionAmount: isCrowdfund && paymentTiming === "now" ? contributionAmount : undefined,
+    contributionAmount: contributionAmount && contributionAmount >= MIN_CONTRIBUTION ? contributionAmount : undefined,
     reservedAt: new Date().toISOString(),
   });
 
