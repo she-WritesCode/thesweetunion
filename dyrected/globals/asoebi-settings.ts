@@ -1,4 +1,4 @@
-import { defineGlobal, defineTextField, defineNumberField, defineRelationshipField } from "@dyrected/core";
+import { defineGlobal, defineTextField, defineNumberField, defineRelationshipField, defineTextareaField } from "@dyrected/core";
 
 export const asoebiSettings = defineGlobal({
   slug: "asoebi_settings",
@@ -62,10 +62,29 @@ export const asoebiSettings = defineGlobal({
       admin: { description: "The name of the bank account holder.", width: "50%" },
     }),
     defineTextField({
+      name: "representativeName",
+      label: "Representative Name",
+      defaultValue: "Ololade",
+      admin: {
+        description: "Name of the representative acting on behalf of the couple for Asoebi reminders.",
+        width: "50%",
+      },
+    }),
+    defineTextField({
       name: "whatsAppContact",
       label: "WhatsApp Contact",
       required: true,
       admin: { description: "WhatsApp number or contact details where guests send proof of payment.", width: "50%" },
+    }),
+    defineTextareaField({
+      name: "whatsAppTemplate",
+      label: "WhatsApp Message Template",
+      admin: {
+        description:
+          "Template for Asoebi payment request messages sent on WhatsApp. Dynamic placeholders: [guest name], [rep name], [items], [total], [bank], [account number], [account name]",
+        rows: 5,
+      },
+      defaultValue: `Hi [guest name] , my name is [rep name] a representative of the couple. \n\nThank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day. \nKindly confirm your Asoebi request of; [items] order for #TheSweetUnion. Please pay the total of [total] to [bank] - [account number] ([account name]) and send proof of payment here. Thank you!`,
     }),
   ],
   access: {

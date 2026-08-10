@@ -36,7 +36,10 @@ const hasOrder = computed(
     (wantsAsoOke.value && (asoOkeMaleQty.value > 0 || asoOkeFemaleQty.value > 0)),
 );
 
-const { data: asoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
+const { data: asoebiSettings, refresh: refreshAsoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
+
+const savingTemplate = ref(false);
+const saveSuccess = ref(false);
 
 const totalAmount = computed(() => {
   let total = 0;
@@ -72,10 +75,11 @@ const defaultMessage = computed(() => {
   const bankName = (asoebiSettings.value as any)?.bankName || "";
   const accountNumber = (asoebiSettings.value as any)?.accountNumber || "";
   const accountName = (asoebiSettings.value as any)?.accountName || "";
+  const repName = (asoebiSettings.value as any)?.representativeName || "Ololade";
 
   const items: string[] = [];
   if (wantsAsoebi.value && asoebiYards.value) {
-    items.push(`${asoebiYards.value} yards of Asoebi fabric`);
+    items.push(`${asoebiYards.value} yards of Asoebi fabric (Customised Adire)`);
   }
   if (wantsAsoOke.value && asoOkeMaleQty.value > 0) {
     items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
@@ -85,7 +89,44 @@ const defaultMessage = computed(() => {
   }
 
   const itemsStr = items.length > 0 ? items.join(" + ") : "Aso Ebi";
-  return `Hi ${leadName.value || "there"}, my name is Ololade a representative of the couple\n\nThank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day.\n\nKindly confirm your Asoebi request of; ${itemsStr} order for #TheSweetUnion.\n\nPlease pay the total of ₦${totalAmount.value.toLocaleString()} to ${bankName} - ${accountNumber} (${accountName}) and send proof of payment here. Thank you!`;
+  const name = leadName.value || "there";
+  const bank = bankName || "Premium Trust Bank";
+  const accNum = accountNumber || "0101087193";
+  const accName = accountName || "Uchechukwu Ndu";
+  const totalStr = `₦${totalAmount.value.toLocaleString()}`;
+
+  const defaultFallbackTemplate = `Hi [guest name] , my name is [rep name] a representative of the couple. 
+
+Thank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day. 
+Kindly confirm your Asoebi request of; [items] order for #TheSweetUnion. Please pay the total of [total] to [bank] - [account number] ([account name]) and send proof of payment here. Thank you!`;
+
+  const rawTemplate = (asoebiSettings.value as any)?.whatsAppTemplate || defaultFallbackTemplate;
+
+  return rawTemplate
+    .replace(/\[guest name\]/gi, name)
+    .replace(/\[guest_name\]/gi, name)
+    .replace(/\{guestName\}/gi, name)
+    .replace(/\[rep name\]/gi, repName)
+    .replace(/\[rep_name\]/gi, repName)
+    .replace(/\[representative name\]/gi, repName)
+    .replace(/\[representative_name\]/gi, repName)
+    .replace(/\{repName\}/gi, repName)
+    .replace(/\{representativeName\}/gi, repName)
+    .replace(/\[items\]/gi, itemsStr)
+    .replace(/\[items_summary\]/gi, itemsStr)
+    .replace(/\{items\}/gi, itemsStr)
+    .replace(/\[total\]/gi, totalStr)
+    .replace(/\[total_amount\]/gi, totalStr)
+    .replace(/\{total\}/gi, totalStr)
+    .replace(/\[bank\]/gi, bank)
+    .replace(/\[bank_name\]/gi, bank)
+    .replace(/\{bank\}/gi, bank)
+    .replace(/\[account number\]/gi, accNum)
+    .replace(/\[account_number\]/gi, accNum)
+    .replace(/\{accountNumber\}/gi, accNum)
+    .replace(/\[account name\]/gi, accName)
+    .replace(/\[account_name\]/gi, accName)
+    .replace(/\{accountName\}/gi, accName);
 });
 
 // Auto-fill message when data changes
@@ -101,6 +142,85 @@ watch(
 
 function resetToDefault() {
   customMessage.value = defaultMessage.value;
+}
+
+function extractTemplateFromMessage(msg: string): string {
+  let template = msg;
+
+  const name = leadName.value?.trim();
+  const bank = (asoebiSettings.value as any)?.bankName || "Premium Trust Bank";
+  const accNum = (asoebiSettings.value as any)?.accountNumber || "0101087193";
+  const accName = (asoebiSettings.value as any)?.accountName || "Uchechukwu Ndu";
+  const repName = (asoebiSettings.value as any)?.representativeName || "Ololade";
+  const totalStr = `₦${totalAmount.value.toLocaleString()}`;
+
+  const items: string[] = [];
+  if (wantsAsoebi.value && asoebiYards.value) {
+    items.push(`${asoebiYards.value} yards of Asoebi fabric (Customised Adire)`);
+  }
+  if (wantsAsoOke.value && asoOkeMaleQty.value > 0) {
+    items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
+  }
+  if (wantsAsoOke.value && asoOkeFemaleQty.value > 0) {
+    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele / Ipele)`);
+  }
+  const itemsStr = items.length > 0 ? items.join(" + ") : "";
+
+  // Convert guest-specific values back into dynamic placeholders
+  if (itemsStr && template.includes(itemsStr)) {
+    template = template.replaceAll(itemsStr, "[items]");
+  }
+  if (totalStr && template.includes(totalStr)) {
+    template = template.replaceAll(totalStr, "[total]");
+  }
+  if (name && name !== "there" && template.includes(name)) {
+    template = template.replaceAll(name, "[guest name]");
+  }
+  if (repName && template.includes(repName)) {
+    template = template.replaceAll(repName, "[rep name]");
+  }
+  if (bank && template.includes(bank)) {
+    template = template.replaceAll(bank, "[bank]");
+  }
+  if (accNum && template.includes(accNum)) {
+    template = template.replaceAll(accNum, "[account number]");
+  }
+  if (accName && template.includes(accName)) {
+    template = template.replaceAll(accName, "[account name]");
+  }
+
+  return template;
+}
+
+async function saveAsGlobalTemplate() {
+  if (savingTemplate.value || !customMessage.value.trim()) return;
+  savingTemplate.value = true;
+  error.value = "";
+  saveSuccess.value = false;
+
+  try {
+    const templateToSave = extractTemplateFromMessage(customMessage.value.trim());
+
+    await $fetch("/api/asoebi/template", {
+      method: "PATCH",
+      headers: adminAuthHeaders(),
+      body: {
+        whatsAppTemplate: templateToSave,
+      },
+    });
+
+    saveSuccess.value = true;
+    if (typeof refreshAsoebiSettings === "function") {
+      await refreshAsoebiSettings();
+    }
+    setTimeout(() => {
+      saveSuccess.value = false;
+    }, 3000);
+  } catch (err: any) {
+    error.value = err?.data?.message || err?.message || "Failed to update global template.";
+  } finally {
+    savingTemplate.value = false;
+  }
 }
 
 function sendReminder() {
@@ -138,7 +258,18 @@ function sendReminder() {
       <div class="message-box space-y-2">
         <div class="flex-header">
           <label class="widget-label">Customize WhatsApp Message</label>
-          <button type="button" class="btn-reset" @click="resetToDefault">Reset Message</button>
+          <div class="header-actions">
+            <button
+              type="button"
+              class="btn-save-template"
+              :disabled="savingTemplate || !customMessage.trim()"
+              @click="saveAsGlobalTemplate"
+              title="Save current message as the default template for all guests in Asoebi Settings"
+            >
+              {{ savingTemplate ? "Saving..." : saveSuccess ? "Saved Globally ✓" : "Save as Global Template 💾" }}
+            </button>
+            <button type="button" class="btn-reset" @click="resetToDefault">Reset Message</button>
+          </div>
         </div>
         <textarea
           v-model="customMessage"
@@ -199,6 +330,36 @@ function sendReminder() {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-save-template {
+  background: rgba(134, 81, 114, 0.1);
+  border: 1px solid rgba(134, 81, 114, 0.3);
+  color: #865172;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition:
+    background 150ms,
+    border-color 150ms;
+}
+
+.btn-save-template:hover:not(:disabled) {
+  background: rgba(134, 81, 114, 0.2);
+  border-color: #865172;
+}
+
+.btn-save-template:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .widget-label {

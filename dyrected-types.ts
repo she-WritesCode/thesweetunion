@@ -207,7 +207,9 @@ export interface Asoebi_settingsGlobal {
   bankName: string;
   accountNumber: string;
   accountName: string;
+  representativeName?: string;
   whatsAppContact: string;
+  whatsAppTemplate?: string;
 }
 
 export interface DyrectedSchema {
