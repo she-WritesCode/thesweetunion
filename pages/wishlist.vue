@@ -176,8 +176,6 @@ const useCustomAmount = ref(false);
 const customAmount = ref<string>("");
 
 const reserveQuantity = ref<number>(1);
-const isCustomFixedPayment = ref(false);
-const customFixedPaymentAmount = ref<string>("");
 
 const availableQty = computed(() => {
   if (!activeItem.value) return 0;
@@ -197,20 +195,10 @@ const isAmountValid = computed(() => {
   return effectiveAmount.value >= MIN_CONTRIBUTION;
 });
 
-const isFixedAmountValid = computed(() => {
-  if (!activeItem.value || activeItem.value.fundingType !== "fixed" || fulfillmentMode.value !== "sent_money")
-    return true;
-  if (!isCustomFixedPayment.value) return true;
-  return (parseInt(customFixedPaymentAmount.value) || 0) >= MIN_CONTRIBUTION;
-});
-
 const isFormValid = computed(() => {
   if (!activeItem.value || !fulfillmentMode.value) return false;
   if (!guestName.value.trim()) return false;
   if (fulfillmentMode.value === "sent_money" && activeItem.value.fundingType === "crowdfund" && !isAmountValid.value) {
-    return false;
-  }
-  if (fulfillmentMode.value === "sent_money" && activeItem.value.fundingType === "fixed" && !isFixedAmountValid.value) {
     return false;
   }
   if (fulfillmentMode.value === "remind_later") {
@@ -234,9 +222,6 @@ const activeAmountValue = computed(() => {
   if (!activeItem.value) return 0;
   if (activeItem.value.fundingType === "crowdfund") {
     return effectiveAmount.value;
-  }
-  if (fulfillmentMode.value === "sent_money" && isCustomFixedPayment.value) {
-    return parseInt(customFixedPaymentAmount.value) || 0;
   }
   return activeItem.value.price * reserveQuantity.value;
 });
@@ -272,8 +257,6 @@ const handleReserveClick = (item: WishlistItem | null) => {
   useCustomAmount.value = false;
   customAmount.value = "";
   reserveQuantity.value = 1;
-  isCustomFixedPayment.value = false;
-  customFixedPaymentAmount.value = "";
 };
 
 const handleConfirmReservation = async () => {
@@ -875,7 +858,9 @@ onUnmounted(() => {
                 You can reserve up to {{ availableQty }} units of this gift item.
               </p>
             </div>
-            <div class="flex items-center gap-3 bg-warm-cream/90 border border-amber-gold/30 rounded-2xl p-2 shadow-inner">
+            <div
+              class="flex items-center gap-3 bg-warm-cream/90 border border-amber-gold/30 rounded-2xl p-2 shadow-inner"
+            >
               <button
                 type="button"
                 @click="reserveQuantity = Math.max(1, reserveQuantity - 1)"
@@ -885,7 +870,9 @@ onUnmounted(() => {
               >
                 −
               </button>
-              <span class="font-heading font-bold text-xl text-deep-espresso min-w-[32px] text-center">{{ reserveQuantity }}</span>
+              <span class="font-heading font-bold text-xl text-deep-espresso min-w-[32px] text-center">{{
+                reserveQuantity
+              }}</span>
               <button
                 type="button"
                 @click="reserveQuantity = Math.min(availableQty, reserveQuantity + 1)"
@@ -953,45 +940,6 @@ onUnmounted(() => {
                     <span v-if="fulfillmentMode === 'sent_money'" class="text-xs font-bold">✓</span>
                   </div>
                 </button>
-
-                <!-- Custom Payment Amount for Fixed Items when Paying Now -->
-                <div
-                  v-if="activeItem.fundingType === 'fixed' && fulfillmentMode === 'sent_money'"
-                  class="p-4 rounded-2xl bg-warm-cream/60 border border-amber-gold/25 space-y-3"
-                >
-                  <div class="flex items-center justify-between text-xs font-bold text-deep-espresso uppercase tracking-wider">
-                    <span>Choose Payment Amount:</span>
-                  </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      @click="isCustomFixedPayment = false"
-                      class="py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer text-center"
-                      :class="!isCustomFixedPayment ? 'bg-deep-terracotta text-white border-deep-terracotta shadow-xs' : 'bg-white text-deep-espresso border-amber-gold/30 hover:bg-amber-gold/10'"
-                    >
-                      Full Amount (₦{{ (activeItem.price * reserveQuantity).toLocaleString("en-US") }})
-                    </button>
-                    <button
-                      type="button"
-                      @click="isCustomFixedPayment = true"
-                      class="py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer text-center"
-                      :class="isCustomFixedPayment ? 'bg-deep-terracotta text-white border-deep-terracotta shadow-xs' : 'bg-white text-deep-espresso border-amber-gold/30 hover:bg-amber-gold/10'"
-                    >
-                      Custom Contribution
-                    </button>
-                  </div>
-                  <div v-if="isCustomFixedPayment" class="space-y-1.5 pt-1">
-                    <label class="text-xs text-deep-espresso/70 font-semibold block">Enter contribution amount (min ₦{{ MIN_CONTRIBUTION.toLocaleString() }}):</label>
-                    <input
-                      v-model="customFixedPaymentAmount"
-                      type="number"
-                      :min="MIN_CONTRIBUTION"
-                      class="input-field py-2.5"
-                      placeholder="e.g. 20000"
-                    />
-                    <p v-if="!isFixedAmountValid" class="text-xs text-rose-700 font-semibold">Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}</p>
-                  </div>
-                </div>
               </div>
 
               <!-- Option 2: Bring Gift to Wedding -->
@@ -1141,7 +1089,7 @@ onUnmounted(() => {
                     @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
                     class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
                   >
-                    {{ isCopied ? "✓ Copied" : "Copy Account Number" }}
+                    {{ isCopied ? "✓ Copied" : "Copy" }}
                   </button>
                 </div>
               </div>

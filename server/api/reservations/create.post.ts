@@ -23,13 +23,15 @@ async function recomputeItemStats(client: any, itemId: string) {
 
   for (const r of reservations.docs) {
     const qty = Math.max(1, Number((r as any).quantity) || 1);
-    if (r.contributionAmount && r.contributionAmount > 0) {
-      amountRaised += r.contributionAmount;
-    }
-    if (r.intent === "contribute") {
-      contributorCount += 1;
-    } else if ((item?.fundingType || "fixed") === "fixed" && r.intent === "reserve") {
-      reservedCount += qty;
+    if ((item?.fundingType || "fixed") === "crowdfund") {
+      if (r.intent === "contribute" && r.contributionAmount && r.contributionAmount > 0) {
+        amountRaised += r.contributionAmount;
+        contributorCount += 1;
+      }
+    } else {
+      if (r.intent === "reserve") {
+        reservedCount += qty;
+      }
     }
   }
 
@@ -134,7 +136,7 @@ export default defineEventHandler(async (event) => {
     reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
     reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
     paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
-    contributionAmount: contributionAmount && contributionAmount >= MIN_CONTRIBUTION ? contributionAmount : undefined,
+    contributionAmount: isCrowdfund && paymentTiming === "now" ? contributionAmount : undefined,
     reservedAt: new Date().toISOString(),
   });
 
