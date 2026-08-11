@@ -81,6 +81,7 @@ export const example: CollectionConfig = {
 ```
 
 Register every new collection in `dyrected.config.ts` (import + add to `collections: []`).
+Always run `npx dyrected generate:types` to update `dyrected-types.ts` after modifying collections or globals.
 
 ## Hook Pattern
 
