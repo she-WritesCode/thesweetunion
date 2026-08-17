@@ -141,7 +141,7 @@ function asoebiSection(
       const cost = asoOkeFemaleQty * femalePrice;
       totalAmount += cost;
       items.push(
-        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Female Aso Oke (Gele/Ipele)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeFemaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`,
+        `<tr><td style="padding:6px 0;font-size:12px;color:${MUTED};font-family:Georgia,serif;">Female Aso Oke (Gele)</td><td style="padding:6px 0;font-size:12px;color:${TEXT};font-weight:600;text-align:right;font-family:Georgia,serif;">${asoOkeFemaleQty} Set(s) (₦${cost.toLocaleString()})</td></tr>`,
       );
     }
   }

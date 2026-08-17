@@ -1044,7 +1044,7 @@ onUnmounted(() => {
                     >
                       <div>
                         <div style="font-weight: 600; font-size: 0.9rem; color: #462137">
-                          Female Aso Oke (Gele / Ipele)
+                          Female Aso Oke (Gele)
                         </div>
                         <div style="font-size: 0.8rem; color: #865172">₦{{ asoOkeFemalePrice.toLocaleString() }}</div>
                       </div>

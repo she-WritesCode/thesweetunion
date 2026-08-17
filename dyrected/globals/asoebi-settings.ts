@@ -1,4 +1,10 @@
-import { defineGlobal, defineTextField, defineNumberField, defineRelationshipField, defineTextareaField } from "@dyrected/core";
+import {
+  defineGlobal,
+  defineTextField,
+  defineNumberField,
+  defineRelationshipField,
+  defineTextareaField,
+} from "@dyrected/core";
 
 export const asoebiSettings = defineGlobal({
   slug: "asoebi_settings",
@@ -10,7 +16,8 @@ export const asoebiSettings = defineGlobal({
       relationTo: "media",
       hasMany: true,
       admin: {
-        description: "Photos of the Aso Ebi fabric and headwear. All photos will be displayed in an interactive gallery on the Aso Ebi page.",
+        description:
+          "Photos of the Aso Ebi fabric and headwear. All photos will be displayed in an interactive gallery on the Aso Ebi page.",
       },
     }),
     defineNumberField({
@@ -35,10 +42,10 @@ export const asoebiSettings = defineGlobal({
     }),
     defineNumberField({
       name: "asoOkeFemalePrice",
-      label: "Female Aso Oke (Gele/Ipele) Price (NGN)",
+      label: "Female Aso Oke (Gele) Price (NGN)",
       defaultValue: 8000,
       admin: {
-        description: "Price for Female Aso Oke (Gele / Ipele) in Naira.",
+        description: "Price for Female Aso Oke (Gele) in Naira.",
         format: { type: "currency", currency: "NGN" },
         width: "50%",
       },

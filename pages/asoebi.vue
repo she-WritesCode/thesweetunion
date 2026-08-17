@@ -364,7 +364,7 @@ const waPaymentLink = computed(() => {
                 <span class="font-semibold text-deep-terracotta">₦{{ asoOkeMalePrice.toLocaleString() }}</span>
               </li>
               <li class="flex justify-between items-center pb-2 border-b border-warm-cream">
-                <span class="font-medium">Female Aso Oke (Gele / Ipele)</span>
+                <span class="font-medium">Female Aso Oke (Gele)</span>
                 <span class="font-semibold text-deep-terracotta">₦{{ asoOkeFemalePrice.toLocaleString() }}</span>
               </li>
             </ul>
@@ -569,7 +569,7 @@ const waPaymentLink = computed(() => {
 
             <div class="flex items-center justify-between gap-3 border-t border-amber-gold/15 pt-3">
               <div>
-                <div class="font-semibold text-sm text-deep-espresso">Female Aso Oke (Gele / Ipele)</div>
+                <div class="font-semibold text-sm text-deep-espresso">Female Aso Oke (Gele)</div>
                 <div class="text-xs text-deep-terracotta font-medium">₦{{ asoOkeFemalePrice.toLocaleString() }}</div>
               </div>
               <div class="stepper-box">

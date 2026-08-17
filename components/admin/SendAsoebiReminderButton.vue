@@ -85,7 +85,7 @@ const defaultMessage = computed(() => {
     items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
   }
   if (wantsAsoOke.value && asoOkeFemaleQty.value > 0) {
-    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele / Ipele)`);
+    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele)`);
   }
 
   const itemsStr = items.length > 0 ? items.join(" + ") : "Aso Ebi";
@@ -162,7 +162,7 @@ function extractTemplateFromMessage(msg: string): string {
     items.push(`${asoOkeMaleQty.value} Male Aso Oke (Fila / Cap)`);
   }
   if (wantsAsoOke.value && asoOkeFemaleQty.value > 0) {
-    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele / Ipele)`);
+    items.push(`${asoOkeFemaleQty.value} Female Aso Oke (Gele)`);
   }
   const itemsStr = items.length > 0 ? items.join(" + ") : "";
 

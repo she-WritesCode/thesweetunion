@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
   }
   if (newWantsAsoOke) {
     if (newAsoOkeMaleQty) detailsParts.push(`Male Aso Oke (Fila/Cap): ${newAsoOkeMaleQty} set(s)`);
-    if (newAsoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele/Ipele): ${newAsoOkeFemaleQty} set(s)`);
+    if (newAsoOkeFemaleQty) detailsParts.push(`Female Aso Oke (Gele): ${newAsoOkeFemaleQty} set(s)`);
   }
   const asoebiDetailsStr = detailsParts.join(" | ");
 

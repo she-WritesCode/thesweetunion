@@ -156,7 +156,7 @@ export const rsvpRecords = defineCollection({
         }),
         defineNumberField({
           name: "asoOkeFemaleQty",
-          label: "Female Aso Oke (Gele/Ipele) Quantity",
+          label: "Female Aso Oke (Gele) Quantity",
           defaultValue: 0,
           admin: {
             width: "50%",
