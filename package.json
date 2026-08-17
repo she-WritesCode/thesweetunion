@@ -6,6 +6,8 @@
     "build": "nuxt build",
     "dev": "TMPDIR=/tmp nuxt dev --port 3005",
     "seed": "npx tsx scripts/seed.ts",
+    "db:backup": "npx tsx scripts/backup-db.ts",
+    "db:restore": "npx tsx scripts/restore-db.ts",
     "format-phones": "npx tsx scripts/format-phone-numbers.ts",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

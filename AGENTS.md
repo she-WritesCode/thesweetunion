@@ -177,6 +177,7 @@ onMounted(() => {
 ```
 
 Register them in `pages/admin.vue`:
+
 ```typescript
 const adminComponents = {
   fields: {
@@ -186,6 +187,7 @@ const adminComponents = {
 ```
 
 And reference in the collection field:
+
 ```typescript
 {
   name: "myField",
@@ -233,3 +235,24 @@ sendEmail({
 ## RSVPRecord — Key Fields
 
 `leadName`, `leadEmail`, `leadPhone`, `hasSpouse`, `spouseName`, `attending`, `group` (→ rsvp_groups), `selectedEvents` (→ events[]), `editToken`, `submittedAt`, `checkedIn`, `checkIn` (→ check_ins), `invitationSent`, `invitationSentAt`, `invitationSentVia`
+
+## Database Backups & Migration Safety Policy
+
+**CRITICAL:** Every script or migration that modifies database records in production/staging MUST create an automatic full database backup before running any queries.
+
+- **Automated Pre-flight Backup:**
+  ```typescript
+  import { backupDatabase } from "./backup-db.ts";
+
+  async function main() {
+    // 1. Always create a pre-flight snapshot first
+    await backupDatabase("pre-migration-name");
+
+    // 2. Perform database queries / updates
+    ...
+  }
+  ```
+- **CLI Commands:**
+  - Create manual backup: `pnpm db:backup`
+  - Restore from backup: `pnpm db:restore` (restores `backups/latest.json` by default or specify a backup path `pnpm db:restore backups/db-backup-....json`)
+- Backups are stored in `backups/` and ignored by git.

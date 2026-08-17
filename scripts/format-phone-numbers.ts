@@ -17,23 +17,12 @@ import path from "node:path";
 // postgres is a transitive dep of @dyrected/db-postgres (postgres@3.4.9)
 import postgres from "postgres";
 import { formatPhoneNumber } from "../utils/phone.ts";
+import { backupDatabase } from "./backup-db.ts";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 const envPath = path.resolve(process.cwd(), ".env.local");
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, "utf-8");
-  for (const line of envContent.split("\n")) {
-    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\\s*$/);
-    if (match) {
-      const key = match[1];
-      let val = match[2] || "";
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-      }
-      process.env[key] = val;
-    }
-  }
-  // Inline parse (fallback without regex capturing trailing \s*)
   for (const line of envContent.split("\n")) {
     const eqIdx = line.indexOf("=");
     if (eqIdx === -1 || line.trim().startsWith("#")) continue;
@@ -57,6 +46,9 @@ if (!DATABASE_URL) {
 const sql = postgres(DATABASE_URL, { ssl: "prefer" });
 
 async function main() {
+  // Always create an automatic database backup before running mutations
+  await backupDatabase("pre-format-phones");
+
   console.log("🔍  Connecting to database...");
 
   // Dyrected stores all record data in a JSONB 'data' column
@@ -68,7 +60,7 @@ async function main() {
   let rows: any[] = [];
   try {
     rows = await sql.unsafe(
-      `SELECT id, data->>'${phoneField}' as "leadPhone" FROM "${tableName}"
+      `SELECT id, data FROM "${tableName}"
        WHERE data->>'${phoneField}' IS NOT NULL
          AND data->>'${phoneField}' != ''
          AND data->>'${phoneField}' NOT LIKE '+%'`,
@@ -92,8 +84,19 @@ async function main() {
   let failed = 0;
 
   for (const row of rows) {
-    const original = row.leadPhone as string;
-    const normalized = formatPhoneNumber(original);
+    let data = row.data;
+    while (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        break;
+      }
+    }
+
+    if (!data || typeof data !== "object") continue;
+
+    const original = (data.leadPhone as string) || "";
+    const normalized = formatPhoneNumber(original.replace(/["'\\]/g, "").trim());
 
     if (normalized === original) {
       skipped++;
@@ -101,11 +104,8 @@ async function main() {
     }
 
     try {
-      // Update the JSONB data field using jsonb_set
-      await sql.unsafe(
-        `UPDATE "${tableName}" SET data = jsonb_set(data, '{${phoneField}}', $1::jsonb) WHERE id = $2`,
-        [JSON.stringify(normalized), row.id],
-      );
+      data.leadPhone = normalized;
+      await sql`UPDATE "${tableName}" SET data = ${sql.json(data)} WHERE id = ${row.id}`;
       console.log(`  ✓  ${row.id}: "${original}" → "${normalized}"`);
       updated++;
     } catch (err) {
