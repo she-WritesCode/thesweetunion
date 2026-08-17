@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpConfirmationEmail, adminRsvpNotificationEmail } from "~~/dyrected/emails";
 import { syncGroupCounts } from "./_counts";
+import { formatPhoneNumber } from "~~/utils/phone";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -27,6 +28,9 @@ export default defineEventHandler(async (event) => {
   if (!groupSlug) {
     throw createError({ statusCode: 400, message: "Missing group slug" });
   }
+
+  // Normalize phone to E.164 international format (default: +234 Nigeria)
+  const normalizedPhone = leadPhone ? formatPhoneNumber(leadPhone) : leadPhone;
 
   const config = useRuntimeConfig();
   const client = createClient({
@@ -58,9 +62,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Duplicate phone check
+  // Duplicate phone check — compare against normalized number
   const phoneCheck = await client.collection("rsvp_records").find({
-    where: { leadPhone: { equals: leadPhone } },
+    where: { leadPhone: { equals: normalizedPhone } },
     limit: 1,
   });
   if (phoneCheck.total > 0) {
@@ -103,7 +107,7 @@ export default defineEventHandler(async (event) => {
       group: group?.id,
       leadName,
       leadEmail,
-      leadPhone,
+      leadPhone: normalizedPhone,
       attending,
       hasSpouse,
       spouseName,
@@ -176,7 +180,7 @@ export default defineEventHandler(async (event) => {
         html: adminRsvpNotificationEmail({
           leadName,
           leadEmail,
-          leadPhone,
+          leadPhone: normalizedPhone,
           groupName: group.name,
           attending,
           hasSpouse,

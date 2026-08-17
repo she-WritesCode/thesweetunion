@@ -29,6 +29,9 @@ dependencies:
   jose:
     specifier: ^6.2.3
     version: 6.2.3
+  libphonenumber-js:
+    specifier: ^1.13.11
+    version: 1.13.11
   nodemailer:
     specifier: ^8.0.10
     version: 8.0.11
@@ -49,7 +52,7 @@ dependencies:
     version: 5.1.0(@vue/compiler-sfc@3.5.39)(vite@8.1.0)(vue@3.5.39)
   vue-tel-input:
     specifier: ^9.8.0
-    version: 9.8.0(libphonenumber-js@1.13.7)(vue@3.5.39)
+    version: 9.8.0(libphonenumber-js@1.13.11)(vue@3.5.39)
 
 devDependencies:
   '@tailwindcss/postcss':
@@ -64,6 +67,9 @@ devDependencies:
   '@types/qrcode':
     specifier: ^1.5.6
     version: 1.5.6
+  postgres:
+    specifier: ^3.4.9
+    version: 3.4.9
   tailwindcss:
     specifier: ^4.3.0
     version: 4.3.1
@@ -2635,8 +2641,8 @@ packages:
   /@radix-ui/react-direction@1.1.2(@types/react@19.2.17)(react@19.2.7):
     resolution: {integrity: sha512-C3vFhbyi4SW3PmbAi6Awpu4OzJtd0MxGurvSsYtr7p7nM8RNB3VAF3CUmnp2j50knpkrRcB7+ycVXzgLgF6yNA==}
     peerDependencies:
-      '@types/react': ^19.0.0
-      react: ^19.2.5
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -2698,8 +2704,8 @@ packages:
   /@radix-ui/react-focus-guards@1.1.4(@types/react@19.2.17)(react@19.2.7):
     resolution: {integrity: sha512-cot/aB/mOm0IYVYTTmQcEEK1M48lZWi8FlYe5nDPQQ8NYZUlXEFgncJ9p2Kzer3RKSrY7cTTpEMLZKNo9QoP5Q==}
     peerDependencies:
-      '@types/react': ^19.0.0
-      react: ^19.2.5
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -3271,8 +3277,8 @@ packages:
   /@radix-ui/react-use-layout-effect@1.1.2(@types/react@19.2.17)(react@19.2.7):
     resolution: {integrity: sha512-jrBWOxZITuGcnjRCM2t2U5ZPkCLxD+Ym6DjfssS5haTj2iiak/DOb64JeN6OdLfLgptb6/e2kKR+ZuTrGoZTPA==}
     peerDependencies:
-      '@types/react': ^19.0.0
-      react: ^19.2.5
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -3284,8 +3290,8 @@ packages:
   /@radix-ui/react-use-previous@1.1.2(@types/react@19.2.17)(react@19.2.7):
     resolution: {integrity: sha512-IGBQPtRFdhN6MQ8dbegVmBq1LVZluya3F1jWY+puIcQC3MHctRwTDSBWCkL/3ZcnMJLTMJ++Z+ktmvg0F89iCw==}
     peerDependencies:
-      '@types/react': ^19.0.0
-      react: ^19.2.5
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -3311,8 +3317,8 @@ packages:
   /@radix-ui/react-use-size@1.1.2(@types/react@19.2.17)(react@19.2.7):
     resolution: {integrity: sha512-giWQp+4mxjBPt4KZ0MmyuykFNWfbDxKt4x+fPkRYmgRFJSbCZFzUglvMb/Kjn38tm10YP4ufiQZDx3zna4LU6w==}
     peerDependencies:
-      '@types/react': ^19.0.0
-      react: ^19.2.5
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -4973,6 +4979,7 @@ packages:
 
   /boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+    requiresBuild: true
     dev: false
 
   /brace-expansion@2.1.1:
@@ -5190,6 +5197,7 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+    requiresBuild: true
     dev: false
 
   /color-string@1.9.1:
@@ -5361,6 +5369,7 @@ packages:
   /css-tree@2.2.1:
     resolution: {integrity: sha512-OA0mILzGc1kCOCSJerOeqDxDQ4HOh+G8NbOJFOTgOCzpw7fCBubk0fEyxp8AgOL/jvLgYA/uV0cMbe43ElF1JA==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0, npm: '>=7.0.0'}
+    requiresBuild: true
     dependencies:
       mdn-data: 2.0.28
       source-map-js: 1.2.1
@@ -5600,6 +5609,7 @@ packages:
 
   /dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
+    requiresBuild: true
     dependencies:
       domelementtype: 2.3.0
       domhandler: 5.0.3
@@ -5608,17 +5618,20 @@ packages:
 
   /domelementtype@2.3.0:
     resolution: {integrity: sha512-OLETBj6w0OsagBwdXnPdN0cnMfF9opN69co+7ZrbfPGrdpPVNBUj02spi6B1N7wChLQiPn4CSH/zJvXw56gmHw==}
+    requiresBuild: true
     dev: false
 
   /domhandler@5.0.3:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
+    requiresBuild: true
     dependencies:
       domelementtype: 2.3.0
     dev: false
 
   /domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
+    requiresBuild: true
     dependencies:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
@@ -5782,6 +5795,7 @@ packages:
   /entities@4.5.0:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
     engines: {node: '>=0.12'}
+    requiresBuild: true
     dev: false
 
   /entities@7.0.1:
@@ -6547,8 +6561,8 @@ packages:
       readable-stream: 2.3.8
     dev: false
 
-  /libphonenumber-js@1.13.7:
-    resolution: {integrity: sha512-rvr3HIMdOgzhz1RFGjftji+wjoAFlzhqCNqJOU/MKTZQ8d9NZxAR/tI+0weDicyoucqVR0U1GCniqHJ0f8aM2A==}
+  /libphonenumber-js@1.13.11:
+    resolution: {integrity: sha512-ETER2kMaIFTI/Nh1a8Gk03dUF/SL0VZqtI+CcVHZxp5WIHYwNS7S+uiYZDYCvLy3lOR4/DAD5jf0h5WkePPpqg==}
     dev: false
 
   /lightningcss-android-arm64@1.32.0:
@@ -6800,6 +6814,7 @@ packages:
 
   /mdn-data@2.0.28:
     resolution: {integrity: sha512-aylIc7Z9y4yzHYAJNuESG3hfhC+0Ibp/MAMiaOZgNv4pmEdFyfZhhhny4MNiAfWdBQ1RQ2mfDWmM1x8SvGyp8g==}
+    requiresBuild: true
     dev: false
 
   /mdn-data@2.0.30:
@@ -7158,6 +7173,7 @@ packages:
 
   /nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
+    requiresBuild: true
     dependencies:
       boolbase: 1.0.0
     dev: false
@@ -7975,7 +7991,6 @@ packages:
   /postgres@3.4.9:
     resolution: {integrity: sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==}
     engines: {node: '>=12'}
-    dev: false
 
   /powershell-utils@0.1.0:
     resolution: {integrity: sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A==}
@@ -9861,13 +9876,13 @@ packages:
       - webpack
     dev: false
 
-  /vue-tel-input@9.8.0(libphonenumber-js@1.13.7)(vue@3.5.39):
+  /vue-tel-input@9.8.0(libphonenumber-js@1.13.11)(vue@3.5.39):
     resolution: {integrity: sha512-/bYrfEuberZ4Knng8xYQISVy6I1pWdh8G0WSDqGYhkyqHIUtDKRXxGK30LTFmBOFtmYPra3mVV6n467FiD6RGw==}
     peerDependencies:
       libphonenumber-js: ^1.12.12
       vue: ^3.5.4
     dependencies:
-      libphonenumber-js: 1.13.7
+      libphonenumber-js: 1.13.11
       vue: 3.5.39
     dev: false
 

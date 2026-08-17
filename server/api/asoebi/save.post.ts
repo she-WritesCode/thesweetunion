@@ -8,7 +8,9 @@ import {
   asoebiOrderUpdatedEmail,
   adminRsvpNotificationEmail,
 } from "~~/dyrected/emails";
+import { formatPhoneNumber } from "~~/utils/phone";
 
+/** Strip all non-digits for fuzzy phone matching (lookup only). */
 function cleanPhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
@@ -33,6 +35,9 @@ export default defineEventHandler(async (event) => {
   if (!leadEmail || !leadPhone) {
     throw createError({ statusCode: 400, message: "Email and Phone Number are required." });
   }
+
+  // Normalize phone to E.164 international format (default: +234 Nigeria)
+  const normalizedPhone = formatPhoneNumber(leadPhone);
 
   const config = useRuntimeConfig();
   const client = createClient({
@@ -79,9 +84,9 @@ export default defineEventHandler(async (event) => {
     if (resEmail.total > 0) {
       existingRecord = resEmail.docs[0];
     } else {
-      // Lookup by phone match
+      // Lookup by phone match — compare normalized query against normalized stored values
       const allRecs = await client.collection("rsvp_records").find({ limit: 500 });
-      const queryPhoneClean = cleanPhone(leadPhone);
+      const queryPhoneClean = cleanPhone(normalizedPhone);
       const phoneMatch = allRecs.docs.find((r: any) => {
         if (!r?.leadPhone) return false;
         const rClean = cleanPhone(r.leadPhone);
@@ -107,7 +112,7 @@ export default defineEventHandler(async (event) => {
     const updated = await client.collection("rsvp_records").update(existingRecord.id, {
       leadName: leadName || existingRecord.leadName,
       leadEmail: leadEmail || existingRecord.leadEmail,
-      leadPhone: leadPhone || existingRecord.leadPhone,
+      leadPhone: normalizedPhone || existingRecord.leadPhone,
       wantsAsoebi: wantsAsoebi ?? false,
       asoebiYards: wantsAsoebi ? asoebiYards : "",
       wantsAsoOke: wantsAsoOke ?? false,
@@ -186,7 +191,7 @@ export default defineEventHandler(async (event) => {
       group: activeGroup.id,
       leadName,
       leadEmail: leadEmail.trim().toLowerCase(),
-      leadPhone,
+      leadPhone: normalizedPhone,
       attending: attending !== undefined ? attending : false, // Default to false for standalone Asoebi orders
       wantsAsoebi: wantsAsoebi ?? false,
       asoebiYards: wantsAsoebi ? asoebiYards : "",
@@ -228,7 +233,7 @@ export default defineEventHandler(async (event) => {
         html: adminRsvpNotificationEmail({
           leadName,
           leadEmail,
-          leadPhone,
+          leadPhone: normalizedPhone,
           groupName: activeGroup.name,
           attending: created.attending,
           hasSpouse: false,

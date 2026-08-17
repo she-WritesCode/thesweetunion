@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
   });
 
   // Build wa.me link with pre-filled message
+  // leadPhone is stored in E.164 format (e.g. +2348012345678) — strip the + for wa.me
   const rawPhone = rsvp.leadPhone || "";
   const phone = rawPhone.startsWith("+")
     ? rawPhone.replace(/\D/g, "")

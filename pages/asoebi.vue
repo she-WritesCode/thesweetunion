@@ -4,6 +4,8 @@ import { useRoute } from "vue-router";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 import { publicPageTransition } from "~/composables/useMotion";
 import Navigation from "~/components/Navigation.vue";
+import PhoneInput from "~/components/PhoneInput.vue";
+import { formatPhoneNumber } from "~/utils/phone";
 
 definePageMeta({
   pageTransition: publicPageTransition,
@@ -200,7 +202,7 @@ async function submitAsoebiForm() {
         id: recordId.value,
         leadName: leadName.value.trim(),
         leadEmail: leadEmail.value.trim(),
-        leadPhone: leadPhone.value.trim(),
+        leadPhone: formatPhoneNumber(leadPhone.value.trim()),
         wantsAsoebi: wantsAsoebi.value,
         asoebiYards: wantsAsoebi.value ? asoebiYards.value : "",
         wantsAsoOke: wantsAsoOke.value,
@@ -489,15 +491,11 @@ const waPaymentLink = computed(() => {
             </div>
 
             <div>
-              <label class="block text-xs uppercase tracking-wider text-deep-espresso/70 font-sans font-semibold mb-2">
-                WhatsApp Phone Number *
-              </label>
-              <input
+              <PhoneInput
                 v-model="leadPhone"
-                type="tel"
-                required
+                label="WhatsApp Phone Number *"
                 placeholder="e.g. 08012345678"
-                class="w-full px-4 py-3 bg-warm-cream/30 border border-amber-gold/30 rounded-xl text-sm font-sans focus:outline-none focus:border-deep-terracotta"
+                required
               />
             </div>
           </div>

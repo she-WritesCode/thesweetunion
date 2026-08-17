@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpUpdatedEmail } from "~~/dyrected/emails";
 import { syncGroupCounts } from "./_counts";
+import { formatPhoneNumber } from "~~/utils/phone";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -47,6 +48,9 @@ export default defineEventHandler(async (event) => {
   const record = search.docs[0];
   const groupId = typeof record.group === "object" ? record.group.id : record.group;
 
+  // Normalize phone to E.164 international format (default: +234 Nigeria)
+  const normalizedPhone = leadPhone ? formatPhoneNumber(leadPhone) : leadPhone;
+
   const newAttending = attending !== undefined ? attending : record.attending;
   const newWantsAsoebi = wantsAsoebi !== undefined ? wantsAsoebi : record.wantsAsoebi;
   const newAsoebiYards = asoebiYards !== undefined ? asoebiYards : record.asoebiYards;
@@ -68,7 +72,7 @@ export default defineEventHandler(async (event) => {
     const updated = await client.collection("rsvp_records").update(record.id, {
       leadName,
       leadEmail,
-      leadPhone,
+      leadPhone: normalizedPhone,
       attending: newAttending,
       hasSpouse,
       spouseName,
