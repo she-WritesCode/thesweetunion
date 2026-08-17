@@ -148,10 +148,10 @@ function asoebiSection(
 
   if (items.length === 0) return "";
 
-  const bankName = settings.bankName || "Premium Trust Bank";
-  const accountNumber = settings.accountNumber || "0101087193";
-  const accountName = settings.accountName || "Uchechukwu Ndu";
-  const whatsAppContact = settings.whatsAppContact || "+234 913 697 6965";
+  const bankName = settings.bankName || "OPay Digital Services Limited(OPay)";
+  const accountNumber = settings.accountNumber || "8105733592";
+  const accountName = settings.accountName || "ADUNOLUWA ANUOLUWAPO OBADOFIN";
+  const whatsAppContact = settings.whatsAppContact || "+2348134371276";
   const cleanWaPhone = whatsAppContact.replace(/\D/g, "");
   const waPaymentUrl = `https://wa.me/${cleanWaPhone}?text=${encodeURIComponent("Hi, here is my proof of payment for my Aso Ebi order.")}`;
 

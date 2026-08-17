@@ -32,12 +32,12 @@ function setLightboxImage(url: string | null) {
 }
 
 const pricePerYard = computed(() => (asoebiSettings.value as any)?.pricePerYard || 10000);
-const asoOkeMalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeMalePrice || 15000);
-const asoOkeFemalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeFemalePrice || 25000);
-const bankName = computed(() => (asoebiSettings.value as any)?.bankName || "Premium Trust Bank");
-const accountNumber = computed(() => (asoebiSettings.value as any)?.accountNumber || "0101087193");
-const accountName = computed(() => (asoebiSettings.value as any)?.accountName || "Uchechukwu Ndu");
-const whatsAppContact = computed(() => (asoebiSettings.value as any)?.whatsAppContact || "+234 913 697 6965");
+const asoOkeMalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeMalePrice || 6000);
+const asoOkeFemalePrice = computed(() => (asoebiSettings.value as any)?.asoOkeFemalePrice || 6000);
+const bankName = computed(() => (asoebiSettings.value as any)?.bankName || "OPay Digital Services Limited(OPay)");
+const accountNumber = computed(() => (asoebiSettings.value as any)?.accountNumber || "8105733592");
+const accountName = computed(() => (asoebiSettings.value as any)?.accountName || "ADUNOLUWA ANUOLUWAPO OBADOFIN");
+const whatsAppContact = computed(() => (asoebiSettings.value as any)?.whatsAppContact || "+2348134371276");
 
 // State
 const lookupQuery = ref("");

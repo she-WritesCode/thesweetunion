@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   const client = createClient({
-    baseUrl: config.public.dyrectedUrl,
+    baseUrl: config.dyrectedUrl || config.public.dyrectedUrl,
     apiKey: config.dyrectedApiKey,
   });
 

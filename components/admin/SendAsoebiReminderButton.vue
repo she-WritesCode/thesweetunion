@@ -20,6 +20,8 @@ const loading = ref(false);
 const error = ref("");
 const customMessage = ref("");
 
+const isUserEdited = ref(false);
+
 const leadName = computed(() => (props.context?.siblingData?.leadName as string) ?? "");
 const leadPhone = computed(() => (props.context?.siblingData?.leadPhone as string) ?? "");
 
@@ -44,8 +46,8 @@ const saveSuccess = ref(false);
 const totalAmount = computed(() => {
   let total = 0;
   const ppy = (asoebiSettings.value as any)?.pricePerYard || 10000;
-  const malePrice = (asoebiSettings.value as any)?.asoOkeMalePrice || 15000;
-  const femalePrice = (asoebiSettings.value as any)?.asoOkeFemalePrice || 25000;
+  const malePrice = (asoebiSettings.value as any)?.asoOkeMalePrice || 6000;
+  const femalePrice = (asoebiSettings.value as any)?.asoOkeFemalePrice || 6000;
 
   if (wantsAsoebi.value && asoebiYards.value) {
     const yards = parseInt(asoebiYards.value, 10);
@@ -72,10 +74,11 @@ const summaryText = computed(() => {
 });
 
 const defaultMessage = computed(() => {
-  const bankName = (asoebiSettings.value as any)?.bankName || "";
-  const accountNumber = (asoebiSettings.value as any)?.accountNumber || "";
-  const accountName = (asoebiSettings.value as any)?.accountName || "";
-  const repName = (asoebiSettings.value as any)?.representativeName || "Ololade";
+  const settings = asoebiSettings.value as any;
+  const bankName = settings?.bankName || "OPay Digital Services Limited(OPay)";
+  const accountNumber = settings?.accountNumber || "8105733592";
+  const accountName = settings?.accountName || "ADUNOLUWA ANUOLUWAPO OBADOFIN";
+  const repName = settings?.representativeName || "Ololade";
 
   const items: string[] = [];
   if (wantsAsoebi.value && asoebiYards.value) {
@@ -90,9 +93,9 @@ const defaultMessage = computed(() => {
 
   const itemsStr = items.length > 0 ? items.join(" + ") : "Aso Ebi";
   const name = leadName.value || "there";
-  const bank = bankName || "Premium Trust Bank";
-  const accNum = accountNumber || "0101087193";
-  const accName = accountName || "Uchechukwu Ndu";
+  const bank = bankName;
+  const accNum = accountNumber;
+  const accName = accountName;
   const totalStr = `₦${totalAmount.value.toLocaleString()}`;
 
   const defaultFallbackTemplate = `Hi [guest name] , my name is [rep name] a representative of the couple. 
@@ -100,7 +103,7 @@ const defaultMessage = computed(() => {
 Thank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day. 
 Kindly confirm your Asoebi request of; [items] order for #TheSweetUnion. Please pay the total of [total] to [bank] - [account number] ([account name]) and send proof of payment here. Thank you!`;
 
-  const rawTemplate = (asoebiSettings.value as any)?.whatsAppTemplate || defaultFallbackTemplate;
+  const rawTemplate = settings?.whatsAppTemplate || defaultFallbackTemplate;
 
   return rawTemplate
     .replace(/\[guest name\]/gi, name)
@@ -120,20 +123,25 @@ Kindly confirm your Asoebi request of; [items] order for #TheSweetUnion. Please 
     .replace(/\{total\}/gi, totalStr)
     .replace(/\[bank\]/gi, bank)
     .replace(/\[bank_name\]/gi, bank)
+    .replace(/\[bank name\]/gi, bank)
     .replace(/\{bank\}/gi, bank)
     .replace(/\[account number\]/gi, accNum)
     .replace(/\[account_number\]/gi, accNum)
+    .replace(/\[accountno\]/gi, accNum)
+    .replace(/\[account_no\]/gi, accNum)
     .replace(/\{accountNumber\}/gi, accNum)
+    .replace(/\{account_number\}/gi, accNum)
     .replace(/\[account name\]/gi, accName)
     .replace(/\[account_name\]/gi, accName)
-    .replace(/\{accountName\}/gi, accName);
+    .replace(/\{accountName\}/gi, accName)
+    .replace(/\{account_name\}/gi, accName);
 });
 
-// Auto-fill message when data changes
+// Auto-fill message when data or asoebiSettings changes, unless user manually customized it
 watch(
   defaultMessage,
   (newVal) => {
-    if (!customMessage.value) {
+    if (!isUserEdited.value) {
       customMessage.value = newVal;
     }
   },
@@ -141,6 +149,7 @@ watch(
 );
 
 function resetToDefault() {
+  isUserEdited.value = false;
   customMessage.value = defaultMessage.value;
 }
 
@@ -148,10 +157,11 @@ function extractTemplateFromMessage(msg: string): string {
   let template = msg;
 
   const name = leadName.value?.trim();
-  const bank = (asoebiSettings.value as any)?.bankName || "Premium Trust Bank";
-  const accNum = (asoebiSettings.value as any)?.accountNumber || "0101087193";
-  const accName = (asoebiSettings.value as any)?.accountName || "Uchechukwu Ndu";
-  const repName = (asoebiSettings.value as any)?.representativeName || "Ololade";
+  const settings = asoebiSettings.value as any;
+  const bank = settings?.bankName || "OPay Digital Services Limited(OPay)";
+  const accNum = settings?.accountNumber || "8105733592";
+  const accName = settings?.accountName || "ADUNOLUWA ANUOLUWAPO OBADOFIN";
+  const repName = settings?.representativeName || "Ololade";
   const totalStr = `₦${totalAmount.value.toLocaleString()}`;
 
   const items: string[] = [];
@@ -179,14 +189,24 @@ function extractTemplateFromMessage(msg: string): string {
   if (repName && template.includes(repName)) {
     template = template.replaceAll(repName, "[rep name]");
   }
+  // Replace current settings and legacy fallbacks
   if (bank && template.includes(bank)) {
     template = template.replaceAll(bank, "[bank]");
+  }
+  if (template.includes("Premium Trust Bank")) {
+    template = template.replaceAll("Premium Trust Bank", "[bank]");
   }
   if (accNum && template.includes(accNum)) {
     template = template.replaceAll(accNum, "[account number]");
   }
+  if (template.includes("0101087193")) {
+    template = template.replaceAll("0101087193", "[account number]");
+  }
   if (accName && template.includes(accName)) {
     template = template.replaceAll(accName, "[account name]");
+  }
+  if (template.includes("Uchechukwu Ndu")) {
+    template = template.replaceAll("Uchechukwu Ndu", "[account name]");
   }
 
   return template;
@@ -273,6 +293,7 @@ function sendReminder() {
         </div>
         <textarea
           v-model="customMessage"
+          @input="isUserEdited = true"
           rows="3"
           class="wa-textarea"
           placeholder="Enter custom reminder message to send on WhatsApp..."
