@@ -41,7 +41,6 @@ const adminComponents = {
   fields: {
     // rsvp_groups collection
     "rsvp_groups.rsvpLink": RsvpLinkField,
-    "rsvp_groups.rsvpEditLink": RsvpEditLinkField,
     "rsvp_groups.confirmedCount": CountField,
     "rsvp_groups.declinedCount": CountField,
     "wishlist_items.amountRaised": CountField,
@@ -50,15 +49,16 @@ const adminComponents = {
     // check_ins collection — QR scanner panel
     "check_ins.checkInScanner": CheckInScanner,
     // rsvp_records collection — invitation & reminder tools
+    "rsvp_records.rsvpEditLink": RsvpEditLinkField,
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
     "rsvp_records.sendWhatsApp": SendWhatsAppButton,
   },
   collectionList: {
-    "RsvpListSummary": RsvpListSummary,
-    "WishlistListSummary": WishlistListSummary,
-    "CheckInListSummary": CheckInListSummary,
-    "GroupListSummary": GroupListSummary,
+    RsvpListSummary: RsvpListSummary,
+    WishlistListSummary: WishlistListSummary,
+    CheckInListSummary: CheckInListSummary,
+    GroupListSummary: GroupListSummary,
   },
 };
 </script>

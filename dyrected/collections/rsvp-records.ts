@@ -49,7 +49,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             description: "Share this link with your guest so they can edit their RSVP.",
-            component: "rsvp_groups.rsvpEditLink",
+            component: "rsvp_records.rsvpEditLink",
           },
         }),
         defineTextField({ name: "leadName", label: "Full Name", required: true }),
@@ -352,8 +352,8 @@ export const rsvpRecords = defineCollection({
       "Invitation & Access Card",
       [
         // Custom Access Card Pass preview + WhatsApp & Email action triggers
-        displayCustomComponent("rsvp_records.accessCardPreview", { span: 12 }),
-        displayCustomComponent("rsvp_records.sendWhatsApp", { span: 12 }),
+        displayCustomComponent("AccessCardPreview", { span: 12 }),
+        displayCustomComponent("SendWhatsAppButton", { span: 12 }),
         displayField("invitationSent", {
           span: 4,
           display: "badge",
@@ -425,7 +425,7 @@ export const rsvpRecords = defineCollection({
           hideIfEmpty: true,
         }),
         // Custom WhatsApp payment reminder component
-        displayCustomComponent("rsvp_records.asoebiReminder", { span: 12 }),
+        displayCustomComponent("SendAsoebiReminderButton", { span: 12 }),
       ],
       {
         icon: "Shirt",
