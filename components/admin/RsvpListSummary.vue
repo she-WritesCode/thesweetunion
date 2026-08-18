@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import type { Rsvp_records, Asoebi_settingsGlobal } from "~/dyrected-types";
+import type { Asoebi_settingsGlobal } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -29,18 +29,6 @@ const summary = ref<any>({
   },
 });
 
-async function safeFetchCollection(sdkClient: any, collectionName: string) {
-  if (sdkClient && typeof sdkClient.collection === "function") {
-    try {
-      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
-      if (res) return res;
-    } catch (e) {
-      console.warn(`[RsvpSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
-    }
-  }
-  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
-}
-
 async function safeFetchGlobal(sdkClient: any, globalName: string) {
   if (sdkClient && typeof sdkClient.global === "function") {
     try {
@@ -50,7 +38,7 @@ async function safeFetchGlobal(sdkClient: any, globalName: string) {
       console.warn(`[RsvpSummary] SDK global get failed for ${globalName}, falling back to $fetch:`, e);
     }
   }
-  return await $fetch<any>(`/api/globals/${globalName}`).catch(() => ({}));
+  return await $fetch<any>(`/api/dyrected/api/globals/${globalName}`).catch(() => ({}));
 }
 
 const fetchSummary = async () => {
@@ -58,61 +46,98 @@ const fetchSummary = async () => {
     loading.value = true;
     const sdkClient = props.client || props.context?.client;
 
-    const [rsvpRes, asoebiGlobalRes] = await Promise.all([
-      safeFetchCollection(sdkClient, "rsvp_records"),
-      safeFetchGlobal(sdkClient, "asoebi_settings"),
+    // Run database-level aggregate & fetch global pricing in parallel
+    const [aggregateRes, asoebiGlobalRes] = await Promise.all([
+      // 1. Native Database Aggregations
+      $fetch<any>("/api/dyrected/api/collections/rsvp_records/aggregate", {
+        method: "POST",
+        body: {
+          totalSubmitted: { count: "*" },
+          totalAttending: {
+            count: "*",
+            where: { attending: { equals: true } },
+          },
+          totalDeclined: {
+            count: "*",
+            where: { attending: { equals: false } },
+          },
+          spouseAttendingCount: {
+            count: "*",
+            where: {
+              AND: [
+                { attending: { equals: true } },
+                { hasSpouse: { equals: true } },
+              ],
+            },
+          },
+          asoebiOrderCount: {
+            count: "*",
+            where: {
+              AND: [
+                { attending: { equals: true } },
+                { wantsAsoebi: { equals: true } },
+              ],
+            },
+          },
+          totalAsoebiYards: {
+            sum: "asoebiYards",
+            cast: "number",
+            where: {
+              AND: [
+                { attending: { equals: true } },
+                { wantsAsoebi: { equals: true } },
+              ],
+            },
+          },
+          totalAsoOkeMaleQty: {
+            sum: "asoOkeMaleQty",
+            cast: "number",
+            where: {
+              AND: [
+                { attending: { equals: true } },
+                { wantsAsoOke: { equals: true } },
+              ],
+            },
+          },
+          totalAsoOkeFemaleQty: {
+            sum: "asoOkeFemaleQty",
+            cast: "number",
+            where: {
+              AND: [
+                { attending: { equals: true } },
+                { wantsAsoOke: { equals: true } },
+              ],
+            },
+          },
+        },
+      }).catch((e) => {
+        console.error("[RsvpSummary] Aggregate failed:", e);
+        return null;
+      }),
+
+      // 2. Global Asoebi Pricing
+      safeFetchGlobal(sdkClient, "asoebi-settings"),
     ]);
 
-    const docs: Rsvp_records[] = rsvpRes?.docs || [];
+    const stats = aggregateRes || {};
     const asoebiGlobal: Partial<Asoebi_settingsGlobal> = (asoebiGlobalRes as any) || {};
 
     const pricePerYard = Number(asoebiGlobal?.pricePerYard) || 10000;
-    const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 15000;
-    const asoOkeFemalePrice = Number(asoebiGlobal?.asoOkeFemalePrice) || 25000;
+    const asoOkeMalePrice = Number(asoebiGlobal?.asoOkeMalePrice) || 6000;
+    const asoOkeFemalePrice = Number(asoebiGlobal?.asoOkeFemalePrice) || 6000;
 
-    let totalSubmitted = docs.length;
-    let totalAttending = 0;
-    let totalDeclined = 0;
-    let leadAttendingCount = 0;
-    let spouseAttendingCount = 0;
-
-    let totalAsoebiYards = 0;
-    let asoebiOrderCount = 0;
-    let totalAsoOkeMaleQty = 0;
-    let totalAsoOkeFemaleQty = 0;
-
-    for (const record of docs) {
-      const isAttending = record.attending === true || (record.attending as any) === "true";
-      if (isAttending) {
-        totalAttending++;
-        leadAttendingCount++;
-
-        if (record.hasSpouse) {
-          spouseAttendingCount++;
-        }
-
-        if (record.wantsAsoebi) {
-          asoebiOrderCount++;
-          const yards = parseInt(record.asoebiYards || "0", 10);
-          if (!isNaN(yards) && yards > 0) {
-            totalAsoebiYards += yards;
-          }
-        }
-
-        if (record.wantsAsoOke) {
-          if (record.asoOkeMaleQty && record.asoOkeMaleQty > 0) {
-            totalAsoOkeMaleQty += Number(record.asoOkeMaleQty);
-          }
-          if (record.asoOkeFemaleQty && record.asoOkeFemaleQty > 0) {
-            totalAsoOkeFemaleQty += Number(record.asoOkeFemaleQty);
-          }
-        }
-      } else {
-        totalDeclined++;
-      }
-    }
-
+    const totalSubmitted = Number(stats.totalSubmitted) || 0;
+    const totalAttending = Number(stats.totalAttending) || 0;
+    const totalDeclined = Number(stats.totalDeclined) || 0;
+    const spouseAttendingCount = Number(stats.spouseAttendingCount) || 0;
+    const leadAttendingCount = totalAttending;
     const totalGuestHeadcount = leadAttendingCount + spouseAttendingCount;
+
+    const asoebiOrderCount = Number(stats.asoebiOrderCount) || 0;
+    const totalAsoebiYards = Number(stats.totalAsoebiYards) || 0;
+    const totalAsoOkeMaleQty = Number(stats.totalAsoOkeMaleQty) || 0;
+    const totalAsoOkeFemaleQty = Number(stats.totalAsoOkeFemaleQty) || 0;
+
     const fabricRevenue = totalAsoebiYards * pricePerYard;
     const asoOkeMaleRevenue = totalAsoOkeMaleQty * asoOkeMalePrice;
     const asoOkeFemaleRevenue = totalAsoOkeFemaleQty * asoOkeFemalePrice;
