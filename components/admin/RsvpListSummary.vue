@@ -116,7 +116,7 @@ const fetchSummary = async () => {
       }),
 
       // 2. Global Asoebi Pricing
-      safeFetchGlobal(sdkClient, "asoebi-settings"),
+      safeFetchGlobal(sdkClient, "asoebi_settings"),
     ]);
 
     const stats = aggregateRes || {};

@@ -5,6 +5,7 @@ import CountField from "~/components/admin/CountField.vue";
 import CheckInScanner from "~/components/admin/CheckInScanner.vue";
 import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
 import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButton.vue";
+import SendWhatsAppButton from "~/components/admin/SendWhatsAppButton.vue";
 import RsvpListSummary from "~/components/admin/RsvpListSummary.vue";
 import WishlistListSummary from "~/components/admin/WishlistListSummary.vue";
 import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
@@ -24,10 +25,19 @@ useHead({
 /**
  * Custom components injected into the Dyrected Admin UI.
  *
+ * Top-level keys: Custom Detail View components referenced via displayCustom("ComponentName")
  * `fields`: Field-level components ("<collection-slug>.<fieldName>")
- * `components`: List & View components referenced in `collection.admin.components.beforeList`
+ * `collectionList`: List & View components referenced in `collection.admin.components.beforeListTable`
  */
 const adminComponents = {
+  // Detail View Custom Components (referenced by displayCustomComponent / displayCustom)
+  AccessCardPreview,
+  SendAsoebiReminderButton,
+  SendWhatsAppButton,
+  RsvpEditLinkField,
+  RsvpLinkField,
+  CheckInScanner,
+
   fields: {
     // rsvp_groups collection
     "rsvp_groups.rsvpLink": RsvpLinkField,
@@ -39,9 +49,10 @@ const adminComponents = {
     "wishlist_items.reservedCount": CountField,
     // check_ins collection — QR scanner panel
     "check_ins.checkInScanner": CheckInScanner,
-    // rsvp_records collection — invitation tools
+    // rsvp_records collection — invitation & reminder tools
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
+    "rsvp_records.sendWhatsApp": SendWhatsAppButton,
   },
   collectionList: {
     "RsvpListSummary": RsvpListSummary,

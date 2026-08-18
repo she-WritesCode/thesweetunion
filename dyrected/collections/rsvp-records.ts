@@ -13,6 +13,7 @@ import {
   // ── Detail View Primitives ──
   displaySection,
   displayField,
+  displayCustomComponent,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
@@ -344,7 +345,9 @@ export const rsvpRecords = defineCollection({
 
     // ── 2. DIGITAL INVITATION & ACCESS PASS (ACTION HUB) ─────────────────────
     displaySection("Invitation & Access Card", [
-      displayField("accessCardPreview", { span: 12 }),
+      // Custom Access Card Pass preview + WhatsApp & Email action triggers
+      displayCustomComponent("AccessCardPreview", { span: 12 }),
+      displayCustomComponent("SendWhatsAppButton", { span: 12 }),
       displayField("invitationSent", {
         span: 4,
         display: "badge",
@@ -411,10 +414,8 @@ export const rsvpRecords = defineCollection({
         label: "Private Notes",
         hideIfEmpty: true,
       }),
-      displayField("asoebiReminder", {
-        span: 12,
-        label: "Send WhatsApp Payment Reminder",
-      }),
+      // Custom WhatsApp payment reminder component
+      displayCustomComponent("SendAsoebiReminderButton", { span: 12 }),
     ], {
       icon: "Shirt",
       collapsible: true,
@@ -431,10 +432,8 @@ export const rsvpRecords = defineCollection({
         label: "Message to the Couple",
         hideIfEmpty: true,
       }),
-      displayField("rsvpEditLink", {
-        span: 12,
-        label: "Guest RSVP Edit Link",
-      }),
+      // Custom Copyable RSVP Edit link component
+      displayCustomComponent("RsvpEditLinkField", { span: 12 }),
       displayField("submittedAt", {
         span: 12,
         display: "relative",
@@ -445,7 +444,6 @@ export const rsvpRecords = defineCollection({
       collapsible: true,
     }),
   ],
-
   access: {
     read: true,
     create: true,

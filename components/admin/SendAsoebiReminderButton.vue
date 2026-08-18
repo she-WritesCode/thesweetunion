@@ -3,6 +3,8 @@ import { ref, computed, watch } from "vue";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 
 const props = defineProps<{
+  doc?: Record<string, any>;
+  user?: any;
   value?: any;
   onChange?: (...args: any[]) => void;
   field?: Record<string, any>;
@@ -22,15 +24,16 @@ const customMessage = ref("");
 
 const isUserEdited = ref(false);
 
-const leadName = computed(() => (props.context?.siblingData?.leadName as string) ?? "");
-const leadPhone = computed(() => (props.context?.siblingData?.leadPhone as string) ?? "");
+const record = computed(() => props.doc ?? props.context?.siblingData ?? {});
+const leadName = computed(() => (record.value.leadName as string) ?? "");
+const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
 
-const wantsAsoebi = computed(() => Boolean(props.context?.siblingData?.wantsAsoebi));
-const asoebiYards = computed(() => (props.context?.siblingData?.asoebiYards as string) ?? "");
+const wantsAsoebi = computed(() => Boolean(record.value.wantsAsoebi));
+const asoebiYards = computed(() => (record.value.asoebiYards as string) ?? "");
 
-const wantsAsoOke = computed(() => Boolean(props.context?.siblingData?.wantsAsoOke));
-const asoOkeMaleQty = computed(() => (props.context?.siblingData?.asoOkeMaleQty as number) || 0);
-const asoOkeFemaleQty = computed(() => (props.context?.siblingData?.asoOkeFemaleQty as number) || 0);
+const wantsAsoOke = computed(() => Boolean(record.value.wantsAsoOke));
+const asoOkeMaleQty = computed(() => (record.value.asoOkeMaleQty as number) || 0);
+const asoOkeFemaleQty = computed(() => (record.value.asoOkeFemaleQty as number) || 0);
 
 const hasOrder = computed(
   () =>

@@ -13,6 +13,8 @@ import { useRuntimeConfig } from "#imports";
  *   context    — { user, schemas, siblingData }
  */
 const props = defineProps<{
+  doc?: Record<string, any>;
+  user?: any;
   value?: string | null;
   onChange?: (...args: any[]) => void;
   field?: Record<string, any>;
@@ -30,7 +32,7 @@ const config = useRuntimeConfig();
 const appUrl = computed(() => window?.location.origin || config.public.appUrl);
 
 /** The RSVP URL is: <appUrl>/rsvp?token=<editToken> */
-const editToken = computed(() => props.context?.siblingData?.editToken as string | undefined);
+const editToken = computed(() => (props.doc?.editToken as string | undefined) ?? (props.context?.siblingData?.editToken as string | undefined));
 const rsvpUrl = computed(() => {
   if (!editToken.value) return null;
   return `${appUrl.value}/rsvp?token=${editToken.value}`;

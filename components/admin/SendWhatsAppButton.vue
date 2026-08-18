@@ -14,6 +14,8 @@ import { adminAuthHeaders } from "~/utils/admin-auth";
  *   3. Updates the button to "Sent ✓" state.
  */
 const props = defineProps<{
+  doc?: Record<string, any>;
+  user?: any;
   value?: any;
   onChange?: (...args: any[]) => void;
   field?: Record<string, any>;
@@ -32,16 +34,18 @@ const error = ref("");
 
 // id is not in siblingData — read from hash (/admin#/collections/rsvp_records/<id>)
 const rsvpId = computed(() => {
+  if (props.doc?.id) return props.doc.id as string;
   const segments = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   const id = segments.at(-1);
   return id && id !== "create" ? id : undefined;
 });
-const leadName = computed(() => (props.context?.siblingData?.leadName as string) ?? "");
-const leadPhone = computed(() => (props.context?.siblingData?.leadPhone as string) ?? "");
-const attending = computed(() => (props.context?.siblingData?.attending as boolean) ?? false);
-const invitationSent = computed(() => (props.context?.siblingData?.invitationSent as boolean) ?? false);
-const invitationSentAt = computed(() => (props.context?.siblingData?.invitationSentAt as string) ?? "");
-const invitationSentVia = computed(() => (props.context?.siblingData?.invitationSentVia as string) ?? "");
+const record = computed(() => props.doc ?? props.context?.siblingData ?? {});
+const leadName = computed(() => (record.value.leadName as string) ?? "");
+const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
+const attending = computed(() => (record.value.attending as boolean) ?? false);
+const invitationSent = computed(() => (record.value.invitationSent as boolean) ?? false);
+const invitationSentAt = computed(() => (record.value.invitationSentAt as string) ?? "");
+const invitationSentVia = computed(() => (record.value.invitationSentVia as string) ?? "");
 
 const sentLabel = computed(() => {
   if (!invitationSent.value) return null;

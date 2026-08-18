@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
+  doc?: Record<string, any>;
+  user?: any;
   value?: any;
   onChange?: (...args: any[]) => void;
   field?: Record<string, any>;
@@ -44,9 +46,9 @@ function readIdFromUrl(): string | undefined {
   return undefined;
 }
 
-const rsvpId = ref<string | undefined>(readIdFromUrl());
+const rsvpId = computed(() => (props.doc?.id as string | undefined) ?? readIdFromUrl());
 
-const siblingData = computed(() => props.context?.siblingData ?? {});
+const siblingData = computed(() => props.doc ?? props.context?.siblingData ?? {});
 const leadName = computed(() => (siblingData.value.leadName as string) ?? "");
 const leadEmail = computed(() => (siblingData.value.leadEmail as string) ?? "");
 const leadPhone = computed(() => (siblingData.value.leadPhone as string) ?? "");
