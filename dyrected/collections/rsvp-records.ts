@@ -306,143 +306,159 @@ export const rsvpRecords = defineCollection({
   // ── 📱 Mobile-First Detail View Layout ────────────────────────────────────────
   detail: [
     // ── 1. GUEST & ATTENDANCE AT-A-GLANCE ─────────────────────────────────────
-    displaySection("Guest Overview", [
-      displayField("leadName", { span: 12 }),
-      displayField("spouseName", {
-        span: 12,
-        label: "Attending With Spouse",
-        emptyText: "Attending Solo",
-      }),
-      displayField("attending", {
-        span: 6,
-        display: "badge",
-        badgeColors: { true: "emerald", false: "rose" },
-        label: "RSVP",
-      }),
-      displayField("checkedIn", {
-        span: 6,
-        display: "badge",
-        badgeColors: { true: "emerald", false: "slate" },
-        label: "Check-in",
-      }),
-      displayField("leadPhone", {
-        span: 6,
-        display: "phone",
-        label: "WhatsApp / Phone",
-      }),
-      displayField("leadEmail", {
-        span: 6,
-        display: "email",
-        label: "Email Address",
-      }),
-      displayField("group", {
-        span: 12,
-        label: "Invitation Group",
-      }),
-    ], {
-      icon: "UserCheck",
-    }),
+    displaySection(
+      "Guest Overview",
+      [
+        displayField("leadName", { span: 12 }),
+        displayField("spouseName", {
+          span: 12,
+          label: "Attending With Spouse",
+          emptyText: "Attending Solo",
+        }),
+        displayField("attending", {
+          span: 6,
+          display: "badge",
+          badgeColors: { true: "emerald", false: "rose" },
+          label: "RSVP",
+        }),
+        displayField("checkedIn", {
+          span: 6,
+          display: "badge",
+          badgeColors: { true: "emerald", false: "slate" },
+          label: "Check-in",
+        }),
+        displayField("leadPhone", {
+          span: 6,
+          display: "phone",
+          label: "WhatsApp / Phone",
+        }),
+        displayField("leadEmail", {
+          span: 6,
+          display: "email",
+          label: "Email Address",
+        }),
+        displayField("group", {
+          span: 12,
+          label: "Invitation Group",
+        }),
+      ],
+      {
+        icon: "UserCheck",
+      },
+    ),
 
     // ── 2. DIGITAL INVITATION & ACCESS PASS (ACTION HUB) ─────────────────────
-    displaySection("Invitation & Access Card", [
-      // Custom Access Card Pass preview + WhatsApp & Email action triggers
-      displayCustomComponent("AccessCardPreview", { span: 12 }),
-      displayCustomComponent("SendWhatsAppButton", { span: 12 }),
-      displayField("invitationSent", {
-        span: 4,
-        display: "badge",
-        badgeColors: { true: "emerald", false: "amber" },
-        label: "Pass Sent",
-      }),
-      displayField("invitationSentVia", {
-        span: 4,
-        display: "badge",
-        label: "Channel",
-      }),
-      displayField("invitationSentAt", {
-        span: 4,
-        display: "relative",
-        label: "Dispatched",
-      }),
-    ], {
-      icon: "QrCode",
-      description: "Preview access pass and send directly to guest via WhatsApp or Email",
-    }),
+    displaySection(
+      "Invitation & Access Card",
+      [
+        // Custom Access Card Pass preview + WhatsApp & Email action triggers
+        displayCustomComponent("rsvp_records.accessCardPreview", { span: 12 }),
+        displayCustomComponent("rsvp_records.sendWhatsApp", { span: 12 }),
+        displayField("invitationSent", {
+          span: 4,
+          display: "badge",
+          badgeColors: { true: "emerald", false: "amber" },
+          label: "Pass Sent",
+        }),
+        displayField("invitationSentVia", {
+          span: 4,
+          display: "badge",
+          label: "Channel",
+        }),
+        displayField("invitationSentAt", {
+          span: 4,
+          display: "relative",
+          label: "Dispatched",
+        }),
+      ],
+      {
+        icon: "QrCode",
+        description: "Preview access pass and send directly to guest via WhatsApp or Email",
+      },
+    ),
 
     // ── 3. ASO EBI & ASO OKE ORDERS ──────────────────────────────────────────
-    displaySection("Aso Ebi & Headwear Order", [
-      displayField("asoebiPaymentStatus", {
-        span: 6,
-        display: "badge",
-        badgeColors: {
-          received: "emerald",
-          pending: "amber",
-          partial: "blue",
-          waived: "purple",
-        },
-        label: "Payment",
-      }),
-      displayField("asoebiOrderStatus", {
-        span: 6,
-        display: "badge",
-        badgeColors: {
-          delivered: "emerald",
-          ready: "blue",
-          unfulfilled: "amber",
-        },
-        label: "Fulfillment",
-      }),
-      displayField("asoebiYards", {
-        span: 4,
-        label: "Fabric Yards",
-        emptyText: "None",
-      }),
-      displayField("asoOkeMaleQty", {
-        span: 4,
-        label: "Male Fila",
-      }),
-      displayField("asoOkeFemaleQty", {
-        span: 4,
-        label: "Female Gele",
-      }),
-      displayField("asoebiDetails", {
-        span: 12,
-        label: "Order Summary",
-      }),
-      displayField("asoebiPaymentNotes", {
-        span: 12,
-        label: "Private Notes",
-        hideIfEmpty: true,
-      }),
-      // Custom WhatsApp payment reminder component
-      displayCustomComponent("SendAsoebiReminderButton", { span: 12 }),
-    ], {
-      icon: "Shirt",
-      collapsible: true,
-    }),
+    displaySection(
+      "Aso Ebi & Headwear Order",
+      [
+        displayField("asoebiPaymentStatus", {
+          span: 6,
+          display: "badge",
+          badgeColors: {
+            received: "emerald",
+            pending: "amber",
+            partial: "blue",
+            waived: "purple",
+          },
+          label: "Payment",
+        }),
+        displayField("asoebiOrderStatus", {
+          span: 6,
+          display: "badge",
+          badgeColors: {
+            delivered: "emerald",
+            ready: "blue",
+            unfulfilled: "amber",
+          },
+          label: "Fulfillment",
+        }),
+        displayField("asoebiYards", {
+          span: 4,
+          label: "Fabric Yards",
+          emptyText: "None",
+        }),
+        displayField("asoOkeMaleQty", {
+          span: 4,
+          label: "Male Fila",
+        }),
+        displayField("asoOkeFemaleQty", {
+          span: 4,
+          label: "Female Gele",
+        }),
+        displayField("asoebiDetails", {
+          span: 12,
+          label: "Order Summary",
+        }),
+        displayField("asoebiPaymentNotes", {
+          span: 12,
+          label: "Private Notes",
+          hideIfEmpty: true,
+        }),
+        // Custom WhatsApp payment reminder component
+        displayCustomComponent("rsvp_records.asoebiReminder", { span: 12 }),
+      ],
+      {
+        icon: "Shirt",
+        collapsible: true,
+      },
+    ),
 
     // ── 4. EVENT SCHEDULE & GUEST TOOLS ──────────────────────────────────────
-    displaySection("Events & Guest Notes", [
-      displayField("selectedEvents", {
-        span: 12,
-        label: "Events Attending",
-      }),
-      displayField("message", {
-        span: 12,
-        label: "Message to the Couple",
-        hideIfEmpty: true,
-      }),
-      // Custom Copyable RSVP Edit link component
-      displayCustomComponent("RsvpEditLinkField", { span: 12 }),
-      displayField("submittedAt", {
-        span: 12,
-        display: "relative",
-        label: "Response Submitted",
-      }),
-    ], {
-      icon: "CalendarHeart",
-      collapsible: true,
-    }),
+    displaySection(
+      "Events & Guest Notes",
+      [
+        displayField("selectedEvents", {
+          span: 12,
+          label: "Events Attending",
+        }),
+        displayField("message", {
+          span: 12,
+          label: "Message to the Couple",
+          hideIfEmpty: true,
+        }),
+        // Custom Copyable RSVP Edit link component
+        displayCustomComponent("RsvpEditLinkField", { span: 12 }),
+        displayField("submittedAt", {
+          span: 12,
+          display: "relative",
+          label: "Response Submitted",
+        }),
+      ],
+      {
+        icon: "CalendarHeart",
+        collapsible: true,
+      },
+    ),
   ],
   access: {
     read: true,
