@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import type { Wishlist_items, Reservations } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -22,16 +21,27 @@ const summary = ref<any>({
   unclaimedCount: 0,
 });
 
-async function safeFetchCollection(sdkClient: any, collectionName: string) {
+async function safeAggregate(sdkClient: any, collectionName: string, input: Record<string, any>) {
   if (sdkClient && typeof sdkClient.collection === "function") {
     try {
-      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
-      if (res) return res;
+      const col = sdkClient.collection(collectionName);
+      if (typeof col.aggregate === "function") {
+        const res = await col.aggregate(input);
+        if (res) return res;
+      }
     } catch (e) {
-      console.warn(`[WishlistSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+      console.warn(`[WishlistSummary] SDK aggregate failed for ${collectionName}, falling back to $fetch:`, e);
     }
   }
-  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+  return await $fetch<any>(`/api/dyrected/api/collections/${collectionName}/aggregate`, {
+    method: "POST",
+    body: input,
+  }).catch(() =>
+    $fetch<any>(`/api/dyrected/collections/${collectionName}/aggregate`, {
+      method: "POST",
+      body: input,
+    }).catch(() => ({}))
+  );
 }
 
 const fetchSummary = async () => {
@@ -39,78 +49,44 @@ const fetchSummary = async () => {
     loading.value = true;
     const sdkClient = props.client || props.context?.client;
 
-    const [itemsRes, reservationsRes] = await Promise.all([
-      safeFetchCollection(sdkClient, "wishlist_items"),
-      safeFetchCollection(sdkClient, "reservations"),
+    const [itemStats, reservationStats] = await Promise.all([
+      safeAggregate(sdkClient, "wishlist_items", {
+        totalItems: { count: "*" },
+        totalTarget: { sum: "price", cast: "number", where: { isHidden: { equals: false } } },
+        totalAmountRaised: { sum: "amountRaised", cast: "number" },
+        crowdfundCount: { count: "*", where: { fundingType: { equals: "crowdfund" } } },
+        fixedCount: { count: "*", where: { fundingType: { equals: "fixed" } } },
+        claimedItems: { count: "*", where: { reservedCount: { greater_than: 0 } } },
+      }),
+      safeAggregate(sdkClient, "reservations", {
+        totalReservations: { count: "*" },
+        totalContributions: { sum: "contributionAmount", cast: "number" },
+        totalQuantityReserved: { sum: "quantity", cast: "number" },
+      }),
     ]);
 
-    const docs: Wishlist_items[] = itemsRes?.docs || [];
-    const reservationDocs: Reservations[] = reservationsRes?.docs || [];
+    const totalItems = Number(itemStats?.totalItems) || 0;
+    const totalReservations = Number(reservationStats?.totalReservations) || 0;
+    const totalRegistryTarget = Number(itemStats?.totalTarget) || 0;
+    const totalAmountRaised = Math.max(
+      Number(itemStats?.totalAmountRaised) || 0,
+      Number(reservationStats?.totalContributions) || 0,
+    );
 
-    let totalRegistryTarget = 0;
-    let totalAmountRaised = 0;
-    let fullyReservedCount = 0;
-    let partiallyFundedCount = 0;
-    let unclaimedCount = 0;
-
-    for (const item of docs) {
-      const price = Number(item.price) || 0;
-      const maxQty = Number(item.maxQuantity) || 1;
-      const isCrowdfund = item.fundingType === "crowdfund";
-
-      // Find matching reservation records for this wishlist item
-      const itemReservations = reservationDocs.filter((r: any) => {
-        const rItemId = typeof r.item === "object" && r.item !== null ? r.item.id : r.item;
-        return rItemId === item.id;
-      });
-
-      const reservationContribSum = itemReservations.reduce(
-        (sum: number, r: any) => sum + (Number(r.contributionAmount) || 0),
-        0,
-      );
-      const raised = Math.max(Number(item.amountRaised) || 0, reservationContribSum);
-
-      const reservationDocsCount = itemReservations.length;
-      const reservedCount = Math.max(Number(item.reservedCount) || 0, reservationDocsCount);
-
-      if (price > 0) {
-        totalRegistryTarget += price * maxQty;
-      }
-
-      if (isCrowdfund) {
-        totalAmountRaised += raised;
-        if (price > 0 && raised >= price) {
-          fullyReservedCount++;
-        } else if (raised > 0 || reservationDocsCount > 0) {
-          partiallyFundedCount++;
-        } else {
-          unclaimedCount++;
-        }
-      } else {
-        const reservedValue = reservedCount > 0 ? Math.min(reservedCount, maxQty) * price : 0;
-        totalAmountRaised += reservedValue;
-
-        if (reservedCount >= maxQty) {
-          fullyReservedCount++;
-        } else if (reservedCount > 0) {
-          partiallyFundedCount++;
-        } else {
-          unclaimedCount++;
-        }
-      }
-    }
+    const claimedCount = Number(itemStats?.claimedItems) || (totalReservations > 0 ? 1 : 0);
+    const unclaimedCount = Math.max(0, totalItems - claimedCount);
 
     const registryFulfillmentPct =
       totalRegistryTarget > 0 ? Math.min(100, Math.round((totalAmountRaised / totalRegistryTarget) * 100)) : 0;
 
     summary.value = {
-      totalItems: docs.length,
-      totalReservations: reservationDocs.length,
+      totalItems,
+      totalReservations,
       totalRegistryTarget,
       totalAmountRaised,
       registryFulfillmentPct,
-      fullyReservedCount,
-      partiallyFundedCount,
+      fullyReservedCount: claimedCount,
+      partiallyFundedCount: totalReservations,
       unclaimedCount,
     };
   } catch (err) {
@@ -192,18 +168,18 @@ onMounted(() => {
       <!-- KPI Metrics Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100">
-          <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Fully Claimed Items</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Claimed / Reserved Items</span>
           <div class="mt-1 flex items-baseline justify-between">
             <span class="text-3xl font-black text-emerald-900">{{ summary.fullyReservedCount }}</span>
-            <span class="text-xs text-emerald-700 font-medium">Completed</span>
+            <span class="text-xs text-emerald-700 font-medium">Claimed</span>
           </div>
         </div>
 
         <div class="p-4 bg-blue-50/60 rounded-xl border border-blue-100">
-          <span class="text-xs font-bold uppercase tracking-wider text-blue-800">Partially Funded</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-800">Total Reservations</span>
           <div class="mt-1 flex items-baseline justify-between">
             <span class="text-3xl font-black text-blue-900">{{ summary.partiallyFundedCount }}</span>
-            <span class="text-xs text-blue-700 font-medium">In Progress</span>
+            <span class="text-xs text-blue-700 font-medium">Contributions</span>
           </div>
         </div>
 

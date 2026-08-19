@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import type { Check_ins, Rsvp_records } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -17,16 +16,27 @@ const summary = ref<any>({
   checkInPct: 0,
 });
 
-async function safeFetchCollection(sdkClient: any, collectionName: string) {
+async function safeAggregate(sdkClient: any, collectionName: string, input: Record<string, any>) {
   if (sdkClient && typeof sdkClient.collection === "function") {
     try {
-      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
-      if (res) return res;
+      const col = sdkClient.collection(collectionName);
+      if (typeof col.aggregate === "function") {
+        const res = await col.aggregate(input);
+        if (res) return res;
+      }
     } catch (e) {
-      console.warn(`[CheckInSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+      console.warn(`[CheckInSummary] SDK aggregate failed for ${collectionName}, falling back to $fetch:`, e);
     }
   }
-  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+  return await $fetch<any>(`/api/dyrected/api/collections/${collectionName}/aggregate`, {
+    method: "POST",
+    body: input,
+  }).catch(() =>
+    $fetch<any>(`/api/dyrected/collections/${collectionName}/aggregate`, {
+      method: "POST",
+      body: input,
+    }).catch(() => ({}))
+  );
 }
 
 const fetchSummary = async () => {
@@ -34,26 +44,33 @@ const fetchSummary = async () => {
     loading.value = true;
     const sdkClient = props.client || props.context?.client;
 
-    const [checkInRes, rsvpRes] = await Promise.all([
-      safeFetchCollection(sdkClient, "check_ins"),
-      safeFetchCollection(sdkClient, "rsvp_records"),
+    const [checkInStats, rsvpStats] = await Promise.all([
+      safeAggregate(sdkClient, "check_ins", {
+        totalCheckedIn: { count: "*" },
+      }),
+      safeAggregate(sdkClient, "rsvp_records", {
+        totalAttending: {
+          count: "*",
+          where: { attending: { equals: true } },
+        },
+        spouseAttending: {
+          count: "*",
+          where: {
+            AND: [
+              { attending: { equals: true } },
+              { hasSpouse: { equals: true } },
+            ],
+          },
+        },
+      }),
     ]);
 
-    const checkInDocs: Check_ins[] = checkInRes?.docs || [];
-    const rsvpDocs: Rsvp_records[] = rsvpRes?.docs || [];
+    const checkedInCount = Number(checkInStats?.totalCheckedIn) || 0;
+    const totalAttending = Number(rsvpStats?.totalAttending) || 0;
+    const spouseAttending = Number(rsvpStats?.spouseAttending) || 0;
+    const totalGuestHeadcount = totalAttending + spouseAttending;
 
-    let totalGuestHeadcount = 0;
-    for (const record of rsvpDocs) {
-      if (record.attending === true || (record.attending as any) === "true") {
-        totalGuestHeadcount++;
-        if (record.hasSpouse) {
-          totalGuestHeadcount++;
-        }
-      }
-    }
-
-    const checkedInCount = checkInDocs.length;
-    const checkInPct = totalGuestHeadcount > 0 ? Math.round((checkedInCount / totalGuestHeadcount) * 100) : 0;
+    const checkInPct = totalGuestHeadcount > 0 ? Math.min(100, Math.round((checkedInCount / totalGuestHeadcount) * 100)) : 0;
 
     summary.value = {
       totalCheckedIn: checkedInCount,

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import type { Rsvp_groups } from "~/dyrected-types";
 
 const props = defineProps<{
   client?: any;
@@ -15,20 +14,32 @@ const summary = ref<any>({
   totalGroups: 0,
   totalCapacity: 0,
   totalConfirmedSeats: 0,
+  totalDeclinedSeats: 0,
   respondedCount: 0,
   responsePct: 0,
 });
 
-async function safeFetchCollection(sdkClient: any, collectionName: string) {
+async function safeAggregate(sdkClient: any, collectionName: string, input: Record<string, any>) {
   if (sdkClient && typeof sdkClient.collection === "function") {
     try {
-      const res = await sdkClient.collection(collectionName).find({ limit: 1000 });
-      if (res) return res;
+      const col = sdkClient.collection(collectionName);
+      if (typeof col.aggregate === "function") {
+        const res = await col.aggregate(input);
+        if (res) return res;
+      }
     } catch (e) {
-      console.warn(`[GroupSummary] SDK find failed for ${collectionName}, falling back to $fetch:`, e);
+      console.warn(`[GroupSummary] SDK aggregate failed for ${collectionName}, falling back to $fetch:`, e);
     }
   }
-  return await $fetch<any>(`/api/dyrected/${collectionName}?limit=1000`).catch(() => ({ docs: [] }));
+  return await $fetch<any>(`/api/dyrected/api/collections/${collectionName}/aggregate`, {
+    method: "POST",
+    body: input,
+  }).catch(() =>
+    $fetch<any>(`/api/dyrected/collections/${collectionName}/aggregate`, {
+      method: "POST",
+      body: input,
+    }).catch(() => ({}))
+  );
 }
 
 const fetchSummary = async () => {
@@ -36,28 +47,28 @@ const fetchSummary = async () => {
     loading.value = true;
     const sdkClient = props.client || props.context?.client;
 
-    const res = await safeFetchCollection(sdkClient, "rsvp_groups");
-    const docs: Rsvp_groups[] = res?.docs || [];
+    const stats = await safeAggregate(sdkClient, "rsvp_groups", {
+      totalGroups: { count: "*" },
+      totalCapacity: { sum: "maxCapacity", cast: "number" },
+      totalConfirmedSeats: { sum: "confirmedCount", cast: "number" },
+      totalDeclinedSeats: { sum: "declinedCount", cast: "number" },
+      activeGroups: { count: "*", where: { isActive: { equals: true } } },
+    });
 
-    let totalCapacity = 0;
-    let totalConfirmedSeats = 0;
-    let respondedCount = 0;
+    const totalGroups = Number(stats?.totalGroups) || 0;
+    const totalCapacity = Number(stats?.totalCapacity) || 0;
+    const totalConfirmedSeats = Number(stats?.totalConfirmedSeats) || 0;
+    const totalDeclinedSeats = Number(stats?.totalDeclinedSeats) || 0;
 
-    for (const g of docs) {
-      totalCapacity += Number(g.maxCapacity) || 0;
-      totalConfirmedSeats += Number(g.confirmedCount) || 0;
-      if (g.confirmedCount || g.declinedCount) {
-        respondedCount++;
-      }
-    }
-
-    const responsePct = docs.length > 0 ? Math.round((respondedCount / docs.length) * 100) : 0;
+    const totalResponses = totalConfirmedSeats + totalDeclinedSeats;
+    const responsePct = totalCapacity > 0 ? Math.min(100, Math.round((totalConfirmedSeats / totalCapacity) * 100)) : 0;
 
     summary.value = {
-      totalGroups: docs.length,
+      totalGroups,
       totalCapacity,
       totalConfirmedSeats,
-      respondedCount,
+      totalDeclinedSeats,
+      respondedCount: totalResponses > 0 ? totalConfirmedSeats : 0,
       responsePct,
     };
   } catch (err) {
