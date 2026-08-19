@@ -263,6 +263,113 @@ function decFemaleAsoOke() {
 const successModal = ref<"submit" | "edit" | "cancel" | null>(null);
 const isSubmitting = ref(false);
 
+// ─── Local / Session Storage Draft Persistence ──────────────────────────────
+const DRAFT_STORAGE_KEY = "thesweetunion_rsvp_draft";
+
+function saveDraft() {
+  if (!import.meta.client) return;
+  if (existingRSVP.value && !isEditing.value) return;
+
+  const draft = {
+    group: group.value,
+    groupSlug: (route.query.group as string) || "",
+    currentStep: currentStep.value,
+    attending: attending.value,
+    leadName: leadName.value,
+    leadEmail: leadEmail.value,
+    leadPhone: leadPhone.value,
+    hasSpouse: hasSpouse.value,
+    spouseName: spouseName.value,
+    selectedEvents: selectedEvents.value,
+    wantsAsoebi: wantsAsoebi.value,
+    asoebiYards: asoebiYards.value,
+    wantsAsoOke: wantsAsoOke.value,
+    asoOkeMaleQty: asoOkeMaleQty.value,
+    asoOkeFemaleQty: asoOkeFemaleQty.value,
+    dietaryNotes: dietaryNotes.value,
+    message: message.value,
+    timestamp: Date.now(),
+  };
+
+  try {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.warn("Could not save RSVP draft to storage:", e);
+  }
+}
+
+function restoreDraft() {
+  if (!import.meta.client) return;
+  if (existingRSVP.value && !isEditing.value) return;
+
+  try {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY) || localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft !== "object") return;
+
+    const currentGroupSlug = route.query.group as string | undefined;
+    if (currentGroupSlug && draft.groupSlug && draft.groupSlug !== currentGroupSlug) {
+      return;
+    }
+
+    if (draft.attending !== undefined && draft.attending !== null) attending.value = draft.attending;
+    if (draft.leadName) leadName.value = draft.leadName;
+    if (draft.leadEmail) leadEmail.value = draft.leadEmail;
+    if (draft.leadPhone) leadPhone.value = draft.leadPhone;
+    if (draft.hasSpouse !== undefined) hasSpouse.value = draft.hasSpouse;
+    if (draft.spouseName) spouseName.value = draft.spouseName;
+    if (Array.isArray(draft.selectedEvents) && draft.selectedEvents.length > 0) {
+      selectedEvents.value = draft.selectedEvents;
+    }
+    if (draft.wantsAsoebi !== undefined) wantsAsoebi.value = draft.wantsAsoebi;
+    if (draft.asoebiYards) asoebiYards.value = draft.asoebiYards;
+    if (draft.wantsAsoOke !== undefined) wantsAsoOke.value = draft.wantsAsoOke;
+    if (draft.asoOkeMaleQty !== undefined) asoOkeMaleQty.value = draft.asoOkeMaleQty;
+    if (draft.asoOkeFemaleQty !== undefined) asoOkeFemaleQty.value = draft.asoOkeFemaleQty;
+    if (draft.dietaryNotes) dietaryNotes.value = draft.dietaryNotes;
+    if (draft.message) message.value = draft.message;
+    if (draft.currentStep && draft.currentStep >= 2) {
+      currentStep.value = draft.currentStep;
+    }
+  } catch (e) {
+    console.warn("Could not restore RSVP draft from storage:", e);
+  }
+}
+
+function clearDraft() {
+  if (!import.meta.client) return;
+  try {
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch (e) {}
+}
+
+watch(
+  [
+    currentStep,
+    attending,
+    leadName,
+    leadEmail,
+    leadPhone,
+    hasSpouse,
+    spouseName,
+    selectedEvents,
+    wantsAsoebi,
+    asoebiYards,
+    wantsAsoOke,
+    asoOkeMaleQty,
+    asoOkeFemaleQty,
+    dietaryNotes,
+    message,
+  ],
+  () => {
+    saveDraft();
+  },
+  { deep: true },
+);
+
 const redirectCountdown = ref(10);
 let redirectInterval: any = null;
 
@@ -342,12 +449,19 @@ watch(initData, (val) => {
     if (!val.isFull) currentStep.value = 2;
     // Auto-select all available events by default
     selectedEvents.value = rsvpEvents.value.map((e) => e.id);
+    restoreDraft();
   } else {
     existingRSVP.value = null;
     groupInfo.value = null;
     editToken.value = "";
     invalidLinkError.value = true;
     groupFullError.value = null;
+  }
+});
+
+onMounted(() => {
+  if (initData.value?.type === "group" || !existingRSVP.value) {
+    restoreDraft();
   }
 });
 
@@ -466,6 +580,7 @@ const handleSubmit = async () => {
         successModal.value = "edit";
         isEditing.value = false;
         populateStates(res.record);
+        clearDraft();
       }
     } else if (groupInfo.value && route.query.group) {
       // Submit new record to DB
@@ -484,6 +599,7 @@ const handleSubmit = async () => {
         successModal.value = "submit";
         isEditing.value = false;
         populateStates(res.record);
+        clearDraft();
         startRedirectTimer();
       }
     } else {
@@ -516,6 +632,7 @@ const handleSubmit = async () => {
       }
 
       localStorage.setItem("thesweetunion_rsvp", JSON.stringify(mockPayload));
+      clearDraft();
       successModal.value = existingRSVP.value ? "edit" : "submit";
       existingRSVP.value = mockPayload;
       isEditing.value = false;
@@ -557,6 +674,7 @@ const handleCancelRSVP = async () => {
       isSubmitting.value = false;
     }
 
+    clearDraft();
     localStorage.removeItem("thesweetunion_rsvp");
     existingRSVP.value = null;
     editToken.value = "";
