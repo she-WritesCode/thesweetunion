@@ -7,6 +7,11 @@ import {
   defineNumberField,
   defineDateField,
   defineTextareaField,
+  // ── Detail View Primitives ──
+  displayGrid,
+  displayField,
+  displayDivider,
+  displayCustomComponent,
 } from "@dyrected/core";
 import { stampCheckInTime } from "../hooks/check-in-hooks.ts";
 
@@ -80,6 +85,45 @@ export const checkIns = defineCollection({
         }),
       ],
     }),
+  ],
+  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
+  detail: [
+    // ── 1. Top Check-in Status & Audit Strip (Compact 4-column grid) ─────────
+    displayGrid(4, [
+      displayField("partySize", {
+        label: "Party Size / Seats",
+      }),
+      displayField("event", {
+        label: "Event Checked In",
+      }),
+      displayField("scannedBy", {
+        label: "Staff / Scanned By",
+        emptyText: "Door Staff",
+      }),
+      displayField("createdAt", {
+        display: "relative",
+        label: "Check-in Timestamp",
+      }),
+    ]),
+
+    displayDivider({ spacing: "sm" }),
+
+    // ── 2. Primary Action Hub (Live Door Check-in Scanner) ───────────────────
+    displayCustomComponent("CheckInScanner"),
+
+    displayDivider({ spacing: "md" }),
+
+    // ── 3. RSVP Record & Staff Notes ─────────────────────────────────────────
+    displayGrid(2, [
+      displayField("rsvpRecord", {
+        label: "Linked Guest RSVP Document",
+      }),
+      displayField("notes", {
+        label: "Door Staff Notes",
+        emptyText: "No internal notes recorded",
+        editable: true,
+      }),
+    ]),
   ],
   access: {
     read: "user != null",
