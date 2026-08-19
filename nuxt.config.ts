@@ -109,6 +109,28 @@ export default defineNuxtConfig({
     },
   },
 
+  nitro: {
+    hooks: {
+      compiled() {
+        const cache = (globalThis as any).__dyrectedPostgresClientCache;
+        if (cache) {
+          for (const entry of cache.values()) {
+            if (entry?.sql?.end) {
+              entry.sql.end({ timeout: 0 }).catch(() => {});
+            }
+          }
+        }
+        // If running in a build environment (CI / CLI / Vercel), ensure process exits cleanly
+        const isDev = process.env.NODE_ENV === "development" || process.argv.includes("dev");
+        if (!isDev) {
+          setTimeout(() => {
+            process.exit(0);
+          }, 200).unref();
+        }
+      },
+    },
+  },
+
   hooks: {
     "modules:done"() {
       // @ts-ignore
@@ -120,6 +142,16 @@ export default defineNuxtConfig({
         if (isVercel) {
           dyrected.configPath = "/var/task/dyrected.config.ts";
           dyrected.loadConfigPath = "/var/task/node_modules/@dyrected/nuxt/dist/runtime/server/plugins/loadConfig.mjs";
+        }
+      }
+    },
+    "close"() {
+      const cache = (globalThis as any).__dyrectedPostgresClientCache;
+      if (cache) {
+        for (const entry of cache.values()) {
+          if (entry?.sql?.end) {
+            entry.sql.end({ timeout: 0 }).catch(() => {});
+          }
         }
       }
     },
