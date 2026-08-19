@@ -396,7 +396,7 @@ export const rsvpRecords = defineCollection({
     ),
     displayCustomComponent("SendAsoebiReminderButton", { visible: asoEbiOrderCondition }),
 
-    displayDivider({ spacing: "md" }),
+    displayDivider({ spacing: "md", visible: asoEbiOrderCondition }),
 
     // ── 4. Digital Invitation & Access Pass (Action Hub) ─────────────────────
     displayCustomComponent("AccessCardPreview", { visible: invitationCondition }),
@@ -423,7 +423,7 @@ export const rsvpRecords = defineCollection({
       { span: 12, icon: "Send", visible: invitationCondition },
     ),
 
-    displayDivider({ spacing: "md" }),
+    displayDivider({ spacing: "md", visible: invitationCondition }),
 
     // ── 5. Event Schedule & Well Wishes Message ──────────────────────────────
     displayField("selectedEvents", {
