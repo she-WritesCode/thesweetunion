@@ -16,7 +16,7 @@
   "dependencies": {
     "@dyrected/core": "2.8.1",
     "@dyrected/db-postgres": "2.8.1",
-    "@dyrected/nuxt": "2.8.1",
+    "@dyrected/nuxt": "2.8.0",
     "@dyrected/sdk": "2.8.1",
     "@dyrected/storage-cloudinary": "2.8.1",
     "html2canvas": "^1.4.1",
