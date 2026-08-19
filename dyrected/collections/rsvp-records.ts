@@ -21,8 +21,10 @@ import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
 // const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
 // const invitationCondition = "doc.attending === true";
+
 const asoEbiOrderCondition = "true";
 const invitationCondition = "true";
+
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
   labels: { singular: "Guest Response", plural: "Guest Responses" },
@@ -356,29 +358,36 @@ export const rsvpRecords = defineCollection({
             display: "badge",
             badgeColors: { received: "emerald", pending: "amber", partial: "blue", waived: "purple" },
             label: "Payment",
+            editable: true,
           }),
           displayField("asoebiOrderStatus", {
             display: "badge",
             badgeColors: { delivered: "emerald", ready: "blue", unfulfilled: "amber" },
             label: "Fulfillment",
+            editable: true,
           }),
           displayField("asoebiYards", {
+            display: "badge",
             label: "Fabric Yards",
             emptyText: "None",
+            editable: true,
           }),
           displayField("asoOkeMaleQty", {
             label: "Male Fila / Caps",
             emptyText: "0",
+            editable: true,
           }),
           displayField("asoOkeFemaleQty", {
             label: "Gele",
             emptyText: "0",
+            editable: true,
           }),
           displayField(
             "asoebiDetails",
             {
               label: "Asoebi Order Summary",
               hideIfEmpty: true,
+              editable: true,
             },
             { span: 2 },
           ),
@@ -387,6 +396,7 @@ export const rsvpRecords = defineCollection({
             {
               label: "Private Payment & Delivery Notes",
               hideIfEmpty: true,
+              editable: true,
             },
             { span: 2 },
           ),
