@@ -1,5 +1,5 @@
 import type { CollectionBeforeChangeHook } from "@dyrected/core";
-import { formatPhoneNumber } from "../../utils/phone.ts";
+import { formatPhoneNumber } from "../../utils/phone";
 
 // Stamps submittedAt and generates an editToken on new records.
 // Also normalises leadPhone to E.164 (e.g. +2348012345678) on every save.

@@ -416,7 +416,7 @@ export const rsvpRecords = defineCollection({
           }),
         ]),
       ],
-      { span: 12, icon: "Send" },
+      { span: 12, icon: "Send", visible: "attending === true" },
     ),
 
     displayDivider({ spacing: "md" }),
