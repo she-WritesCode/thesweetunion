@@ -345,7 +345,7 @@ export const rsvpRecords = defineCollection({
 
     // ── 3. Aso Ebi & Headwear Order (Financials & Reminder Action) ────────────
     displaySection(
-      "",
+      "Aso Ebi & Headwear Order",
       [
         displayGrid(4, [
           displayField("asoebiPaymentStatus", {
@@ -370,19 +370,26 @@ export const rsvpRecords = defineCollection({
             label: "Gele",
             emptyText: "0",
           }),
+          displayField(
+            "asoebiDetails",
+            {
+              label: "Asoebi Order Summary",
+              hideIfEmpty: true,
+            },
+            { span: 2 },
+          ),
+          displayField(
+            "asoebiPaymentNotes",
+            {
+              label: "Private Payment & Delivery Notes",
+              hideIfEmpty: true,
+            },
+            { span: 2 },
+          ),
         ]),
       ],
-      { span: 12, visible: "wantsAsoebi === true || wantsAsoOke === true" },
+      { span: 12, visible: "wantsAsoebi === true || wantsAsoOke === true", icon: "Package" },
     ),
-
-    displayField("asoebiDetails", {
-      label: "Asoebi Order Summary",
-      hideIfEmpty: true,
-    }),
-    displayField("asoebiPaymentNotes", {
-      label: "Private Payment & Delivery Notes",
-      hideIfEmpty: true,
-    }),
     displayCustomComponent("SendAsoebiReminderButton"),
 
     displayDivider({ spacing: "md" }),
@@ -390,22 +397,27 @@ export const rsvpRecords = defineCollection({
     // ── 4. Digital Invitation & Access Pass (Action Hub) ─────────────────────
     displayCustomComponent("AccessCardPreview"),
     displayCustomComponent("SendWhatsAppButton"),
-
-    displayGrid(3, [
-      displayField("invitationSent", {
-        display: "badge",
-        badgeColors: { true: "emerald", false: "amber" },
-        label: "Pass Sent",
-      }),
-      displayField("invitationSentVia", {
-        display: "badge",
-        label: "Channel",
-      }),
-      displayField("invitationSentAt", {
-        display: "relative",
-        label: "Sent Date",
-      }),
-    ]),
+    displaySection(
+      "Invitation Status",
+      [
+        displayGrid(3, [
+          displayField("invitationSent", {
+            display: "badge",
+            badgeColors: { true: "emerald", false: "amber" },
+            label: "Pass Sent",
+          }),
+          displayField("invitationSentVia", {
+            display: "badge",
+            label: "Channel",
+          }),
+          displayField("invitationSentAt", {
+            display: "relative",
+            label: "Sent Date",
+          }),
+        ]),
+      ],
+      { span: 12, icon: "Send" },
+    ),
 
     displayDivider({ spacing: "md" }),
 
