@@ -198,15 +198,14 @@ const effectiveAmount = computed(() => {
 });
 
 const isAmountValid = computed(() => {
-  if (!activeItem.value || activeItem.value.fundingType !== "crowdfund" || fulfillmentMode.value !== "sent_money")
-    return true;
+  if (!activeItem.value || activeItem.value.fundingType !== "crowdfund") return true;
   return effectiveAmount.value >= MIN_CONTRIBUTION;
 });
 
 const isFormValid = computed(() => {
   if (!activeItem.value || !fulfillmentMode.value) return false;
   if (!guestName.value.trim()) return false;
-  if (fulfillmentMode.value === "sent_money" && activeItem.value.fundingType === "crowdfund" && !isAmountValid.value) {
+  if (activeItem.value.fundingType === "crowdfund" && !isAmountValid.value) {
     return false;
   }
   if (fulfillmentMode.value === "remind_later") {
@@ -908,7 +907,7 @@ onUnmounted(() => {
           >
             <div class="space-y-3">
               <label class="input-label text-xs uppercase tracking-wider text-deep-espresso/70 font-semibold block">
-                Choose contribution amount:
+                {{ fulfillmentMode === "remind_later" ? "Choose pledge amount for your reminder:" : "Choose contribution amount:" }}
               </label>
               <div class="modal-amount-grid">
                 <button
@@ -948,13 +947,13 @@ onUnmounted(() => {
                 />
               </div>
               <p v-if="!isAmountValid" class="modal-validation">
-                Minimum contribution is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}
+                Minimum pledge is ₦{{ MIN_CONTRIBUTION.toLocaleString() }}
               </p>
             </div>
 
             <div class="pt-4 border-t border-amber-gold/15 flex justify-between items-center">
               <span class="text-xs uppercase tracking-[0.2em] text-deep-espresso/60 font-semibold"
-                >Your Contribution:</span
+                >{{ fulfillmentMode === "remind_later" ? "Your Pledge Amount:" : "Your Contribution:" }}</span
               >
               <span class="font-heading text-3xl sm:text-4xl font-bold text-deep-espresso"
                 >₦{{ activeAmountValue.toLocaleString("en-US") }}</span

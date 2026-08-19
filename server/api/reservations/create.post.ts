@@ -108,11 +108,14 @@ export default defineEventHandler(async (event) => {
   const currentStats = await recomputeItemStats(client, itemId);
 
   if (isCrowdfund) {
-    if (paymentTiming === "now" && (!contributionAmount || contributionAmount < MIN_CONTRIBUTION)) {
-      throw createError({ statusCode: 400, message: `Minimum contribution is ₦${MIN_CONTRIBUTION.toLocaleString()}.` });
+    if (!contributionAmount || Number(contributionAmount) < MIN_CONTRIBUTION) {
+      throw createError({
+        statusCode: 400,
+        message: `Please choose a pledge/contribution amount (minimum ₦${MIN_CONTRIBUTION.toLocaleString()}).`,
+      });
     }
 
-    if (item.price > 0 && currentStats.amountRaised >= item.price) {
+    if (paymentTiming === "now" && item.price > 0 && currentStats.amountRaised >= item.price) {
       throw createError({ statusCode: 400, message: "This fund has been fully raised. Thank you!" });
     }
   } else {
