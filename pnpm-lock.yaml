@@ -4898,6 +4898,7 @@ packages:
   /bare-os@3.9.1:
     resolution: {integrity: sha512-6M5XjcnsygQNPMCMPXSK379xrJFiZ/AEMNBmFEmQW8d/789VQATvriyi5r0HYTL9TkQ26rn3kgdTG3aisbrXkQ==}
     engines: {bare: '>=1.14.0'}
+    requiresBuild: true
     dev: false
 
   /bare-path@3.0.1:
