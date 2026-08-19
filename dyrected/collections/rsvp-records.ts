@@ -328,8 +328,8 @@ export const rsvpRecords = defineCollection({
       }),
     ]),
 
-    // ── 2. Spouse & Invitation Group Strip (Compact 2-column grid) ────────────
-    displayGrid(2, [
+    // ── 2. Spouse, Group & Guest RSVP Edit Link (Compact 3-column grid) ─────
+    displayGrid(3, [
       displayField("spouseName", {
         label: "Attending With Spouse",
         emptyText: "Attending Solo",
@@ -337,33 +337,12 @@ export const rsvpRecords = defineCollection({
       displayField("group", {
         label: "Invitation Group",
       }),
+      displayCustomComponent("RsvpEditLinkField"),
     ]),
 
-    displayDivider({ spacing: "sm" }),
+    displayDivider({ spacing: "md" }),
 
-    // ── 3. Digital Invitation & Access Pass (Hero Action Hub) ─────────────────
-    displayCustomComponent("AccessCardPreview"),
-    displayCustomComponent("SendWhatsAppButton"),
-
-    displayGrid(3, [
-      displayField("invitationSent", {
-        display: "badge",
-        badgeColors: { true: "emerald", false: "amber" },
-        label: "Pass Sent",
-      }),
-      displayField("invitationSentVia", {
-        display: "badge",
-        label: "Channel",
-      }),
-      displayField("invitationSentAt", {
-        display: "relative",
-        label: "Sent Date",
-      }),
-    ]),
-
-    displayDivider({ spacing: "sm" }),
-
-    // ── 4. Aso Ebi & Headwear Order (Compact 4-column grid) ───────────────────
+    // ── 3. Aso Ebi & Headwear Order (Financials & Reminder Action) ────────────
     displayGrid(4, [
       displayField("asoebiPaymentStatus", {
         display: "badge",
@@ -383,6 +362,10 @@ export const rsvpRecords = defineCollection({
         label: "Male Fila / Caps",
         emptyText: "0",
       }),
+      displayField("asoOkeFemaleQty", {
+        label: "Gele",
+        emptyText: "0",
+      }),
     ]),
 
     displayField("asoebiDetails", {
@@ -395,9 +378,31 @@ export const rsvpRecords = defineCollection({
     }),
     displayCustomComponent("SendAsoebiReminderButton"),
 
-    displayDivider({ spacing: "sm" }),
+    displayDivider({ spacing: "md" }),
 
-    // ── 5. Events, Well Wishes Message & Self-Edit Link ──────────────────────
+    // ── 4. Digital Invitation & Access Pass (Action Hub) ─────────────────────
+    displayCustomComponent("AccessCardPreview"),
+    displayCustomComponent("SendWhatsAppButton"),
+
+    displayGrid(3, [
+      displayField("invitationSent", {
+        display: "badge",
+        badgeColors: { true: "emerald", false: "amber" },
+        label: "Pass Sent",
+      }),
+      displayField("invitationSentVia", {
+        display: "badge",
+        label: "Channel",
+      }),
+      displayField("invitationSentAt", {
+        display: "relative",
+        label: "Sent Date",
+      }),
+    ]),
+
+    displayDivider({ spacing: "md" }),
+
+    // ── 5. Event Schedule & Well Wishes Message ──────────────────────────────
     displayField("selectedEvents", {
       label: "Events Attending",
     }),
@@ -405,7 +410,6 @@ export const rsvpRecords = defineCollection({
       label: "Message to the Couple",
       hideIfEmpty: true,
     }),
-    displayCustomComponent("RsvpEditLinkField"),
     displayField("submittedAt", {
       display: "relative",
       label: "Response Submitted",
