@@ -80,16 +80,9 @@ export default defineNuxtConfig({
               entry.sql.end({ timeout: 0 }).catch(() => {});
             }
           }
-        }
-        const isDev = process.env.NODE_ENV === "development" || process.argv.includes("dev");
-        if (!isDev) {
-          setTimeout(() => {
-            process.exit(0);
-          }, 200).unref();
+          cache.clear();
         }
       },
     },
   },
-
-  hooks: {},
 });
