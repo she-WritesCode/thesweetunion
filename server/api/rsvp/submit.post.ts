@@ -127,9 +127,11 @@ export default defineEventHandler(async (event) => {
     // Fetch events for emails
     const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
     let rsvpEvents: any[] = [];
-    if (eventIds.length) {
-      const evRes = await client.collection("events").find({ limit: 20 });
-      rsvpEvents = evRes.docs.filter((e: any) => eventIds.includes(e.id));
+    const evRes = await client.collection("events").find({ limit: 20 });
+    const allDocs = [...evRes.docs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    rsvpEvents = allDocs.filter((e: any) => !e.collectsRsvp || eventIds.includes(e.id));
+    if (!rsvpEvents.length) {
+      rsvpEvents = allDocs;
     }
 
     const config2 = useRuntimeConfig();

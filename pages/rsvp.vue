@@ -86,11 +86,19 @@ const couplesPhoto = computed(() => {
   return typeof img === "object" && img !== null ? img.url : img || null;
 });
 
-// Fetch RSVP events from CMS; filter collectsRsvp in JS (boolean column workaround)
+// Fetch all events from CMS; categorize church ceremony and RSVP reception
 const { data: cmsEventsRaw } = useCachedDyrectedCollection("events", { limit: 20 });
-const rsvpEvents = computed<CMSEvent[]>(() => {
+const allEvents = computed<CMSEvent[]>(() => {
   const docs = (cmsEventsRaw.value as any)?.docs || [];
-  return docs.filter((e: any) => e.collectsRsvp);
+  return [...docs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+});
+const churchEvent = computed<CMSEvent | undefined>(() => {
+  return allEvents.value.find(
+    (e) => !e.collectsRsvp || e.name.toLowerCase().includes("church") || e.name.toLowerCase().includes("ceremony"),
+  );
+});
+const rsvpEvents = computed<CMSEvent[]>(() => {
+  return allEvents.value.filter((e) => e.collectsRsvp);
 });
 
 // ─── Resolve group / token from URL ─────────────────
@@ -693,20 +701,42 @@ onUnmounted(() => {
 
             <div v-if="existingRSVP.attending" class="rsvp-summary__column">
               <div>
-                <h4 class="rsvp-summary__section-heading">Events Selected</h4>
-                <ul class="rsvp-events-list">
-                  <template v-if="existingRSVP.selectedEvents?.length">
-                    <li
-                      v-for="ev in existingRSVP.selectedEvents"
-                      :key="typeof ev === 'object' ? ev.id : ev"
-                      class="rsvp-event-item"
-                    >
-                      <span class="rsvp-event-item__check">✓</span>
-                      {{ typeof ev === "object" ? ev.name : (rsvpEvents.find((e) => e.id === ev)?.name ?? ev) }}
-                    </li>
-                  </template>
-                  <li v-else class="rsvp-spouse-none">No events selected</li>
-                </ul>
+                <h4 class="rsvp-summary__section-heading">Wedding Day Schedule &amp; Venues</h4>
+                <div class="space-y-3 mt-2">
+                  <!-- Church Ceremony (Full Address) -->
+                  <div v-if="churchEvent" class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-1">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-deep-espresso uppercase tracking-wider">{{ churchEvent.name }}</span>
+                      <span class="text-[11px] font-semibold text-deep-terracotta">
+                        {{ new Date(churchEvent.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) }}
+                      </span>
+                    </div>
+                    <p class="text-xs text-deep-espresso font-medium">{{ churchEvent.venueName }}</p>
+                    <p class="text-xs text-deep-espresso/70 leading-relaxed">{{ churchEvent.venueAddress }}</p>
+                  </div>
+
+                  <!-- Reception (RSVP Confirmed) -->
+                  <div class="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200/70 space-y-1">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-deep-espresso uppercase tracking-wider">
+                        {{ rsvpEvents[0]?.name || "Wedding Reception" }}
+                      </span>
+                      <span class="text-[11px] font-semibold text-purple-700">
+                        {{ rsvpEvents[0] ? new Date(rsvpEvents[0].date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "12:00 PM" }}
+                      </span>
+                    </div>
+                    <p class="text-xs text-deep-espresso font-medium">
+                      {{ rsvpEvents[0]?.venueName || "Agege, Lagos" }}
+                    </p>
+                    <p class="text-xs text-deep-espresso/70 leading-relaxed">
+                      {{ rsvpEvents[0]?.venueAddress || "Agege, Lagos (Details on your invitation card)" }}
+                    </p>
+                    <div class="pt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-700">
+                      <span>✓</span>
+                      <span>RSVP Confirmed ({{ existingRSVP.hasSpouse ? "2 Seats Allocated" : "1 Seat Allocated" }})</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -880,19 +910,39 @@ onUnmounted(() => {
                       />
                     </div>
                   </div>
-                  <div v-if="attending && rsvpEvents.length > 0" class="rsvp-events-box">
-                    <h4 class="rsvp-events-box__title">You are RSVPing for:</h4>
-                    <div class="rsvp-events-options">
-                      <div v-for="event in rsvpEvents" :key="event.id" class="rsvp-event-info-display">
-                        <span class="rsvp-event-info-display__check">✓</span>
-                        <span class="rsvp-event-info-display__text">
-                          <strong>{{ event.name }}</strong> <br />
-                          {{
-                            new Date(event.date).toLocaleDateString("en-NG", {
-                              dateStyle: "full",
-                            })
-                          }}
-                        </span>
+                  <div v-if="attending" class="rsvp-events-box space-y-3">
+                    <h4 class="rsvp-events-box__title">Wedding Day Schedule &amp; Locations:</h4>
+                    <div class="space-y-2.5">
+                      <!-- Church Ceremony -->
+                      <div v-if="churchEvent" class="p-3.5 bg-white/90 rounded-xl border border-amber-gold/20 flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs font-bold text-deep-espresso uppercase tracking-wider">{{ churchEvent.name }}</span>
+                          <span class="text-[11px] font-semibold text-deep-terracotta">
+                            {{ new Date(churchEvent.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-deep-espresso font-medium">{{ churchEvent.venueName }}</p>
+                        <p class="text-xs text-deep-espresso/70 leading-relaxed">{{ churchEvent.venueAddress }}</p>
+                      </div>
+
+                      <!-- Reception (RSVP Event) -->
+                      <div
+                        v-for="event in rsvpEvents"
+                        :key="event.id"
+                        class="p-3.5 bg-white/90 rounded-xl border border-amber-gold/20 flex flex-col gap-1"
+                      >
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs font-bold text-deep-espresso uppercase tracking-wider">{{ event.name }}</span>
+                          <span class="text-[11px] font-semibold text-deep-terracotta">
+                            {{ new Date(event.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-deep-espresso font-medium">{{ event.venueName }}</p>
+                        <p class="text-xs text-deep-espresso/70 leading-relaxed">{{ event.venueAddress }}</p>
+                        <div class="pt-1 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+                          <span>✓</span>
+                          <span>Included in your RSVP</span>
+                        </div>
                       </div>
                     </div>
                   </div>
