@@ -1,11 +1,55 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
+  build: {
+    transpile: [/@dyrected/],
+  },
+
+  vite: {
+    resolve: {
+      alias: {
+        // attr-accept publishes a broken `module` entry that points to a CJS-shaped file.
+        // Force Vite to the CJS build so default-import interop works for DyrectedAdmin/react-dropzone.
+        "attr-accept": "attr-accept/dist/index.js",
+        "prop-types": "prop-types/index.js",
+        "papaparse": "papaparse/papaparse.js",
+        "jexl": "jexl/dist/Jexl.js",
+      },
+    },
+    optimizeDeps: {
+      include: [
+        "react-dropzone",
+        "attr-accept",
+        "prop-types",
+        "file-selector",
+        "papaparse",
+        "jexl",
+        "react-datasheet-grid",
+      ],
+    },
+    ssr: {
+      noExternal: [
+        "react-dropzone",
+        "attr-accept",
+        "prop-types",
+        "file-selector",
+        "papaparse",
+        "jexl",
+        "react-datasheet-grid",
+      ],
+    },
+  },
 
   modules: ["@dyrected/nuxt"],
 
+  dyrected: {
+    apiBase: "/api/dyrected",
+    adminPath: "admin",
+  },
+
   runtimeConfig: {
     dyrectedApiKey: process.env.DYRECTED_API_KEY || "sk_test_dev_key",
+    // Server-side URL — uses the internal Vercel URL so SSR fetches don't go through localhost
     dyrectedUrl:
       process.env.NUXT_PUBLIC_DYRECTED_URL ||
       (process.env.VERCEL_URL
@@ -65,19 +109,19 @@ export default defineNuxtConfig({
     },
   },
 
-  nitro: {
-    hooks: {
-      compiled() {
-        const cache = (globalThis as any).__dyrectedPostgresClientCache;
-        if (cache) {
-          for (const entry of cache.values()) {
-            if (entry?.sql?.end) {
-              entry.sql.end({ timeout: 0 }).catch(() => {});
-            }
-          }
-          cache.clear();
+  hooks: {
+    "modules:done"() {
+      // @ts-ignore
+      const nuxt = this as any;
+      const dyrected = nuxt?.options?.runtimeConfig?.dyrected as any;
+      if (dyrected) {
+        const isVercel =
+          process.env.VERCEL === "1" || process.env.VERCEL_ENV !== undefined || process.env.NOW_BUILDER === "1";
+        if (isVercel) {
+          dyrected.configPath = "/var/task/dyrected.config.ts";
+          dyrected.loadConfigPath = "/var/task/node_modules/@dyrected/nuxt/dist/runtime/server/plugins/loadConfig.mjs";
         }
-      },
+      }
     },
   },
 });
