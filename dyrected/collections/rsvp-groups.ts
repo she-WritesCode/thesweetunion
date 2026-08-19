@@ -116,7 +116,7 @@ export const rsvpGroups = defineCollection({
       displayField("isActive", {
         display: "badge",
         badgeColors: { true: "emerald", false: "rose" },
-        label: "Group Status",
+        label: "Is Group Active",
         editable: true,
       }),
       displayField("maxCapacity", {
