@@ -19,8 +19,10 @@ import {
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
-const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
-const invitationCondition = "doc.attending === true";
+// const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
+// const invitationCondition = "doc.attending === true";
+const asoEbiOrderCondition = "true";
+const invitationCondition = "true";
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
   labels: { singular: "Guest Response", plural: "Guest Responses" },
