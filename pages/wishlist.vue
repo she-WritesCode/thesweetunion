@@ -237,13 +237,15 @@ const activeAmountValue = computed(() => {
 const finalCtaLabel = computed(() => {
   if (isSubmitting.value) return "Processing...";
   if (fulfillmentMode.value === "sent_money") {
-    return activeItem.value?.fundingType === "crowdfund" ? "Confirm Contribution" : "Confirm Payment";
+    return activeItem.value?.fundingType === "crowdfund"
+      ? `Confirm Contribution (₦${activeAmountValue.value.toLocaleString("en-US")})`
+      : `Confirm Payment (₦${activeAmountValue.value.toLocaleString("en-US")})`;
   }
   if (fulfillmentMode.value === "bring_to_wedding") {
-    return "Reserve & Bring to Wedding";
+    return `Reserve & Bring to Wedding${reserveQuantity.value > 1 ? ` (${reserveQuantity.value} items)` : ""}`;
   }
   if (fulfillmentMode.value === "remind_later") {
-    return "Save Reminder & Reserve";
+    return `Save Reminder & Reserve (₦${activeAmountValue.value.toLocaleString("en-US")})`;
   }
   return "Confirm Reservation";
 });
@@ -298,7 +300,7 @@ const handleConfirmReservation = async () => {
           paymentTiming: currentTiming,
           intent,
           quantity: currentQty,
-          contributionAmount: currentMode === "sent_money" ? activeAmountValue.value : undefined,
+          contributionAmount: activeAmountValue.value,
           reminderAt:
             currentMode === "remind_later" && reminderDate.value
               ? new Date(`${reminderDate.value}T12:00:00`).toISOString()
@@ -359,9 +361,13 @@ const handleConfirmReservation = async () => {
   }
 };
 
+const featuredItemIds = computed(() => new Set(featuredItems.value.map((f) => f.id)));
+
 const filteredAndSortedItems = computed<WishlistItem[]>(() => {
   let list = [...items.value].filter(
-    (item) => selectedCategory.value === "All" || item.category === selectedCategory.value,
+    (item) =>
+      !featuredItemIds.value.has(item.id) &&
+      (selectedCategory.value === "All" || item.category === selectedCategory.value),
   );
 
   if (priceSort.value === "high-to-low") {
@@ -959,38 +965,55 @@ onUnmounted(() => {
           <!-- Quantity Selection Card (for Fixed Items with Available Quantity > 1) -->
           <div
             v-if="activeItem.fundingType === 'fixed' && availableQty > 1"
-            class="linen-card p-6 sm:p-7 rounded-3xl border border-amber-gold/20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4"
+            class="linen-card p-6 sm:p-7 rounded-3xl border border-amber-gold/20 shadow-md space-y-4"
           >
-            <div class="space-y-1 text-center sm:text-left">
-              <label class="font-heading font-bold text-base text-deep-espresso block">Quantity to Reserve</label>
-              <p class="text-xs text-deep-espresso/65 font-body">
-                You can reserve up to {{ availableQty }} units of this gift item.
-              </p>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="space-y-1 text-center sm:text-left">
+                <label class="font-heading font-bold text-base text-deep-espresso block">Quantity to Reserve</label>
+                <p class="text-xs text-deep-espresso/65 font-body">
+                  You can reserve up to {{ availableQty }} units of this gift item.
+                </p>
+              </div>
+              <div
+                class="flex items-center gap-3 bg-warm-cream/90 border border-amber-gold/30 rounded-2xl p-2 shadow-inner"
+              >
+                <button
+                  type="button"
+                  @click="reserveQuantity = Math.max(1, reserveQuantity - 1)"
+                  :disabled="reserveQuantity <= 1"
+                  class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span class="font-heading font-bold text-xl text-deep-espresso min-w-[32px] text-center">{{
+                  reserveQuantity
+                }}</span>
+                <button
+                  type="button"
+                  @click="reserveQuantity = Math.min(availableQty, reserveQuantity + 1)"
+                  :disabled="reserveQuantity >= availableQty"
+                  class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
             </div>
-            <div
-              class="flex items-center gap-3 bg-warm-cream/90 border border-amber-gold/30 rounded-2xl p-2 shadow-inner"
-            >
-              <button
-                type="button"
-                @click="reserveQuantity = Math.max(1, reserveQuantity - 1)"
-                :disabled="reserveQuantity <= 1"
-                class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
-                aria-label="Decrease quantity"
-              >
-                −
-              </button>
-              <span class="font-heading font-bold text-xl text-deep-espresso min-w-[32px] text-center">{{
-                reserveQuantity
-              }}</span>
-              <button
-                type="button"
-                @click="reserveQuantity = Math.min(availableQty, reserveQuantity + 1)"
-                :disabled="reserveQuantity >= availableQty"
-                class="w-9 h-9 rounded-xl bg-white border border-amber-gold/30 text-deep-espresso font-bold text-base flex items-center justify-center hover:bg-amber-gold/15 disabled:opacity-30 cursor-pointer shadow-xs transition-all"
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
+
+            <!-- Total Price Calculation Display -->
+            <div class="pt-3 border-t border-amber-gold/15 flex items-center justify-between">
+              <span class="text-xs uppercase tracking-wider text-deep-espresso/70 font-semibold">
+                Total for {{ reserveQuantity }} unit{{ reserveQuantity > 1 ? "s" : "" }}:
+              </span>
+              <div class="text-right">
+                <span class="font-heading text-xl sm:text-2xl font-bold text-deep-espresso">
+                  ₦{{ activeAmountValue.toLocaleString("en-US") }}
+                </span>
+                <span v-if="reserveQuantity > 1" class="text-[11px] text-deep-espresso/60 block font-medium">
+                  (₦{{ activeItem.price.toLocaleString("en-US") }} × {{ reserveQuantity }})
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1182,6 +1205,30 @@ onUnmounted(() => {
                   </div>
                 </div>
 
+                <!-- Total Amount to Transfer Highlight Strip (near Account Number) -->
+                <div
+                  class="p-4 rounded-xl bg-amber-50/80 border border-amber-gold/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
+                  <div>
+                    <span class="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-900 block">
+                      {{
+                        activeItem.fundingType === "crowdfund"
+                          ? "Contribution Amount to Transfer"
+                          : "Total Amount to Transfer"
+                      }}
+                    </span>
+                    <p class="font-heading text-2xl sm:text-3xl font-bold text-deep-espresso mt-0.5">
+                      ₦{{ activeAmountValue.toLocaleString("en-US") }}
+                    </p>
+                  </div>
+                  <div
+                    v-if="activeItem.fundingType === 'fixed' && reserveQuantity > 1"
+                    class="text-xs sm:text-right text-amber-900 font-semibold bg-white/90 px-3 py-1.5 rounded-lg border border-amber-gold/20 self-start sm:self-auto"
+                  >
+                    <span>₦{{ activeItem.price.toLocaleString("en-US") }} × {{ reserveQuantity }} items</span>
+                  </div>
+                </div>
+
                 <div
                   class="border-t border-amber-gold/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
@@ -1198,7 +1245,7 @@ onUnmounted(() => {
                     @click="copyToClipboard(activeItem.bankDetails.accountNumber)"
                     class="px-5 py-3 rounded-full bg-deep-terracotta text-white text-xs font-bold uppercase tracking-[0.2em] hover:bg-deep-espresso transition-all shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
                   >
-                    {{ isCopied ? "✓ Copied" : "Copy" }}
+                    {{ isCopied ? "✓ Copied" : "Copy Account" }}
                   </button>
                 </div>
               </div>

@@ -159,6 +159,11 @@ const fetchSummary = async () => {
           cast: "number",
           where: { paymentOption: { equals: "bring_to_wedding" } },
         },
+        weddingDayCash: {
+          sum: "contributionAmount",
+          cast: "number",
+          where: { paymentOption: { equals: "bring_to_wedding" } },
+        },
         // 3. Remind Later / Scheduled Pledges
         remindLaterCount: {
           count: "*",
@@ -206,9 +211,9 @@ const fetchSummary = async () => {
 
     const weddingDayCount = Number(reservationStats?.weddingDayCount) || 0;
     const weddingDayQuantity = Number(reservationStats?.weddingDayQuantity) || weddingDayCount;
-    // Estimated average allocation for physical gifts or count
+    const weddingDayCash = Number(reservationStats?.weddingDayCash) || 0;
     const avgItemPrice = totalItems > 0 && totalRegistryTarget > 0 ? Math.round(totalRegistryTarget / totalItems) : 0;
-    const weddingDayValue = weddingDayQuantity * avgItemPrice;
+    const weddingDayValue = weddingDayCash > 0 ? weddingDayCash : weddingDayQuantity * avgItemPrice;
 
     const remindLaterCount = Number(reservationStats?.remindLaterCount) || 0;
     const remindLaterCash = Number(reservationStats?.remindLaterCash) || 0;

@@ -8,6 +8,7 @@
     "seed": "npx tsx scripts/seed.ts",
     "db:backup": "npx tsx scripts/backup-db.ts",
     "db:restore": "npx tsx scripts/restore-db.ts",
+    "db:migrate-reservations": "npx tsx scripts/migrate-reservation-amounts.ts",
     "format-phones": "npx tsx scripts/format-phone-numbers.ts",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

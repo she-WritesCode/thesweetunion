@@ -125,6 +125,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Compute the exact monetary amount for this reservation record
+  const computedContributionAmount = isCrowdfund
+    ? (Number(contributionAmount) || 0)
+    : (Number(item.price) || 0) * reqQty;
+
   // Create the reservation record
   const reservation = await client.collection("reservations").create({
     item: itemId,
@@ -136,7 +141,7 @@ export default defineEventHandler(async (event) => {
     reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
     reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
     paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
-    contributionAmount: isCrowdfund && paymentTiming === "now" ? contributionAmount : undefined,
+    contributionAmount: computedContributionAmount,
     reservedAt: new Date().toISOString(),
   });
 
