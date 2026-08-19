@@ -19,6 +19,8 @@ import {
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
+const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
+const invitationCondition = "doc.attending === true";
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
   labels: { singular: "Guest Response", plural: "Guest Responses" },
@@ -388,15 +390,15 @@ export const rsvpRecords = defineCollection({
           ),
         ]),
       ],
-      { span: 12, visible: "wantsAsoebi === true || wantsAsoOke === true", icon: "Package" },
+      { span: 12, visible: asoEbiOrderCondition, icon: "Package" },
     ),
-    displayCustomComponent("SendAsoebiReminderButton"),
+    displayCustomComponent("SendAsoebiReminderButton", { visible: asoEbiOrderCondition }),
 
     displayDivider({ spacing: "md" }),
 
     // ── 4. Digital Invitation & Access Pass (Action Hub) ─────────────────────
-    displayCustomComponent("AccessCardPreview"),
-    displayCustomComponent("SendWhatsAppButton"),
+    displayCustomComponent("AccessCardPreview", { visible: invitationCondition }),
+    displayCustomComponent("SendWhatsAppButton", { visible: invitationCondition }),
     displaySection(
       "Invitation Status",
       [
@@ -416,7 +418,7 @@ export const rsvpRecords = defineCollection({
           }),
         ]),
       ],
-      { span: 12, icon: "Send", visible: "attending === true" },
+      { span: 12, icon: "Send", visible: invitationCondition },
     ),
 
     displayDivider({ spacing: "md" }),
