@@ -4,11 +4,6 @@ export default defineNuxtConfig({
 
   modules: ["@dyrected/nuxt"],
 
-  dyrected: {
-    apiBase: "/api/dyrected",
-    adminPath: "admin",
-  },
-
   runtimeConfig: {
     dyrectedApiKey: process.env.DYRECTED_API_KEY || "sk_test_dev_key",
     dyrectedUrl:
