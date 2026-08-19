@@ -26,3 +26,5 @@ logs
 # Database backups
 backups/
 
+.vercel
+.env*

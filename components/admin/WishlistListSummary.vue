@@ -56,7 +56,7 @@ const fetchSummary = async () => {
         totalAmountRaised: { sum: "amountRaised", cast: "number" },
         crowdfundCount: { count: "*", where: { fundingType: { equals: "crowdfund" } } },
         fixedCount: { count: "*", where: { fundingType: { equals: "fixed" } } },
-        claimedItems: { count: "*", where: { reservedCount: { greater_than: 0 } } },
+        claimedItems: { count: "*", where: { reservedCount: { gt: 0 } } },
       }),
       safeAggregate(sdkClient, "reservations", {
         totalReservations: { count: "*" },
