@@ -46,6 +46,7 @@ const {
   refresh,
 } = useCachedDyrectedCollection("wishlist_items", {
   limit: 100,
+  sort: "price",
 });
 const { data: siteSettings, pending: siteSettingsPending } = useCachedDyrectedGlobal("site_settings");
 
@@ -138,7 +139,7 @@ const isInitialLoading = computed(() => {
 });
 
 const selectedCategory = ref<string>("All");
-const priceSort = ref<"none" | "low-to-high" | "high-to-low">("none");
+const priceSort = ref<"low-to-high" | "high-to-low">("low-to-high");
 
 // Modal Reservation State
 const activeItem = ref<WishlistItem | null>(null);
@@ -363,12 +364,11 @@ const filteredAndSortedItems = computed<WishlistItem[]>(() => {
     (item) => selectedCategory.value === "All" || item.category === selectedCategory.value,
   );
 
-  if (priceSort.value === "low-to-high") {
-    list.sort((a, b) => a.price - b.price);
-  } else if (priceSort.value === "high-to-low") {
-    list.sort((a, b) => b.price - a.price);
+  if (priceSort.value === "high-to-low") {
+    list.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
   } else {
-    list.sort((a, b) => a.name.localeCompare(b.name));
+    // Default: lowest price first
+    list.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
   }
 
   return list;
@@ -545,9 +545,8 @@ onUnmounted(() => {
           <div class="flex items-center gap-2">
             <span class="text-xs uppercase tracking-wider font-semibold text-deep-espresso/60"> Sort Price: </span>
             <select v-model="priceSort" class="select-dropdown">
-              <option value="none">Default</option>
-              <option value="low-to-high">Low to High</option>
-              <option value="high-to-low">High to Low</option>
+              <option value="low-to-high">Lowest Price First</option>
+              <option value="high-to-low">Highest Price First</option>
             </select>
           </div>
         </FadeInSection>
