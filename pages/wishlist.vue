@@ -179,7 +179,7 @@ const copyToClipboard = (text: string) => {
 };
 
 // Crowdfund & Fixed Payment / Quantity state
-const selectedAmount = ref<number>(SUGGESTED_AMOUNTS[0]);
+const selectedAmount = ref<number>(SUGGESTED_AMOUNTS[SUGGESTED_AMOUNTS.length - 1]);
 const useCustomAmount = ref(false);
 const customAmount = ref<string>("");
 
@@ -262,7 +262,8 @@ const handleReserveClick = (item: WishlistItem | null) => {
   reminderChannel.value = "whatsapp";
   reminderContact.value = "";
   paymentOption.value = item.link ? null : "bank_transfer";
-  selectedAmount.value = SUGGESTED_AMOUNTS[0];
+  selectedAmount.value =
+    item.price > 0 ? item.price : SUGGESTED_AMOUNTS[SUGGESTED_AMOUNTS.length - 1];
   useCustomAmount.value = false;
   customAmount.value = "";
   reserveQuantity.value = 1;
@@ -478,7 +479,13 @@ onUnmounted(() => {
                       {{ item.category }}
                     </span>
                     <span class="font-heading font-bold text-base md:text-lg text-deep-espresso">
-                      ₦{{ item.price.toLocaleString("en-US") }}
+                      {{
+                        item.fundingType === "crowdfund"
+                          ? item.price > 0
+                            ? `Goal: ₦${item.price.toLocaleString("en-US")}`
+                            : "Any Amount"
+                          : `₦${item.price.toLocaleString("en-US")}`
+                      }}
                     </span>
                   </div>
 
@@ -492,8 +499,8 @@ onUnmounted(() => {
                     {{ item.description }}
                   </p>
 
-                  <!-- Crowdfund Progress -->
-                  <div v-if="item.fundingType === 'crowdfund'" class="space-y-1 pt-1">
+                  <!-- Crowdfund Progress for items with target price -->
+                  <div v-if="item.fundingType === 'crowdfund' && item.price > 0" class="space-y-1 pt-1">
                     <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
                       <div
                         class="h-full bg-amber-gold rounded-full transition-all duration-500"
@@ -502,8 +509,18 @@ onUnmounted(() => {
                     </div>
                     <p class="text-[11px] text-deep-espresso/60 font-body">
                       ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised · {{ item.contributorCount ?? 0 }}
-                      contributors
+                      {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
                     </p>
+                  </div>
+
+                  <!-- Open Cash Fund (no target): only show contributor count -->
+                  <div v-else-if="item.fundingType === 'crowdfund' && (item.contributorCount ?? 0) > 0" class="pt-1">
+                    <span
+                      class="text-[11px] font-semibold text-deep-terracotta bg-deep-terracotta/10 px-2.5 py-0.5 rounded-full inline-block"
+                    >
+                      {{ item.contributorCount }}
+                      {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                    </span>
                   </div>
                 </div>
 
@@ -671,7 +688,7 @@ onUnmounted(() => {
                     v-else-if="item.fundingType === 'crowdfund'"
                     class="bg-amber-950/80 border border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full backdrop-blur-xs"
                   >
-                    {{ item.price > 0 ? "Crowdfund" : "Open Fund" }}
+                    {{ item.price > 0 ? "Crowdfund" : "Cash Gift" }}
                   </span>
                   <span
                     v-else-if="item.maxQuantity - item.reservedCount <= 0"
@@ -702,8 +719,12 @@ onUnmounted(() => {
                       {{ item.category }}
                     </span>
                     <span class="text-sm font-bold text-deep-espresso font-body">
-                      {{ item.fundingType === "crowdfund" && item.price > 0 ? "Goal: " : "" }}₦{{
-                        item.price.toLocaleString("en-US")
+                      {{
+                        item.fundingType === "crowdfund"
+                          ? item.price > 0
+                            ? `Goal: ₦${item.price.toLocaleString("en-US")}`
+                            : "Any Amount"
+                          : `₦${item.price.toLocaleString("en-US")}`
                       }}
                     </span>
                   </div>
@@ -716,28 +737,34 @@ onUnmounted(() => {
                     {{ item.description }}
                   </p>
 
-                  <!-- Crowdfund Progress -->
-                  <div v-if="item.fundingType === 'crowdfund'" class="space-y-1.5">
+                  <!-- Crowdfund Progress for items with a target price -->
+                  <div v-if="item.fundingType === 'crowdfund' && item.price > 0" class="space-y-1.5">
                     <div class="w-full h-2 bg-deep-espresso/10 rounded-full overflow-hidden">
                       <div
                         class="h-full rounded-full transition-all duration-500"
                         :class="
-                          item.price > 0 && (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'
+                          (item.amountRaised ?? 0) >= item.price ? 'bg-emerald-600' : 'bg-amber-gold'
                         "
                         :style="{ width: `${progressPercent(item)}%` }"
                       />
                     </div>
                     <p class="text-xs text-deep-espresso/60 font-body">
-                      <template v-if="item.price > 0">
-                        ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
-                          item.price.toLocaleString("en-US")
-                        }}
-                        raised
-                      </template>
-                      <template v-else> ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} raised </template>
-                      · {{ item.contributorCount ?? 0 }}
+                      ₦{{ (item.amountRaised ?? 0).toLocaleString("en-US") }} of ₦{{
+                        item.price.toLocaleString("en-US")
+                      }}
+                      raised · {{ item.contributorCount ?? 0 }}
                       {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
                     </p>
+                  </div>
+
+                  <!-- Open Cash Fund (no target): only show contributor count -->
+                  <div v-else-if="item.fundingType === 'crowdfund' && (item.contributorCount ?? 0) > 0" class="pt-1">
+                    <span
+                      class="text-[11px] font-semibold text-deep-terracotta bg-deep-terracotta/10 px-2.5 py-0.5 rounded-full inline-block"
+                    >
+                      {{ item.contributorCount }}
+                      {{ (item.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                    </span>
                   </div>
                 </div>
 
@@ -875,16 +902,28 @@ onUnmounted(() => {
 
                 <div class="flex flex-wrap items-baseline gap-3 pt-1">
                   <template v-if="activeItem.fundingType === 'crowdfund'">
-                    <span class="font-heading text-2xl font-bold text-deep-espresso">
-                      ₦{{
-                        activeItem.price > 0 ? activeItem.price.toLocaleString("en-US") + " goal" : "Open cash fund"
-                      }}
-                    </span>
-                    <span
-                      class="text-xs font-semibold uppercase tracking-wider text-deep-terracotta bg-deep-terracotta/10 px-3 py-1 rounded-full"
-                    >
-                      ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised so far
-                    </span>
+                    <template v-if="activeItem.price > 0">
+                      <span class="font-heading text-2xl font-bold text-deep-espresso">
+                        ₦{{ activeItem.price.toLocaleString("en-US") }} goal
+                      </span>
+                      <span
+                        class="text-xs font-semibold uppercase tracking-wider text-deep-terracotta bg-deep-terracotta/10 px-3 py-1 rounded-full"
+                      >
+                        ₦{{ (activeItem.amountRaised ?? 0).toLocaleString("en-US") }} raised so far
+                      </span>
+                    </template>
+                    <template v-else>
+                      <span class="font-heading text-2xl font-bold text-deep-espresso">
+                        Gift Any Amount
+                      </span>
+                      <span
+                        v-if="(activeItem.contributorCount ?? 0) > 0"
+                        class="text-xs font-semibold uppercase tracking-wider text-deep-terracotta bg-deep-terracotta/10 px-3 py-1 rounded-full"
+                      >
+                        {{ activeItem.contributorCount }}
+                        {{ (activeItem.contributorCount ?? 0) === 1 ? "contributor" : "contributors" }}
+                      </span>
+                    </template>
                   </template>
                   <template v-else>
                     <span class="font-heading text-2xl md:text-3xl font-bold text-deep-espresso">
