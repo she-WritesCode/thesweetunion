@@ -31,14 +31,12 @@ useHead({
  */
 const adminComponents = {
   // Detail View Custom Components (referenced by displayCustomComponent / displayCustom)
-  customComponents: {
-    AccessCardPreview,
-    SendAsoebiReminderButton,
-    SendWhatsAppButton,
-    RsvpEditLinkField,
-    RsvpLinkField,
-    CheckInScanner,
-  },
+  AccessCardPreview,
+  SendAsoebiReminderButton,
+  SendWhatsAppButton,
+  RsvpEditLinkField,
+  RsvpLinkField,
+  CheckInScanner,
 
   fields: {
     // rsvp_groups collection
