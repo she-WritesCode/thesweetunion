@@ -29,6 +29,29 @@ const summary = ref<any>({
   },
 });
 
+async function safeAggregate(sdkClient: any, collectionName: string, input: Record<string, any>) {
+  if (sdkClient && typeof sdkClient.collection === "function") {
+    try {
+      const col = sdkClient.collection(collectionName);
+      if (typeof col.aggregate === "function") {
+        const res = await col.aggregate(input);
+        if (res) return res;
+      }
+    } catch (e) {
+      console.warn(`[RsvpSummary] SDK aggregate failed for ${collectionName}, falling back to $fetch:`, e);
+    }
+  }
+  return await $fetch<any>(`/api/dyrected/api/collections/${collectionName}/aggregate`, {
+    method: "POST",
+    body: input,
+  }).catch(() =>
+    $fetch<any>(`/api/dyrected/collections/${collectionName}/aggregate`, {
+      method: "POST",
+      body: input,
+    }).catch(() => ({})),
+  );
+}
+
 async function safeFetchGlobal(sdkClient: any, globalName: string) {
   if (sdkClient && typeof sdkClient.global === "function") {
     try {
@@ -49,70 +72,49 @@ const fetchSummary = async () => {
     // Run database-level aggregate & fetch global pricing in parallel
     const [aggregateRes, asoebiGlobalRes] = await Promise.all([
       // 1. Native Database Aggregations
-      $fetch<any>("/api/dyrected/api/collections/rsvp_records/aggregate", {
-        method: "POST",
-        body: {
-          totalSubmitted: { count: "*" },
-          totalAttending: {
-            count: "*",
-            where: { attending: { equals: true } },
-          },
-          totalDeclined: {
-            count: "*",
-            where: { attending: { equals: false } },
-          },
-          spouseAttendingCount: {
-            count: "*",
-            where: {
-              AND: [
-                { attending: { equals: true } },
-                { hasSpouse: { equals: true } },
-              ],
-            },
-          },
-          asoebiOrderCount: {
-            count: "*",
-            where: {
-              AND: [
-                { attending: { equals: true } },
-                { wantsAsoebi: { equals: true } },
-              ],
-            },
-          },
-          totalAsoebiYards: {
-            sum: "asoebiYards",
-            cast: "number",
-            where: {
-              AND: [
-                { attending: { equals: true } },
-                { wantsAsoebi: { equals: true } },
-              ],
-            },
-          },
-          totalAsoOkeMaleQty: {
-            sum: "asoOkeMaleQty",
-            cast: "number",
-            where: {
-              AND: [
-                { attending: { equals: true } },
-                { wantsAsoOke: { equals: true } },
-              ],
-            },
-          },
-          totalAsoOkeFemaleQty: {
-            sum: "asoOkeFemaleQty",
-            cast: "number",
-            where: {
-              AND: [
-                { attending: { equals: true } },
-                { wantsAsoOke: { equals: true } },
-              ],
-            },
+      safeAggregate(sdkClient, "rsvp_records", {
+        totalSubmitted: { count: "*" },
+        totalAttending: {
+          count: "*",
+          where: { attending: { equals: true } },
+        },
+        totalDeclined: {
+          count: "*",
+          where: { attending: { equals: false } },
+        },
+        spouseAttendingCount: {
+          count: "*",
+          where: {
+            AND: [{ attending: { equals: true } }, { hasSpouse: { equals: true } }],
           },
         },
-      }).catch((e) => {
-        console.error("[RsvpSummary] Aggregate failed:", e);
-        return null;
+        asoebiOrderCount: {
+          count: "*",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+          },
+        },
+        totalAsoebiYards: {
+          sum: "asoebiYards",
+          cast: "number",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+          },
+        },
+        totalAsoOkeMaleQty: {
+          sum: "asoOkeMaleQty",
+          cast: "number",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+          },
+        },
+        totalAsoOkeFemaleQty: {
+          sum: "asoOkeFemaleQty",
+          cast: "number",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+          },
+        },
       }),
 
       // 2. Global Asoebi Pricing
