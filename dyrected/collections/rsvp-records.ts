@@ -14,6 +14,7 @@ import {
   displayGrid,
   displayField,
   displayDivider,
+  displaySection,
   displayCustomComponent,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
@@ -343,30 +344,36 @@ export const rsvpRecords = defineCollection({
     displayDivider({ spacing: "md" }),
 
     // ── 3. Aso Ebi & Headwear Order (Financials & Reminder Action) ────────────
-    displayGrid(4, [
-      displayField("asoebiPaymentStatus", {
-        display: "badge",
-        badgeColors: { received: "emerald", pending: "amber", partial: "blue", waived: "purple" },
-        label: "Payment",
-      }),
-      displayField("asoebiOrderStatus", {
-        display: "badge",
-        badgeColors: { delivered: "emerald", ready: "blue", unfulfilled: "amber" },
-        label: "Fulfillment",
-      }),
-      displayField("asoebiYards", {
-        label: "Fabric Yards",
-        emptyText: "None",
-      }),
-      displayField("asoOkeMaleQty", {
-        label: "Male Fila / Caps",
-        emptyText: "0",
-      }),
-      displayField("asoOkeFemaleQty", {
-        label: "Gele",
-        emptyText: "0",
-      }),
-    ]),
+    displaySection(
+      "",
+      [
+        displayGrid(4, [
+          displayField("asoebiPaymentStatus", {
+            display: "badge",
+            badgeColors: { received: "emerald", pending: "amber", partial: "blue", waived: "purple" },
+            label: "Payment",
+          }),
+          displayField("asoebiOrderStatus", {
+            display: "badge",
+            badgeColors: { delivered: "emerald", ready: "blue", unfulfilled: "amber" },
+            label: "Fulfillment",
+          }),
+          displayField("asoebiYards", {
+            label: "Fabric Yards",
+            emptyText: "None",
+          }),
+          displayField("asoOkeMaleQty", {
+            label: "Male Fila / Caps",
+            emptyText: "0",
+          }),
+          displayField("asoOkeFemaleQty", {
+            label: "Gele",
+            emptyText: "0",
+          }),
+        ]),
+      ],
+      { span: 12, visible: "wantsAsoebi === true || wantsAsoOke === true" },
+    ),
 
     displayField("asoebiDetails", {
       label: "Asoebi Order Summary",
