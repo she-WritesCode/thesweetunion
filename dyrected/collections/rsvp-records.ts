@@ -73,7 +73,7 @@ export const rsvpRecords = defineCollection({
       slug: "asoebi_logistics",
       label: "Aso Ebi Orders",
       icon: "Package",
-      layout: "table",
+      layout: "cards",
       filter: {
         or: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
       },
@@ -115,7 +115,7 @@ export const rsvpRecords = defineCollection({
       slug: "invitation_dispatch",
       label: "Pass Dispatch",
       icon: "Send",
-      layout: "table",
+      layout: "cards",
       filter: { attending: { equals: true } },
       columns: [
         "leadName",
