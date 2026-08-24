@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
     reminderAt: paymentTiming === "later" ? reminderAt : undefined,
     reminderChannel: paymentTiming === "later" ? reminderChannel : undefined,
     reminderContact: paymentTiming === "later" ? trimmedReminderContact : undefined,
-    paymentOption: paymentOption || (isCrowdfund ? "bank_transfer" : undefined),
+    paymentOption: paymentOption || (item.link ? "purchase_link" : "bank_transfer"),
     contributionAmount: computedContributionAmount,
     reservedAt: new Date().toISOString(),
   });

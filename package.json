@@ -9,6 +9,7 @@
     "db:backup": "npx tsx scripts/backup-db.ts",
     "db:restore": "npx tsx scripts/restore-db.ts",
     "db:migrate-reservations": "npx tsx scripts/migrate-reservation-amounts.ts",
+    "db:migrate-payment-options": "npx tsx scripts/migrate-reservation-payment-options.ts",
     "db:recalculate-groups": "npx tsx scripts/recalculate-group-counts.ts",
     "format-phones": "npx tsx scripts/format-phone-numbers.ts",
     "generate": "nuxt generate",

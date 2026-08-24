@@ -202,6 +202,9 @@ const fetchSummary = async () => {
     const fixedCount = Number(itemStats?.fixedCount) || 0;
     const claimedItemsCount = Number(itemStats?.claimedItemsCount) || 0;
 
+    const totalReservations = Number(reservationStats?.totalReservations) || 0;
+    const totalContributions = Number(reservationStats?.totalContributions) || 0;
+
     // Reservation statistics
     const paidNowCount = Number(reservationStats?.paidNowCount) || 0;
     const paidNowCash = Math.max(Number(reservationStats?.paidNowCash) || 0, totalCrowdfundRaised);
@@ -215,8 +218,15 @@ const fetchSummary = async () => {
     const avgItemPrice = totalItems > 0 && totalRegistryTarget > 0 ? Math.round(totalRegistryTarget / totalItems) : 0;
     const weddingDayValue = weddingDayCash > 0 ? weddingDayCash : weddingDayQuantity * avgItemPrice;
 
-    const remindLaterCount = Number(reservationStats?.remindLaterCount) || 0;
-    const remindLaterCash = Number(reservationStats?.remindLaterCash) || 0;
+    const aggregateRemindLaterCount = Number(reservationStats?.remindLaterCount) || 0;
+    const remindLaterCount = Math.max(
+      aggregateRemindLaterCount,
+      Math.max(0, totalReservations - paidNowCount - weddingDayCount),
+    );
+    const aggregateRemindLaterCash = Number(reservationStats?.remindLaterCash) || 0;
+    const calculatedRemindLaterCash = Math.max(0, totalContributions - paidNowCash - weddingDayCash);
+    const remindLaterCash = Math.max(aggregateRemindLaterCash, calculatedRemindLaterCash);
+
     const whatsappReminderCount = Number(reservationStats?.whatsappReminderCount) || 0;
     const emailReminderCount = Number(reservationStats?.emailReminderCount) || 0;
     const pledgedValue = remindLaterCash > 0 ? remindLaterCash : remindLaterCount * avgItemPrice;
