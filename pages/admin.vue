@@ -53,6 +53,10 @@ const adminComponents = {
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
     "rsvp_records.sendWhatsApp": SendWhatsAppButton,
+    "asoebiReminder": SendAsoebiReminderButton,
+    "accessCardPreview": AccessCardPreview,
+    "rsvpEditLink": RsvpEditLinkField,
+    "sendWhatsApp": SendWhatsAppButton,
   },
   collectionList: {
     RsvpListSummary: RsvpListSummary,

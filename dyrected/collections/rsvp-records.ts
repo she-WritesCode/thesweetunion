@@ -1,5 +1,7 @@
 import {
   defineCollection,
+  defineView,
+  defineAction,
   defineTab,
   defineTextField,
   defineEmailField,
@@ -46,6 +48,88 @@ export const rsvpRecords = defineCollection({
     ],
     group: "RSVP",
   },
+  // ── 📊 Operational Views (Dyrected 2.9.0 Workspaces) ──────────────────────
+  views: [
+    defineView({
+      slug: "all_responses",
+      label: "All RSVPs",
+      icon: "Users",
+      layout: "table",
+      columns: [
+        "leadName",
+        "group",
+        "attending",
+        "hasSpouse",
+        "spouseName",
+        "wantsAsoebi",
+        "asoebiPaymentStatus",
+        "invitationSent",
+        "checkedIn",
+        "submittedAt",
+      ],
+      sort: { field: "submittedAt", direction: "desc" },
+    }),
+    defineView({
+      slug: "asoebi_logistics",
+      label: "Aso Ebi Orders",
+      icon: "Package",
+      layout: "table",
+      filter: {
+        or: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
+      },
+      columns: [
+        "leadName",
+        "leadPhone",
+        "asoebiYards",
+        "asoOkeMaleQty",
+        "asoOkeFemaleQty",
+        "asoebiPaymentStatus",
+        "asoebiOrderStatus",
+        "asoebiPaymentNotes",
+      ],
+      actions: [
+        defineAction({
+          name: "sendAsoebiReminder",
+          label: "Send WhatsApp Reminder",
+          icon: "MessageSquare",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "asoebiReminder",
+              label: "WhatsApp Reminder Message",
+              admin: {
+                component: "rsvp_records.asoebiReminder",
+                description: "Review and send the personalized WhatsApp reminder for this guest.",
+              },
+            }),
+          ],
+        }),
+      ],
+      features: {
+        edit: false,
+        delete: false,
+        duplicate: false,
+      },
+    }),
+    defineView({
+      slug: "invitation_dispatch",
+      label: "Pass Dispatch",
+      icon: "Send",
+      layout: "table",
+      filter: { attending: { equals: true } },
+      columns: [
+        "leadName",
+        "leadPhone",
+        "hasSpouse",
+        "spouseName",
+        "group",
+        "invitationSent",
+        "invitationSentVia",
+        "invitationSentAt",
+      ],
+      sort: { field: "invitationSent", direction: "asc" },
+    }),
+  ],
   fields: [
     // ── RSVP Response tab ───────────────────────────────────────────────────
     ...defineTab({
@@ -335,35 +419,42 @@ export const rsvpRecords = defineCollection({
       }),
     ]),
 
-    // ── 2. Spouse, Group & Guest RSVP Edit Link (Compact 3-column grid) ─────
+    // ── 2. Headcount, Companion & Guest RSVP Edit Link (Compact 3-column grid) ─────
     displayGrid(3, [
-      displayField("spouseName", {
+      displayField("hasSpouse", {
+        display: "badge",
+        badgeColors: { true: "purple", false: "slate" },
         label: "Attending With Spouse",
         emptyText: "Attending Solo",
+      }),
+      displayField("spouseName", {
+        label: "Spouse / Plus-One Name",
+        emptyText: "None (Attending Solo)",
       }),
       displayField("group", {
         label: "Invitation Group",
       }),
-      displayCustomComponent("RsvpEditLinkField"),
     ]),
+
+    displayCustomComponent("RsvpEditLinkField"),
 
     displayDivider({ spacing: "md" }),
 
-    // ── 3. Aso Ebi & Headwear Order (Financials & Reminder Action) ────────────
+    // ── 3. Aso Ebi & Headwear Order (Financials & Logistics Desk) ────────────
     displaySection(
-      "Aso Ebi & Headwear Order",
+      "Aso Ebi & Headwear Logistics",
       [
         displayGrid(4, [
           displayField("asoebiPaymentStatus", {
             display: "badge",
             badgeColors: { received: "emerald", pending: "amber", partial: "blue", waived: "purple" },
-            label: "Payment",
+            label: "Payment (Bank Transfer)",
             editable: true,
           }),
           displayField("asoebiOrderStatus", {
             display: "badge",
             badgeColors: { delivered: "emerald", ready: "blue", unfulfilled: "amber" },
-            label: "Fulfillment",
+            label: "Fulfillment / Delivery",
             editable: true,
           }),
           displayField("asoebiYards", {
@@ -378,75 +469,89 @@ export const rsvpRecords = defineCollection({
             editable: true,
           }),
           displayField("asoOkeFemaleQty", {
-            label: "Gele",
+            label: "Female Gele",
             emptyText: "0",
             editable: true,
           }),
-          displayField(
-            "asoebiDetails",
-            {
-              label: "Asoebi Order Summary",
-              hideIfEmpty: true,
-              editable: true,
-            },
-            { span: 2 },
-          ),
-          displayField(
-            "asoebiPaymentNotes",
-            {
-              label: "Private Payment & Delivery Notes",
-              hideIfEmpty: true,
-              editable: true,
-            },
-            { span: 2 },
-          ),
+          displayField("asoebiDetails", {
+            label: "Asoebi Order Summary",
+            hideIfEmpty: true,
+            editable: true,
+            span: 2,
+          }),
+          displayField("asoebiPaymentNotes", {
+            label: "Payment & Delivery Notes (Pickup / Dispatch Rider)",
+            hideIfEmpty: false,
+            editable: true,
+            span: 2,
+          }),
         ]),
+        displayCustomComponent("SendAsoebiReminderButton", { visible: asoEbiOrderCondition }),
       ],
-      { span: 12, visible: asoEbiOrderCondition, icon: "Package" },
+      {
+        span: 12,
+        visible: asoEbiOrderCondition,
+        icon: "Package",
+        description: "Manage bank transfer verification, fabric & headwear prep, and pickup/rider distribution.",
+      },
     ),
-    displayCustomComponent("SendAsoebiReminderButton", { visible: asoEbiOrderCondition }),
 
     displayDivider({ spacing: "md", visible: asoEbiOrderCondition }),
 
-    // ── 4. Digital Invitation & Access Pass (Action Hub) ─────────────────────
-    displayCustomComponent("AccessCardPreview", { visible: invitationCondition }),
-    displayCustomComponent("SendWhatsAppButton", { visible: invitationCondition }),
+    // ── 4. Digital Invitation & Access Pass (Dispatch Action Hub) ─────────────
     displaySection(
-      "Invitation Status",
+      "Digital Invitation & Joint Access Pass",
       [
+        displayCustomComponent("AccessCardPreview", { visible: invitationCondition }),
+        displayCustomComponent("SendWhatsAppButton", { visible: invitationCondition }),
         displayGrid(3, [
           displayField("invitationSent", {
             display: "badge",
             badgeColors: { true: "emerald", false: "amber" },
-            label: "Pass Sent",
+            label: "Pass Dispatched",
           }),
           displayField("invitationSentVia", {
             display: "badge",
-            label: "Channel",
+            label: "Delivery Channel",
           }),
           displayField("invitationSentAt", {
             display: "relative",
-            label: "Sent Date",
+            label: "Dispatched Date",
           }),
         ]),
       ],
-      { span: 12, icon: "Send", visible: invitationCondition },
+      {
+        span: 12,
+        icon: "Send",
+        visible: invitationCondition,
+        description:
+          "Live preview of the 1 joint access pass (Lead + Spouse) and direct WhatsApp / Email dispatch triggers.",
+      },
     ),
 
     displayDivider({ spacing: "md", visible: invitationCondition }),
 
     // ── 5. Event Schedule & Well Wishes Message ──────────────────────────────
-    displayField("selectedEvents", {
-      label: "Events Attending",
-    }),
-    displayField("message", {
-      label: "Message to the Couple",
-      hideIfEmpty: true,
-    }),
-    displayField("submittedAt", {
-      display: "relative",
-      label: "Response Submitted",
-    }),
+    displaySection(
+      "Event Details & Guest Notes",
+      [
+        displayGrid(2, [
+          displayField("selectedEvents", {
+            label: "Events Attending",
+          }),
+          displayField("submittedAt", {
+            display: "relative",
+            label: "RSVP Submitted",
+          }),
+          displayField("message", {
+            label: "Message to the Couple",
+            hideIfEmpty: true,
+            span: 2,
+          }),
+        ]),
+      ],
+      { span: 12, icon: "Calendar" },
+    ),
   ],
   access: {
     read: true,

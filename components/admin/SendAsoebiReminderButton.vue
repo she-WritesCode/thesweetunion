@@ -4,6 +4,9 @@ import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 
 const props = defineProps<{
   doc?: Record<string, any>;
+  data?: Record<string, any>;
+  record?: Record<string, any>;
+  row?: Record<string, any>;
   user?: any;
   value?: any;
   onChange?: (...args: any[]) => void;
@@ -15,6 +18,11 @@ const props = defineProps<{
     user?: Record<string, unknown> | null;
     schemas?: Record<string, unknown>;
     siblingData?: Record<string, unknown>;
+    doc?: Record<string, unknown>;
+    row?: Record<string, unknown>;
+    record?: Record<string, unknown>;
+    data?: Record<string, unknown>;
+    formData?: Record<string, unknown>;
   };
 }>();
 
@@ -24,7 +32,22 @@ const customMessage = ref("");
 
 const isUserEdited = ref(false);
 
-const record = computed(() => props.doc ?? props.context?.siblingData ?? {});
+const record = computed<Record<string, any>>(() => {
+  const ctx = props.context || {};
+  return (
+    props.doc ||
+    (props as any).data ||
+    (props as any).record ||
+    (props as any).row ||
+    (ctx as any).doc ||
+    (ctx as any).row ||
+    (ctx as any).record ||
+    (ctx as any).data ||
+    (ctx as any).siblingData ||
+    (ctx as any).formData ||
+    (typeof props.value === "object" && props.value !== null ? props.value : {})
+  );
+});
 const leadName = computed(() => (record.value.leadName as string) ?? "");
 const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
 
@@ -37,8 +60,11 @@ const asoOkeFemaleQty = computed(() => (record.value.asoOkeFemaleQty as number) 
 
 const hasOrder = computed(
   () =>
-    (wantsAsoebi.value && Boolean(asoebiYards.value)) ||
-    (wantsAsoOke.value && (asoOkeMaleQty.value > 0 || asoOkeFemaleQty.value > 0)),
+    Boolean(wantsAsoebi.value) ||
+    Boolean(asoebiYards.value) ||
+    Boolean(wantsAsoOke.value) ||
+    asoOkeMaleQty.value > 0 ||
+    asoOkeFemaleQty.value > 0,
 );
 
 const { data: asoebiSettings, refresh: refreshAsoebiSettings } = useCachedDyrectedGlobal("asoebi_settings");
