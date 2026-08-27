@@ -5,7 +5,6 @@ export const admins = defineCollection({
   auth: true,
   labels: { singular: "Admin", plural: "Admins" },
   admin: { useAsTitle: "name" },
-  fields: [
-    defineTextField({ name: "name", label: "Name" }),
-  ],
+  detail: false,
+  fields: [defineTextField({ name: "name", label: "Name" })],
 });

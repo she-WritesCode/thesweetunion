@@ -38,6 +38,7 @@ export const wishlistItems = defineCollection({
     ],
     group: "Wishlist",
   },
+  detail: false,
   fields: [
     ...defineTab({
       label: "General",
@@ -145,109 +146,6 @@ export const wishlistItems = defineCollection({
         }),
       ],
     }),
-  ],
-  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
-  detail: [
-    // ── 1. Top Status & Funding Model Strip (Compact 4-column grid) ──────────
-    displayGrid(4, [
-      displayField("fundingType", {
-        display: "badge",
-        badgeColors: { fixed: "indigo", crowdfund: "purple" },
-        label: "Funding Model",
-        editable: true,
-      }),
-      displayField("category", {
-        display: "badge",
-        badgeColors: {
-          kitchen: "amber",
-          travel: "sky",
-          home: "teal",
-          "cash-fund": "emerald",
-          other: "slate",
-        },
-        label: "Category",
-        editable: true,
-      }),
-      displayField("isFeatured", {
-        display: "badge",
-        badgeColors: { true: "amber", false: "slate" },
-        label: "Showcase",
-        editable: true,
-      }),
-      displayField("isHidden", {
-        display: "badge",
-        badgeColors: { false: "emerald", true: "rose" },
-        label: "Visibility",
-        editable: true,
-      }),
-    ]),
-
-    displayDivider({ spacing: "sm" }),
-
-    // ── 2. Financial & Reservation Metrics Hub (4-column grid) ───────────────
-    displayGrid(4, [
-      displayField("price", {
-        display: "currency",
-        currency: "NGN",
-        label: "Price / Goal",
-        editable: true,
-      }),
-      displayField("amountRaised", {
-        display: "currency",
-        currency: "NGN",
-        label: "Total Raised",
-      }),
-      displayField("reservedCount", {
-        label: "Reserved Units",
-      }),
-      displayField("contributorCount", {
-        label: "Contributors",
-      }),
-    ]),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 3. Product Media, Details & Links ────────────────────────────────────
-    displayGrid(3, [
-      displayField("image", {
-        label: "Product Image",
-        display: "image",
-        aspectRatio: "1/1",
-        objectFit: "cover",
-      }),
-      displayField("description", {
-        label: "Description & Gift Notes",
-        emptyText: "No description provided.",
-        editable: true,
-        span: 2,
-      }),
-    ]),
-
-    displayGrid(2, [
-      displayField("link", {
-        display: "link",
-        label: "Purchase / Registry Link",
-        emptyText: "Direct Gift / No External Link",
-        editable: true,
-      }),
-      displayField("maxQuantity", {
-        label: "Max Allowed Reservations",
-        editable: true,
-      }),
-    ]),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 4. Guest Reservations & Contributions Subsystem (Card Section) ───────
-    displaySection(
-      "Guest Reservations & Contributions",
-      [
-        displayField("reservations", {
-          label: "Reservation Records",
-        }),
-      ],
-      { span: 12, icon: "Gift" },
-    ),
   ],
   access: {
     read: "true",

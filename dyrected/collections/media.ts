@@ -15,6 +15,7 @@ export const media = defineCollection({
       { name: "hero", width: 1920, fit: "contain" },
     ],
   },
+  detail: false,
   fields: [
     defineTextField({ name: "alt", label: "Alt Text", required: true }),
     defineTextareaField({ name: "caption", label: "Caption" }),

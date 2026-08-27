@@ -29,6 +29,7 @@ export const rsvpGroups = defineCollection({
     defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
     group: "RSVP",
   },
+  detail: false,
   fields: [
     ...defineTab({
       label: "General",
@@ -108,61 +109,6 @@ export const rsvpGroups = defineCollection({
         }),
       ],
     }),
-  ],
-  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
-  detail: [
-    // ── 1. Top Status & Headcount Strip (Compact 4-column grid) ──────────────
-    displayGrid(4, [
-      displayField("isActive", {
-        display: "badge",
-        badgeColors: { true: "emerald", false: "rose" },
-        label: "Is Group Active",
-        editable: true,
-      }),
-      displayField("maxCapacity", {
-        label: "Max Capacity",
-        editable: true,
-      }),
-      displayField("confirmedCount", {
-        label: "Confirmed Seats",
-      }),
-      displayField("declinedCount", {
-        label: "Declined",
-      }),
-    ]),
-
-    displayDivider({ spacing: "sm" }),
-
-    // ── 2. Primary Action Hub (RSVP Link & QR Code Hero Widget) ──────────────
-    displayCustomComponent("RsvpLinkField"),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 3. Group Identity & Operational Notes ────────────────────────────────
-    displayGrid(2, [
-      displayField("slug", {
-        display: "code-badge",
-        label: "Invite URL Slug",
-      }),
-      displayField("description", {
-        label: "Internal Notes",
-        emptyText: "No internal notes",
-        editable: true,
-      }),
-    ]),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 4. Guest Submissions Subsystem (Card section) ────────────────────────
-    displaySection(
-      "Guest Responses in Group",
-      [
-        displayField("guests", {
-          label: "Guest Submissions",
-        }),
-      ],
-      { span: 12, icon: "Users" },
-    ),
   ],
   access: {
     read: "true",

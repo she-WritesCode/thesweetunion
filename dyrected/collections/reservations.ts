@@ -27,6 +27,7 @@ export const reservations = defineCollection({
     defaultColumns: ["guestName", "item", "intent", "paymentTiming", "reminderAt", "reservedAt"],
     group: "Wishlist",
   },
+  detail: false,
   fields: [
     ...defineTab({
       label: "Details",
@@ -130,96 +131,6 @@ export const reservations = defineCollection({
         }),
       ],
     }),
-  ],
-  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
-  detail: [
-    // ── 1. Top Intent & Operational Status Strip (Compact 4-column grid) ─────
-    displayGrid(4, [
-      displayField("intent", {
-        display: "badge",
-        badgeColors: {
-          reserve: "indigo",
-          contribute: "purple",
-          reminder: "amber",
-        },
-        label: "Guest Intent",
-        editable: true,
-      }),
-      displayField("paymentTiming", {
-        display: "badge",
-        badgeColors: { now: "emerald", later: "amber" },
-        label: "Payment Timing",
-        editable: true,
-      }),
-      displayField("paymentOption", {
-        display: "badge",
-        badgeColors: {
-          bank_transfer: "blue",
-          purchase_link: "teal",
-          bring_to_wedding: "purple",
-        },
-        label: "Payment Method",
-        emptyText: "Not Specified",
-        editable: true,
-      }),
-      displayField("item", {
-        label: "Wishlist Item",
-      }),
-    ]),
-
-    displayDivider({ spacing: "sm" }),
-
-    // ── 2. Financial Contribution & Quantity Hub (3-column grid) ─────────────
-    displayGrid(3, [
-      displayField("contributionAmount", {
-        display: "currency",
-        currency: "NGN",
-        label: "Contribution Amount",
-        emptyText: "Full Gift Reservation",
-        editable: true,
-      }),
-      displayField("quantity", {
-        label: "Quantity Reserved",
-        editable: true,
-      }),
-      displayField("reservedAt", {
-        display: "relative",
-        label: "Reservation Placed",
-      }),
-    ]),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 3. Scheduled Reminder & Guest Contact Subsystem (Card Section) ───────
-    displaySection(
-      "Reminder & Follow-up Details",
-      [
-        displayGrid(3, [
-          displayField("reminderAt", {
-            display: "date",
-            label: "Reminder Date",
-            emptyText: "No reminder scheduled",
-            editable: true,
-          }),
-          displayField("reminderChannel", {
-            display: "badge",
-            badgeColors: { whatsapp: "emerald", email: "sky" },
-            label: "Channel",
-            emptyText: "None",
-            editable: true,
-          }),
-          displayField("reminderContact", {
-            label: "Reminder Contact",
-            emptyText: "None",
-            editable: true,
-          }),
-        ]),
-      ],
-      {
-        span: 12,
-        icon: "Bell",
-      },
-    ),
   ],
   access: {
     read: "true",

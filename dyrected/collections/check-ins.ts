@@ -86,7 +86,6 @@ export const checkIns = defineCollection({
       ],
     }),
   ],
-  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
   detail: false,
   access: {
     read: "user != null",

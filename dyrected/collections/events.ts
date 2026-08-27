@@ -17,6 +17,7 @@ export const events = defineCollection({
     defaultColumns: ["order", "name", "date", "venueName", "dressCode", "collectsRsvp"],
     group: "RSVP",
   },
+  detail: false,
   fields: [
     defineNumberField({
       name: "order",
