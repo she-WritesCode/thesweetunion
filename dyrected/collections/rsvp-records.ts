@@ -70,6 +70,9 @@ export const rsvpRecords = defineCollection({
         "submittedAt",
       ],
       sort: { field: "submittedAt", direction: "desc" },
+      features: {
+        duplicate: false,
+      },
     }),
     defineView({
       slug: "asoebi_logistics",
