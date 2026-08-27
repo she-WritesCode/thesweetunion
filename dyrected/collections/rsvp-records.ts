@@ -50,6 +50,7 @@ export const rsvpRecords = defineCollection({
   },
   detail: false,
   // ── 📊 Operational Views (Dyrected 2.9.0 Workspaces) ──────────────────────
+  defaultView: "all_responses",
   views: [
     defineView({
       slug: "all_responses",
@@ -74,7 +75,7 @@ export const rsvpRecords = defineCollection({
       slug: "asoebi_logistics",
       label: "Aso Ebi Orders",
       icon: "Package",
-      layout: "cards",
+      layout: "table",
       filter: {
         or: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
       },
@@ -108,6 +109,7 @@ export const rsvpRecords = defineCollection({
       ],
       features: {
         edit: false,
+        view: false,
         delete: false,
         duplicate: false,
       },
@@ -395,164 +397,6 @@ export const rsvpRecords = defineCollection({
         }),
       ],
     }),
-  ],
-  // ── 📱 High-Density Compact Detail View ──────────────────────────────────────
-  detail: [
-    // ── 1. Top Status & Contact Strip (Compact 4-column grid) ─────────────────
-    displayGrid(4, [
-      displayField("attending", {
-        display: "badge",
-        badgeColors: { true: "emerald", false: "rose" },
-        label: "RSVP Status",
-      }),
-      displayField("checkedIn", {
-        display: "badge",
-        badgeColors: { true: "emerald", false: "slate" },
-        label: "Door Check-in",
-      }),
-      displayField("leadPhone", {
-        display: "phone",
-        label: "WhatsApp / Phone",
-      }),
-      displayField("leadEmail", {
-        display: "email",
-        label: "Email Address",
-      }),
-    ]),
-
-    // ── 2. Headcount, Companion & Guest RSVP Edit Link (Compact 3-column grid) ─────
-    displayGrid(3, [
-      displayField("hasSpouse", {
-        display: "badge",
-        badgeColors: { true: "purple", false: "slate" },
-        label: "Attending With Spouse",
-        emptyText: "Attending Solo",
-      }),
-      displayField("spouseName", {
-        label: "Spouse / Plus-One Name",
-        emptyText: "None (Attending Solo)",
-      }),
-      displayField("group", {
-        label: "Invitation Group",
-      }),
-    ]),
-
-    displayCustomComponent("RsvpEditLinkField"),
-
-    displayDivider({ spacing: "md" }),
-
-    // ── 3. Aso Ebi & Headwear Order (Financials & Logistics Desk) ────────────
-    displaySection(
-      "Aso Ebi & Headwear Logistics",
-      [
-        displayGrid(4, [
-          displayField("asoebiPaymentStatus", {
-            display: "badge",
-            badgeColors: { received: "emerald", pending: "amber", partial: "blue", waived: "purple" },
-            label: "Payment (Bank Transfer)",
-            editable: true,
-          }),
-          displayField("asoebiOrderStatus", {
-            display: "badge",
-            badgeColors: { delivered: "emerald", ready: "blue", unfulfilled: "amber" },
-            label: "Fulfillment / Delivery",
-            editable: true,
-          }),
-          displayField("asoebiYards", {
-            display: "badge",
-            label: "Fabric Yards",
-            emptyText: "None",
-            editable: true,
-          }),
-          displayField("asoOkeMaleQty", {
-            label: "Male Fila / Caps",
-            emptyText: "0",
-            editable: true,
-          }),
-          displayField("asoOkeFemaleQty", {
-            label: "Female Gele",
-            emptyText: "0",
-            editable: true,
-          }),
-          displayField("asoebiDetails", {
-            label: "Asoebi Order Summary",
-            hideIfEmpty: true,
-            editable: true,
-            span: 2,
-          }),
-          displayField("asoebiPaymentNotes", {
-            label: "Payment & Delivery Notes (Pickup / Dispatch Rider)",
-            hideIfEmpty: false,
-            editable: true,
-            span: 2,
-          }),
-        ]),
-        displayCustomComponent("SendAsoebiReminderButton", { visible: asoEbiOrderCondition }),
-      ],
-      {
-        span: 12,
-        visible: asoEbiOrderCondition,
-        icon: "Package",
-        description: "Manage bank transfer verification, fabric & headwear prep, and pickup/rider distribution.",
-      },
-    ),
-
-    displayDivider({ spacing: "md", visible: asoEbiOrderCondition }),
-
-    // ── 4. Digital Invitation & Access Pass (Dispatch Action Hub) ─────────────
-    displaySection(
-      "Digital Invitation & Joint Access Pass",
-      [
-        displayCustomComponent("AccessCardPreview", { visible: invitationCondition }),
-        displayCustomComponent("SendWhatsAppButton", { visible: invitationCondition }),
-        displayGrid(3, [
-          displayField("invitationSent", {
-            display: "badge",
-            badgeColors: { true: "emerald", false: "amber" },
-            label: "Pass Dispatched",
-          }),
-          displayField("invitationSentVia", {
-            display: "badge",
-            label: "Delivery Channel",
-          }),
-          displayField("invitationSentAt", {
-            display: "relative",
-            label: "Dispatched Date",
-          }),
-        ]),
-      ],
-      {
-        span: 12,
-        icon: "Send",
-        visible: invitationCondition,
-        description:
-          "Live preview of the 1 joint access pass (Lead + Spouse) and direct WhatsApp / Email dispatch triggers.",
-      },
-    ),
-
-    displayDivider({ spacing: "md", visible: invitationCondition }),
-
-    // ── 5. Event Schedule & Well Wishes Message ──────────────────────────────
-    displaySection(
-      "Event Details & Guest Notes",
-      [
-        displayGrid(2, [
-          displayField("selectedEvents", {
-            label: "Events Attending",
-          }),
-          displayField("submittedAt", {
-            display: "relative",
-            label: "RSVP Submitted",
-          }),
-          displayField("message", {
-            label: "Message to the Couple",
-            hideIfEmpty: true,
-            span: 2,
-          }),
-        ]),
-      ],
-      { span: 12, icon: "Calendar" },
-    ),
   ],
   access: {
     read: true,
