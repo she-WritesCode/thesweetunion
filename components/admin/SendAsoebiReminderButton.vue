@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
   doc?: Record<string, any>;
@@ -28,25 +29,24 @@ const props = defineProps<{
 
 const loading = ref(false);
 const error = ref("");
-const customMessage = ref("");
-
-const isUserEdited = ref(false);
+const customMessage = ref(typeof props.value === "string" ? props.value : "");
+const isUserEdited = ref(Boolean(typeof props.value === "string" && props.value.trim()));
 
 const record = computed<Record<string, any>>(() => {
   const ctx = props.context || {};
-  return (
-    props.doc ||
-    (props as any).data ||
-    (props as any).record ||
-    (props as any).row ||
-    (ctx as any).doc ||
-    (ctx as any).row ||
-    (ctx as any).record ||
-    (ctx as any).data ||
-    (ctx as any).siblingData ||
-    (ctx as any).formData ||
-    (typeof props.value === "object" && props.value !== null ? props.value : {})
-  );
+  return {
+    ...(typeof props.value === "object" && props.value !== null ? props.value : {}),
+    ...(ctx.formData || {}),
+    ...(ctx.siblingData || {}),
+    ...(ctx.data || {}),
+    ...(ctx.record || {}),
+    ...(ctx.row || {}),
+    ...(ctx.doc || {}),
+    ...((props as any).data || {}),
+    ...((props as any).record || {}),
+    ...((props as any).row || {}),
+    ...(props.doc || {}),
+  };
 });
 const leadName = computed(() => (record.value.leadName as string) ?? "");
 const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
@@ -172,6 +172,17 @@ watch(
   (newVal) => {
     if (!isUserEdited.value) {
       customMessage.value = newVal;
+    }
+  },
+  { immediate: true },
+);
+
+// Sync current message to parent form state via onChange (if available)
+watch(
+  customMessage,
+  (newMsg) => {
+    if (props.onChange) {
+      props.onChange(newMsg);
     }
   },
   { immediate: true },
