@@ -12,14 +12,34 @@ import {
   defineTextareaField,
   defineDateField,
   defineNumberField,
-  // ── Detail View Primitives ──
-  displayGrid,
-  displayField,
-  displayDivider,
-  displaySection,
-  displayCustomComponent,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
+
+export const ASOEBI_PAYMENT_STATUS_OPTIONS = [
+  { label: "Pending Payment ⏳", value: "pending" },
+  { label: "Payment Received ✓", value: "received" },
+  { label: "Partial Payment 💳", value: "partial" },
+  { label: "Gift / Waived 🎁", value: "waived" },
+];
+
+export const ASOEBI_ORDER_STATUS_OPTIONS = [
+  { label: "Unfulfilled / Processing 📦", value: "unfulfilled" },
+  { label: "Ready for Pickup / Delivery 🛍️", value: "ready" },
+  { label: "Delivered / Handed Over ✅", value: "delivered" },
+];
+
+export const ASOEBI_YARDS_OPTIONS = [
+  { label: "2 Yards (₦20,000)", value: "2" },
+  { label: "3 Yards (₦30,000)", value: "3" },
+  { label: "4 Yards (₦40,000)", value: "4" },
+  { label: "5 Yards (₦50,000)", value: "5" },
+  { label: "6 Yards (₦60,000)", value: "6" },
+];
+
+export const INVITATION_SENT_VIA_OPTIONS = [
+  { label: "WhatsApp", value: "whatsapp" },
+  { label: "Email", value: "email" },
+];
 
 // const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
 // const invitationCondition = "doc.attending === true";
@@ -89,10 +109,61 @@ export const rsvpRecords = defineCollection({
         "asoOkeMaleQty",
         "asoOkeFemaleQty",
         "asoebiPaymentStatus",
+        "asoebiAmountPaid",
         "asoebiOrderStatus",
         "asoebiPaymentNotes",
       ],
       actions: [
+        defineAction({
+          name: "updatePaymentStatus",
+          label: "Update Payment",
+          icon: "CreditCard",
+          type: "row",
+          fields: [
+            defineSelectField({
+              name: "asoebiPaymentStatus",
+              label: "Payment Status",
+              required: true,
+              options: ASOEBI_PAYMENT_STATUS_OPTIONS,
+            }),
+            defineNumberField({
+              name: "asoebiAmountPaid",
+              label: "Amount Paid (₦)",
+              admin: {
+                placeholder: "e.g. 20000",
+                description: "Amount received so far in Naira (helpful for partial payments).",
+              },
+            }),
+            defineTextareaField({
+              name: "asoebiPaymentNotes",
+              label: "Payment Notes",
+              admin: {
+                placeholder: "e.g. Received ₦40,000 via bank transfer on July 30th...",
+              },
+            }),
+          ],
+        }),
+        defineAction({
+          name: "updateFulfillmentStatus",
+          label: "Update Fulfilment",
+          icon: "PackageCheck",
+          type: "row",
+          fields: [
+            defineSelectField({
+              name: "asoebiOrderStatus",
+              label: "Fulfilment Status",
+              required: true,
+              options: ASOEBI_ORDER_STATUS_OPTIONS,
+            }),
+            defineTextareaField({
+              name: "asoebiPaymentNotes",
+              label: "Fulfilment & Delivery Notes",
+              admin: {
+                placeholder: "e.g. Package ready for pickup / Handed over to guest...",
+              },
+            }),
+          ],
+        }),
         defineAction({
           name: "sendAsoebiReminder",
           label: "Send WhatsApp Reminder",
@@ -229,13 +300,7 @@ export const rsvpRecords = defineCollection({
         defineSelectField({
           name: "asoebiYards",
           label: "Asoebi Fabric Yards",
-          options: [
-            { label: "2 Yards (₦20,000)", value: "2" },
-            { label: "3 Yards (₦30,000)", value: "3" },
-            { label: "4 Yards (₦40,000)", value: "4" },
-            { label: "5 Yards (₦50,000)", value: "5" },
-            { label: "6 Yards (₦60,000)", value: "6" },
-          ],
+          options: ASOEBI_YARDS_OPTIONS,
           admin: {
             width: "50%",
             condition: (data: any) => data.wantsAsoebi === true,
@@ -277,15 +342,20 @@ export const rsvpRecords = defineCollection({
           name: "asoebiPaymentStatus",
           label: "Payment Status",
           defaultValue: "pending",
-          options: [
-            { label: "Pending Payment ⏳", value: "pending" },
-            { label: "Payment Received ✓", value: "received" },
-            { label: "Partial Payment 💳", value: "partial" },
-            { label: "Gift / Waived 🎁", value: "waived" },
-          ],
+          options: ASOEBI_PAYMENT_STATUS_OPTIONS,
           admin: {
             width: "50%",
             description: "Track whether the guest has completed payment for their order.",
+            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+          },
+        }),
+        defineNumberField({
+          name: "asoebiAmountPaid",
+          label: "Amount Paid (₦)",
+          admin: {
+            width: "50%",
+            placeholder: "e.g. 20000",
+            description: "Amount received so far in Naira (helpful for partial payments).",
             condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
           },
         }),
@@ -293,11 +363,7 @@ export const rsvpRecords = defineCollection({
           name: "asoebiOrderStatus",
           label: "Fulfillment Status",
           defaultValue: "unfulfilled",
-          options: [
-            { label: "Unfulfilled / Processing 📦", value: "unfulfilled" },
-            { label: "Ready for Pickup / Delivery 🛍️", value: "ready" },
-            { label: "Delivered / Handed Over ✅", value: "delivered" },
-          ],
+          options: ASOEBI_ORDER_STATUS_OPTIONS,
           admin: {
             width: "50%",
             description: "Track physical packaging and delivery of fabric & headwear items.",
@@ -361,10 +427,7 @@ export const rsvpRecords = defineCollection({
         defineSelectField({
           name: "invitationSentVia",
           label: "Sent Via",
-          options: [
-            { label: "WhatsApp", value: "whatsapp" },
-            { label: "Email", value: "email" },
-          ],
+          options: INVITATION_SENT_VIA_OPTIONS,
           admin: {
             readOnly: true,
             width: "33%",

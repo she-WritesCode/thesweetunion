@@ -121,6 +121,7 @@ export interface Rsvp_records {
   asoOkeFemaleQty?: number;
   asoebiDetails?: string;
   asoebiPaymentStatus?: "pending" | "received" | "partial" | "waived";
+  asoebiAmountPaid?: number;
   asoebiOrderStatus?: "unfulfilled" | "ready" | "delivered";
   asoebiPaymentNotes?: string;
   asoebiReminder?: Record<string, unknown>;
