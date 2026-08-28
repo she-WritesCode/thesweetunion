@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
+import { useDyrected } from "@dyrected/vue";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 import { adminAuthHeaders } from "~/utils/admin-auth";
 
@@ -8,6 +9,7 @@ const props = defineProps<{
   data?: Record<string, any>;
   record?: Record<string, any>;
   row?: Record<string, any>;
+  ids?: string[];
   user?: any;
   value?: any;
   onChange?: (...args: any[]) => void;
@@ -24,17 +26,44 @@ const props = defineProps<{
     record?: Record<string, unknown>;
     data?: Record<string, unknown>;
     formData?: Record<string, unknown>;
+    ids?: string[];
   };
 }>();
 
+const dyrected = useDyrected();
 const loading = ref(false);
+const loadingDoc = ref(false);
 const error = ref("");
 const customMessage = ref(typeof props.value === "string" ? props.value : "");
 const isUserEdited = ref(Boolean(typeof props.value === "string" && props.value.trim()));
+const fetchedDoc = ref<Record<string, any> | null>(null);
+
+const ROUTE_SEGMENTS = new Set(["admin", "create", "collections", "globals"]);
+function readIdFromUrl(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const pathId = window.location.pathname.split("/").filter(Boolean).at(-1);
+  if (pathId && !ROUTE_SEGMENTS.has(pathId)) return pathId;
+  const hashId = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).at(-1);
+  if (hashId && !ROUTE_SEGMENTS.has(hashId)) return hashId;
+  return undefined;
+}
+
+const rsvpId = computed(() => {
+  return (
+    props.doc?.id ||
+    props.context?.doc?.id ||
+    props.context?.row?.id ||
+    (props as any).row?.id ||
+    (props as any).ids?.[0] ||
+    props.context?.ids?.[0] ||
+    readIdFromUrl()
+  );
+});
 
 const record = computed<Record<string, any>>(() => {
   const ctx = props.context || {};
   return {
+    ...(fetchedDoc.value || {}),
     ...(typeof props.value === "object" && props.value !== null ? props.value : {}),
     ...(ctx.formData || {}),
     ...(ctx.siblingData || {}),
@@ -48,15 +77,75 @@ const record = computed<Record<string, any>>(() => {
     ...(props.doc || {}),
   };
 });
+
+async function fetchRecordIfNeeded() {
+  const current = record.value;
+  // If we already have leadName and the asoebi fields, we're good
+  const hasAsoebiFields =
+    current.wantsAsoebi !== undefined ||
+    current.wantsAsoOke !== undefined ||
+    current.asoebiYards !== undefined ||
+    current.asoOkeMaleQty !== undefined;
+
+  if (current.leadName && hasAsoebiFields) {
+    return;
+  }
+
+  const id = rsvpId.value;
+  if (!id) return;
+
+  loadingDoc.value = true;
+  try {
+    if (dyrected?.client) {
+      const res = await dyrected.client.collection("rsvp_records").find({
+        where: { id: { equals: id } },
+        limit: 1,
+      });
+      if (res?.docs?.[0]) {
+        fetchedDoc.value = res.docs[0];
+        return;
+      }
+    }
+
+    const data = await $fetch<any>(`/api/dyrected/api/collections/rsvp_records/${id}`, {
+      headers: adminAuthHeaders(),
+    });
+    if (data?.id) {
+      fetchedDoc.value = data;
+    }
+  } catch (err) {
+    console.warn("Failed to fetch full RSVP record in Asoebi reminder:", err);
+  } finally {
+    loadingDoc.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchRecordIfNeeded();
+});
+
+watch(rsvpId, () => {
+  fetchRecordIfNeeded();
+});
+
 const leadName = computed(() => (record.value.leadName as string) ?? "");
 const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
 
-const wantsAsoebi = computed(() => Boolean(record.value.wantsAsoebi));
-const asoebiYards = computed(() => (record.value.asoebiYards as string) ?? "");
+const wantsAsoebi = computed(() => {
+  const val = record.value.wantsAsoebi;
+  return val === true || val === "true" || val === 1 || val === "1";
+});
+const asoebiYards = computed(() => {
+  const val = record.value.asoebiYards;
+  return val ? String(val) : "";
+});
 
-const wantsAsoOke = computed(() => Boolean(record.value.wantsAsoOke));
-const asoOkeMaleQty = computed(() => (record.value.asoOkeMaleQty as number) || 0);
-const asoOkeFemaleQty = computed(() => (record.value.asoOkeFemaleQty as number) || 0);
+const wantsAsoOke = computed(() => {
+  const val = record.value.wantsAsoOke;
+  return val === true || val === "true" || val === 1 || val === "1";
+});
+const asoOkeMaleQty = computed(() => Number(record.value.asoOkeMaleQty) || 0);
+const asoOkeFemaleQty = computed(() => Number(record.value.asoOkeFemaleQty) || 0);
 
 const hasOrder = computed(
   () =>
@@ -308,7 +397,10 @@ function sendReminder() {
 
 <template>
   <div class="asoebi-reminder-widget">
-    <template v-if="!hasOrder">
+    <template v-if="loadingDoc">
+      <p class="hint-text">Loading guest order details…</p>
+    </template>
+    <template v-else-if="!hasOrder">
       <p class="hint-text">Guest has not selected any Asoebi fabric or Aso Oke headwear yet.</p>
     </template>
     <template v-else-if="!leadPhone">
