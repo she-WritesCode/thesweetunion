@@ -210,6 +210,22 @@ function resetToDefault() {
   customMessage.value = defaultMessage.value;
 }
 
+const copied = ref(false);
+const showPreview = ref(false);
+
+async function copyPassUrl() {
+  if (!passUrl.value) return;
+  try {
+    await navigator.clipboard.writeText(passUrl.value);
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 2000);
+  } catch (err) {
+    console.error("Failed to copy link:", err);
+  }
+}
+
 async function handleDownloadCard() {
   if (cardRef.value?.downloadCard) {
     await cardRef.value.downloadCard();
@@ -224,18 +240,12 @@ async function sendWhatsApp() {
   sendSuccess.value = "";
 
   try {
-    // 1. Download card snapshot for easy manual attach if needed
-    if (cardRef.value?.downloadCard) {
-      await cardRef.value.downloadCard();
-    }
-
-    // 2. Mark as sent via API
+    // Mark as sent via API
     await $fetch(`/api/invitations/send-single/${id}`, {
       method: "POST",
       headers: adminAuthHeaders(),
     });
 
-    // 3. Open WhatsApp link with current customized message
     const cleanPhone = leadPhone.value.replace(/\+/g, "").replace(/[\s-()]/g, "");
     if (!cleanPhone) {
       throw new Error("No phone number found for this guest.");
@@ -245,7 +255,7 @@ async function sendWhatsApp() {
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(textToSend)}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
 
-    sendSuccess.value = "Pass downloaded & WhatsApp opened! Marked as Sent.";
+    sendSuccess.value = "WhatsApp opened! Pass marked as Sent.";
     if (props.onChange) props.onChange({ invitationSent: true });
   } catch (err: any) {
     error.value = err?.data?.message || err.message || "Failed to dispatch pass.";
@@ -284,98 +294,140 @@ async function sendEmail() {
 <template>
   <div class="send-pass-widget">
     <template v-if="loadingDoc">
-      <p class="hint-text">Loading pass information…</p>
+      <div class="loading-box">
+        <div class="spinner-sm" />
+        <p class="hint-text">Loading pass information…</p>
+      </div>
     </template>
     <template v-else-if="!rsvpId">
       <p class="hint-text">Please save the guest record first before dispatching the pass.</p>
     </template>
     <template v-else>
-      <div class="dispatch-grid">
-        <!-- Live Card Preview -->
-        <div class="card-preview-col">
-          <div class="preview-header">
-            <span class="widget-label">Live Pass Preview</span>
-            <button type="button" class="btn-download-sm" @click="handleDownloadCard">
-              📥 Download Card PNG
-            </button>
+      <div class="pass-stack">
+        <!-- 1. Guest Quick Card Header -->
+        <div class="guest-card">
+          <div class="guest-info">
+            <h4 class="guest-name">{{ guestName }}</h4>
+            <div class="guest-tags">
+              <span v-if="groupName" class="badge badge--group">{{ groupName }}</span>
+              <span v-if="hasSpouse" class="badge badge--admits">Admits 2</span>
+              <span class="badge badge--code">{{ rsvpId.toUpperCase() }}</span>
+            </div>
           </div>
-          <div class="card-scaler">
-            <AccessCard
-              ref="cardRef"
-              :rsvp-id="rsvpId"
-              :guest-name="guestName"
-              :has-spouse="hasSpouse"
-              :spouse-name="spouseName"
-              :group-name="groupName"
-              :event-names="eventNames"
-              :couple-name="coupleName"
-              :hashtag="hashtag"
-              :wedding-date-text="weddingDateText"
-            />
-          </div>
+          <p v-if="leadPhone" class="guest-phone">📱 {{ leadPhone }}</p>
+          <p v-else class="guest-phone error-inline">⚠️ No WhatsApp number</p>
         </div>
 
-        <!-- Dispatch Controls -->
-        <div class="controls-col">
-          <div class="message-box">
-            <div class="flex-header">
-              <label class="widget-label">Customize WhatsApp Message</label>
-              <button type="button" class="btn-reset" @click="resetToDefault">Reset Message</button>
-            </div>
-            <textarea
-              v-model="customMessage"
-              @input="isUserEdited = true"
-              rows="6"
-              class="wa-textarea"
-              placeholder="Enter message with pass link..."
-            />
-          </div>
-
-          <div class="pass-link-box">
-            <span class="link-label">Public Pass URL:</span>
-            <a :href="passUrl" target="_blank" rel="noopener" class="pass-url-text">
-              {{ passUrl }} ↗
-            </a>
-          </div>
-
-          <div class="action-buttons-row">
-            <!-- Send WhatsApp Button -->
-            <button
-              type="button"
-              class="btn-wa"
-              :disabled="sendingWa || !leadPhone || !customMessage.trim()"
-              @click="sendWhatsApp"
+        <!-- 2. Primary WhatsApp & Action Dispatch Buttons -->
+        <div class="actions-stack">
+          <button
+            type="button"
+            class="btn-primary-wa"
+            :disabled="sendingWa || !leadPhone || !customMessage.trim()"
+            @click="sendWhatsApp"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
-                />
-              </svg>
-              {{ sendingWa ? "Opening…" : "Send Pass on WhatsApp" }}
-            </button>
+              <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
+              />
+            </svg>
+            <span>{{ sendingWa ? "Opening WhatsApp…" : "Send Pass on WhatsApp" }}</span>
+          </button>
 
-            <!-- Send Email Button -->
+          <div class="secondary-actions-row">
             <button
               v-if="leadEmail"
               type="button"
-              class="btn-email"
+              class="btn-secondary"
               :disabled="sendingEmail"
               @click="sendEmail"
             >
-              ✉️ {{ sendingEmail ? "Sending…" : "Send via Email" }}
+              ✉️ {{ sendingEmail ? "Sending…" : "Send Email" }}
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="handleDownloadCard"
+            >
+              📥 Save Card PNG
             </button>
           </div>
+        </div>
 
-          <p v-if="!leadPhone" class="hint-text">⚠️ No WhatsApp phone number found for this guest.</p>
-          <p v-if="sendSuccess" class="success-text">{{ sendSuccess }}</p>
-          <p v-if="error" class="error-text">{{ error }}</p>
+        <!-- Feedback Alert -->
+        <p v-if="sendSuccess" class="alert-box alert-box--ok">{{ sendSuccess }}</p>
+        <p v-if="error" class="alert-box alert-box--err">{{ error }}</p>
+
+        <!-- 3. Copyable Public Pass URL -->
+        <div class="link-card">
+          <div class="link-card__header">
+            <span class="widget-label">Digital Pass Link</span>
+            <div class="link-buttons">
+              <button type="button" class="btn-copy" @click="copyPassUrl">
+                {{ copied ? "Copied! ✓" : "Copy Link 📋" }}
+              </button>
+              <a :href="passUrl" target="_blank" rel="noopener" class="btn-open-link">
+                Open ↗
+              </a>
+            </div>
+          </div>
+          <div class="link-pill" @click="copyPassUrl" title="Click to copy">
+            <span class="link-text">{{ passUrl }}</span>
+          </div>
+        </div>
+
+        <!-- 4. WhatsApp Message Editor -->
+        <div class="message-card">
+          <div class="message-header">
+            <span class="widget-label">WhatsApp Message Template</span>
+            <button type="button" class="btn-reset" @click="resetToDefault">Reset Default</button>
+          </div>
+          <textarea
+            v-model="customMessage"
+            @input="isUserEdited = true"
+            rows="5"
+            class="wa-textarea"
+            placeholder="Enter message to send on WhatsApp..."
+          />
+          <p class="message-hint">
+            The link above will automatically unfurl with the official digital pass card on WhatsApp.
+          </p>
+        </div>
+
+        <!-- 5. Collapsible Live Pass Preview -->
+        <div class="preview-section">
+          <button
+            type="button"
+            class="preview-toggle-btn"
+            @click="showPreview = !showPreview"
+          >
+            <span>🎟️ {{ showPreview ? "Hide Digital Pass Preview" : "Show Digital Pass Preview" }}</span>
+            <span class="toggle-arrow">{{ showPreview ? "▲" : "▼" }}</span>
+          </button>
+
+          <div v-show="showPreview" class="preview-content">
+            <div class="card-scaler">
+              <AccessCard
+                ref="cardRef"
+                :rsvp-id="rsvpId"
+                :guest-name="guestName"
+                :has-spouse="hasSpouse"
+                :spouse-name="spouseName"
+                :group-name="groupName"
+                :event-names="eventNames"
+                :couple-name="coupleName"
+                :hashtag="hashtag"
+                :wedding-date-text="weddingDateText"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </template>
@@ -384,92 +436,302 @@ async function sendEmail() {
 
 <style scoped>
 .send-pass-widget {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
+  display: block;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 4px 0;
+  font-family: inherit;
+}
+
+.loading-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+}
+
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e09f8c;
+  border-top-color: #865172;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .hint-text {
-  font-size: 0.825rem;
+  font-size: 0.85rem;
   color: #888;
   font-style: italic;
   margin: 0;
 }
 
-.success-text {
-  font-size: 0.825rem;
-  color: #2d7a47;
-  font-weight: 600;
-  margin: 0;
-}
-
-.error-text {
-  font-size: 0.825rem;
-  color: #c0514a;
-  margin: 0;
-}
-
-.dispatch-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 768px) {
-  .dispatch-grid {
-    grid-template-columns: 320px 1fr;
-  }
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.btn-download-sm {
-  background: none;
-  border: 1px solid #d4c5cf;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #865172;
-  cursor: pointer;
-}
-
-.btn-download-sm:hover {
-  background: #f5edf1;
-}
-
-.card-scaler {
-  transform-origin: top left;
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.controls-col {
+.pass-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  width: 100%;
 }
 
-.flex-header {
+/* ── Guest Card ── */
+.guest-card {
+  background: #fdfafc;
+  border: 1px solid #ebdbe4;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guest-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guest-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #30222a;
+}
+
+.guest-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.badge--group {
+  background: rgba(134, 81, 114, 0.1);
+  color: #865172;
+  border: 1px solid rgba(134, 81, 114, 0.2);
+}
+
+.badge--admits {
+  background: rgba(212, 175, 55, 0.15);
+  color: #8a651e;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.badge--code {
+  background: #30222a;
+  color: #fce8b3;
+  font-family: monospace;
+}
+
+.guest-phone {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.error-inline {
+  color: #c0514a;
+}
+
+/* ── Actions Stack ── */
+.actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-primary-wa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.925rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #25d366;
+  background: #25d366;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
+  transition:
+    background 150ms,
+    transform 100ms;
+}
+
+.btn-primary-wa:hover:not(:disabled) {
+  background: #1eb556;
+}
+
+.btn-primary-wa:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.btn-primary-wa:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondary-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  color: #653853;
+  border: 1px solid #d4c5cf;
+  transition:
+    background 150ms,
+    border-color 150ms;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fdfafc;
+  border-color: #865172;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Alerts ── */
+.alert-box {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.alert-box--ok {
+  background: #edf7ed;
+  color: #2d7a47;
+  border: 1px solid #c8e6c9;
+}
+
+.alert-box--err {
+  background: #fde8e7;
+  color: #c0514a;
+  border: 1px solid #f9c2be;
+}
+
+/* ── Pass Link Card ── */
+.link-card {
+  background: #fdfafc;
+  border: 1px solid #ebdbe4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.link-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .widget-label {
-  font-size: 0.825rem;
-  font-weight: 600;
-  color: #4a3746;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #653853;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+}
+
+.link-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-copy {
+  background: none;
+  border: none;
+  color: #865172;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-copy:hover {
+  color: #4a253b;
+}
+
+.btn-open-link {
+  color: #865172;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.link-pill {
+  background: #f5edf1;
+  border: 1px solid #dfcdd8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-text {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #653853;
+  user-select: all;
+}
+
+/* ── Message Card ── */
+.message-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .btn-reset {
@@ -488,11 +750,11 @@ async function sendEmail() {
   box-sizing: border-box;
   font-family: inherit;
   font-size: 0.85rem;
-  line-height: 1.4;
+  line-height: 1.45;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d4c5cf;
-  background: #fdfafc;
+  background: #ffffff;
   color: #2b1c28;
   resize: vertical;
   outline: none;
@@ -501,89 +763,59 @@ async function sendEmail() {
 
 .wa-textarea:focus {
   border-color: #865172;
-  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(134, 81, 114, 0.15);
 }
 
-.pass-link-box {
+.message-hint {
+  margin: 0;
+  font-size: 0.725rem;
+  color: #8a7280;
+  line-height: 1.35;
+  font-style: italic;
+}
+
+/* ── Preview Accordion Section ── */
+.preview-section {
+  border-top: 1px solid #ebdbe4;
+  padding-top: 10px;
+}
+
+.preview-toggle-btn {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(134, 81, 114, 0.06);
-  border: 1px dashed rgba(134, 81, 114, 0.3);
-  padding: 8px 12px;
+  justify-content: space-between;
+  background: #fdfafc;
+  border: 1px solid #ebdbe4;
   border-radius: 8px;
-  font-size: 0.8rem;
-}
-
-.link-label {
+  padding: 10px 14px;
+  font-size: 0.825rem;
   font-weight: 600;
-  color: #865172;
-  white-space: nowrap;
-}
-
-.pass-url-text {
-  color: #865172;
-  text-decoration: underline;
-  word-break: break-all;
-  font-family: monospace;
-}
-
-.action-buttons-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.btn-wa {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  color: #653853;
   cursor: pointer;
-  border: 1px solid transparent;
-  background: #25d366;
-  color: #fff;
-  border-color: #25d366;
-  transition:
-    background 150ms,
-    opacity 150ms;
-}
-
-.btn-wa:hover:not(:disabled) {
-  background: #1eb556;
-}
-
-.btn-wa:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-email {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: #865172;
-  color: #fff;
-  border: 1px solid #865172;
   transition: background 150ms;
 }
 
-.btn-email:hover:not(:disabled) {
-  background: #653853;
+.preview-toggle-btn:hover {
+  background: #f5edf1;
 }
 
-.btn-email:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.toggle-arrow {
+  font-size: 0.7rem;
+  color: #865172;
+}
+
+.preview-content {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.card-scaler {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
 }
 </style>

@@ -261,8 +261,8 @@ defineExpose({
 /* ── Card shell ───────────────────────────────────────────────────── */
 .acp-card {
   position: relative;
-  width: 380px;
-  max-width: calc(100vw - 32px);
+  width: 100%;
+  max-width: 360px;
   aspect-ratio: 3 / 4;
   background-color: #653853;
   border: 1.5px solid;
@@ -272,7 +272,7 @@ defineExpose({
   box-shadow:
     0 12px 40px -6px rgba(48, 34, 42, 0.25),
     0 3px 12px rgba(48, 34, 42, 0.1);
-  padding: 14px;
+  padding: 10px;
   box-sizing: border-box;
   margin: 0 auto;
 }
