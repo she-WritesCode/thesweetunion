@@ -6,6 +6,7 @@ import CheckInScanner from "~/components/admin/CheckInScanner.vue";
 import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
 import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButton.vue";
 import SendWhatsAppButton from "~/components/admin/SendWhatsAppButton.vue";
+import SendPassModal from "~/components/admin/SendPassModal.vue";
 import RsvpListSummary from "~/components/admin/RsvpListSummary.vue";
 import WishlistListSummary from "~/components/admin/WishlistListSummary.vue";
 import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
@@ -34,6 +35,7 @@ const adminComponents = {
   AccessCardPreview,
   SendAsoebiReminderButton,
   SendWhatsAppButton,
+  SendPassModal,
   RsvpEditLinkField,
   RsvpLinkField,
   CheckInScanner,
@@ -53,6 +55,10 @@ const adminComponents = {
     "rsvp_records.accessCardPreview": AccessCardPreview,
     "rsvp_records.asoebiReminder": SendAsoebiReminderButton,
     "rsvp_records.sendWhatsApp": SendWhatsAppButton,
+    "rsvp_records.sendPassModal": SendPassModal,
+    "rsvp_records.passModal": SendPassModal,
+    sendPassModal: SendPassModal,
+    passModal: SendPassModal,
     asoebiReminder: SendAsoebiReminderButton,
     accessCardPreview: AccessCardPreview,
     rsvpEditLink: RsvpEditLinkField,

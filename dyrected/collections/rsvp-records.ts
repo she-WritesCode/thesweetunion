@@ -448,27 +448,37 @@ export const rsvpRecords = defineCollection({
           unit: "Orders",
           aggregate: {
             count: "*",
+            where: { OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }] },
           },
           subMetrics: [
             {
               label: "In Processing",
               aggregate: {
                 count: "*",
-                where: { asoebiOrderStatus: { equals: "unfulfilled" } },
+                where: {
+                  asoebiOrderStatus: { equals: "unfulfilled" },
+                  OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                },
               },
             },
             {
               label: "Ready for Pickup",
               aggregate: {
                 count: "*",
-                where: { asoebiOrderStatus: { equals: "ready" } },
+                where: {
+                  asoebiOrderStatus: { equals: "ready" },
+                  OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                },
               },
             },
             {
               label: "Handed Over",
               aggregate: {
                 count: "*",
-                where: { asoebiOrderStatus: { equals: "delivered" } },
+                where: {
+                  asoebiOrderStatus: { equals: "delivered" },
+                  OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                },
               },
             },
           ],
@@ -656,6 +666,58 @@ export const rsvpRecords = defineCollection({
         "invitationSentAt",
       ],
       sort: { field: "invitationSent", direction: "asc" },
+      metrics: [
+        {
+          label: "Dispatched Passes",
+          aggregates: {
+            sent: {
+              count: "id",
+              where: { attending: { equals: true }, invitationSent: { equals: true } },
+            },
+          },
+          expression: "aggregates.sent",
+          format: "number",
+          subMetrics: [
+            {
+              label: "Total Attending",
+              aggregates: {
+                total: { count: "id", where: { attending: { equals: true } } },
+              },
+              expression: "aggregates.total",
+              format: "number",
+            },
+          ],
+        },
+        {
+          label: "Pending Dispatch",
+          aggregates: {
+            pending: {
+              count: "id",
+              where: { attending: { equals: true }, invitationSent: { equals: false } },
+            },
+          },
+          expression: "aggregates.pending",
+          format: "number",
+        },
+      ],
+      actions: [
+        defineAction({
+          name: "sendPass",
+          label: "Send Pass",
+          icon: "Send",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "passModal",
+              label: "Dispatch Wedding Pass",
+              admin: {
+                component: "rsvp_records.sendPassModal",
+                description: "Preview access card and dispatch digital pass to guest via WhatsApp or Email.",
+              },
+            }),
+          ],
+        }),
+      ],
       features: {
         edit: false,
         view: false,

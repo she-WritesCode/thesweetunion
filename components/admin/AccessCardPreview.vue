@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useDyrectedClient } from "#imports";
 import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
@@ -18,7 +19,7 @@ const props = defineProps<{
   };
 }>();
 
-const qrCanvas = ref<HTMLCanvasElement | null>(null);
+const client = useDyrectedClient();
 const loading = ref(false);
 const sendingWa = ref(false);
 const sendingEmail = ref(false);
@@ -38,15 +39,26 @@ const ROUTE_SEGMENTS = new Set(["admin", "create", "collections", "globals"]);
 
 function readIdFromUrl(): string | undefined {
   // Try pathname first (React Router / History API)
-  const pathId = window.location.pathname.split("/").filter(Boolean).at(-1);
+  if (typeof window === "undefined") return undefined;
+  const pathSegments = window.location.pathname.split("/").filter(Boolean);
+  const pathId = pathSegments.at(-1);
   if (pathId && !ROUTE_SEGMENTS.has(pathId)) return pathId;
-  // Fall back to hash routing
-  const hashId = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean).at(-1);
+
+  // Fallback to hash (#/collections/rsvp_records/<id>)
+  const hashSegments = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const hashId = hashSegments.at(-1);
   if (hashId && !ROUTE_SEGMENTS.has(hashId)) return hashId;
+
   return undefined;
 }
 
-const rsvpId = computed(() => (props.doc?.id as string | undefined) ?? readIdFromUrl());
+const routeId = ref<string | undefined>(readIdFromUrl());
+
+function handleNavigation() {
+  routeId.value = readIdFromUrl();
+}
+
+const rsvpId = computed(() => (props.doc?.id as string | undefined) ?? routeId.value);
 
 const siblingData = computed(() => props.doc ?? props.context?.siblingData ?? {});
 const leadName = computed(() => (siblingData.value.leadName as string) ?? "");
@@ -85,15 +97,13 @@ async function loadCardData() {
     await Promise.all([fetchEvents(), fetchGroup(), fetchSiteSettings()]);
   } finally {
     loading.value = false;
-    await nextTick();
-    await renderQR();
   }
 }
 
 async function fetchEvents() {
   if (!selectedEventIds.value.length) return;
   try {
-    const data = await $fetch<any>("/api/dyrected/api/collections/events?limit=20");
+    const data = await client.collection("events").find({ limit: 50, depth: 1 });
     eventNames.value = (data?.docs ?? [])
       .filter((e: any) => selectedEventIds.value.includes(e.id))
       .map((e: any) => e.name);
@@ -103,34 +113,23 @@ async function fetchEvents() {
 async function fetchGroup() {
   if (!groupId.value) return;
   try {
-    const data = await $fetch<any>(`/api/dyrected/api/collections/rsvp_groups/${groupId.value}`);
-    groupName.value = data?.name ?? "";
+    const data = await client.collection("rsvp_groups").find({
+      where: { id: { equals: groupId.value } },
+      limit: 1,
+    });
+    groupName.value = data?.docs?.[0]?.name ?? "";
   } catch {}
 }
 
 async function fetchSiteSettings() {
   try {
-    const data = await $fetch<any>("/api/dyrected/api/globals/site_settings");
+    const data = (await client.global("site_settings").get()) as any;
     const p1 = data?.partnerOneName ?? "";
     const p2 = data?.partnerTwoName ?? "";
     if (p1 && p2) coupleName.value = `${p1} & ${p2}`;
     if (data?.hashtag) hashtag.value = data.hashtag;
     if (data?.weddingDateText) weddingDateText.value = data.weddingDateText;
   } catch {}
-}
-
-async function renderQR() {
-  if (!qrCanvas.value || !rsvpId.value) return;
-  const QRCode = (await import("qrcode")).default;
-  await QRCode.toCanvas(qrCanvas.value, rsvpId.value, {
-    width: 110,
-    margin: 1,
-    color: { dark: "#865172", light: "#F5EDF1" },
-  });
-}
-
-function handleNavigation() {
-  rsvpId.value = readIdFromUrl();
 }
 
 // Patch history API — React Router uses pushState, not hashchange
@@ -163,30 +162,12 @@ onUnmounted(() => {
 watch(rsvpId, loadCardData);
 watch([selectedEventIds, groupId], loadCardData, { deep: true });
 
-async function captureCardImage(): Promise<string> {
-  const captureEl = document.getElementById(`access-card-capture-${rsvpId.value}`);
-  const cardEl = document.getElementById(`access-card-${rsvpId.value}`);
-  if (!captureEl || !cardEl) throw new Error("Card element not found");
-
-  // Add exporting class to temporarily fall back to solid colors for html2canvas
-  cardEl.classList.add("acp-exporting");
-
-  try {
-    const html2canvas = (await import("html2canvas")).default;
-    const canvas = await html2canvas(captureEl, { scale: 3, backgroundColor: null, useCORS: true });
-    return canvas.toDataURL("image/png");
-  } finally {
-    // Restore the screen-friendly shiny gradients immediately
-    cardEl.classList.remove("acp-exporting");
-  }
-}
+const accessCardRef = ref<any>(null);
 
 async function downloadCard() {
-  const dataUrl = await captureCardImage();
-  const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = `access-card-${(guestName.value || "guest").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
-  a.click();
+  if (accessCardRef.value?.downloadCard) {
+    await accessCardRef.value.downloadCard();
+  }
 }
 
 async function sendWhatsApp() {
@@ -195,12 +176,13 @@ async function sendWhatsApp() {
   sendError.value = "";
   sendSuccess.value = "";
   try {
-    // Capture the card image and trigger download so user can attach in WhatsApp
-    const dataUrl = await captureCardImage();
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = `access-card-${(guestName.value || "guest").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
-    a.click();
+    if (accessCardRef.value?.captureCardImage) {
+      const dataUrl = await accessCardRef.value.captureCardImage();
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `access-card-${(guestName.value || "guest").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+      a.click();
+    }
 
     // Mark as sent + get wa.me link
     const data = await $fetch<any>(`/api/invitations/send-single/${rsvpId.value}`, {
@@ -225,7 +207,10 @@ async function sendEmail() {
   sendError.value = "";
   sendSuccess.value = "";
   try {
-    const imageBase64 = await captureCardImage();
+    let imageBase64 = "";
+    if (accessCardRef.value?.captureCardImage) {
+      imageBase64 = await accessCardRef.value.captureCardImage();
+    }
     await $fetch(`/api/invitations/send-email/${rsvpId.value}`, {
       method: "POST",
       headers: adminAuthHeaders(),
@@ -244,136 +229,25 @@ async function sendEmail() {
 <template>
   <div class="acp-wrap">
     <p v-if="!rsvpId" class="acp-empty">Save this record first to generate the access card.</p>
-    <p v-else-if="!attending" class="acp-empty">This guest declined attendance (Attending: No). Access card invitation is not generated.</p>
+    <p v-else-if="!attending" class="acp-empty">
+      This guest declined attendance (Attending: No). Access card invitation is not generated.
+    </p>
 
     <template v-else>
-      <!-- ─── Card + overlay wrapper ───────────────────────── -->
-      <div class="acp-card-wrap">
-        <div :id="`access-card-capture-${rsvpId}`" class="acp-capture-wrapper">
-          <div :id="`access-card-${rsvpId}`" class="acp-card">
-            <!-- Paper grain overlay -->
-            <div class="acp-texture" aria-hidden="true" />
-
-            <div class="acp-inner-frame">
-              <!-- ── Header ──────────────────────────────────────── -->
-              <!-- Botanical ornament with gold-foil gradient definition -->
-              <svg
-                class="acp-botanical"
-                viewBox="0 0 160 36"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient id="gold-foil" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#FCE8B3" />
-                    <stop offset="40%" stop-color="#D4AF37" />
-                    <stop offset="60%" stop-color="#F5D77F" />
-                    <stop offset="100%" stop-color="#B48A1E" />
-                  </linearGradient>
-                </defs>
-                <path d="M80 18 C65 10, 48 8, 30 14" stroke="url(#gold-foil)" stroke-width="1" stroke-linecap="round" />
-                <path
-                  d="M80 18 C95 10, 112 8, 130 14"
-                  stroke="url(#gold-foil)"
-                  stroke-width="1"
-                  stroke-linecap="round"
-                />
-                <path
-                  d="M50 14 C46 8, 40 6, 34 10"
-                  stroke="url(#gold-foil)"
-                  stroke-width="0.8"
-                  stroke-linecap="round"
-                />
-                <path
-                  d="M110 14 C114 8, 120 6, 126 10"
-                  stroke="url(#gold-foil)"
-                  stroke-width="0.8"
-                  stroke-linecap="round"
-                />
-                <path
-                  d="M60 12 C57 6, 53 4, 48 7"
-                  stroke="url(#gold-foil)"
-                  stroke-width="0.7"
-                  stroke-linecap="round"
-                  opacity="0.7"
-                />
-                <path
-                  d="M100 12 C103 6, 107 4, 112 7"
-                  stroke="url(#gold-foil)"
-                  stroke-width="0.7"
-                  stroke-linecap="round"
-                  opacity="0.7"
-                />
-                <circle cx="80" cy="18" r="1.5" fill="url(#gold-foil)" opacity="0.8" />
-                <circle cx="34" cy="10" r="1" fill="url(#gold-foil)" opacity="0.6" />
-                <circle cx="126" cy="10" r="1" fill="url(#gold-foil)" opacity="0.6" />
-              </svg>
-
-              <p class="acp-couple">{{ coupleName }}</p>
-              <p class="acp-hashtag">{{ hashtag }}</p>
-
-              <!-- ── Divider ─────────────────────────────────────── -->
-              <div class="acp-divider">
-                <span class="acp-divider__line" />
-                <svg class="acp-divider__diamond" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <defs>
-                    <linearGradient id="gold-foil-diamond" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#FCE8B3" />
-                      <stop offset="40%" stop-color="#D4AF37" />
-                      <stop offset="60%" stop-color="#F5D77F" />
-                      <stop offset="100%" stop-color="#B48A1E" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M6 1 L11 6 L6 11 L1 6 Z" fill="url(#gold-foil-diamond)" opacity="0.85" />
-                </svg>
-                <span class="acp-divider__line" />
-              </div>
-
-              <!-- ── Body ───────────────────────────────────────── -->
-              <div class="acp-body">
-                <p class="acp-guest">{{ guestName }}</p>
-
-                <div v-if="hasSpouse" class="acp-admits">
-                  <span class="acp-admits__pill">ADMITS 2</span>
-                </div>
-
-                <p v-if="groupName" class="acp-group">{{ groupName }}</p>
-
-                <p v-if="eventNames.length" class="acp-events">
-                  <span v-for="(name, i) in eventNames" :key="name">
-                    {{ name }}<span v-if="i < eventNames.length - 1" class="acp-events__sep"> · </span>
-                  </span>
-                </p>
-                <p v-else-if="loading" class="acp-events acp-events--loading">Loading…</p>
-
-                <!-- QR code frame -->
-                <div class="acp-qr-frame">
-                  <div class="acp-qr-inner">
-                    <canvas ref="qrCanvas" class="acp-qr-canvas" />
-                  </div>
-                  <p class="acp-qr-label">Show at entrance</p>
-                </div>
-              </div>
-
-              <!-- ── Footer ─────────────────────────────────────── -->
-              <div class="acp-footer">
-                <div class="acp-footer__rule" />
-                <p v-if="weddingDateText" class="acp-date">{{ weddingDateText }}</p>
-                <p class="acp-welcome">Welcome to our celebration</p>
-                <p class="acp-footer__hashtag">{{ hashtag }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- ─── End Card ──────────────────────────────────── -->
-
-        <!-- Loading overlay -->
-        <div v-if="loading" class="acp-overlay" aria-hidden="true">
-          <div class="acp-loading__spinner" />
-        </div>
-      </div>
-      <!-- ─── End Card Wrap ─────────────────────────────────── -->
+      <!-- Reusable Access Card Component -->
+      <AccessCard
+        ref="accessCardRef"
+        :rsvp-id="rsvpId"
+        :guest-name="guestName"
+        :has-spouse="hasSpouse"
+        :spouse-name="spouseName"
+        :group-name="groupName"
+        :event-names="eventNames"
+        :couple-name="coupleName"
+        :hashtag="hashtag"
+        :wedding-date-text="weddingDateText"
+        :loading="loading"
+      />
 
       <!-- Actions -->
       <div class="acp-actions">
@@ -477,7 +351,6 @@ async function sendEmail() {
 </template>
 
 <style scoped>
-/* ── Wrapper ──────────────────────────────────────────────────────── */
 .acp-wrap {
   display: flex;
   flex-direction: column;
@@ -491,370 +364,11 @@ async function sendEmail() {
   font-style: italic;
 }
 
-.acp-card-wrap {
-  position: relative;
-  display: block;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 12px;
-}
-
-.acp-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background: rgba(245, 237, 241, 0.72);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.acp-loading__spinner {
-  width: 28px;
-  height: 28px;
-  border: 2.5px solid #e09f8c;
-  border-top-color: #865172;
-  border-radius: 50%;
-  animation: acp-spin 0.7s linear infinite;
-}
-
-@keyframes acp-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ── Card shell ───────────────────────────────────────────────────── */
-.acp-card {
-  position: relative;
-  width: 480px;
-  aspect-ratio: 3 / 4;
-  background-color: #653853;
-  border: 1.5px solid;
-  border-image: linear-gradient(135deg, #fce8b3 0%, #d4af37 40%, #f5d77f 60%, #b48a1e 100%) 1;
-  border-radius: 0;
-  overflow: hidden;
-  box-shadow:
-    0 12px 40px -6px rgba(48, 34, 42, 0.25),
-    0 3px 12px rgba(48, 34, 42, 0.1);
-  padding: 14px;
-  box-sizing: border-box;
-}
-
-/* Double border frame mimicking elegant wedding card stock */
-.acp-inner-frame {
-  border: 1.5px solid;
-  border-image: linear-gradient(135deg, #b48a1e 0%, #f5d77f 40%, #d4af37 60%, #fce8b3 100%) 1;
-  outline: 1px solid #d4af37;
-  outline-offset: -4px;
-  border-radius: 0;
-  padding: 14px 12px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.acp-capture-wrapper {
-  padding: 8px;
-  background: transparent;
-  display: inline-block;
-}
-
-/* Paper grain texture overlay */
-.acp-texture {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.025;
-  background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 50%, transparent 50%),
-    linear-gradient(rgba(255, 255, 255, 0.15) 50%, transparent 50%);
-  background-size: 2px 2px;
-}
-
-/* Everything above texture */
-.acp-card > *:not(.acp-texture) {
-  position: relative;
-  z-index: 2;
-}
-
-/* ── Header ───────────────────────────────────────────────────────── */
-.acp-header {
-  background: transparent;
-  padding: 12px 16px 8px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  width: 100%;
-}
-
-.acp-botanical {
-  width: 160px;
-  height: 36px;
-  margin-bottom: 12px;
-  opacity: 0.95;
-}
-
-.acp-couple {
-  margin: 0;
-  font-family: "Cinzel Decorative", serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 40%, #f5d77f 60%, #b48a1e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: 0.06em;
-  line-height: 1.3;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-.acp-hashtag {
-  margin: 6px 0 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.62rem;
-  font-weight: 500;
-  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 50%, #b48a1e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-/* ── Divider ──────────────────────────────────────────────────────── */
-.acp-divider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 24px;
-  margin: 12px 0 4px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.acp-divider__line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.65), transparent);
-}
-
-.acp-divider__diamond {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-/* ── Body ─────────────────────────────────────────────────────────── */
-.acp-body {
-  padding: 12px 16px 12px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.acp-guest {
-  margin: 0;
-  font-family: "Lora", serif;
-  font-size: 1.45rem;
-  font-weight: 600;
-  color: #faf5f8;
-  letter-spacing: 0.01em;
-  line-height: 1.25;
-}
-
-.acp-admits {
-  margin: 4px 0 2px;
-}
-
-.acp-admits__pill {
-  display: inline-block;
-  padding: 3px 12px;
-  border: 1px solid;
-  border-image: linear-gradient(135deg, #fce8b3, #d4af37, #b48a1e) 1;
-  border-radius: 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: #faf5f8;
-  text-transform: uppercase;
-  background: rgba(212, 175, 55, 0.08);
-}
-
-.acp-group {
-  margin: 2px 0 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(250, 245, 248, 0.7);
-}
-
-.acp-events {
-  margin: 2px 0 0;
-  font-family: "Lora", serif;
-  font-size: 0.75rem;
-  font-style: italic;
-  color: rgba(250, 245, 248, 0.85);
-  line-height: 1.4;
-}
-
-.acp-events__sep {
-  color: #d4af37;
-  font-style: normal;
-}
-
-.acp-events--loading {
-  color: rgba(250, 245, 248, 0.4);
-}
-
-/* QR frame */
-.acp-qr-frame {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-
-.acp-qr-inner {
-  padding: 8px;
-  background: #faf5f8;
-  border: 1.5px solid;
-  border-image: linear-gradient(135deg, #fce8b3, #d4af37, #b48a1e) 1;
-  border-radius: 0;
-  box-shadow: 0 4px 14px rgba(48, 34, 42, 0.2);
-}
-
-.acp-qr-canvas {
-  display: block;
-  border-radius: 4px;
-}
-
-.acp-qr-label {
-  margin: 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(250, 245, 248, 0.6);
-}
-
-/* ── Footer ───────────────────────────────────────────────────────── */
-.acp-footer {
-  padding: 10px 16px 4px;
-  text-align: center;
-  background: transparent;
-  border-top: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.acp-footer__rule {
-  width: 40px;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.65), transparent);
-  margin-bottom: 8px;
-}
-
-.acp-date {
-  margin: 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 50%, #b48a1e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.acp-welcome {
-  margin: 0;
-  font-family: "Lora", serif;
-  font-size: 0.75rem;
-  font-style: italic;
-  color: rgba(250, 245, 248, 0.7);
-}
-
-.acp-footer__hashtag {
-  margin: 0;
-  font-family: "Jost", sans-serif;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(250, 245, 248, 0.5);
-  opacity: 0.7;
-}
-
-/* Fallbacks during HTML2Canvas Export */
-.acp-card.acp-exporting {
-  border: 1.5px solid #d4af37;
-  border-image: none;
-}
-.acp-card.acp-exporting .acp-inner-frame {
-  border: 1.5px solid #d4af37;
-  border-image: none;
-  outline: 1.5px solid #d4af37;
-}
-.acp-card.acp-exporting .acp-couple {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: initial;
-  color: #d4af37;
-}
-.acp-card.acp-exporting .acp-hashtag {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: initial;
-  color: #d4af37;
-}
-.acp-card.acp-exporting .acp-date {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  -webkit-text-fill-color: initial;
-  color: #d4af37;
-}
-.acp-card.acp-exporting .acp-admits__pill {
-  border: 1px solid #d4af37;
-  border-image: none;
-}
-.acp-card.acp-exporting .acp-qr-inner {
-  border: 1.5px solid #d4af37;
-  border-image: none;
-}
-
-/* ── Actions ──────────────────────────────────────────────────────── */
 .acp-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-top: 4px;
 }
 
 .acp-btn {
