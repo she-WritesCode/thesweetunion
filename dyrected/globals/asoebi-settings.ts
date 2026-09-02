@@ -33,7 +33,7 @@ export const asoebiSettings = defineGlobal({
     defineNumberField({
       name: "asoOkeMalePrice",
       label: "Male Aso Oke (Fila/Cap) Price (NGN)",
-      defaultValue: 8000,
+      defaultValue: 6000,
       admin: {
         description: "Price for Male Aso Oke (Fila / Cap) in Naira.",
         format: { type: "currency", currency: "NGN" },
@@ -43,7 +43,7 @@ export const asoebiSettings = defineGlobal({
     defineNumberField({
       name: "asoOkeFemalePrice",
       label: "Female Aso Oke (Gele) Price (NGN)",
-      defaultValue: 8000,
+      defaultValue: 6000,
       admin: {
         description: "Price for Female Aso Oke (Gele) in Naira.",
         format: { type: "currency", currency: "NGN" },

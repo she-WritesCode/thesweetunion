@@ -53,9 +53,9 @@ export const rsvpRecords = defineCollection({
   admin: {
     icon: "ReceiptText",
     useAsTitle: "leadName",
-    components: {
-      beforeListTable: ["RsvpListSummary"],
-    },
+    // components: {
+    //   beforeListTable: ["RsvpListSummary"],
+    // },
     defaultColumns: [
       "leadName",
       "group",
@@ -133,10 +133,7 @@ export const rsvpRecords = defineCollection({
                 sum: "asoebiYards",
                 cast: "number",
                 where: {
-                  AND: [
-                    { wantsAsoebi: { equals: true } },
-                    { asoebiOrderStatus: { equals: "delivered" } },
-                  ],
+                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                 },
               },
             },
@@ -152,10 +149,7 @@ export const rsvpRecords = defineCollection({
                   sum: "asoebiYards",
                   cast: "number",
                   where: {
-                    AND: [
-                      { wantsAsoebi: { equals: true } },
-                      { asoebiOrderStatus: { equals: "delivered" } },
-                    ],
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
               },
@@ -179,10 +173,7 @@ export const rsvpRecords = defineCollection({
                 sum: "asoOkeMaleQty",
                 cast: "number",
                 where: {
-                  AND: [
-                    { wantsAsoOke: { equals: true } },
-                    { asoebiOrderStatus: { equals: "delivered" } },
-                  ],
+                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                 },
               },
             },
@@ -198,10 +189,7 @@ export const rsvpRecords = defineCollection({
                   sum: "asoOkeMaleQty",
                   cast: "number",
                   where: {
-                    AND: [
-                      { wantsAsoOke: { equals: true } },
-                      { asoebiOrderStatus: { equals: "delivered" } },
-                    ],
+                    AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
               },
@@ -225,10 +213,7 @@ export const rsvpRecords = defineCollection({
                 sum: "asoOkeFemaleQty",
                 cast: "number",
                 where: {
-                  AND: [
-                    { wantsAsoOke: { equals: true } },
-                    { asoebiOrderStatus: { equals: "delivered" } },
-                  ],
+                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                 },
               },
             },
@@ -244,10 +229,7 @@ export const rsvpRecords = defineCollection({
                   sum: "asoOkeFemaleQty",
                   cast: "number",
                   where: {
-                    AND: [
-                      { wantsAsoOke: { equals: true } },
-                      { asoebiOrderStatus: { equals: "delivered" } },
-                    ],
+                    AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
               },
@@ -277,8 +259,7 @@ export const rsvpRecords = defineCollection({
               where: { wantsAsoOke: { equals: true } },
             },
           },
-          expression:
-            "(aggregates.totalYards * 10000) + (aggregates.maleQty * 8000) + (aggregates.femaleQty * 8000)",
+          expression: "(aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)",
           subMetrics: [
             {
               label: "Total Paid",
@@ -313,7 +294,7 @@ export const rsvpRecords = defineCollection({
                 },
               },
               expression:
-                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 8000) + (aggregates.femaleQty * 8000)) - aggregates.amountPaid",
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) - aggregates.amountPaid",
               format: "currency",
               currency: "NGN",
             },
