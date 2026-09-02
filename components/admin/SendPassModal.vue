@@ -39,6 +39,8 @@ const sendingWa = ref(false);
 const sendingEmail = ref(false);
 const sendSuccess = ref("");
 const error = ref("");
+const copied = ref(false);
+const showPreview = ref(false);
 
 const customMessage = ref(typeof props.value === "string" ? props.value : "");
 const isUserEdited = ref(Boolean(typeof props.value === "string" && props.value.trim()));
@@ -209,9 +211,6 @@ function resetToDefault() {
   isUserEdited.value = false;
   customMessage.value = defaultMessage.value;
 }
-
-const copied = ref(false);
-const showPreview = ref(false);
 
 async function copyPassUrl() {
   if (!passUrl.value) return;
