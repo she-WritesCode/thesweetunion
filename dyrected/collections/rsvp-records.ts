@@ -93,9 +93,178 @@ export const rsvpRecords = defineCollection({
       features: {
         duplicate: false,
       },
-      components: {
-        afterViewHeader: ["RsvpListSummary"],
-      },
+      metrics: [
+        {
+          label: "Attending Guests",
+          color: "purple",
+          unit: "Headcount",
+          aggregates: {
+            leads: {
+              count: "*",
+              where: { attending: { equals: true } },
+            },
+            spouses: {
+              count: "*",
+              where: {
+                AND: [{ attending: { equals: true } }, { hasSpouse: { equals: true } }],
+              },
+            },
+          },
+          expression: "aggregates.leads + aggregates.spouses",
+          subMetrics: [
+            {
+              label: "Leads",
+              aggregate: {
+                count: "*",
+                where: { attending: { equals: true } },
+              },
+            },
+            {
+              label: "Spouses",
+              aggregate: {
+                count: "*",
+                where: {
+                  AND: [{ attending: { equals: true } }, { hasSpouse: { equals: true } }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          label: "RSVP Status",
+          color: "emerald",
+          unit: "Confirmed Yes",
+          aggregate: {
+            count: "*",
+            where: { attending: { equals: true } },
+          },
+          subMetrics: [
+            {
+              label: "Declined",
+              aggregate: {
+                count: "*",
+                where: { attending: { equals: false } },
+              },
+            },
+            {
+              label: "Total Submissions",
+              aggregate: {
+                count: "*",
+              },
+            },
+          ],
+        },
+        {
+          label: "Asoebi Fabric & Headwear",
+          color: "amber",
+          unit: "Yards",
+          aggregate: {
+            sum: "asoebiYards",
+            cast: "number",
+            where: {
+              AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+            },
+          },
+          subMetrics: [
+            {
+              label: "Orders",
+              aggregate: {
+                count: "*",
+                where: {
+                  AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+                },
+              },
+            },
+            {
+              label: "Male Caps",
+              aggregate: {
+                sum: "asoOkeMaleQty",
+                cast: "number",
+                where: {
+                  AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                },
+              },
+            },
+            {
+              label: "Female Gele",
+              aggregate: {
+                sum: "asoOkeFemaleQty",
+                cast: "number",
+                where: {
+                  AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                },
+              },
+            },
+          ],
+        },
+        {
+          label: "Total Asoebi Revenue",
+          color: "rose",
+          format: "currency",
+          currency: "₦",
+          aggregates: {
+            totalYards: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: {
+                AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+              },
+            },
+            maleQty: {
+              sum: "asoOkeMaleQty",
+              cast: "number",
+              where: {
+                AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+              },
+            },
+            femaleQty: {
+              sum: "asoOkeFemaleQty",
+              cast: "number",
+              where: {
+                AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+              },
+            },
+          },
+          expression: "(aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)",
+          subMetrics: [
+            {
+              label: "Fabric",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+                },
+              },
+              transform: "value * 10000",
+              format: "currency",
+              currency: "₦",
+            },
+            {
+              label: "Headwear",
+              aggregates: {
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                  },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
+                  },
+                },
+              },
+              expression: "(aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)",
+              format: "currency",
+              currency: "₦",
+            },
+          ],
+        },
+      ],
     }),
     defineView({
       slug: "asoebi_logistics",
@@ -164,7 +333,7 @@ export const rsvpRecords = defineCollection({
               },
               transform: "value * 10000",
               format: "currency",
-              currency: "NGN",
+              currency: "₦",
             },
           ],
         },
@@ -215,7 +384,7 @@ export const rsvpRecords = defineCollection({
               },
               transform: "value * 6000",
               format: "currency",
-              currency: "NGN",
+              currency: "₦",
             },
           ],
         },
@@ -266,7 +435,7 @@ export const rsvpRecords = defineCollection({
               },
               transform: "value * 6000",
               format: "currency",
-              currency: "NGN",
+              currency: "₦",
             },
           ],
         },
@@ -274,7 +443,7 @@ export const rsvpRecords = defineCollection({
           label: "Total Expected Revenue",
           color: "emerald",
           format: "currency",
-          currency: "NGN",
+          currency: "₦",
           aggregates: {
             totalYards: {
               sum: "asoebiYards",
@@ -301,7 +470,7 @@ export const rsvpRecords = defineCollection({
                 cast: "number",
               },
               format: "currency",
-              currency: "NGN",
+              currency: "₦",
             },
             {
               label: "Total Due",
@@ -329,7 +498,7 @@ export const rsvpRecords = defineCollection({
               expression:
                 "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) - aggregates.amountPaid",
               format: "currency",
-              currency: "NGN",
+              currency: "₦",
             },
           ],
         },
