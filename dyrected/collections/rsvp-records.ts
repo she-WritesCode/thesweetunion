@@ -93,6 +93,9 @@ export const rsvpRecords = defineCollection({
       features: {
         duplicate: false,
       },
+      components: {
+        afterViewHeader: ["RsvpListSummary"],
+      },
     }),
     defineView({
       slug: "asoebi_logistics",
@@ -112,6 +115,210 @@ export const rsvpRecords = defineCollection({
         "asoebiAmountPaid",
         "asoebiOrderStatus",
         "asoebiPaymentNotes",
+      ],
+      metrics: [
+        {
+          label: "Total Yards",
+          color: "amber",
+          unit: "Yds",
+          aggregate: {
+            sum: "asoebiYards",
+            cast: "number",
+            where: { wantsAsoebi: { equals: true } },
+          },
+          subMetrics: [
+            {
+              label: "Fulfilled",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [
+                    { wantsAsoebi: { equals: true } },
+                    { asoebiOrderStatus: { equals: "delivered" } },
+                  ],
+                },
+              },
+            },
+            {
+              label: "Pending",
+              aggregates: {
+                total: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                fulfilled: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { wantsAsoebi: { equals: true } },
+                      { asoebiOrderStatus: { equals: "delivered" } },
+                    ],
+                  },
+                },
+              },
+              expression: "aggregates.total - aggregates.fulfilled",
+            },
+          ],
+        },
+        {
+          label: "Total Male Aso Oke",
+          color: "indigo",
+          unit: "Caps",
+          aggregate: {
+            sum: "asoOkeMaleQty",
+            cast: "number",
+            where: { wantsAsoOke: { equals: true } },
+          },
+          subMetrics: [
+            {
+              label: "Fulfilled",
+              aggregate: {
+                sum: "asoOkeMaleQty",
+                cast: "number",
+                where: {
+                  AND: [
+                    { wantsAsoOke: { equals: true } },
+                    { asoebiOrderStatus: { equals: "delivered" } },
+                  ],
+                },
+              },
+            },
+            {
+              label: "Pending",
+              aggregates: {
+                total: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                fulfilled: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { wantsAsoOke: { equals: true } },
+                      { asoebiOrderStatus: { equals: "delivered" } },
+                    ],
+                  },
+                },
+              },
+              expression: "aggregates.total - aggregates.fulfilled",
+            },
+          ],
+        },
+        {
+          label: "Total Female Aso Oke",
+          color: "purple",
+          unit: "Gele",
+          aggregate: {
+            sum: "asoOkeFemaleQty",
+            cast: "number",
+            where: { wantsAsoOke: { equals: true } },
+          },
+          subMetrics: [
+            {
+              label: "Fulfilled",
+              aggregate: {
+                sum: "asoOkeFemaleQty",
+                cast: "number",
+                where: {
+                  AND: [
+                    { wantsAsoOke: { equals: true } },
+                    { asoebiOrderStatus: { equals: "delivered" } },
+                  ],
+                },
+              },
+            },
+            {
+              label: "Pending",
+              aggregates: {
+                total: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                fulfilled: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { wantsAsoOke: { equals: true } },
+                      { asoebiOrderStatus: { equals: "delivered" } },
+                    ],
+                  },
+                },
+              },
+              expression: "aggregates.total - aggregates.fulfilled",
+            },
+          ],
+        },
+        {
+          label: "Total Expected Revenue",
+          color: "emerald",
+          format: "currency",
+          currency: "NGN",
+          aggregates: {
+            totalYards: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: { wantsAsoebi: { equals: true } },
+            },
+            maleQty: {
+              sum: "asoOkeMaleQty",
+              cast: "number",
+              where: { wantsAsoOke: { equals: true } },
+            },
+            femaleQty: {
+              sum: "asoOkeFemaleQty",
+              cast: "number",
+              where: { wantsAsoOke: { equals: true } },
+            },
+          },
+          expression:
+            "(aggregates.totalYards * 10000) + (aggregates.maleQty * 8000) + (aggregates.femaleQty * 8000)",
+          subMetrics: [
+            {
+              label: "Total Paid",
+              aggregate: {
+                sum: "asoebiAmountPaid",
+                cast: "number",
+              },
+              format: "currency",
+              currency: "NGN",
+            },
+            {
+              label: "Total Due",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 8000) + (aggregates.femaleQty * 8000)) - aggregates.amountPaid",
+              format: "currency",
+              currency: "NGN",
+            },
+          ],
+        },
       ],
       actions: [
         defineAction({
