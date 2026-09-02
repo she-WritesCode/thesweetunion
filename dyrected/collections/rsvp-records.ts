@@ -443,6 +443,37 @@ export const rsvpRecords = defineCollection({
           ],
         },
         {
+          label: "Dispatch Pipeline",
+          color: "blue",
+          unit: "Orders",
+          aggregate: {
+            count: "*",
+          },
+          subMetrics: [
+            {
+              label: "In Processing",
+              aggregate: {
+                count: "*",
+                where: { asoebiOrderStatus: { equals: "unfulfilled" } },
+              },
+            },
+            {
+              label: "Ready for Pickup",
+              aggregate: {
+                count: "*",
+                where: { asoebiOrderStatus: { equals: "ready" } },
+              },
+            },
+            {
+              label: "Handed Over",
+              aggregate: {
+                count: "*",
+                where: { asoebiOrderStatus: { equals: "delivered" } },
+              },
+            },
+          ],
+        },
+        {
           label: "Total Expected Revenue",
           color: "emerald",
           format: "currency",
@@ -502,6 +533,33 @@ export const rsvpRecords = defineCollection({
                 "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) - aggregates.amountPaid",
               format: "currency",
               currency: "₦",
+            },
+            {
+              label: "Collection Rate",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "(aggregates.amountPaid / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000))) * 100",
+              format: "percent",
             },
           ],
         },
