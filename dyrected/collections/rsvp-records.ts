@@ -155,6 +155,17 @@ export const rsvpRecords = defineCollection({
               },
               expression: "aggregates.total - aggregates.fulfilled",
             },
+            {
+              label: "Expected Revenue",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: { wantsAsoebi: { equals: true } },
+              },
+              transform: "value * 10000",
+              format: "currency",
+              currency: "NGN",
+            },
           ],
         },
         {
@@ -195,6 +206,17 @@ export const rsvpRecords = defineCollection({
               },
               expression: "aggregates.total - aggregates.fulfilled",
             },
+            {
+              label: "Expected Revenue",
+              aggregate: {
+                sum: "asoOkeMaleQty",
+                cast: "number",
+                where: { wantsAsoOke: { equals: true } },
+              },
+              transform: "value * 6000",
+              format: "currency",
+              currency: "NGN",
+            },
           ],
         },
         {
@@ -234,6 +256,17 @@ export const rsvpRecords = defineCollection({
                 },
               },
               expression: "aggregates.total - aggregates.fulfilled",
+            },
+            {
+              label: "Expected Revenue",
+              aggregate: {
+                sum: "asoOkeFemaleQty",
+                cast: "number",
+                where: { wantsAsoOke: { equals: true } },
+              },
+              transform: "value * 6000",
+              format: "currency",
+              currency: "NGN",
             },
           ],
         },
