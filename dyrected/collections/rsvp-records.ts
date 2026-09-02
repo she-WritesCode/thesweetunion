@@ -656,6 +656,12 @@ export const rsvpRecords = defineCollection({
         "invitationSentAt",
       ],
       sort: { field: "invitationSent", direction: "asc" },
+      features: {
+        edit: false,
+        view: false,
+        delete: false,
+        duplicate: false,
+      },
     }),
   ],
   fields: [
