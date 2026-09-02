@@ -100,7 +100,7 @@ export const rsvpRecords = defineCollection({
       icon: "Package",
       layout: "table",
       filter: {
-        or: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
+        OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
       },
       columns: [
         "leadName",

@@ -15,7 +15,8 @@
     "format-phones": "npx tsx scripts/format-phone-numbers.ts",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:backfill-asoebi-defaults": "npx tsx scripts/backfill-asoebi-defaults.ts"
   },
   "dependencies": {
     "@dyrected/core": "2.10.0",

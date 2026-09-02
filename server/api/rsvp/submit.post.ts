@@ -120,6 +120,8 @@ export default defineEventHandler(async (event) => {
       asoOkeMaleQty: wantsAsoOke ? asoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
+      asoebiPaymentStatus: "pending",
+      asoebiOrderStatus: "unfulfilled",
     });
 
     await syncGroupCounts(client, group.id);
