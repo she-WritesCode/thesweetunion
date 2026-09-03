@@ -24,6 +24,8 @@
     "@dyrected/nuxt": "2.10.1",
     "@dyrected/sdk": "2.10.1",
     "@dyrected/storage-cloudinary": "2.10.1",
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
