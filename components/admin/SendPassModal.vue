@@ -33,6 +33,7 @@ const client = useDyrectedClient();
 const config = useRuntimeConfig();
 const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
 
+const activeTab = ref<"whatsapp" | "card">("whatsapp");
 const loading = ref(false);
 const loadingDoc = ref(false);
 const sendingWa = ref(false);
@@ -40,7 +41,6 @@ const sendingEmail = ref(false);
 const sendSuccess = ref("");
 const error = ref("");
 const copied = ref(false);
-const showPreview = ref(false);
 
 const customMessage = ref(typeof props.value === "string" ? props.value : "");
 const isUserEdited = ref(Boolean(typeof props.value === "string" && props.value.trim()));
@@ -163,6 +163,9 @@ const leadEmail = computed(() => (record.value.leadEmail as string) ?? "");
 const hasSpouse = computed(() => Boolean(record.value.hasSpouse));
 const spouseName = computed(() => (record.value.spouseName as string) ?? "");
 const attending = computed(() => Boolean(record.value.attending));
+const invitationSent = computed(() => Boolean(record.value.invitationSent));
+const invitationSentAt = computed(() => record.value.invitationSentAt as string | undefined);
+const invitationSentVia = computed(() => (record.value.invitationSentVia as string) || "WhatsApp");
 
 const guestName = computed(() => {
   if (hasSpouse.value && spouseName.value) return `${leadName.value} + ${spouseName.value}`;
@@ -291,142 +294,191 @@ async function sendEmail() {
 </script>
 
 <template>
-  <div class="send-pass-widget">
-    <template v-if="loadingDoc">
-      <div class="loading-box">
-        <div class="spinner-sm" />
-        <p class="hint-text">Loading pass information…</p>
+  <div class="dispatch-cockpit">
+    <!-- Loading State -->
+    <div v-if="loadingDoc" class="loading-state">
+      <div class="spinner-sm" />
+      <span>Loading invitation details…</span>
+    </div>
+
+    <template v-else-if="!rsvpId">
+      <div class="empty-state">
+        <p>Please save the guest record first before dispatching the pass.</p>
       </div>
     </template>
-    <template v-else-if="!rsvpId">
-      <p class="hint-text">Please save the guest record first before dispatching the pass.</p>
-    </template>
+
     <template v-else>
-      <div class="pass-stack">
-        <!-- 1. Guest Quick Card Header -->
-        <div class="guest-card">
-          <div class="guest-info">
-            <h4 class="guest-name">{{ guestName }}</h4>
-            <div class="guest-tags">
-              <span v-if="groupName" class="badge badge--group">{{ groupName }}</span>
-              <span v-if="hasSpouse" class="badge badge--admits">Admits 2</span>
-              <span class="badge badge--code">{{ rsvpId.toUpperCase() }}</span>
+      <!-- ─── Header: Guest Identity Bar ──────────────────────── -->
+      <div class="guest-header">
+        <div class="guest-header__main">
+          <div class="guest-avatar">
+            {{ (leadName[0] || "G").toUpperCase() }}
+          </div>
+          <div class="guest-details">
+            <h3 class="guest-name">{{ guestName }}</h3>
+            <div class="guest-meta">
+              <span v-if="leadPhone" class="meta-phone">
+                <span class="phone-dot" />
+                {{ leadPhone }}
+              </span>
+              <span v-if="groupName" class="meta-group">{{ groupName }}</span>
+              <span v-if="hasSpouse" class="meta-admits">Admits 2</span>
             </div>
           </div>
-          <p v-if="leadPhone" class="guest-phone">📱 {{ leadPhone }}</p>
-          <p v-else class="guest-phone error-inline">⚠️ No WhatsApp number</p>
         </div>
 
-        <!-- 2. Primary WhatsApp & Action Dispatch Buttons -->
-        <div class="actions-stack">
+        <div class="status-indicator" :class="invitationSent ? 'status-indicator--sent' : 'status-indicator--pending'">
+          <span class="status-dot" />
+          <span>{{ invitationSent ? `Sent (${invitationSentVia})` : "Pending Dispatch" }}</span>
+        </div>
+      </div>
+
+      <!-- ─── Segmented Navigation ────────────────────────────── -->
+      <div class="segmented-bar">
+        <button
+          type="button"
+          class="seg-btn"
+          :class="{ 'seg-btn--active': activeTab === 'whatsapp' }"
+          @click="activeTab = 'whatsapp'"
+        >
+          <span class="seg-icon">💬</span>
+          <span>WhatsApp Message</span>
+        </button>
+        <button
+          type="button"
+          class="seg-btn"
+          :class="{ 'seg-btn--active': activeTab === 'card' }"
+          @click="activeTab = 'card'"
+        >
+          <span class="seg-icon">🎟️</span>
+          <span>Access Pass Card</span>
+        </button>
+      </div>
+
+      <!-- ─── Tab 1: WhatsApp Dispatch Cockpit ────────────────── -->
+      <div v-if="activeTab === 'whatsapp'" class="tab-pane">
+        <!-- Quick Link Bar -->
+        <div class="link-bar">
+          <div class="link-bar__info">
+            <span class="link-bar__badge">PASS URL</span>
+            <span class="link-bar__url">/pass/{{ rsvpId.toLowerCase() }}</span>
+          </div>
+          <div class="link-bar__actions">
+            <button type="button" class="btn-tool" @click="copyPassUrl">
+              {{ copied ? "Copied! ✓" : "Copy Link" }}
+            </button>
+            <a :href="passUrl" target="_blank" rel="noopener" class="btn-tool">
+              Open ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- WhatsApp Chat Simulator / Editor -->
+        <div class="chat-composer">
+          <div class="chat-composer__top">
+            <span class="composer-label">Message Preview & Customization</span>
+            <button type="button" class="btn-reset-link" @click="resetToDefault">
+              Reset Default
+            </button>
+          </div>
+
+          <div class="wa-bubble">
+            <textarea
+              v-model="customMessage"
+              @input="isUserEdited = true"
+              rows="6"
+              class="wa-bubble__textarea"
+              placeholder="Type message to guest..."
+            />
+
+            <!-- Embedded Unfurl Preview -->
+            <div class="wa-unfurl">
+              <div class="wa-unfurl__thumb">🎟️</div>
+              <div class="wa-unfurl__body">
+                <span class="wa-unfurl__title">Official Wedding Pass · Adun &amp; Uche</span>
+                <span class="wa-unfurl__domain">thesweetunion.com</span>
+              </div>
+            </div>
+
+            <div class="wa-bubble__footer">
+              <span class="wa-note">WhatsApp link unfurl preview included</span>
+              <span class="wa-time">Now ✓✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback Messages -->
+        <div v-if="sendSuccess" class="toast toast--success">
+          <span>✓</span> {{ sendSuccess }}
+        </div>
+        <div v-if="error" class="toast toast--error">
+          <span>⚠️</span> {{ error }}
+        </div>
+
+        <!-- Primary Dispatch Button -->
+        <button
+          type="button"
+          class="btn-wa-dispatch"
+          :disabled="sendingWa || !leadPhone || !customMessage.trim()"
+          @click="sendWhatsApp"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
+            />
+          </svg>
+          <span>{{ sendingWa ? "Opening WhatsApp…" : "Send Pass on WhatsApp" }}</span>
+        </button>
+
+        <div v-if="leadEmail" class="secondary-actions">
           <button
             type="button"
-            class="btn-primary-wa"
-            :disabled="sendingWa || !leadPhone || !customMessage.trim()"
-            @click="sendWhatsApp"
+            class="btn-email-link"
+            :disabled="sendingEmail"
+            @click="sendEmail"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
-              />
-            </svg>
-            <span>{{ sendingWa ? "Opening WhatsApp…" : "Send Pass on WhatsApp" }}</span>
+            ✉️ {{ sendingEmail ? "Sending Email…" : `Also send to ${leadEmail}` }}
           </button>
-
-          <div class="secondary-actions-row">
-            <button
-              v-if="leadEmail"
-              type="button"
-              class="btn-secondary"
-              :disabled="sendingEmail"
-              @click="sendEmail"
-            >
-              ✉️ {{ sendingEmail ? "Sending…" : "Send Email" }}
-            </button>
-            <button
-              type="button"
-              class="btn-secondary"
-              @click="handleDownloadCard"
-            >
-              📥 Save Card PNG
-            </button>
-          </div>
         </div>
+      </div>
 
-        <!-- Feedback Alert -->
-        <p v-if="sendSuccess" class="alert-box alert-box--ok">{{ sendSuccess }}</p>
-        <p v-if="error" class="alert-box alert-box--err">{{ error }}</p>
-
-        <!-- 3. Copyable Public Pass URL -->
-        <div class="link-card">
-          <div class="link-card__header">
-            <span class="widget-label">Digital Pass Link</span>
-            <div class="link-buttons">
-              <button type="button" class="btn-copy" @click="copyPassUrl">
-                {{ copied ? "Copied! ✓" : "Copy Link 📋" }}
-              </button>
-              <a :href="passUrl" target="_blank" rel="noopener" class="btn-open-link">
-                Open ↗
-              </a>
-            </div>
-          </div>
-          <div class="link-pill" @click="copyPassUrl" title="Click to copy">
-            <span class="link-text">{{ passUrl }}</span>
-          </div>
-        </div>
-
-        <!-- 4. WhatsApp Message Editor -->
-        <div class="message-card">
-          <div class="message-header">
-            <span class="widget-label">WhatsApp Message Template</span>
-            <button type="button" class="btn-reset" @click="resetToDefault">Reset Default</button>
-          </div>
-          <textarea
-            v-model="customMessage"
-            @input="isUserEdited = true"
-            rows="5"
-            class="wa-textarea"
-            placeholder="Enter message to send on WhatsApp..."
+      <!-- ─── Tab 2: Pass Card Preview ───────────────────────── -->
+      <div v-else class="tab-pane">
+        <div class="card-display">
+          <AccessCard
+            ref="cardRef"
+            :rsvp-id="rsvpId"
+            :guest-name="guestName"
+            :has-spouse="hasSpouse"
+            :spouse-name="spouseName"
+            :group-name="groupName"
+            :event-names="eventNames"
+            :couple-name="coupleName"
+            :hashtag="hashtag"
+            :wedding-date-text="weddingDateText"
           />
-          <p class="message-hint">
-            The link above will automatically unfurl with the official digital pass card on WhatsApp.
-          </p>
         </div>
 
-        <!-- 5. Collapsible Live Pass Preview -->
-        <div class="preview-section">
-          <button
-            type="button"
-            class="preview-toggle-btn"
-            @click="showPreview = !showPreview"
-          >
-            <span>🎟️ {{ showPreview ? "Hide Digital Pass Preview" : "Show Digital Pass Preview" }}</span>
-            <span class="toggle-arrow">{{ showPreview ? "▲" : "▼" }}</span>
+        <div class="card-actions">
+          <button type="button" class="btn-action-gold" @click="handleDownloadCard">
+            📥 Download High-Res PNG
           </button>
-
-          <div v-show="showPreview" class="preview-content">
-            <div class="card-scaler">
-              <AccessCard
-                ref="cardRef"
-                :rsvp-id="rsvpId"
-                :guest-name="guestName"
-                :has-spouse="hasSpouse"
-                :spouse-name="spouseName"
-                :group-name="groupName"
-                :event-names="eventNames"
-                :couple-name="coupleName"
-                :hashtag="hashtag"
-                :wedding-date-text="weddingDateText"
-              />
-            </div>
-          </div>
+          <button
+            v-if="leadEmail"
+            type="button"
+            class="btn-action-outline"
+            :disabled="sendingEmail"
+            @click="sendEmail"
+          >
+            ✉️ Email Pass Card
+          </button>
         </div>
       </div>
     </template>
@@ -434,25 +486,30 @@ async function sendEmail() {
 </template>
 
 <style scoped>
-.send-pass-widget {
-  display: block;
+.dispatch-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
-  padding: 4px 0;
   font-family: inherit;
+  color: #30222a;
 }
 
-.loading-box {
+/* ── Loading / Empty ───────────────────────────────────────── */
+.loading-state,
+.empty-state {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 0;
+  padding: 20px 0;
+  color: #8a7280;
+  font-size: 0.85rem;
 }
 
 .spinner-sm {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid #e09f8c;
   border-top-color: #865172;
   border-radius: 50%;
@@ -465,356 +522,482 @@ async function sendEmail() {
   }
 }
 
-.hint-text {
-  font-size: 0.85rem;
-  color: #888;
-  font-style: italic;
-  margin: 0;
-}
-
-.pass-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
-/* ── Guest Card ── */
-.guest-card {
-  background: #fdfafc;
-  border: 1px solid #ebdbe4;
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.guest-info {
+/* ── Guest Header ──────────────────────────────────────────── */
+.guest-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #ebdbe4;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 4px rgba(48, 34, 42, 0.04);
+}
+
+.guest-header__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.guest-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #653853, #4a253b);
+  color: #fce8b3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.guest-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .guest-name {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #30222a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.guest-tags {
+.guest-meta {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  font-size: 0.725rem;
 }
 
-.badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.badge--group {
-  background: rgba(134, 81, 114, 0.1);
-  color: #865172;
-  border: 1px solid rgba(134, 81, 114, 0.2);
-}
-
-.badge--admits {
-  background: rgba(212, 175, 55, 0.15);
-  color: #8a651e;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-}
-
-.badge--code {
-  background: #30222a;
-  color: #fce8b3;
-  font-family: monospace;
-}
-
-.guest-phone {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #555;
-}
-
-.error-inline {
-  color: #c0514a;
-}
-
-/* ── Actions Stack ── */
-.actions-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.btn-primary-wa {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.925rem;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1px solid #25d366;
-  background: #25d366;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
-  transition:
-    background 150ms,
-    transform 100ms;
-}
-
-.btn-primary-wa:hover:not(:disabled) {
-  background: #1eb556;
-}
-
-.btn-primary-wa:active:not(:disabled) {
-  transform: scale(0.99);
-}
-
-.btn-primary-wa:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.secondary-actions-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.btn-secondary {
+.meta-phone {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #25d366;
+}
+
+.phone-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #25d366;
+}
+
+.meta-group {
+  background: #f5edf1;
+  color: #865172;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.meta-admits {
+  background: #fff8e6;
+  color: #b48a1e;
+  border: 1px solid #fce8b3;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-indicator--sent {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.status-indicator--sent .status-dot {
+  background: #2e7d32;
+}
+
+.status-indicator--pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+.status-indicator--pending .status-dot {
+  background: #e65100;
+}
+
+/* ── Segmented Navigation ──────────────────────────────────── */
+.segmented-bar {
+  display: flex;
+  background: #f0e6eb;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.seg-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #865172;
   font-size: 0.8rem;
   font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.seg-btn:hover:not(.seg-btn--active) {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.seg-btn--active {
   background: #ffffff;
-  color: #653853;
-  border: 1px solid #d4c5cf;
-  transition:
-    background 150ms,
-    border-color 150ms;
+  color: #30222a;
+  box-shadow: 0 1px 3px rgba(48, 34, 42, 0.1);
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background: #fdfafc;
-  border-color: #865172;
+.seg-icon {
+  font-size: 0.9rem;
 }
 
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ── Alerts ── */
-.alert-box {
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  font-weight: 600;
-}
-
-.alert-box--ok {
-  background: #edf7ed;
-  color: #2d7a47;
-  border: 1px solid #c8e6c9;
-}
-
-.alert-box--err {
-  background: #fde8e7;
-  color: #c0514a;
-  border: 1px solid #f9c2be;
-}
-
-/* ── Pass Link Card ── */
-.link-card {
-  background: #fdfafc;
-  border: 1px solid #ebdbe4;
-  border-radius: 8px;
-  padding: 10px 12px;
+/* ── Tab Pane ──────────────────────────────────────────────── */
+.tab-pane {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
-.link-card__header {
+/* ── Link Bar ──────────────────────────────────────────────── */
+.link-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  background: #faf5f8;
+  border: 1px dashed #d5cad0;
+  padding: 6px 10px;
+  border-radius: 8px;
 }
 
-.widget-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #653853;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.link-buttons {
+.link-bar__info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
 }
 
-.btn-copy {
-  background: none;
-  border: none;
-  color: #865172;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
+.link-bar__badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: #653853;
+  color: #fce8b3;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
-.btn-copy:hover {
-  color: #4a253b;
-}
-
-.btn-open-link {
-  color: #865172;
-  font-size: 0.75rem;
+.link-bar__url {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #653853;
   font-weight: 600;
-  text-decoration: underline;
-}
-
-.link-pill {
-  background: #f5edf1;
-  border: 1px solid #dfcdd8;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.link-text {
-  font-family: monospace;
-  font-size: 0.78rem;
-  color: #653853;
-  user-select: all;
+.link-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-/* ── Message Card ── */
-.message-card {
+.btn-tool {
+  background: #ffffff;
+  border: 1px solid #d4c5cf;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #865172;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 120ms;
+}
+
+.btn-tool:hover {
+  background: #f5edf1;
+  border-color: #865172;
+}
+
+/* ── WhatsApp Chat Composer ────────────────────────────────── */
+.chat-composer {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.message-header {
+.chat-composer__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.btn-reset {
+.composer-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #653853;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-reset-link {
   background: none;
   border: none;
   color: #865172;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
 }
 
-.wa-textarea {
+.btn-reset-link:hover {
+  color: #30222a;
+}
+
+.wa-bubble {
+  background: #e7ffdb;
+  border: 1px solid #c2eab2;
+  border-radius: 10px 10px 2px 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.wa-bubble__textarea {
   width: 100%;
-  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: vertical;
   font-family: inherit;
   font-size: 0.85rem;
   line-height: 1.45;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d4c5cf;
-  background: #ffffff;
-  color: #2b1c28;
-  resize: vertical;
-  outline: none;
-  transition: border-color 150ms;
+  color: #111b21;
+  box-sizing: border-box;
 }
 
-.wa-textarea:focus {
-  border-color: #865172;
-  box-shadow: 0 0 0 2px rgba(134, 81, 114, 0.15);
+.wa-unfurl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border-left: 3px solid #25d366;
+  padding: 6px 8px;
+  border-radius: 4px;
 }
 
-.message-hint {
-  margin: 0;
-  font-size: 0.725rem;
-  color: #8a7280;
-  line-height: 1.35;
-  font-style: italic;
+.wa-unfurl__thumb {
+  font-size: 1.1rem;
 }
 
-/* ── Preview Accordion Section ── */
-.preview-section {
-  border-top: 1px solid #ebdbe4;
-  padding-top: 10px;
+.wa-unfurl__body {
+  display: flex;
+  flex-direction: column;
 }
 
-.preview-toggle-btn {
-  width: 100%;
+.wa-unfurl__title {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #111b21;
+}
+
+.wa-unfurl__domain {
+  font-size: 0.65rem;
+  color: #667781;
+}
+
+.wa-bubble__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fdfafc;
-  border: 1px solid #ebdbe4;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.825rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 4px;
+}
+
+.wa-note {
+  font-size: 0.68rem;
+  color: #54656f;
+  font-style: italic;
+}
+
+.wa-time {
+  font-size: 0.68rem;
   font-weight: 600;
-  color: #653853;
+  color: #53bdeb;
+}
+
+/* ── Toasts ────────────────────────────────────────────────── */
+.toast {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toast--success {
+  background: #edf7ed;
+  color: #2d7a47;
+  border: 1px solid #c8e6c9;
+}
+
+.toast--error {
+  background: #fde8e7;
+  color: #c0514a;
+  border: 1px solid #f9c2be;
+}
+
+/* ── Primary Action ────────────────────────────────────────── */
+.btn-wa-dispatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 150ms;
+  border: none;
+  background: linear-gradient(135deg, #25d366, #1eb556);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3);
+  transition: all 150ms ease;
 }
 
-.preview-toggle-btn:hover {
-  background: #f5edf1;
+.btn-wa-dispatch:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
 }
 
-.toggle-arrow {
-  font-size: 0.7rem;
+.btn-wa-dispatch:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-wa-dispatch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondary-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-email-link {
+  background: none;
+  border: none;
   color: #865172;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
-.preview-content {
-  margin-top: 12px;
+.btn-email-link:hover {
+  color: #4a253b;
+}
+
+/* ── Card Display (Tab 2) ──────────────────────────────────── */
+.card-display {
   display: flex;
   justify-content: center;
   width: 100%;
-  overflow-x: auto;
+  padding: 4px 0;
 }
 
-.card-scaler {
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-action-gold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
-  max-width: 340px;
-  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 50%, #b48a1e 100%);
+  color: #30222a;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
+  transition: filter 150ms;
+}
+
+.btn-action-gold:hover {
+  filter: brightness(1.05);
+}
+
+.btn-action-outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  color: #865172;
+  border: 1px solid #d4c5cf;
+}
+
+.btn-action-outline:hover:not(:disabled) {
+  background: #fdfafc;
+  border-color: #865172;
 }
 </style>

@@ -262,7 +262,7 @@ defineExpose({
 .acp-card {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 320px;
   aspect-ratio: 3 / 4;
   background-color: #653853;
   border: 1.5px solid;
