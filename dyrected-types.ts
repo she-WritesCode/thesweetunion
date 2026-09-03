@@ -21,6 +21,8 @@ export interface Media {
   updatedAt: string;
   alt: string;
   caption?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
 }
 
 // URL field types
@@ -44,6 +46,8 @@ export type UrlField = UrlFieldValue | string;
 export interface Admins {
   id: string;
   name?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   email: string;
   roles?: string[];
   createdAt: string;
@@ -62,6 +66,8 @@ export interface Wishlist_items {
   link?: UrlField;
   isFeatured?: boolean;
   isHidden?: boolean;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   amountRaised?: number;
   contributorCount?: number;
   reservedCount?: number;
@@ -82,6 +88,8 @@ export interface Reservations {
   reminderContact?: string;
   paymentOption?: "bank_transfer" | "purchase_link" | "bring_to_wedding";
   reservedAt?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,6 +102,8 @@ export interface Rsvp_groups {
   maxCapacity: number;
   isActive?: boolean;
   description?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   confirmedCount?: number;
   declinedCount?: number;
   createdAt: string;
@@ -114,8 +124,10 @@ export interface Rsvp_records {
   message?: string;
   submittedAt?: string;
   editToken?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   wantsAsoebi?: boolean;
-  asoebiYards?: "2" | "3" | "4" | "5" | "6";
+  asoebiYards?: "0" | "2" | "3" | "4" | "5" | "6";
   wantsAsoOke?: boolean;
   asoOkeMaleQty?: number;
   asoOkeFemaleQty?: number;
@@ -124,6 +136,8 @@ export interface Rsvp_records {
   asoebiAmountPaid?: number;
   asoebiOrderStatus?: "unfulfilled" | "ready" | "delivered";
   asoebiPaymentNotes?: string;
+  asoebiSent?: boolean;
+  asoebiSentAt?: string;
   asoebiReminder?: Record<string, unknown>;
   accessCardPreview?: Record<string, unknown>;
   invitationSent?: boolean;
@@ -145,6 +159,8 @@ export interface Events {
   dressCode?: string;
   photo?: Media | string;
   collectsRsvp?: boolean;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   createdAt: string;
   updatedAt: string;
 }
@@ -158,6 +174,8 @@ export interface Check_ins {
   partySize?: number;
   scannedBy?: string;
   notes?: string;
+  createdBy?: Admins | string;
+  updatedBy?: Admins | string;
   createdAt: string;
   updatedAt: string;
 }

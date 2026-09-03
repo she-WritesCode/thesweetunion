@@ -309,6 +309,7 @@ export const rsvpRecords = defineCollection({
         "asoebiAmountPaid",
         "group",
         "asoebiOrderStatus",
+        "asoebiSent",
         "asoebiPaymentNotes",
       ],
       metrics: [
@@ -930,6 +931,25 @@ export const rsvpRecords = defineCollection({
           admin: {
             placeholder: "e.g. Received ₦40,000 via bank transfer on July 30th. Handed over at bridal shower.",
             description: "Private notes for admin to track bank transfer receipts or delivery arrangements.",
+            condition: wantsAsoebiOrHeadwearCondition,
+          },
+        }),
+        defineBooleanField({
+          name: "asoebiSent",
+          label: "Aso Ebi Reminder Sent",
+          defaultValue: false,
+          admin: {
+            readOnly: true,
+            width: "50%",
+            condition: wantsAsoebiOrHeadwearCondition,
+          },
+        }),
+        defineDateField({
+          name: "asoebiSentAt",
+          label: "Aso Ebi Reminder Sent At",
+          admin: {
+            readOnly: true,
+            width: "50%",
             condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
