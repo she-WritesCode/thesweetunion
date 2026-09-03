@@ -277,23 +277,19 @@ export default defineEventHandler(async (event) => {
   </g>
 </svg>`;
 
-  // Locate font files
-  const possibleFontPaths = [
-    path.resolve(process.cwd(), "public/fonts"),
-    path.resolve(process.cwd(), ".output/public/fonts"),
-    path.resolve(process.cwd(), "node_modules/@fontsource/cinzel/files"),
+  // Locate TrueType font files
+  const fontCandidates = [
+    path.resolve(process.cwd(), "public/fonts/Cinzel-Bold.ttf"),
+    path.resolve(process.cwd(), "public/fonts/Cinzel-Regular.ttf"),
+    path.resolve(process.cwd(), "public/fonts/Inter-SemiBold.ttf"),
+    path.resolve(process.cwd(), "public/fonts/Inter-Regular.ttf"),
+    path.resolve(process.cwd(), "assets/fonts/Cinzel-Bold.ttf"),
+    path.resolve(process.cwd(), "assets/fonts/Inter-SemiBold.ttf"),
   ];
 
-  const fontFiles: string[] = [];
-  const cinzelPath = path.resolve(process.cwd(), "public/fonts/cinzel-700.woff");
-  const inter600Path = path.resolve(process.cwd(), "public/fonts/inter-600.woff");
-  const inter400Path = path.resolve(process.cwd(), "public/fonts/inter-400.woff");
+  const fontFiles = fontCandidates.filter((p) => fs.existsSync(p));
 
-  if (fs.existsSync(cinzelPath)) fontFiles.push(cinzelPath);
-  if (fs.existsSync(inter600Path)) fontFiles.push(inter600Path);
-  if (fs.existsSync(inter400Path)) fontFiles.push(inter400Path);
-
-  // Convert SVG to PNG Buffer via Resvg with fonts
+  // Convert SVG to PNG Buffer via Resvg with TrueType fonts
   const resvg = new Resvg(svg, {
     fitTo: {
       mode: "width",
@@ -301,7 +297,6 @@ export default defineEventHandler(async (event) => {
     },
     font: {
       fontFiles: fontFiles.length > 0 ? fontFiles : undefined,
-      fontDirs: possibleFontPaths.filter((p) => fs.existsSync(p)),
       defaultFontFamily: "Inter",
       serifFamily: "Cinzel",
       sansSerifFamily: "Inter",
