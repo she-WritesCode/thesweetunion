@@ -31,7 +31,19 @@ const props = defineProps<{
 
 const client = useDyrectedClient();
 const config = useRuntimeConfig();
-const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
+const appUrl = computed(() => {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "thesweetunion.com" || host === "www.thesweetunion.com") {
+      return "https://thesweetunion.com";
+    }
+  }
+  const configured = (config.public as any).appUrl;
+  if (configured && !configured.includes("-") && !configured.includes("localhost")) {
+    return configured;
+  }
+  return "https://thesweetunion.com";
+});
 
 const activeTab = ref<"whatsapp" | "card">("whatsapp");
 const loadingDoc = ref(false);
@@ -305,31 +317,6 @@ async function sendEmail() {
     </template>
 
     <template v-else>
-      <!-- ─── Header: Guest Identity Bar ──────────────────────── -->
-      <div class="guest-header">
-        <div class="guest-header__main">
-          <div class="guest-avatar">
-            {{ (leadName[0] || "G").toUpperCase() }}
-          </div>
-          <div class="guest-details">
-            <h3 class="guest-name">{{ guestName }}</h3>
-            <div class="guest-meta">
-              <span v-if="leadPhone" class="meta-phone">
-                <span class="phone-dot" />
-                {{ leadPhone }}
-              </span>
-              <span v-if="groupName" class="meta-group">{{ groupName }}</span>
-              <span v-if="hasSpouse" class="meta-admits">Admits 2</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="status-indicator" :class="invitationSent ? 'status-indicator--sent' : 'status-indicator--pending'">
-          <span class="status-dot" />
-          <span>{{ invitationSent ? `Sent (${invitationSentVia})` : "Pending Dispatch" }}</span>
-        </div>
-      </div>
-
       <!-- ─── Segmented Navigation ────────────────────────────── -->
       <div class="segmented-bar">
         <button
@@ -338,8 +325,16 @@ async function sendEmail() {
           :class="{ 'seg-btn--active': activeTab === 'whatsapp' }"
           @click="activeTab = 'whatsapp'"
         >
-          <svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <svg
+            class="w-3.5 h-3.5 inline-block"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span>WhatsApp Message</span>
         </button>
@@ -349,10 +344,18 @@ async function sendEmail() {
           :class="{ 'seg-btn--active': activeTab === 'card' }"
           @click="activeTab = 'card'"
         >
-          <svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <line x1="7" y1="8" x2="17" y2="8"/>
-            <line x1="7" y1="12" x2="17" y2="12"/>
+          <svg
+            class="w-3.5 h-3.5 inline-block"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <line x1="7" y1="8" x2="17" y2="8" />
+            <line x1="7" y1="12" x2="17" y2="12" />
           </svg>
           <span>Access Pass Card</span>
         </button>
@@ -370,9 +373,7 @@ async function sendEmail() {
             <button type="button" class="btn-tool" @click="copyPassUrl">
               {{ copied ? "Copied! ✓" : "Copy Link" }}
             </button>
-            <a :href="passUrl" target="_blank" rel="noopener" class="btn-tool">
-              Open ↗
-            </a>
+            <a :href="passUrl" target="_blank" rel="noopener" class="btn-tool"> Open ↗ </a>
           </div>
         </div>
 
@@ -380,9 +381,7 @@ async function sendEmail() {
         <div class="chat-composer">
           <div class="chat-composer__top">
             <span class="composer-label">Message Preview &amp; Customization</span>
-            <button type="button" class="btn-reset-link" @click="resetToDefault">
-              Reset Default
-            </button>
+            <button type="button" class="btn-reset-link" @click="resetToDefault">Reset Default</button>
           </div>
 
           <div class="wa-bubble">
@@ -397,9 +396,17 @@ async function sendEmail() {
             <!-- Embedded Unfurl Preview -->
             <div class="wa-unfurl">
               <div class="wa-unfurl__thumb">
-                <svg class="w-4 h-4 text-[#865172]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2"/>
-                  <line x1="7" y1="8" x2="17" y2="8"/>
+                <svg
+                  class="w-4 h-4 text-[#865172]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="7" y1="8" x2="17" y2="8" />
                 </svg>
               </div>
               <div class="wa-unfurl__body">
@@ -416,12 +423,8 @@ async function sendEmail() {
         </div>
 
         <!-- Feedback Messages -->
-        <div v-if="sendSuccess" class="toast toast--success">
-          <span>✓</span> {{ sendSuccess }}
-        </div>
-        <div v-if="error" class="toast toast--error">
-          <span>⚠️</span> {{ error }}
-        </div>
+        <div v-if="sendSuccess" class="toast toast--success"><span>✓</span> {{ sendSuccess }}</div>
+        <div v-if="error" class="toast toast--error"><span>⚠️</span> {{ error }}</div>
 
         <!-- Primary Dispatch Button -->
         <button
@@ -446,12 +449,7 @@ async function sendEmail() {
         </button>
 
         <div v-if="leadEmail" class="secondary-actions">
-          <button
-            type="button"
-            class="btn-email-link"
-            :disabled="sendingEmail"
-            @click="sendEmail"
-          >
+          <button type="button" class="btn-email-link" :disabled="sendingEmail" @click="sendEmail">
             ✉️ {{ sendingEmail ? "Sending Email…" : `Also send to ${leadEmail}` }}
           </button>
         </div>
@@ -476,20 +474,22 @@ async function sendEmail() {
 
         <div class="card-actions">
           <button type="button" class="btn-action-gold" @click="handleDownloadCard">
-            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+            <svg
+              class="w-4 h-4 inline-block mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             Download High-Res PNG
           </button>
-          <button
-            v-if="leadEmail"
-            type="button"
-            class="btn-action-outline"
-            :disabled="sendingEmail"
-            @click="sendEmail"
-          >
+          <button v-if="leadEmail" type="button" class="btn-action-outline" :disabled="sendingEmail" @click="sendEmail">
             Email Pass Card
           </button>
         </div>

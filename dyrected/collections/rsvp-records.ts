@@ -656,7 +656,8 @@ export const rsvpRecords = defineCollection({
       slug: "invitation_dispatch",
       label: "Pass Dispatch",
       icon: "Send",
-      layout: "cards",
+      layout: "table",
+      groupBy: "invitationSent",
       filter: { attending: { equals: true } },
       columns: [
         "leadName",
