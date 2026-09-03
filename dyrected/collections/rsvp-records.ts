@@ -296,6 +296,7 @@ export const rsvpRecords = defineCollection({
       label: "Aso Ebi Orders",
       icon: "Package",
       layout: "table",
+      sort: { field: "submittedAt", direction: "asc" },
       filter: {
         OR: [{ wantsAsoebi: { equals: true } }, { wantsAsoOke: { equals: true } }],
       },
