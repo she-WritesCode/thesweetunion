@@ -734,17 +734,22 @@ export const rsvpRecords = defineCollection({
       slug: "messages_to_couple",
       label: "Messages to Couple",
       icon: "MessageSquareHeart",
-      layout: "cards",
+      layout: "table",
       columns: ["leadName", "hasSpouse", "spouseName", "group", "message", "submittedAt"],
       sort: { field: "submittedAt", direction: "desc" },
       filter: {
-        OR: [{ message: { notEquals: null } }, { message: { notEquals: "" } }],
+        AND: [{ message: { not_equals: null } }, { message: { not_equals: "" } }],
       },
       metrics: [
         {
           label: "Total Messages",
           aggregates: {
-            total: { count: "*", where: { OR: [{ message: { notEquals: null } }, { message: { notEquals: "" } }] } },
+            total: {
+              count: "*",
+              where: {
+                AND: [{ message: { not_equals: null } }, { message: { not_equals: "" } }],
+              },
+            },
           },
           expression: "aggregates.total",
           format: "number",
