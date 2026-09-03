@@ -1,0 +1,161 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { evaluateJexl } from "@dyrected/core";
+import { calculateAsoebiFullPrice, rsvpRecords } from "../rsvp-records.ts";
+
+describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () => {
+  // Helper to extract fields from flat collection fields array
+  const findField = (name: string) => (rsvpRecords as any).fields?.find((f: any) => f.name === name);
+
+  const amountPaidField = findField("asoebiAmountPaid");
+  const asoebiAmountPaidOnChangeExpr = amountPaidField?.admin?.hooks?.onChange;
+
+  it("exports a valid declarative onChange expression for asoebiAmountPaid", () => {
+    assert.equal(typeof asoebiAmountPaidOnChangeExpr, "string");
+    assert.ok(asoebiAmountPaidOnChangeExpr.length > 0);
+  });
+
+  describe("Asoebi Full Price Calculation Parity", () => {
+    const scenarios = [
+      {
+        name: "No items selected",
+        item: { wantsAsoebi: false, wantsAsoOke: false },
+      },
+      {
+        name: "Only fabric (5 yards)",
+        item: { wantsAsoebi: true, asoebiYards: 5, wantsAsoOke: false },
+      },
+      {
+        name: "Only headwear (2 male caps, 1 female gele)",
+        item: {
+          wantsAsoebi: false,
+          wantsAsoOke: true,
+          asoOkeMaleQty: 2,
+          asoOkeFemaleQty: 1,
+        },
+      },
+      {
+        name: "Both fabric (4 yards) and headwear (1 male cap, 2 female gele)",
+        item: {
+          wantsAsoebi: true,
+          asoebiYards: 4,
+          wantsAsoOke: true,
+          asoOkeMaleQty: 1,
+          asoOkeFemaleQty: 2,
+        },
+      },
+    ];
+
+    for (const { name, item } of scenarios) {
+      it(`calculates price correctly for: ${name}`, async () => {
+        const expectedPrice = calculateAsoebiFullPrice(item);
+
+        // Under 'received' status, onChange evaluates the full calculated price expression
+        const jexlPrice = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+          ...item,
+          asoebiPaymentStatus: "received",
+          value: 0,
+        });
+
+        assert.equal(
+          jexlPrice,
+          expectedPrice,
+          `Mismatch for ${name}: JEXL gave ${jexlPrice}, JS gave ${expectedPrice}`,
+        );
+      });
+    }
+  });
+
+  describe("Asoebi Payment Status onChange Behavior", () => {
+    const baseOrder = {
+      wantsAsoebi: true,
+      asoebiYards: 4, // 4 * 10,000 = 40,000
+      wantsAsoOke: true,
+      asoOkeMaleQty: 1, // 1 * 6,000  = 6,000
+      asoOkeFemaleQty: 2, // 2 * 6,000  = 12,000
+      // Total price = 58,000
+    };
+
+    it("resets amount to 0 when status is pending", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "pending",
+        value: 20000,
+      });
+      assert.equal(result, 0);
+    });
+
+    it("sets full price (₦58k) when status is received", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "received",
+        value: 0,
+      });
+      assert.equal(result, 58000);
+    });
+
+    it("sets full price (₦58k) when status is waived", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "waived",
+        value: 0,
+      });
+      assert.equal(result, 58000);
+    });
+
+    it("preserves partial payment amount if already entered (> 0)", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "partial",
+        value: 25000,
+      });
+      assert.equal(result, 25000);
+    });
+
+    it("defaults partial payment to full price if current value is 0", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "partial",
+        value: 0,
+      });
+      assert.equal(result, 58000);
+    });
+
+    it("preserves value for unhandled/custom status", async () => {
+      const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
+        ...baseOrder,
+        asoebiPaymentStatus: "custom_status",
+        value: 15000,
+      });
+      assert.equal(result, 15000);
+    });
+  });
+
+  describe("Field Condition Visibility Logic", () => {
+    const spouseField = findField("spouseName");
+    const asoebiYardsField = findField("asoebiYards");
+    const paymentStatusField = findField("asoebiPaymentStatus");
+
+    it("shows spouseName only when hasSpouse is true", async () => {
+      const cond = spouseField?.admin?.condition;
+      assert.equal(await evaluateJexl(cond, { hasSpouse: true }), true);
+      assert.equal(await evaluateJexl(cond, { hasSpouse: false }), false);
+      assert.equal(await evaluateJexl(cond, {}), false);
+    });
+
+    it("shows asoebiYards only when wantsAsoebi is true", async () => {
+      const cond = asoebiYardsField?.admin?.condition;
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: true }), true);
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: false }), false);
+      assert.equal(await evaluateJexl(cond, {}), false);
+    });
+
+    it("shows order fields when wantsAsoebi OR wantsAsoOke is true", async () => {
+      const cond = paymentStatusField?.admin?.condition;
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: true, wantsAsoOke: false }), true);
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: false, wantsAsoOke: true }), true);
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: true, wantsAsoOke: true }), true);
+      assert.equal(await evaluateJexl(cond, { wantsAsoebi: false, wantsAsoOke: false }), false);
+    });
+  });
+});
