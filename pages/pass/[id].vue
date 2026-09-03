@@ -77,11 +77,10 @@ function formatDate(dateStr: string) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
+    weekday: "short",
+    month: "short",
     day: "numeric",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
   });
 }
@@ -96,7 +95,7 @@ function getGoogleCalendarUrl(event: any) {
   let datesParam = "";
   if (event.date) {
     const start = new Date(event.date);
-    const end = new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours duration
+    const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
     const formatIso = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
     datesParam = `&dates=${formatIso(start)}/${formatIso(end)}`;
   }
@@ -106,66 +105,63 @@ function getGoogleCalendarUrl(event: any) {
 </script>
 
 <template>
-  <div class="pass-page-root min-h-screen bg-[#170E14] text-[#FAF5F8] flex flex-col justify-between selection:bg-[#D4AF37] selection:text-[#30222A]">
-    <!-- Ambient glowing backgrounds -->
+  <div class="min-h-screen bg-[#140C12] text-[#FAF5F8] flex flex-col justify-between selection:bg-[#D4AF37] selection:text-[#30222A]">
+    <!-- Ambient subtle background glow -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      <div class="absolute -top-40 -left-40 w-96 h-96 bg-[#865172]/20 rounded-full blur-[100px]" />
-      <div class="absolute top-1/3 -right-40 w-[30rem] h-[30rem] bg-[#D4AF37]/10 rounded-full blur-[120px]" />
-      <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-[#865172]/20 rounded-full blur-[100px]" />
+      <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] bg-[#865172]/15 rounded-full blur-[140px]" />
     </div>
 
-    <!-- Header Navigation -->
-    <header class="relative z-10 border-b border-[#D4AF37]/20 bg-[#24151F]/80 backdrop-blur-md px-4 sm:px-6 py-3.5">
-      <div class="max-w-4xl mx-auto flex items-center justify-between">
-        <NuxtLink to="/" class="flex items-center gap-2.5 text-decoration-none group">
-          <span class="font-cinzel text-lg sm:text-xl font-bold tracking-[0.18em] bg-gradient-to-r from-[#FCE8B3] via-[#D4AF37] to-[#B48A1E] bg-clip-text text-transparent group-hover:brightness-110 transition">
+    <!-- Minimalist Header Navigation -->
+    <header class="relative z-10 border-b border-[#D4AF37]/15 bg-[#1C111A]/70 backdrop-blur-md px-4 sm:px-6 py-3.5">
+      <div class="max-w-3xl mx-auto flex items-center justify-between">
+        <NuxtLink to="/" class="flex items-center gap-2 text-decoration-none group">
+          <span class="font-cinzel text-base sm:text-lg font-bold tracking-[0.16em] bg-gradient-to-r from-[#FCE8B3] via-[#D4AF37] to-[#B48A1E] bg-clip-text text-transparent group-hover:brightness-110 transition">
             {{ coupleName }}
           </span>
-          <span class="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37]/60 font-mono hidden sm:inline pt-0.5">
+          <span class="text-[9px] uppercase tracking-[0.25em] text-[#D4AF37]/50 font-mono hidden sm:inline pt-0.5">
             {{ hashtag }}
           </span>
         </NuxtLink>
 
         <NuxtLink
           to="/wishlist"
-          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-xs font-semibold tracking-wider text-[#FCE8B3] hover:bg-[#D4AF37]/20 hover:border-[#D4AF37] active:scale-95 transition shadow-sm"
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[11px] font-semibold tracking-wider text-[#FCE8B3] hover:bg-[#D4AF37]/20 hover:border-[#D4AF37] active:scale-95 transition"
         >
-          <!-- Gift Icon SVG -->
-          <svg class="w-3.5 h-3.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-3 h-3 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="8" width="18" height="4" rx="1"/>
             <path d="M12 8v13"/>
             <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
             <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>
           </svg>
-          <span>Gift Registry</span>
+          <span>Registry</span>
         </NuxtLink>
       </div>
     </header>
 
     <!-- Main Content Container -->
-    <main class="relative z-10 flex-1 max-w-3xl w-full mx-auto px-4 py-6 sm:py-10 flex flex-col items-center">
+    <main class="relative z-10 flex-1 max-w-xl w-full mx-auto px-4 py-6 sm:py-8 flex flex-col items-center">
       <!-- Loading State -->
-      <div v-if="pending" class="py-24 flex flex-col items-center justify-center gap-4 text-center">
-        <div class="w-10 h-10 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
-        <p class="text-xs tracking-[0.2em] uppercase text-[#D4AF37] font-semibold">Preparing your digital pass…</p>
+      <div v-if="pending" class="py-24 flex flex-col items-center justify-center gap-3 text-center">
+        <div class="w-8 h-8 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
+        <p class="text-[11px] tracking-[0.2em] uppercase text-[#D4AF37] font-semibold">Loading pass…</p>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error || !pass" class="py-20 text-center max-w-md mx-auto">
-        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center text-[#FCE8B3]">
-          <svg class="w-6 h-6 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div v-else-if="error || !pass" class="py-16 text-center max-w-sm mx-auto">
+        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center text-[#FCE8B3]">
+          <svg class="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="15" y1="9" x2="9" y2="15"/>
             <line x1="9" y1="9" x2="15" y2="15"/>
           </svg>
         </div>
-        <h1 class="text-2xl font-cinzel font-bold text-[#FCE8B3] mb-2">Pass Not Found</h1>
-        <p class="text-xs text-[#FAF5F8]/70 mb-6 leading-relaxed">
-          We couldn't locate this invitation pass code. Please check the URL link or contact the wedding party.
+        <h1 class="text-xl font-cinzel font-bold text-[#FCE8B3] mb-1.5">Pass Not Found</h1>
+        <p class="text-xs text-[#FAF5F8]/70 mb-5 leading-relaxed">
+          We couldn't locate this pass code. Please verify the URL link or contact the wedding party.
         </p>
         <NuxtLink
           to="/"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#865172] text-white text-xs font-semibold uppercase tracking-widest hover:bg-[#653853] transition"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#865172] text-white text-[11px] font-semibold uppercase tracking-widest hover:bg-[#653853] transition"
         >
           Return Home
         </NuxtLink>
@@ -173,25 +169,8 @@ function getGoogleCalendarUrl(event: any) {
 
       <!-- Loaded Pass View -->
       <div v-else class="w-full flex flex-col items-center">
-        <!-- Top Pass Title Header -->
-        <div class="text-center mb-5 sm:mb-6">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 mb-2.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />
-            <span class="text-[10px] uppercase font-bold tracking-[0.25em] text-[#FCE8B3]">
-              Official Wedding Pass
-            </span>
-          </div>
-
-          <h1 class="text-2xl sm:text-3xl font-cinzel font-bold text-[#FAF5F8] tracking-wide">
-            {{ guestName }}
-          </h1>
-          <p class="text-xs text-[#FAF5F8]/60 mt-1">
-            Pass Code: <span class="font-mono font-bold text-[#FCE8B3] tracking-widest">{{ pass.id.toUpperCase() }}</span>
-          </p>
-        </div>
-
-        <!-- Luxury Access Card Canvas -->
-        <div class="w-full flex justify-center mb-6 sm:mb-8">
+        <!-- Hero Luxury Access Card Canvas -->
+        <div class="w-full flex justify-center mb-5">
           <AccessCard
             ref="cardRef"
             :rsvp-id="pass.id"
@@ -206,27 +185,27 @@ function getGoogleCalendarUrl(event: any) {
           />
         </div>
 
-        <!-- Primary Action Buttons -->
-        <div class="w-full max-w-sm sm:max-w-md flex flex-col gap-2.5 mb-8 sm:mb-10">
+        <!-- Sleek Action Buttons (2-Column Grid) -->
+        <div class="w-full max-w-[340px] grid grid-cols-2 gap-2.5 mb-8">
           <!-- Download Image Button -->
           <button
             type="button"
             :disabled="downloading"
-            class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-gradient-to-r from-[#FCE8B3] via-[#D4AF37] to-[#B48A1E] text-[#30222A] font-bold text-xs uppercase tracking-[0.15em] shadow-lg shadow-[#D4AF37]/20 hover:brightness-105 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#FCE8B3] via-[#D4AF37] to-[#B48A1E] text-[#30222A] font-bold text-[11px] uppercase tracking-wider shadow-md hover:brightness-105 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
             @click="handleDownload"
           >
-            <svg class="w-4 h-4 text-[#30222A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-3.5 h-3.5 text-[#30222A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            <span>{{ downloading ? "Saving Pass…" : "Save Pass to Photos" }}</span>
+            <span>{{ downloading ? "Saving…" : "Save Pass" }}</span>
           </button>
 
           <!-- Wishlist Link -->
           <NuxtLink
             to="/wishlist"
-            class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl border border-[#D4AF37]/40 bg-[#30222A]/80 text-[#FCE8B3] font-semibold text-xs uppercase tracking-[0.15em] hover:bg-[#D4AF37]/15 hover:border-[#D4AF37] active:scale-[0.98] transition text-center"
+            class="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-[#D4AF37]/35 bg-[#251620]/80 text-[#FCE8B3] font-semibold text-[11px] uppercase tracking-wider hover:bg-[#D4AF37]/15 hover:border-[#D4AF37] active:scale-[0.98] transition text-center"
           >
             <svg class="w-3.5 h-3.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="8" width="18" height="4" rx="1"/>
@@ -234,42 +213,33 @@ function getGoogleCalendarUrl(event: any) {
               <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
               <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>
             </svg>
-            <span>View Wishlist</span>
+            <span>Wishlist</span>
           </NuxtLink>
         </div>
 
-        <!-- Event Details & Itinerary -->
-        <div class="w-full max-w-xl bg-[#24151F]/80 border border-[#D4AF37]/25 rounded-2xl p-5 sm:p-8 backdrop-blur-md shadow-xl mb-8">
-          <div class="flex items-center gap-3 mb-5 pb-4 border-b border-[#D4AF37]/20">
-            <div class="w-8 h-8 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] flex-shrink-0">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="font-cinzel text-base sm:text-lg font-bold text-[#FCE8B3] tracking-wide">Celebration Schedule &amp; Venues</h2>
-              <p class="text-[11px] text-[#FAF5F8]/60">Present your pass QR code upon arrival at the entrance.</p>
-            </div>
+        <!-- Minimalist Itinerary & Schedule -->
+        <div v-if="pass.events && pass.events.length" class="w-full max-w-md border-t border-[#D4AF37]/15 pt-6 mb-6">
+          <div class="text-center mb-5">
+            <span class="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">
+              Event Itinerary
+            </span>
           </div>
 
-          <div v-if="pass.events && pass.events.length" class="space-y-6">
+          <div class="space-y-4">
             <div
               v-for="(ev, idx) in pass.events"
               :key="ev.id || idx"
-              class="relative pl-6 border-l-2 border-[#D4AF37]/40 space-y-2"
+              class="p-4 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 space-y-1.5"
             >
-              <div class="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-[#D4AF37] ring-4 ring-[#24151F]" />
-
-              <div class="flex items-baseline justify-between flex-wrap gap-2">
-                <h3 class="font-cinzel text-sm sm:text-base font-bold text-[#FAF5F8] tracking-wide">{{ ev.name }}</h3>
-                <span v-if="ev.dressCode" class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#865172]/40 text-[#FCE8B3] border border-[#865172]/60">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <h3 class="font-cinzel text-sm font-bold text-[#FAF5F8] tracking-wide">{{ ev.name }}</h3>
+                <span v-if="ev.dressCode" class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#865172]/30 text-[#FCE8B3] border border-[#865172]/40">
                   {{ ev.dressCode }}
                 </span>
               </div>
 
-              <p v-if="ev.date" class="text-xs font-mono text-[#D4AF37] flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-[#D4AF37]/80 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <p v-if="ev.date" class="text-[11px] font-mono text-[#D4AF37] flex items-center gap-1.5">
+                <svg class="w-3 h-3 text-[#D4AF37]/80 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                   <line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/>
@@ -278,56 +248,50 @@ function getGoogleCalendarUrl(event: any) {
                 <span>{{ formatDate(ev.date) }}</span>
               </p>
 
-              <div v-if="ev.venueName" class="text-xs text-[#FAF5F8]/80 leading-relaxed">
-                <p class="font-semibold text-[#FAF5F8]">{{ ev.venueName }}</p>
-                <p v-if="ev.venueAddress" class="text-[#FAF5F8]/60">{{ ev.venueAddress }}</p>
+              <div v-if="ev.venueName" class="text-[11px] text-[#FAF5F8]/70 leading-relaxed">
+                <span class="font-medium text-[#FAF5F8]">{{ ev.venueName }}</span>
+                <span v-if="ev.venueAddress" class="text-[#FAF5F8]/50"> · {{ ev.venueAddress }}</span>
               </div>
 
-              <div class="pt-1.5 flex items-center gap-4 flex-wrap">
-                <!-- Add to Google Calendar -->
+              <div class="pt-1 flex items-center gap-4 text-[10px]">
                 <a
                   :href="getGoogleCalendarUrl(ev)"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#FCE8B3] hover:text-white underline underline-offset-4 decoration-[#D4AF37]/50 transition"
+                  class="inline-flex items-center gap-1 text-[#FCE8B3] hover:text-white transition font-medium underline underline-offset-2 decoration-[#D4AF37]/40"
                 >
-                  <svg class="w-3 h-3 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="w-2.5 h-2.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                     <line x1="16" y1="2" x2="16" y2="6"/>
                     <line x1="8" y1="2" x2="8" y2="6"/>
                     <line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
-                  <span>Add to Calendar</span>
+                  <span>Calendar</span>
                 </a>
 
-                <!-- Google Maps Directions -->
                 <a
                   v-if="ev.venueName || ev.venueAddress"
                   :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((ev.venueName || '') + ' ' + (ev.venueAddress || ''))}`"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#FCE8B3] hover:text-white underline underline-offset-4 decoration-[#D4AF37]/50 transition"
+                  class="inline-flex items-center gap-1 text-[#FCE8B3] hover:text-white transition font-medium underline underline-offset-2 decoration-[#D4AF37]/40"
                 >
-                  <svg class="w-3 h-3 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="w-2.5 h-2.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="3 11 22 2 13 21 11 13 3 11"/>
                   </svg>
-                  <span>Open in Maps</span>
+                  <span>Maps ↗</span>
                 </a>
               </div>
             </div>
           </div>
-
-          <div v-else class="text-center py-4 text-xs text-[#FAF5F8]/60 italic">
-            Event itinerary details will be announced shortly.
-          </div>
         </div>
 
         <!-- Note to Guests -->
-        <div class="w-full max-w-xl text-center space-y-1.5 px-4 mb-4">
-          <p class="text-xs font-serif italic text-[#FAF5F8]/70">
-            "Your love, presence, and prayers are the greatest gifts of all."
+        <div class="w-full max-w-md text-center space-y-1 px-4 pt-2 mb-4 border-t border-[#D4AF37]/10">
+          <p class="text-[11px] font-serif italic text-[#FAF5F8]/60">
+            "Your love, presence, and prayers are our greatest gifts."
           </p>
-          <p class="text-[10px] font-mono tracking-[0.2em] text-[#D4AF37]/75 uppercase">
+          <p class="text-[9px] font-mono tracking-[0.2em] text-[#D4AF37]/60 uppercase">
             {{ hashtag }} · {{ weddingDateText }}
           </p>
         </div>
