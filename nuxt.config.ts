@@ -86,6 +86,15 @@ export default defineNuxtConfig({
         "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
       },
     },
+    "/api/pass/card-image/**": {
+      cache: {
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        swr: true,
+      },
+      headers: {
+        "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+      },
+    },
   },
 
   app: {
