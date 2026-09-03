@@ -489,33 +489,40 @@ export function rsvpCancelledEmail({ leadName }: { leadName: string }): string {
 export function invitationEmail({
   guestName,
   accessCode,
+  passUrl,
   eventNames,
   wishlistLink,
 }: {
   guestName: string;
   accessCode: string;
+  passUrl: string;
   eventNames: string[];
   wishlistLink: string;
 }): string {
   return layout(
     heading(`You're invited, ${guestName}! 🎉`),
     paragraph(
-      "We're so excited to celebrate with you. Your personal access card is below — please save it or screenshot it to show at the entrance.",
+      "We're so excited to celebrate with you. Your personal access pass card is below — please save it to your photos or show it at the entrance.",
     ),
     divider(),
     `<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0;">
       <tr>
         <td align="center">
-          <img src="cid:accesscard@thesweetunion" alt="Your Access Card" style="max-width:320px;width:100%;border-radius:0;border:1px solid ${BORDER};" />
+          <a href="${passUrl}" target="_blank" style="text-decoration:none;">
+            <img src="cid:accesscard@thesweetunion" alt="Wedding Access Card for ${guestName}" style="max-width:320px;width:100%;height:auto;display:block;border-radius:0;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
+          </a>
         </td>
       </tr>
     </table>`,
+    `<p align="center" style="margin:8px 0 16px;">
+      <a href="${passUrl}" style="color:${ACCENT};font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:underline;">View Online Pass &amp; Directions ↗</a>
+    </p>`,
     sectionLabel("Your access code"),
     `<p style="margin:0 0 16px;font-size:18px;font-family:'Courier New',monospace;color:${TEXT};letter-spacing:2px;background:${BASE};border:1px solid ${BORDER};border-radius:6px;padding:10px 16px;display:inline-block;">${accessCode}</p>`,
     eventNames.length ? sectionLabel("Events you're attending") + eventList(eventNames) : "",
     divider(),
     paragraph(
-      "Present this card (or your access code) at the entrance and it will be scanned to check you in. We cannot wait to see you!",
+      "Present this pass at the entrance to be scanned for check-in. We cannot wait to celebrate with you!",
     ),
     divider(),
     sectionLabel("Our Registry"),

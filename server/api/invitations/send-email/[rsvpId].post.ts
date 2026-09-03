@@ -40,9 +40,9 @@ export default defineEventHandler(async (event) => {
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
     imageBuffer = Buffer.from(base64Data, "base64");
   } else {
-    // Generate pass card image automatically on the server
+    // Generate pass card image automatically on the server via dedicated Resvg card-image endpoint
     try {
-      const fetchedPng = await $fetch<Buffer>(`/api/pass/og-image/${rsvpId}.png`, {
+      const fetchedPng = await $fetch<Buffer>(`/api/pass/card-image/${rsvpId}.png`, {
         responseType: "arrayBuffer",
       });
       imageBuffer = Buffer.from(fetchedPng);
@@ -62,6 +62,7 @@ export default defineEventHandler(async (event) => {
 
   const from = process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`;
   const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
+  const passUrl = `${appUrl}/pass/${rsvpId.toLowerCase()}`;
   const wishlistLink = `${appUrl}/wishlist`;
 
   const attachments: any[] = [];
@@ -74,7 +75,7 @@ export default defineEventHandler(async (event) => {
         cid: "accesscard@thesweetunion",
       },
       {
-        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        filename: `wedding-pass-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
         content: imageBuffer,
         contentType: "image/png",
         contentDisposition: "attachment",
@@ -86,7 +87,7 @@ export default defineEventHandler(async (event) => {
     from,
     to: rsvp.leadEmail,
     subject: `You're invited, ${rsvp.leadName}! Your access card is inside 🎉`,
-    html: invitationEmail({ guestName, accessCode: rsvpId, eventNames, wishlistLink }),
+    html: invitationEmail({ guestName, accessCode: rsvpId, passUrl, eventNames, wishlistLink }),
     attachments,
   });
 
