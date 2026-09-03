@@ -2,8 +2,7 @@ import { defineEventHandler, getRouterParam, createError, setHeader } from "h3";
 import { createClient } from "@dyrected/sdk";
 import QRCode from "qrcode";
 import { Resvg } from "@resvg/resvg-js";
-import path from "path";
-import fs from "fs";
+import { ensureServerFonts } from "~~/server/utils/og-fonts";
 
 export default defineEventHandler(async (event) => {
   const rawId = getRouterParam(event, "id") || "";
@@ -277,17 +276,8 @@ export default defineEventHandler(async (event) => {
   </g>
 </svg>`;
 
-  // Locate TrueType font files
-  const fontCandidates = [
-    path.resolve(process.cwd(), "public/fonts/Cinzel-Bold.ttf"),
-    path.resolve(process.cwd(), "public/fonts/Cinzel-Regular.ttf"),
-    path.resolve(process.cwd(), "public/fonts/Inter-SemiBold.ttf"),
-    path.resolve(process.cwd(), "public/fonts/Inter-Regular.ttf"),
-    path.resolve(process.cwd(), "assets/fonts/Cinzel-Bold.ttf"),
-    path.resolve(process.cwd(), "assets/fonts/Inter-SemiBold.ttf"),
-  ];
-
-  const fontFiles = fontCandidates.filter((p) => fs.existsSync(p));
+  // Ensure fonts exist in /tmp for guaranteed serverless Resvg execution
+  const fontFiles = ensureServerFonts();
 
   // Convert SVG to PNG Buffer via Resvg with TrueType fonts
   const resvg = new Resvg(svg, {
