@@ -12,7 +12,7 @@ import {
   defineTextareaField,
   defineDateField,
   defineNumberField,
-  when,
+  expr,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
@@ -52,23 +52,23 @@ export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number
 }
 
 // ── Declarative JEXL Expressions using when helper ───────────────────────────
-const fabricPriceExpr = when.then(when.sibling("wantsAsoebi").isTrue(), "siblingData.asoebiYards * 10000", 0);
-const asoOkePriceExpr = when.then(
-  when.sibling("wantsAsoOke").isTrue(),
+const fabricPriceExpr = expr.then(expr.sibling("wantsAsoebi").isTrue(), "siblingData.asoebiYards * 10000", 0);
+const asoOkePriceExpr = expr.then(
+  expr.sibling("wantsAsoOke").isTrue(),
   "(siblingData.asoOkeMaleQty * 6000) + (siblingData.asoOkeFemaleQty * 6000)",
   0,
 );
 const asoebiFullPriceExpr = `(${fabricPriceExpr}) + (${asoOkePriceExpr})`;
 
-const asoebiAmountPaidOnChange = when
+const asoebiAmountPaidOnChange = expr
   .match()
-  .case(when.sibling("asoebiPaymentStatus").equals("pending"), 0)
-  .case(when.sibling("asoebiPaymentStatus").in("received", "waived"), asoebiFullPriceExpr)
-  .case(when.sibling("asoebiPaymentStatus").equals("partial"), `value > 0 ? value : (${asoebiFullPriceExpr})`)
+  .case(expr.sibling("asoebiPaymentStatus").equals("pending"), 0)
+  .case(expr.sibling("asoebiPaymentStatus").in("received", "waived"), asoebiFullPriceExpr)
+  .case(expr.sibling("asoebiPaymentStatus").equals("partial"), `value > 0 ? value : (${asoebiFullPriceExpr})`)
   .otherwise("value");
 
-const wantsAsoebiOrHeadwearCondition = when.any(when("wantsAsoebi").isTrue(), when("wantsAsoOke").isTrue());
-const attendingCondition = when("attending").isTrue();
+const wantsAsoebiOrHeadwearCondition = expr.any(expr("wantsAsoebi").isTrue(), when("wantsAsoOke").isTrue());
+const attendingCondition = expr("attending").isTrue();
 
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
