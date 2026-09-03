@@ -34,7 +34,6 @@ const config = useRuntimeConfig();
 const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
 
 const activeTab = ref<"whatsapp" | "card">("whatsapp");
-const loading = ref(false);
 const loadingDoc = ref(false);
 const sendingWa = ref(false);
 const sendingEmail = ref(false);
@@ -162,9 +161,7 @@ const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
 const leadEmail = computed(() => (record.value.leadEmail as string) ?? "");
 const hasSpouse = computed(() => Boolean(record.value.hasSpouse));
 const spouseName = computed(() => (record.value.spouseName as string) ?? "");
-const attending = computed(() => Boolean(record.value.attending));
 const invitationSent = computed(() => Boolean(record.value.invitationSent));
-const invitationSentAt = computed(() => record.value.invitationSentAt as string | undefined);
 const invitationSentVia = computed(() => (record.value.invitationSentVia as string) || "WhatsApp");
 
 const guestName = computed(() => {
@@ -341,7 +338,9 @@ async function sendEmail() {
           :class="{ 'seg-btn--active': activeTab === 'whatsapp' }"
           @click="activeTab = 'whatsapp'"
         >
-          <span class="seg-icon">💬</span>
+          <svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
           <span>WhatsApp Message</span>
         </button>
         <button
@@ -350,7 +349,11 @@ async function sendEmail() {
           :class="{ 'seg-btn--active': activeTab === 'card' }"
           @click="activeTab = 'card'"
         >
-          <span class="seg-icon">🎟️</span>
+          <svg class="w-3.5 h-3.5 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="7" y1="8" x2="17" y2="8"/>
+            <line x1="7" y1="12" x2="17" y2="12"/>
+          </svg>
           <span>Access Pass Card</span>
         </button>
       </div>
@@ -376,7 +379,7 @@ async function sendEmail() {
         <!-- WhatsApp Chat Simulator / Editor -->
         <div class="chat-composer">
           <div class="chat-composer__top">
-            <span class="composer-label">Message Preview & Customization</span>
+            <span class="composer-label">Message Preview &amp; Customization</span>
             <button type="button" class="btn-reset-link" @click="resetToDefault">
               Reset Default
             </button>
@@ -393,7 +396,12 @@ async function sendEmail() {
 
             <!-- Embedded Unfurl Preview -->
             <div class="wa-unfurl">
-              <div class="wa-unfurl__thumb">🎟️</div>
+              <div class="wa-unfurl__thumb">
+                <svg class="w-4 h-4 text-[#865172]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2"/>
+                  <line x1="7" y1="8" x2="17" y2="8"/>
+                </svg>
+              </div>
               <div class="wa-unfurl__body">
                 <span class="wa-unfurl__title">Official Wedding Pass · Adun &amp; Uche</span>
                 <span class="wa-unfurl__domain">thesweetunion.com</span>
@@ -468,7 +476,12 @@ async function sendEmail() {
 
         <div class="card-actions">
           <button type="button" class="btn-action-gold" @click="handleDownloadCard">
-            📥 Download High-Res PNG
+            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download High-Res PNG
           </button>
           <button
             v-if="leadEmail"
@@ -477,7 +490,7 @@ async function sendEmail() {
             :disabled="sendingEmail"
             @click="sendEmail"
           >
-            ✉️ Email Pass Card
+            Email Pass Card
           </button>
         </div>
       </div>
