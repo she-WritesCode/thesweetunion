@@ -44,8 +44,14 @@ export const INVITATION_SENT_VIA_OPTIONS = [
 // const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
 // const invitationCondition = "doc.attending === true";
 
-const asoEbiOrderCondition = "true";
-const invitationCondition = "true";
+export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number {
+  const yards = Number(item.asoebiYards) || 0;
+  const maleQty = Number(item.asoOkeMaleQty) || 0;
+  const femaleQty = Number(item.asoOkeFemaleQty) || 0;
+  const fabricTotal = item.wantsAsoebi === true || yards > 0 ? yards * 10000 : 0;
+  const asoOkeTotal = item.wantsAsoOke === true || maleQty > 0 || femaleQty > 0 ? (maleQty + femaleQty) * 6000 : 0;
+  return fabricTotal + asoOkeTotal;
+}
 
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
@@ -594,6 +600,27 @@ export const rsvpRecords = defineCollection({
               admin: {
                 placeholder: "e.g. 20000",
                 description: "Amount received so far in Naira (helpful for partial payments).",
+                hooks: {
+                  onChange: ({ value, siblingData, data }) => {
+                    const ctx = { ...(data || {}), ...(siblingData || {}) };
+                    const status = ctx.asoebiPaymentStatus;
+                    const fullPrice = calculateAsoebiFullPrice(ctx);
+
+                    if (status === "pending") {
+                      return 0;
+                    }
+                    if (status === "received" || status === "waived") {
+                      return fullPrice;
+                    }
+                    if (status === "partial") {
+                      if (typeof value === "number" && value > 0 && value !== fullPrice) {
+                        return value;
+                      }
+                      return fullPrice;
+                    }
+                    return value;
+                  },
+                },
               },
             }),
             defineTextareaField({
@@ -881,6 +908,27 @@ export const rsvpRecords = defineCollection({
             placeholder: "e.g. 20000",
             description: "Amount received so far in Naira (helpful for partial payments).",
             condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            hooks: {
+              onChange: ({ value, siblingData, data }) => {
+                const ctx = { ...(data || {}), ...(siblingData || {}) };
+                const status = ctx.asoebiPaymentStatus;
+                const fullPrice = calculateAsoebiFullPrice(ctx);
+
+                if (status === "pending") {
+                  return 0;
+                }
+                if (status === "received" || status === "waived") {
+                  return fullPrice;
+                }
+                if (status === "partial") {
+                  if (typeof value === "number" && value > 0 && value !== fullPrice) {
+                    return value;
+                  }
+                  return fullPrice;
+                }
+                return value;
+              },
+            },
           },
         }),
         defineSelectField({
