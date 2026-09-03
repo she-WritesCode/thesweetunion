@@ -20,7 +20,8 @@ const weddingDateText = computed(() => pass.value?.siteSettings?.weddingDateText
 const eventNames = computed(() => (pass.value?.events || []).map((e: any) => e.name));
 
 const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
-const ogImageUrl = computed(() => `${appUrl}/api/pass/og-image/${passId.value}`);
+const ogImageUrl = computed(() => `${appUrl}/api/pass/og-image/${passId.value}.png`);
+const pageUrl = computed(() => `${appUrl}/pass/${passId.value}`);
 
 useSeoMeta({
   title: () => `Wedding Pass: ${guestName.value} · ${hashtag.value}`,
@@ -30,11 +31,28 @@ useSeoMeta({
   ogDescription: () =>
     `Official digital wedding pass for ${guestName.value} celebrating ${coupleName.value}. Kindly present this pass at the entrance.`,
   ogImage: () => ogImageUrl.value,
+  ogImageType: "image/png",
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: () => `Wedding Access Pass for ${guestName.value}`,
+  ogUrl: () => pageUrl.value,
   ogType: "website",
   twitterCard: "summary_large_image",
   twitterTitle: () => `🎟️ Wedding Pass: ${guestName.value}`,
   twitterDescription: () => `Digital wedding pass for ${coupleName.value}'s wedding celebration.`,
   twitterImage: () => ogImageUrl.value,
+});
+
+useHead({
+  meta: [
+    { property: "og:image", content: ogImageUrl.value },
+    { property: "og:image:secure_url", content: ogImageUrl.value },
+    { property: "og:image:type", content: "image/png" },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { name: "thumbnail", content: ogImageUrl.value },
+  ],
+  link: [{ rel: "image_src", href: ogImageUrl.value }],
 });
 
 async function handleDownload() {

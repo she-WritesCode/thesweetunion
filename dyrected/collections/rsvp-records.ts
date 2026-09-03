@@ -578,6 +578,7 @@ export const rsvpRecords = defineCollection({
         defineAction({
           name: "updatePaymentStatus",
           label: "Update Payment",
+          submitLabel: "Save Payment",
           icon: "CreditCard",
           type: "row",
           fields: [
@@ -607,6 +608,7 @@ export const rsvpRecords = defineCollection({
         defineAction({
           name: "updateFulfillmentStatus",
           label: "Update Fulfilment",
+          submitLabel: "Save Fulfilment",
           icon: "PackageCheck",
           type: "row",
           fields: [
@@ -628,6 +630,7 @@ export const rsvpRecords = defineCollection({
         defineAction({
           name: "sendAsoebiReminder",
           label: "Send WhatsApp Reminder",
+          submitLabel: "Done",
           icon: "MessageSquare",
           type: "row",
           fields: [
@@ -704,6 +707,7 @@ export const rsvpRecords = defineCollection({
         defineAction({
           name: "sendPass",
           label: "Send Pass",
+          submitLabel: "Done",
           icon: "Send",
           type: "row",
           fields: [
