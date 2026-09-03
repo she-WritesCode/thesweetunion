@@ -285,12 +285,16 @@ async function sendEmail() {
   try {
     let imageBase64 = "";
     if (cardRef.value?.captureCardImage) {
-      imageBase64 = await cardRef.value.captureCardImage();
+      try {
+        imageBase64 = await cardRef.value.captureCardImage();
+      } catch (e) {
+        console.warn("Client card capture skipped, using server generator:", e);
+      }
     }
     await $fetch(`/api/invitations/send-email/${id}`, {
       method: "POST",
       headers: adminAuthHeaders(),
-      body: { imageBase64 },
+      body: { imageBase64: imageBase64 || undefined },
     });
     sendSuccess.value = `Wedding pass emailed to ${leadEmail.value}.`;
     if (props.onChange) props.onChange({ invitationSent: true });
@@ -393,31 +397,9 @@ async function sendEmail() {
               placeholder="Type message to guest..."
             />
 
-            <!-- Embedded Unfurl Preview -->
-            <div class="wa-unfurl">
-              <div class="wa-unfurl__thumb">
-                <svg
-                  class="w-4 h-4 text-[#865172]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="16" rx="2" />
-                  <line x1="7" y1="8" x2="17" y2="8" />
-                </svg>
-              </div>
-              <div class="wa-unfurl__body">
-                <span class="wa-unfurl__title">Official Wedding Pass · Adun &amp; Uche</span>
-                <span class="wa-unfurl__domain">thesweetunion.com</span>
-              </div>
-            </div>
-
             <div class="wa-bubble__footer">
-              <span class="wa-note">WhatsApp link unfurl preview included</span>
-              <span class="wa-time">Now ✓✓</span>
+              <span class="wa-note">{{ leadPhone ? `To: ${leadPhone}` : "No phone provided" }}</span>
+              <span class="wa-time">Ready to send</span>
             </div>
           </div>
         </div>

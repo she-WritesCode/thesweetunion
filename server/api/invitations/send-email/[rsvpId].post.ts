@@ -8,8 +8,8 @@ export default defineEventHandler(async (event) => {
   const rsvpId = getRouterParam(event, "rsvpId");
   if (!rsvpId) throw createError({ statusCode: 400, message: "Missing rsvpId" });
 
-  const { imageBase64 } = await readBody(event);
-  if (!imageBase64) throw createError({ statusCode: 400, message: "Missing imageBase64" });
+  const body = (await readBody(event).catch(() => ({}))) || {};
+  const { imageBase64 } = body;
 
   const config = useRuntimeConfig();
   const client = createClient({
@@ -35,7 +35,22 @@ export default defineEventHandler(async (event) => {
     ? rsvp.selectedEvents.map((e: any) => (typeof e === "object" ? e.name : e)).filter(Boolean)
     : [];
 
-  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+  let imageBuffer: Buffer;
+  if (imageBase64 && typeof imageBase64 === "string" && imageBase64.trim()) {
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+    imageBuffer = Buffer.from(base64Data, "base64");
+  } else {
+    // Generate pass card image automatically on the server
+    try {
+      const fetchedPng = await $fetch<Buffer>(`/api/pass/og-image/${rsvpId}.png`, {
+        responseType: "arrayBuffer",
+      });
+      imageBuffer = Buffer.from(fetchedPng);
+    } catch (err) {
+      console.warn("Could not generate server-side pass image for email:", err);
+      imageBuffer = Buffer.alloc(0);
+    }
+  }
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -46,30 +61,33 @@ export default defineEventHandler(async (event) => {
   });
 
   const from = process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`;
-  const appUrl = (config.public as any).appUrl || "http://localhost:3000";
+  const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
   const wishlistLink = `${appUrl}/wishlist`;
+
+  const attachments: any[] = [];
+  if (imageBuffer.length > 0) {
+    attachments.push(
+      {
+        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        content: imageBuffer,
+        contentType: "image/png",
+        cid: "accesscard@thesweetunion",
+      },
+      {
+        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        content: imageBuffer,
+        contentType: "image/png",
+        contentDisposition: "attachment",
+      },
+    );
+  }
 
   await transporter.sendMail({
     from,
     to: rsvp.leadEmail,
     subject: `You're invited, ${rsvp.leadName}! Your access card is inside 🎉`,
     html: invitationEmail({ guestName, accessCode: rsvpId, eventNames, wishlistLink }),
-    attachments: [
-      {
-        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
-        content: base64Data,
-        encoding: "base64",
-        contentType: "image/png",
-        cid: "accesscard@thesweetunion",
-      },
-      {
-        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
-        content: base64Data,
-        encoding: "base64",
-        contentType: "image/png",
-        contentDisposition: "attachment",
-      },
-    ],
+    attachments,
   });
 
   await client.collection("rsvp_records").update(rsvpId, {
