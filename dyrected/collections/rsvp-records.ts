@@ -30,6 +30,7 @@ export const ASOEBI_ORDER_STATUS_OPTIONS = [
 ];
 
 export const ASOEBI_YARDS_OPTIONS = [
+  { label: "None", value: "0" },
   { label: "2 Yards (₦20,000)", value: "2" },
   { label: "3 Yards (₦30,000)", value: "3" },
   { label: "4 Yards (₦40,000)", value: "4" },
@@ -299,12 +300,12 @@ export const rsvpRecords = defineCollection({
       },
       columns: [
         "leadName",
-        "leadPhone",
+        "asoebiPaymentStatus",
         "asoebiYards",
         "asoOkeMaleQty",
         "asoOkeFemaleQty",
-        "asoebiPaymentStatus",
         "asoebiAmountPaid",
+        "group",
         "asoebiOrderStatus",
         "asoebiPaymentNotes",
       ],
