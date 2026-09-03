@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { evaluateJexl } from "@dyrected/core";
 import { calculateAsoebiFullPrice, rsvpRecords } from "../rsvp-records.ts";
+import { rsvpGroups } from "../rsvp-groups.ts";
 
 describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () => {
   // Helper to extract fields from flat collection fields array
@@ -156,6 +157,62 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
       assert.equal(await evaluateJexl(cond, { wantsAsoebi: false, wantsAsoOke: true }), true);
       assert.equal(await evaluateJexl(cond, { wantsAsoebi: true, wantsAsoOke: true }), true);
       assert.equal(await evaluateJexl(cond, { wantsAsoebi: false, wantsAsoOke: false }), false);
+    });
+  });
+
+  describe("Access Control Policy Evaluation", () => {
+    const helperEval = async (rule: any, ctx: Record<string, any>) => {
+      if (typeof rule === "boolean") return rule;
+      if (typeof rule === "function") return rule(ctx);
+      if (typeof rule === "string") return await evaluateJexl(rule, ctx);
+      return false;
+    };
+
+    describe("rsvp_records Access Rules", () => {
+      const access = (rsvpRecords as any).access;
+
+      it("allows public read", async () => {
+        assert.equal(await helperEval(access.read, { user: null }), true);
+        assert.equal(await helperEval(access.read, { user: { id: "u1" } }), true);
+      });
+
+      it("allows public create (guests submitting RSVPs)", async () => {
+        assert.equal(await helperEval(access.create, { user: null }), true);
+        assert.equal(await helperEval(access.create, { user: { id: "u1" } }), true);
+      });
+
+      it("allows public update (guests editing RSVPs with tokens)", async () => {
+        assert.equal(await helperEval(access.update, { user: null }), true);
+        assert.equal(await helperEval(access.update, { user: { id: "u1" } }), true);
+      });
+
+      it("restricts delete to authenticated admins only", async () => {
+        assert.equal(await helperEval(access.delete, { user: null }), false);
+        assert.equal(await helperEval(access.delete, {}), false);
+        assert.equal(await helperEval(access.delete, { user: { id: "admin-1", email: "admin@sweetunion.com" } }), true);
+      });
+    });
+
+    describe("rsvp_groups Access Rules", () => {
+      const access = (rsvpGroups as any).access;
+
+      it("allows public read", async () => {
+        assert.equal(await helperEval(access.read, { user: null }), true);
+      });
+
+      it("restricts create to authenticated admins only", async () => {
+        assert.equal(await helperEval(access.create, { user: null }), false);
+        assert.equal(await helperEval(access.create, { user: { id: "admin-1" } }), true);
+      });
+
+      it("allows update for dynamic RSVP responses", async () => {
+        assert.equal(await helperEval(access.update, { user: null }), true);
+      });
+
+      it("restricts delete to authenticated admins only", async () => {
+        assert.equal(await helperEval(access.delete, { user: null }), false);
+        assert.equal(await helperEval(access.delete, { user: { id: "admin-1" } }), true);
+      });
     });
   });
 });
