@@ -20,11 +20,11 @@
     "db:backfill-invitation-defaults": "npx tsx scripts/backfill-invitation-sent-defaults.ts"
   },
   "dependencies": {
-    "@dyrected/core": "2.10.1",
-    "@dyrected/db-postgres": "2.10.1",
-    "@dyrected/nuxt": "2.10.1",
-    "@dyrected/sdk": "2.10.1",
-    "@dyrected/storage-cloudinary": "2.10.1",
+    "@dyrected/core": "2.11.0",
+    "@dyrected/db-postgres": "2.11.0",
+    "@dyrected/nuxt": "2.11.0",
+    "@dyrected/sdk": "2.11.0",
+    "@dyrected/storage-cloudinary": "2.11.0",
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
