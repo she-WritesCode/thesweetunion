@@ -68,8 +68,24 @@ export default defineNuxtConfig({
           : "http://localhost:3000/api/dyrected"),
       dyrectedApiKey: process.env.NUXT_PUBLIC_DYRECTED_API_KEY || "pk_test_dev_key",
       appUrl:
-        process.env.NUXT_PUBLIC_DYRECTED_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),
+        process.env.NUXT_PUBLIC_APP_URL ||
+        process.env.APP_URL ||
+        (process.env.VERCEL_PROJECT_PRODUCTION_URL
+          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+          : "") ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://thesweetunion.com"),
+    },
+  },
+
+  routeRules: {
+    "/api/pass/og-image/**": {
+      cache: {
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        swr: true,
+      },
+      headers: {
+        "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+      },
     },
   },
 

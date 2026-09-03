@@ -19,9 +19,15 @@ const hashtag = computed(() => pass.value?.siteSettings?.hashtag || "#TheSweetUn
 const weddingDateText = computed(() => pass.value?.siteSettings?.weddingDateText || "October 22 & 24, 2026");
 const eventNames = computed(() => (pass.value?.events || []).map((e: any) => e.name));
 
-const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
-const ogImageUrl = computed(() => `${appUrl}/api/pass/og-image/${passId.value}.png`);
-const pageUrl = computed(() => `${appUrl}/pass/${passId.value}`);
+const requestUrl = useRequestURL();
+const baseUrl = computed(() => {
+  if (requestUrl?.origin && !requestUrl.origin.includes("localhost")) {
+    return requestUrl.origin;
+  }
+  return (config.public as any).appUrl || "https://thesweetunion.com";
+});
+const ogImageUrl = computed(() => `${baseUrl.value}/api/pass/og-image/${passId.value}.png`);
+const pageUrl = computed(() => `${baseUrl.value}/pass/${passId.value}`);
 
 useSeoMeta({
   title: () => `Wedding Pass: ${guestName.value} · ${hashtag.value}`,

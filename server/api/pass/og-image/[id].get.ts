@@ -4,122 +4,107 @@ import QRCode from "qrcode";
 import { Resvg } from "@resvg/resvg-js";
 import { ensureServerFonts } from "~~/server/utils/og-fonts";
 
+// Module-level font extraction cache
+let cachedFontFiles: string[] = [];
+
 export default defineEventHandler(async (event) => {
-  const rawId = getRouterParam(event, "id") || "";
-  // Strip .png if present in URL (e.g. /api/pass/og-image/ieyhqr.png)
-  const id = rawId.replace(/\.png$/i, "");
-  if (!id) {
-    throw createError({ statusCode: 400, message: "Missing pass ID" });
-  }
-
-  const config = useRuntimeConfig();
-  const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
-  const client = createClient({
-    baseUrl: config.dyrectedUrl,
-    apiKey: config.dyrectedApiKey,
-  });
-
-  // Query RSVP record
-  let result = await client.collection("rsvp_records").find({
-    where: { id: { equals: id } },
-    limit: 1,
-    depth: 1,
-  });
-
-  if (!result.docs || result.docs.length === 0) {
-    result = await client.collection("rsvp_records").find({
-      where: { editToken: { equals: id } },
-      limit: 1,
-      depth: 1,
-    });
-  }
-
-  const rsvp = result.docs?.[0];
-  const leadName = rsvp?.leadName || "Honoured Guest";
-  const hasSpouse = Boolean(rsvp?.hasSpouse);
-  const spouseName = rsvp?.spouseName || "";
-  const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
-  const passCode = (rsvp?.id || id).toUpperCase();
-
-  // Populate events & group
-  let eventText = "";
-  let groupName = "";
-  if (Array.isArray(rsvp?.selectedEvents) && rsvp.selectedEvents.length > 0) {
-    if (typeof rsvp.selectedEvents[0] === "object" && rsvp.selectedEvents[0]?.name) {
-      eventText = rsvp.selectedEvents.map((e: any) => e.name).join(" · ");
-    } else {
-      try {
-        const eventsRes = await client.collection("events").find({ limit: 50, depth: 1 });
-        eventText = (eventsRes?.docs || [])
-          .filter((e: any) => rsvp.selectedEvents.includes(e.id))
-          .map((e: any) => e.name)
-          .join(" · ");
-      } catch {}
+    const rawId = getRouterParam(event, "id") || "";
+    // Strip .png if present in URL (e.g. /api/pass/og-image/ieyhqr.png)
+    const id = rawId.replace(/\.png$/i, "");
+    if (!id) {
+      throw createError({ statusCode: 400, message: "Missing pass ID" });
     }
-  }
 
-  if (rsvp?.group) {
-    if (typeof rsvp.group === "object" && rsvp.group?.name) {
-      groupName = rsvp.group.name;
-    } else {
-      try {
-        const groupRes = await client.collection("rsvp_groups").find({
-          where: { id: { equals: rsvp.group } },
+    const config = useRuntimeConfig();
+    const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
+    const client = createClient({
+      baseUrl: config.dyrectedUrl,
+      apiKey: config.dyrectedApiKey,
+    });
+
+    // Parallel fetch: RSVP record (depth: 2 populates events and group) + site settings
+    const [rsvpRes, settingsRes] = await Promise.all([
+      client.collection("rsvp_records").find({
+        where: { id: { equals: id } },
+        limit: 1,
+        depth: 2,
+      }).then(async (res) => {
+        if (res.docs && res.docs.length > 0) return res;
+        return client.collection("rsvp_records").find({
+          where: { editToken: { equals: id } },
           limit: 1,
+          depth: 2,
         });
-        groupName = groupRes?.docs?.[0]?.name || "";
-      } catch {}
+      }),
+      client.global("site_settings").get().catch(() => null) as Promise<any>,
+    ]);
+
+    const rsvp = rsvpRes?.docs?.[0];
+    const leadName = rsvp?.leadName || "Honoured Guest";
+    const hasSpouse = Boolean(rsvp?.hasSpouse);
+    const spouseName = rsvp?.spouseName || "";
+    const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
+    const passCode = (rsvp?.id || id).toUpperCase();
+
+    // Populate events & group from populated depth: 2
+    let eventText = "";
+    if (Array.isArray(rsvp?.selectedEvents)) {
+      eventText = (rsvp.selectedEvents as any[])
+        .map((e) => (typeof e === "object" && e?.name ? e.name : ""))
+        .filter(Boolean)
+        .join(" · ");
     }
-  }
 
-  // Fetch site settings if available
-  let coupleName = "ADUN & UCHE";
-  let hashtag = "#THESWEETUNION";
-  let weddingDateText = "OCTOBER 22 & 24, 2026";
-  try {
-    const settings = (await client.global("site_settings").get()) as any;
-    if (settings?.partnerOneName && settings?.partnerTwoName) {
-      coupleName = `${settings.partnerOneName} & ${settings.partnerTwoName}`.toUpperCase();
+    let groupName = "";
+    if (rsvp?.group) {
+      groupName = typeof rsvp.group === "object" && (rsvp.group as any)?.name ? (rsvp.group as any).name : "";
     }
-    if (settings?.hashtag) hashtag = settings.hashtag.toUpperCase();
-    if (settings?.weddingDateText) weddingDateText = settings.weddingDateText.toUpperCase();
-  } catch {}
 
-  // Generate QR Code data URL matching the Access Card colors
-  const passUrl = `${appUrl}/pass/${id.toLowerCase()}`;
-  let qrDataUrl = "";
-  try {
-    qrDataUrl = await QRCode.toDataURL(passUrl, {
-      margin: 1,
-      width: 220,
-      color: {
-        dark: "#865172",
-        light: "#F5EDF1",
-      },
-    });
-  } catch (err) {
-    console.warn("Failed to generate QR in OG image:", err);
-  }
+    // Site settings
+    let coupleName = "ADUN & UCHE";
+    let hashtag = "#THESWEETUNION";
+    let weddingDateText = "OCTOBER 22 & 24, 2026";
+    if (settingsRes?.partnerOneName && settingsRes?.partnerTwoName) {
+      coupleName = `${settingsRes.partnerOneName} & ${settingsRes.partnerTwoName}`.toUpperCase();
+    }
+    if (settingsRes?.hashtag) hashtag = settingsRes.hashtag.toUpperCase();
+    if (settingsRes?.weddingDateText) weddingDateText = settingsRes.weddingDateText.toUpperCase();
 
-  // Escape XML entities
-  const escapeXml = (unsafe: string) =>
-    (unsafe || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
+    // Generate QR Code data URL matching the Access Card colors
+    const passUrl = `${appUrl}/pass/${id.toLowerCase()}`;
+    let qrDataUrl = "";
+    try {
+      qrDataUrl = await QRCode.toDataURL(passUrl, {
+        margin: 1,
+        width: 200,
+        color: {
+          dark: "#865172",
+          light: "#F5EDF1",
+        },
+      });
+    } catch (err) {
+      console.warn("Failed to generate QR in OG image:", err);
+    }
 
-  const safeGuestTitle = escapeXml(guestTitle);
-  const safeCoupleName = escapeXml(coupleName);
-  const safeHashtag = escapeXml(hashtag);
-  const safePassCode = escapeXml(passCode);
-  const safeDate = escapeXml(weddingDateText);
-  const safeGroup = escapeXml(groupName.toUpperCase());
-  const safeEvents = escapeXml(eventText);
+    // Escape XML entities
+    const escapeXml = (unsafe: string) =>
+      (unsafe || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
 
-  // 1200x630 Rich Wedding Pass Card Preview
-  const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+    const safeGuestTitle = escapeXml(guestTitle);
+    const safeCoupleName = escapeXml(coupleName);
+    const safeHashtag = escapeXml(hashtag);
+    const safePassCode = escapeXml(passCode);
+    const safeDate = escapeXml(weddingDateText);
+    const safeGroup = escapeXml(groupName.toUpperCase());
+    const safeEvents = escapeXml(eventText);
+
+    // 1200x630 Rich Wedding Pass Card Preview
+    const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2D1222"/>
@@ -276,29 +261,31 @@ export default defineEventHandler(async (event) => {
   </g>
 </svg>`;
 
-  // Ensure fonts exist in /tmp for guaranteed serverless Resvg execution
-  const fontFiles = ensureServerFonts();
+    // Ensure fonts exist in /tmp once per container
+    if (cachedFontFiles.length === 0) {
+      cachedFontFiles = ensureServerFonts();
+    }
 
-  // Convert SVG to PNG Buffer via Resvg with TrueType fonts
-  const resvg = new Resvg(svg, {
-    fitTo: {
-      mode: "width",
-      value: 1200,
-    },
-    font: {
-      fontFiles: fontFiles.length > 0 ? fontFiles : undefined,
-      defaultFontFamily: "Inter",
-      serifFamily: "Cinzel",
-      sansSerifFamily: "Inter",
-    },
-  });
+    // Convert SVG to PNG Buffer via Resvg with TrueType fonts
+    const resvg = new Resvg(svg, {
+      fitTo: {
+        mode: "width",
+        value: 1200,
+      },
+      font: {
+        fontFiles: cachedFontFiles.length > 0 ? cachedFontFiles : undefined,
+        defaultFontFamily: "Inter",
+        serifFamily: "Cinzel",
+        sansSerifFamily: "Inter",
+      },
+    });
 
-  const pngData = resvg.render();
-  const pngBuffer = pngData.asPng();
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
 
-  setHeader(event, "Content-Type", "image/png");
-  setHeader(event, "Cache-Control", "public, max-age=86400, s-maxage=86400");
-  setHeader(event, "Content-Length", pngBuffer.length);
+    setHeader(event, "Content-Type", "image/png");
+    setHeader(event, "Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400");
+    setHeader(event, "Content-Length", pngBuffer.length);
 
-  return pngBuffer;
+    return pngBuffer;
 });
