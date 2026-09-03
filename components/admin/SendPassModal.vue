@@ -31,19 +31,6 @@ const props = defineProps<{
 
 const client = useDyrectedClient();
 const config = useRuntimeConfig();
-const appUrl = computed(() => {
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "thesweetunion.com" || host === "www.thesweetunion.com") {
-      return "https://thesweetunion.com";
-    }
-  }
-  const configured = (config.public as any).appUrl;
-  if (configured && !configured.includes("-") && !configured.includes("localhost")) {
-    return configured;
-  }
-  return "https://thesweetunion.com";
-});
 
 const activeTab = ref<"whatsapp" | "card">("whatsapp");
 const loadingDoc = ref(false);
@@ -104,6 +91,20 @@ const record = computed<Record<string, any>>(() => {
   };
 });
 
+const appUrl = computed(() => {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "thesweetunion.com" || host === "www.thesweetunion.com") {
+      return "https://thesweetunion.com";
+    }
+  }
+  const configured = (config.public as any).appUrl;
+  if (configured && !configured.includes("-") && !configured.includes("localhost")) {
+    return configured;
+  }
+  return "https://thesweetunion.com";
+});
+
 async function fetchRecordIfNeeded() {
   const id = rsvpId.value;
   if (!id) return;
@@ -119,7 +120,6 @@ async function fetchRecordIfNeeded() {
       fetchedDoc.value = res.docs[0];
     }
 
-    // Fetch site settings via SDK
     try {
       const settings = (await client.global("site_settings").get()) as any;
       if (settings?.partnerOneName && settings?.partnerTwoName) {
@@ -129,7 +129,6 @@ async function fetchRecordIfNeeded() {
       if (settings?.weddingDateText) weddingDateText.value = settings.weddingDateText;
     } catch {}
 
-    // Populate events & group via SDK
     const current = record.value;
     if (Array.isArray(current.selectedEvents) && current.selectedEvents.length > 0) {
       if (typeof current.selectedEvents[0] === "object" && current.selectedEvents[0]?.name) {
@@ -173,16 +172,14 @@ const leadPhone = computed(() => (record.value.leadPhone as string) ?? "");
 const leadEmail = computed(() => (record.value.leadEmail as string) ?? "");
 const hasSpouse = computed(() => Boolean(record.value.hasSpouse));
 const spouseName = computed(() => (record.value.spouseName as string) ?? "");
-const invitationSent = computed(() => Boolean(record.value.invitationSent));
-const invitationSentVia = computed(() => (record.value.invitationSentVia as string) || "WhatsApp");
 
 const guestName = computed(() => {
   if (hasSpouse.value && spouseName.value) return `${leadName.value} + ${spouseName.value}`;
   return leadName.value || "Guest";
 });
 
-const passUrl = computed(() => `${appUrl}/pass/${rsvpId.value || ""}`);
-const wishlistUrl = computed(() => `${appUrl}/wishlist`);
+const passUrl = computed(() => `${appUrl.value}/pass/${rsvpId.value || ""}`);
+const wishlistUrl = computed(() => `${appUrl.value}/wishlist`);
 
 const defaultMessage = computed(() => {
   const name = leadName.value || "there";
@@ -191,7 +188,7 @@ const defaultMessage = computed(() => {
   return (
     `Hi ${name}!\n\n` +
     `You're invited to Adun & Uche's wedding celebration! 🎉\n\n` +
-    `🎟️ Your Official Wedding Pass & Itinerary:\n${passUrl.value}\n\n` +
+    `Your Official Wedding Pass & Itinerary:\n${passUrl.value}\n\n` +
     `Pass Code: ${idStr}\n` +
     `Kindly show your pass at the entrance.\n\n` +
     `Your love, presence, and prayers are our greatest gifts. If you'd like to bless our new home, browse our registry wishlist here:\n${wishlistUrl.value}\n\n` +
@@ -251,7 +248,6 @@ async function sendWhatsApp() {
   sendSuccess.value = "";
 
   try {
-    // Mark as sent via API
     await $fetch(`/api/invitations/send-single/${id}`, {
       method: "POST",
       headers: adminAuthHeaders(),
@@ -307,139 +303,119 @@ async function sendEmail() {
 </script>
 
 <template>
-  <div class="dispatch-cockpit">
+  <div class="mini-modal">
     <!-- Loading State -->
-    <div v-if="loadingDoc" class="loading-state">
-      <div class="spinner-sm" />
-      <span>Loading invitation details…</span>
+    <div v-if="loadingDoc" class="mini-loading">
+      <div class="mini-spinner" />
+      <span>Loading details…</span>
     </div>
 
     <template v-else-if="!rsvpId">
-      <div class="empty-state">
-        <p>Please save the guest record first before dispatching the pass.</p>
+      <div class="mini-empty">
+        <p>Save this guest record first to generate the access pass.</p>
       </div>
     </template>
 
     <template v-else>
-      <!-- ─── Segmented Navigation ────────────────────────────── -->
-      <div class="segmented-bar">
+      <!-- Sleek Segmented Switcher -->
+      <div class="mini-tabs">
         <button
           type="button"
-          class="seg-btn"
-          :class="{ 'seg-btn--active': activeTab === 'whatsapp' }"
+          class="mini-tab-btn"
+          :class="{ 'mini-tab-btn--active': activeTab === 'whatsapp' }"
           @click="activeTab = 'whatsapp'"
         >
-          <svg
-            class="w-3.5 h-3.5 inline-block"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
           <span>WhatsApp Message</span>
         </button>
+
         <button
           type="button"
-          class="seg-btn"
-          :class="{ 'seg-btn--active': activeTab === 'card' }"
+          class="mini-tab-btn"
+          :class="{ 'mini-tab-btn--active': activeTab === 'card' }"
           @click="activeTab = 'card'"
         >
-          <svg
-            class="w-3.5 h-3.5 inline-block"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <line x1="7" y1="8" x2="17" y2="8" />
-            <line x1="7" y1="12" x2="17" y2="12" />
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <line x1="7" y1="8" x2="17" y2="8"/>
+            <line x1="7" y1="12" x2="17" y2="12"/>
           </svg>
           <span>Access Pass Card</span>
         </button>
       </div>
 
-      <!-- ─── Tab 1: WhatsApp Dispatch Cockpit ────────────────── -->
-      <div v-if="activeTab === 'whatsapp'" class="tab-pane">
-        <!-- Quick Link Bar -->
-        <div class="link-bar">
-          <div class="link-bar__info">
-            <span class="link-bar__badge">PASS URL</span>
-            <span class="link-bar__url">/pass/{{ rsvpId.toLowerCase() }}</span>
-          </div>
-          <div class="link-bar__actions">
-            <button type="button" class="btn-tool" @click="copyPassUrl">
+      <!-- Tab 1: Minimalist WhatsApp Dispatch -->
+      <div v-if="activeTab === 'whatsapp'" class="mini-pane">
+        <!-- Message Box -->
+        <div class="mini-textarea-wrap">
+          <textarea
+            v-model="customMessage"
+            @input="isUserEdited = true"
+            rows="6"
+            class="mini-textarea"
+            placeholder="Type message to guest..."
+          />
+        </div>
+
+        <!-- Inline Meta & Quick Actions -->
+        <div class="mini-actions-row">
+          <div class="mini-link-group">
+            <button type="button" class="mini-chip-btn" @click="copyPassUrl">
               {{ copied ? "Copied! ✓" : "Copy Link" }}
             </button>
-            <a :href="passUrl" target="_blank" rel="noopener" class="btn-tool"> Open ↗ </a>
+            <a :href="passUrl" target="_blank" rel="noopener" class="mini-chip-btn">
+              Open ↗
+            </a>
           </div>
+
+          <button type="button" class="mini-text-btn" @click="resetToDefault">
+            Reset Template
+          </button>
         </div>
 
-        <!-- WhatsApp Chat Simulator / Editor -->
-        <div class="chat-composer">
-          <div class="chat-composer__top">
-            <span class="composer-label">Message Preview &amp; Customization</span>
-            <button type="button" class="btn-reset-link" @click="resetToDefault">Reset Default</button>
-          </div>
-
-          <div class="wa-bubble">
-            <textarea
-              v-model="customMessage"
-              @input="isUserEdited = true"
-              rows="6"
-              class="wa-bubble__textarea"
-              placeholder="Type message to guest..."
-            />
-
-            <div class="wa-bubble__footer">
-              <span class="wa-note">{{ leadPhone ? `To: ${leadPhone}` : "No phone provided" }}</span>
-              <span class="wa-time">Ready to send</span>
-            </div>
-          </div>
+        <!-- Feedback Alert -->
+        <div v-if="sendSuccess" class="mini-toast mini-toast--success">
+          <span>✓</span> {{ sendSuccess }}
+        </div>
+        <div v-if="error" class="mini-toast mini-toast--error">
+          <span>⚠️</span> {{ error }}
         </div>
 
-        <!-- Feedback Messages -->
-        <div v-if="sendSuccess" class="toast toast--success"><span>✓</span> {{ sendSuccess }}</div>
-        <div v-if="error" class="toast toast--error"><span>⚠️</span> {{ error }}</div>
-
-        <!-- Primary Dispatch Button -->
+        <!-- Send on WhatsApp Button -->
         <button
           type="button"
-          class="btn-wa-dispatch"
+          class="mini-btn-wa"
           :disabled="sendingWa || !leadPhone || !customMessage.trim()"
           @click="sendWhatsApp"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
-            />
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
-          <span>{{ sendingWa ? "Opening WhatsApp…" : "Send Pass on WhatsApp" }}</span>
+          <span>{{ sendingWa ? "Opening WhatsApp…" : (leadPhone ? `Send to ${leadPhone}` : "Send on WhatsApp") }}</span>
         </button>
 
-        <div v-if="leadEmail" class="secondary-actions">
-          <button type="button" class="btn-email-link" :disabled="sendingEmail" @click="sendEmail">
-            ✉️ {{ sendingEmail ? "Sending Email…" : `Also send to ${leadEmail}` }}
+        <!-- Secondary Email Dispatch -->
+        <div v-if="leadEmail" class="mini-email-wrap">
+          <button
+            type="button"
+            class="mini-text-email-btn"
+            :disabled="sendingEmail"
+            @click="sendEmail"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>{{ sendingEmail ? "Sending Email…" : `Also email pass to ${leadEmail}` }}</span>
           </button>
         </div>
       </div>
 
-      <!-- ─── Tab 2: Pass Card Preview ───────────────────────── -->
-      <div v-else class="tab-pane">
-        <div class="card-display">
+      <!-- Tab 2: Minimalist Card Preview -->
+      <div v-else class="mini-pane">
+        <div class="mini-card-container">
           <AccessCard
             ref="cardRef"
             :rsvp-id="rsvpId"
@@ -454,25 +430,28 @@ async function sendEmail() {
           />
         </div>
 
-        <div class="card-actions">
-          <button type="button" class="btn-action-gold" @click="handleDownloadCard">
-            <svg
-              class="w-4 h-4 inline-block mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+        <div class="mini-card-actions">
+          <button type="button" class="mini-btn-primary" @click="handleDownloadCard">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            Download High-Res PNG
+            <span>Download PNG</span>
           </button>
-          <button v-if="leadEmail" type="button" class="btn-action-outline" :disabled="sendingEmail" @click="sendEmail">
-            Email Pass Card
+
+          <button
+            v-if="leadEmail"
+            type="button"
+            class="mini-btn-secondary"
+            :disabled="sendingEmail"
+            @click="sendEmail"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span>{{ sendingEmail ? "Sending…" : "Email Card" }}</span>
           </button>
         </div>
       </div>
@@ -481,483 +460,188 @@ async function sendEmail() {
 </template>
 
 <style scoped>
-.dispatch-cockpit {
+.mini-modal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
-  color: #30222a;
+  color: #2b1c26;
 }
 
-/* ── Loading / Empty ───────────────────────────────────────── */
-.loading-state,
-.empty-state {
+.mini-loading,
+.mini-empty {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 20px 0;
-  color: #8a7280;
-  font-size: 0.85rem;
+  gap: 8px;
+  padding: 16px 0;
+  color: #7d6b76;
+  font-size: 0.825rem;
 }
 
-.spinner-sm {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e09f8c;
+.mini-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e0cbd6;
   border-top-color: #865172;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: mini-spin 0.6s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes mini-spin {
+  to { transform: rotate(360deg); }
 }
 
-/* ── Guest Header ──────────────────────────────────────────── */
-.guest-header {
+/* ── Minimalist Segmented Tabs ────────────────────────────── */
+.mini-tabs {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #ffffff;
-  border: 1px solid #ebdbe4;
-  border-radius: 12px;
-  padding: 10px 14px;
-  box-shadow: 0 1px 4px rgba(48, 34, 42, 0.04);
-}
-
-.guest-header__main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.guest-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #653853, #4a253b);
-  color: #fce8b3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  flex-shrink: 0;
-}
-
-.guest-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.guest-name {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #30222a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.guest-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: 0.725rem;
-}
-
-.meta-phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  color: #25d366;
-}
-
-.phone-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #25d366;
-}
-
-.meta-group {
-  background: #f5edf1;
-  color: #865172;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.meta-admits {
-  background: #fff8e6;
-  color: #b48a1e;
-  border: 1px solid #fce8b3;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.status-indicator--sent {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.status-indicator--sent .status-dot {
-  background: #2e7d32;
-}
-
-.status-indicator--pending {
-  background: #fff3e0;
-  color: #e65100;
-}
-.status-indicator--pending .status-dot {
-  background: #e65100;
-}
-
-/* ── Segmented Navigation ──────────────────────────────────── */
-.segmented-bar {
-  display: flex;
-  background: #f0e6eb;
+  background: #f4ecf0;
   padding: 3px;
   border-radius: 8px;
-  gap: 4px;
+  gap: 3px;
 }
 
-.seg-btn {
+.mini-tab-btn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 6px 12px;
   border: none;
   background: transparent;
-  color: #865172;
-  font-size: 0.8rem;
+  color: #705566;
+  font-size: 0.78rem;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: all 120ms ease;
 }
 
-.seg-btn:hover:not(.seg-btn--active) {
-  background: rgba(255, 255, 255, 0.4);
+.mini-tab-btn:hover:not(.mini-tab-btn--active) {
+  color: #30222a;
 }
 
-.seg-btn--active {
+.mini-tab-btn--active {
   background: #ffffff;
   color: #30222a;
-  box-shadow: 0 1px 3px rgba(48, 34, 42, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.seg-icon {
-  font-size: 0.9rem;
-}
-
-/* ── Tab Pane ──────────────────────────────────────────────── */
-.tab-pane {
+/* ── Pane ─────────────────────────────────────────────────── */
+.mini-pane {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* ── Link Bar ──────────────────────────────────────────────── */
-.link-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #faf5f8;
-  border: 1px dashed #d5cad0;
-  padding: 6px 10px;
+/* ── Minimalist Textarea ─────────────────────────────────── */
+.mini-textarea-wrap {
+  border: 1px solid #e4d8df;
   border-radius: 8px;
+  background: #faf7f9;
+  transition: border-color 120ms, box-shadow 120ms;
 }
 
-.link-bar__info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.link-bar__badge {
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  background: #653853;
-  color: #fce8b3;
-  padding: 1px 5px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.link-bar__url {
-  font-family: monospace;
-  font-size: 0.78rem;
-  color: #653853;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.link-bar__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.btn-tool {
-  background: #ffffff;
-  border: 1px solid #d4c5cf;
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #865172;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 120ms;
-}
-
-.btn-tool:hover {
-  background: #f5edf1;
+.mini-textarea-wrap:focus-within {
   border-color: #865172;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(134, 81, 114, 0.1);
 }
 
-/* ── WhatsApp Chat Composer ────────────────────────────────── */
-.chat-composer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.chat-composer__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.composer-label {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #653853;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.btn-reset-link {
-  background: none;
-  border: none;
-  color: #865172;
-  font-size: 0.74rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.btn-reset-link:hover {
-  color: #30222a;
-}
-
-.wa-bubble {
-  background: #e7ffdb;
-  border: 1px solid #c2eab2;
-  border-radius: 10px 10px 2px 10px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.wa-bubble__textarea {
+.mini-textarea {
   width: 100%;
   background: transparent;
   border: none;
   outline: none;
   resize: vertical;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.825rem;
   line-height: 1.45;
-  color: #111b21;
+  color: #2b1c26;
+  padding: 10px 12px;
   box-sizing: border-box;
 }
 
-.wa-unfurl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  border-left: 3px solid #25d366;
-  padding: 6px 8px;
-  border-radius: 4px;
-}
-
-.wa-unfurl__thumb {
-  font-size: 1.1rem;
-}
-
-.wa-unfurl__body {
-  display: flex;
-  flex-direction: column;
-}
-
-.wa-unfurl__title {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #111b21;
-}
-
-.wa-unfurl__domain {
-  font-size: 0.65rem;
-  color: #667781;
-}
-
-.wa-bubble__footer {
+/* ── Actions Row ─────────────────────────────────────────── */
+.mini-actions-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  padding-top: 4px;
+  gap: 8px;
 }
 
-.wa-note {
-  font-size: 0.68rem;
-  color: #54656f;
-  font-style: italic;
-}
-
-.wa-time {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: #53bdeb;
-}
-
-/* ── Toasts ────────────────────────────────────────────────── */
-.toast {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+.mini-link-group {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.toast--success {
-  background: #edf7ed;
-  color: #2d7a47;
-  border: 1px solid #c8e6c9;
-}
-
-.toast--error {
-  background: #fde8e7;
-  color: #c0514a;
-  border: 1px solid #f9c2be;
-}
-
-/* ── Primary Action ────────────────────────────────────────── */
-.btn-wa-dispatch {
-  display: flex;
+.mini-chip-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #dfd3db;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #705566;
   cursor: pointer;
-  border: none;
-  background: linear-gradient(135deg, #25d366, #1eb556);
-  color: #ffffff;
-  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.3);
-  transition: all 150ms ease;
+  text-decoration: none;
+  transition: all 120ms;
 }
 
-.btn-wa-dispatch:hover:not(:disabled) {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
+.mini-chip-btn:hover {
+  border-color: #865172;
+  color: #865172;
+  background: #fdfafc;
 }
 
-.btn-wa-dispatch:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-wa-dispatch:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.secondary-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.btn-email-link {
+.mini-text-btn {
   background: none;
   border: none;
-  color: #865172;
-  font-size: 0.78rem;
-  font-weight: 600;
+  color: #8a7380;
+  font-size: 0.72rem;
+  font-weight: 500;
   cursor: pointer;
+  padding: 0;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.btn-email-link:hover {
-  color: #4a253b;
+.mini-text-btn:hover {
+  color: #30222a;
 }
 
-/* ── Card Display (Tab 2) ──────────────────────────────────── */
-.card-display {
+/* ── Toast ────────────────────────────────────────────────── */
+.mini-toast {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 4px 0;
+  align-items: center;
+  gap: 6px;
 }
 
-.card-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.mini-toast--success {
+  background: #edf7ed;
+  color: #2d7a47;
 }
 
-.btn-action-gold {
+.mini-toast--error {
+  background: #fde8e7;
+  color: #c0514a;
+}
+
+/* ── WhatsApp Button ─────────────────────────────────────── */
+.mini-btn-wa {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
   padding: 10px 16px;
   border-radius: 8px;
@@ -965,34 +649,101 @@ async function sendEmail() {
   font-weight: 700;
   cursor: pointer;
   border: none;
-  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 50%, #b48a1e 100%);
-  color: #30222a;
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
-  transition: filter 150ms;
+  background: #25d366;
+  color: #ffffff;
+  transition: filter 120ms ease, transform 120ms ease;
 }
 
-.btn-action-gold:hover {
+.mini-btn-wa:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-.btn-action-outline {
+.mini-btn-wa:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.mini-btn-wa:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Secondary Email ─────────────────────────────────────── */
+.mini-email-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.mini-text-email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: #865172;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mini-text-email-btn:hover {
+  color: #4a253b;
+}
+
+/* ── Card Pane ───────────────────────────────────────────── */
+.mini-card-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.mini-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mini-btn-primary {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: 100%;
   padding: 9px 14px;
-  border-radius: 8px;
-  font-size: 0.825rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #fce8b3 0%, #d4af37 50%, #b48a1e 100%);
+  color: #30222a;
+  transition: filter 120ms;
+}
+
+.mini-btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.mini-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   background: #ffffff;
   color: #865172;
-  border: 1px solid #d4c5cf;
+  border: 1px solid #dfd3db;
+  transition: all 120ms;
 }
 
-.btn-action-outline:hover:not(:disabled) {
-  background: #fdfafc;
+.mini-btn-secondary:hover:not(:disabled) {
+  background: #faf6f8;
   border-color: #865172;
 }
 </style>
