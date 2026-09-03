@@ -99,9 +99,6 @@ export const rsvpRecords = defineCollection({
       features: {
         duplicate: false,
       },
-      components: {
-        afterViewHeader: ["RsvpListSummary"],
-      },
       metrics: [
         {
           label: "Attending Guests",
