@@ -18,57 +18,67 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
-  const client = createClient({
-    baseUrl: config.dyrectedUrl,
-    apiKey: config.dyrectedApiKey,
-  });
 
-  // Parallel fetch: RSVP record + site settings
-  const [rsvpRes, settingsRes] = await Promise.all([
-    client.collection("rsvp_records").find({
-      where: { id: { equals: id } },
-      limit: 1,
-      depth: 2,
-    }).then(async (res) => {
-      if (res.docs && res.docs.length > 0) return res;
-      return client.collection("rsvp_records").find({
-        where: { editToken: { equals: id } },
+  let rsvp: any = null;
+  let settingsRes: any = null;
+
+  try {
+    const client = createClient({
+      baseUrl: config.dyrectedUrl,
+      apiKey: config.dyrectedApiKey,
+    });
+
+    const [rsvpRes, sRes] = await Promise.all([
+      client.collection("rsvp_records").find({
+        where: { id: { equals: id } },
         limit: 1,
         depth: 2,
-      });
-    }),
-    client.global("site_settings").get().catch(() => null) as Promise<any>,
-  ]);
+      }).then(async (res) => {
+        if (res.docs && res.docs.length > 0) return res;
+        return client.collection("rsvp_records").find({
+          where: { editToken: { equals: id } },
+          limit: 1,
+          depth: 2,
+        });
+      }),
+      client.global("site_settings").get().catch(() => null) as Promise<any>,
+    ]);
 
-  const rsvp = rsvpRes?.docs?.[0];
-  const leadName = rsvp?.leadName || "Honoured Guest";
-  const hasSpouse = Boolean(rsvp?.hasSpouse);
-  const spouseName = rsvp?.spouseName || "";
+    rsvp = rsvpRes?.docs?.[0];
+    settingsRes = sRes;
+  } catch (err) {
+    console.warn("DB lookup in card-image endpoint bypassed or failed, using parameters:", err);
+  }
+
+  const leadName = (query.name as string) || rsvp?.leadName || "Honoured Guest";
+  const hasSpouse = query.spouse !== undefined ? query.spouse === "true" || query.spouse === "1" : Boolean(rsvp?.hasSpouse);
+  const spouseName = (query.spouseName as string) || rsvp?.spouseName || "";
   const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
-  const passCode = (rsvp?.id || id).toUpperCase();
+  const passCode = ((query.code as string) || rsvp?.id || id).toUpperCase();
 
   // Populate events & group
-  let eventText = "";
-  if (Array.isArray(rsvp?.selectedEvents)) {
+  let eventText = (query.events as string) || "";
+  if (!eventText && Array.isArray(rsvp?.selectedEvents)) {
     eventText = (rsvp.selectedEvents as any[])
       .map((e) => (typeof e === "object" && e?.name ? e.name : ""))
       .filter(Boolean)
       .join(" · ");
   }
 
-  let groupName = "";
-  if (rsvp?.group) {
+  let groupName = (query.group as string) || "";
+  if (!groupName && rsvp?.group) {
     groupName = typeof rsvp.group === "object" && (rsvp.group as any)?.name ? (rsvp.group as any).name : "";
   }
 
-  let coupleName = "ADUN & UCHE";
-  let hashtag = "#THESWEETUNION";
-  let weddingDateText = "OCTOBER 22 & 24, 2026";
-  if (settingsRes?.partnerOneName && settingsRes?.partnerTwoName) {
+  let coupleName = (query.couple as string) || "ADUN & UCHE";
+  let hashtag = (query.hashtag as string) || "#THESWEETUNION";
+  let weddingDateText = (query.date as string) || "OCTOBER 22 & 24, 2026";
+
+  if (!query.couple && settingsRes?.partnerOneName && settingsRes?.partnerTwoName) {
     coupleName = `${settingsRes.partnerOneName} & ${settingsRes.partnerTwoName}`.toUpperCase();
   }
-  if (settingsRes?.hashtag) hashtag = settingsRes.hashtag.toUpperCase();
-  if (settingsRes?.weddingDateText) weddingDateText = settingsRes.weddingDateText.toUpperCase();
+  if (!query.hashtag && settingsRes?.hashtag) hashtag = settingsRes.hashtag.toUpperCase();
+  if (!query.date && settingsRes?.weddingDateText) weddingDateText = settingsRes.weddingDateText.toUpperCase();
 
   const passUrl = `${appUrl}/pass/${id.toLowerCase()}`;
   let qrDataUrl = "";
