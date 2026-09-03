@@ -13,8 +13,10 @@ import {
   defineDateField,
   defineNumberField,
   when,
+  defineDateTimeField,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
+import { admins } from "./admins.ts";
 
 export const ASOEBI_PAYMENT_STATUS_OPTIONS = [
   { label: "Pending Payment ⏳", value: "pending" },
@@ -830,6 +832,28 @@ export const rsvpRecords = defineCollection({
         defineTextField({
           name: "editToken",
           label: "Edit Token",
+          admin: { readOnly: true, hidden: true },
+        }),
+        defineDateTimeField({
+          name: "createdAt",
+          label: "Created At",
+          admin: { readOnly: true },
+        }),
+        defineDateTimeField({
+          name: "updatedAt",
+          label: "Updated At",
+          admin: { readOnly: true },
+        }),
+        defineRelationshipField({
+          name: "createdBy",
+          label: "Created By",
+          relationTo: admins.slug,
+          admin: { readOnly: true, hidden: true },
+        }),
+        defineRelationshipField({
+          name: "updatedBy",
+          label: "Updated By",
+          relationTo: admins.slug,
           admin: { readOnly: true, hidden: true },
         }),
       ],
