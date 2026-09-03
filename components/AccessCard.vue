@@ -60,26 +60,35 @@ watch(
 );
 
 async function captureCardImage(): Promise<string> {
-  const captureEl = document.getElementById(uniqueCaptureId.value);
-  const cardEl = document.getElementById(uniqueCardId.value);
-  if (!captureEl || !cardEl) throw new Error("Card element not found");
-
-  cardEl.classList.add("acp-exporting");
+  if (!props.rsvpId) return "";
   try {
+    const res = await fetch(`/api/pass/card-image/${props.rsvpId}.png`);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn("Server-side card fetch failed, falling back to canvas:", err);
+    const captureEl = document.getElementById(uniqueCaptureId.value);
+    const cardEl = document.getElementById(uniqueCardId.value);
+    if (!captureEl || !cardEl) throw new Error("Card element not found");
     const html2canvas = (await import("html2canvas")).default;
-    const canvas = await html2canvas(captureEl, { scale: 3, backgroundColor: null, useCORS: true });
+    const canvas = await html2canvas(captureEl, { scale: 2, backgroundColor: null, useCORS: true });
     return canvas.toDataURL("image/png");
-  } finally {
-    cardEl.classList.remove("acp-exporting");
   }
 }
 
 async function downloadCard() {
-  const dataUrl = await captureCardImage();
+  if (!props.rsvpId) return;
+  const downloadUrl = `/api/pass/card-image/${props.rsvpId}.png?download=true`;
   const a = document.createElement("a");
-  a.href = dataUrl;
-  a.download = `access-card-${(props.guestName || "guest").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+  a.href = downloadUrl;
+  a.download = `wedding-pass-${(props.guestName || "guest").replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
 
 defineExpose({

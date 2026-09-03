@@ -235,9 +235,15 @@ async function copyPassUrl() {
 }
 
 async function handleDownloadCard() {
-  if (cardRef.value?.downloadCard) {
-    await cardRef.value.downloadCard();
-  }
+  const id = rsvpId.value;
+  if (!id) return;
+  const downloadUrl = `/api/pass/card-image/${id}.png?download=true`;
+  const a = document.createElement("a");
+  a.href = downloadUrl;
+  a.download = `wedding-pass-${guestName.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 async function sendWhatsApp() {
