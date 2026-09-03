@@ -39,7 +39,7 @@ async function renderQR() {
   if (!qrCanvas.value || !props.rsvpId) return;
   const QRCode = (await import("qrcode")).default;
   await QRCode.toCanvas(qrCanvas.value, props.rsvpId, {
-    width: 110,
+    width: 100,
     margin: 1,
     color: { dark: "#865172", light: "#F5EDF1" },
   });
@@ -263,12 +263,10 @@ defineExpose({
   position: relative;
   width: 100%;
   max-width: 320px;
-  aspect-ratio: 3 / 4;
   background-color: #653853;
   border: 1.5px solid;
   border-image: linear-gradient(135deg, #fce8b3 0%, #d4af37 40%, #f5d77f 60%, #b48a1e 100%) 1;
   border-radius: 0;
-  overflow: hidden;
   box-shadow:
     0 12px 40px -6px rgba(48, 34, 42, 0.25),
     0 3px 12px rgba(48, 34, 42, 0.1);
@@ -284,13 +282,13 @@ defineExpose({
   outline: 1px solid #d4af37;
   outline-offset: -4px;
   border-radius: 0;
-  padding: 14px 12px 16px;
+  padding: 14px 12px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 4px;
   width: 100%;
-  height: 100%;
   box-sizing: border-box;
 }
 
