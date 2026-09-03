@@ -730,38 +730,6 @@ export const rsvpRecords = defineCollection({
         duplicate: false,
       },
     }),
-    defineView({
-      slug: "messages_to_couple",
-      label: "Messages to Couple",
-      icon: "MessageSquareHeart",
-      layout: "table",
-      columns: ["leadName", "hasSpouse", "spouseName", "group", "message", "submittedAt"],
-      sort: { field: "submittedAt", direction: "desc" },
-      filter: {
-        AND: [{ message: { not_equals: null } }, { message: { not_equals: "" } }],
-      },
-      metrics: [
-        {
-          label: "Total Messages",
-          aggregates: {
-            total: {
-              count: "*",
-              where: {
-                AND: [{ message: { not_equals: null } }, { message: { not_equals: "" } }],
-              },
-            },
-          },
-          expression: "aggregates.total",
-          format: "number",
-        },
-      ],
-      features: {
-        edit: false,
-        view: false,
-        delete: false,
-        duplicate: false,
-      },
-    }),
   ],
   fields: [
     // ── RSVP Response tab ───────────────────────────────────────────────────
