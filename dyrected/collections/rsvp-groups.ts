@@ -11,6 +11,7 @@ import {
 import { generateGroupSlug } from "../hooks/group-hooks.ts";
 import { adminOnly } from "../access/admin.ts";
 import { publicRead } from "../access/public.ts";
+import { generalFields } from "./utils.ts";
 
 export const rsvpGroups = defineCollection({
   slug: "rsvp_groups",
@@ -74,6 +75,7 @@ export const rsvpGroups = defineCollection({
           label: "Description",
           admin: { description: "Internal notes for the couple" },
         }),
+        ...generalFields,
       ],
     }),
 

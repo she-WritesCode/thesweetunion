@@ -15,6 +15,7 @@ import {
   displayDivider,
   displaySection,
 } from "@dyrected/core";
+import { generalFields } from "./utils";
 
 export const wishlistItems = defineCollection({
   slug: "wishlist_items",
@@ -106,6 +107,7 @@ export const wishlistItems = defineCollection({
           admin: { description: "Show in the top showcase section on the registry page." },
         }),
         defineBooleanField({ name: "isHidden", label: "Hidden", defaultValue: false }),
+        ...generalFields,
       ],
     }),
 

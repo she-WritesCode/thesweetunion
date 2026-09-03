@@ -1,4 +1,5 @@
 import { defineCollection, defineTextField, defineTextareaField } from "@dyrected/core";
+import { generalFields } from "./utils";
 
 export const media = defineCollection({
   slug: "media",
@@ -19,6 +20,7 @@ export const media = defineCollection({
   fields: [
     defineTextField({ name: "alt", label: "Alt Text", required: true }),
     defineTextareaField({ name: "caption", label: "Caption" }),
+    ...generalFields,
   ],
   access: {
     read: "true",

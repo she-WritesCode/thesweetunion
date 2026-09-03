@@ -7,13 +7,9 @@ import {
   defineNumberField,
   defineDateField,
   defineDateTimeField,
-  // ── Detail View Primitives ──
-  displayGrid,
-  displayField,
-  displayDivider,
-  displaySection,
 } from "@dyrected/core";
 import { reserveItem, releaseReservation } from "../hooks/reservation-hooks.ts";
+import { generalFields } from "./utils.ts";
 
 export const reservations = defineCollection({
   slug: "reservations",
@@ -129,6 +125,7 @@ export const reservations = defineCollection({
             width: "50%",
           },
         }),
+        ...generalFields,
       ],
     }),
   ],

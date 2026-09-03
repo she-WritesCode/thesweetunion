@@ -7,6 +7,7 @@ import {
   defineRelationshipField,
   defineBooleanField,
 } from "@dyrected/core";
+import { generalFields } from "./utils";
 
 export const events = defineCollection({
   slug: "events",
@@ -32,6 +33,7 @@ export const events = defineCollection({
     defineTextField({ name: "dressCode", label: "Dress Code", defaultValue: "Strictly Formal" }),
     defineRelationshipField({ name: "photo", label: "Event Photo", relationTo: "media" }),
     defineBooleanField({ name: "collectsRsvp", label: "Collect RSVPs", defaultValue: true }),
+    ...generalFields,
   ],
   access: {
     read: "true",

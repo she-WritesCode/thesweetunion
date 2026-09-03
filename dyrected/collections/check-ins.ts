@@ -14,6 +14,7 @@ import {
   displayCustomComponent,
 } from "@dyrected/core";
 import { stampCheckInTime } from "../hooks/check-in-hooks.ts";
+import { generalFields } from "./utils.ts";
 
 export const checkIns = defineCollection({
   slug: "check_ins",
@@ -83,6 +84,7 @@ export const checkIns = defineCollection({
           name: "notes",
           label: "Staff Notes",
         }),
+        ...generalFields,
       ],
     }),
   ],
