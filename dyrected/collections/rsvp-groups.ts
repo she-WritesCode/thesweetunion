@@ -12,6 +12,7 @@ import {
   displayDivider,
   displaySection,
   displayCustomComponent,
+  when,
 } from "@dyrected/core";
 import { generateGroupSlug } from "../hooks/group-hooks.ts";
 import { adminOnly } from "../access/admin.ts";
@@ -58,11 +59,7 @@ export const rsvpGroups = defineCollection({
           admin: {
             hidden: true,
             hooks: {
-              onChange: ({ value, siblingData }) => {
-                const titleSlug = ((siblingData?.title as string) || "").toLowerCase().replace(/\s/g, "-");
-                if (titleSlug.includes(value)) return titleSlug;
-                return value;
-              },
+              onChange: when.slugify("name"),
             },
           },
         }),

@@ -12,6 +12,7 @@ import {
   defineTextareaField,
   defineDateField,
   defineNumberField,
+  when,
 } from "@dyrected/core";
 import { enforceRsvpCapacity } from "../hooks/rsvp-hooks.ts";
 
@@ -41,9 +42,6 @@ export const INVITATION_SENT_VIA_OPTIONS = [
   { label: "Email", value: "email" },
 ];
 
-// const asoEbiOrderCondition = "doc.wantsAsoebi === true || doc.wantsAsoOke === true";
-// const invitationCondition = "doc.attending === true";
-
 export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number {
   const yards = Number(item.asoebiYards) || 0;
   const maleQty = Number(item.asoOkeMaleQty) || 0;
@@ -52,6 +50,20 @@ export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number
   const asoOkeTotal = item.wantsAsoOke === true || maleQty > 0 || femaleQty > 0 ? (maleQty + femaleQty) * 6000 : 0;
   return fabricTotal + asoOkeTotal;
 }
+
+// ── Declarative JEXL Expressions using when helper ───────────────────────────
+const fabricPriceExpr = when.then(when("wantsAsoebi").isTrue(), "asoebiYards * 10000", 0);
+const asoOkePriceExpr = when.then(when("wantsAsoOke").isTrue(), "(asoOkeMaleQty * 6000) + (asoOkeFemaleQty * 6000)", 0);
+const asoebiFullPriceExpr = `(${fabricPriceExpr}) + (${asoOkePriceExpr})`;
+
+const asoebiAmountPaidOnChange = when.match()
+  .case(when("asoebiPaymentStatus").equals("pending"), 0)
+  .case(when("asoebiPaymentStatus").in("received", "waived"), asoebiFullPriceExpr)
+  .case(when("asoebiPaymentStatus").equals("partial"), `value > 0 ? value : (${asoebiFullPriceExpr})`)
+  .otherwise("value");
+
+const wantsAsoebiOrHeadwearCondition = when.any(when("wantsAsoebi").isTrue(), when("wantsAsoOke").isTrue());
+const attendingCondition = when("attending").isTrue();
 
 export const rsvpRecords = defineCollection({
   slug: "rsvp_records",
@@ -598,25 +610,7 @@ export const rsvpRecords = defineCollection({
                 placeholder: "e.g. 20000",
                 description: "Amount received so far in Naira (helpful for partial payments).",
                 hooks: {
-                  onChange: ({ value, siblingData, data }) => {
-                    const ctx = { ...(data || {}), ...(siblingData || {}) };
-                    const status = ctx.asoebiPaymentStatus;
-                    const fullPrice = calculateAsoebiFullPrice(ctx);
-
-                    if (status === "pending") {
-                      return 0;
-                    }
-                    if (status === "received" || status === "waived") {
-                      return fullPrice;
-                    }
-                    if (status === "partial") {
-                      if (typeof value === "number" && value > 0 && value !== fullPrice) {
-                        return value;
-                      }
-                      return fullPrice;
-                    }
-                    return value;
-                  },
+                  onChange: asoebiAmountPaidOnChange,
                 },
               },
             }),
@@ -794,7 +788,7 @@ export const rsvpRecords = defineCollection({
           label: "Spouse Name",
           admin: {
             width: "50%",
-            condition: (data) => data.hasSpouse === true,
+            condition: when("hasSpouse").isTrue(),
             description: "Required if attending with spouse",
           },
         }),
@@ -851,7 +845,7 @@ export const rsvpRecords = defineCollection({
           options: ASOEBI_YARDS_OPTIONS,
           admin: {
             width: "50%",
-            condition: (data: any) => data.wantsAsoebi === true,
+            condition: when("wantsAsoebi").isTrue(),
           },
         }),
         defineBooleanField({
@@ -866,7 +860,7 @@ export const rsvpRecords = defineCollection({
           defaultValue: 0,
           admin: {
             width: "50%",
-            condition: (data: any) => data.wantsAsoOke === true,
+            condition: when("wantsAsoOke").isTrue(),
           },
         }),
         defineNumberField({
@@ -875,7 +869,7 @@ export const rsvpRecords = defineCollection({
           defaultValue: 0,
           admin: {
             width: "50%",
-            condition: (data: any) => data.wantsAsoOke === true,
+            condition: when("wantsAsoOke").isTrue(),
           },
         }),
         defineTextareaField({
@@ -883,7 +877,7 @@ export const rsvpRecords = defineCollection({
           label: "Asoebi & Aso Oke Breakdown Summary",
           admin: {
             description: "Full breakdown of requested fabric and Aso Oke items",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
         defineSelectField({
@@ -894,7 +888,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             width: "50%",
             description: "Track whether the guest has completed payment for their order.",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
         defineNumberField({
@@ -904,27 +898,9 @@ export const rsvpRecords = defineCollection({
             width: "50%",
             placeholder: "e.g. 20000",
             description: "Amount received so far in Naira (helpful for partial payments).",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
             hooks: {
-              onChange: ({ value, siblingData, data }) => {
-                const ctx = { ...(data || {}), ...(siblingData || {}) };
-                const status = ctx.asoebiPaymentStatus;
-                const fullPrice = calculateAsoebiFullPrice(ctx);
-
-                if (status === "pending") {
-                  return 0;
-                }
-                if (status === "received" || status === "waived") {
-                  return fullPrice;
-                }
-                if (status === "partial") {
-                  if (typeof value === "number" && value > 0 && value !== fullPrice) {
-                    return value;
-                  }
-                  return fullPrice;
-                }
-                return value;
-              },
+              onChange: asoebiAmountPaidOnChange,
             },
           },
         }),
@@ -936,7 +912,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             width: "50%",
             description: "Track physical packaging and delivery of fabric & headwear items.",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
         defineTextareaField({
@@ -945,7 +921,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             placeholder: "e.g. Received ₦40,000 via bank transfer on July 30th. Handed over at bridal shower.",
             description: "Private notes for admin to track bank transfer receipts or delivery arrangements.",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
         defineJsonField({
@@ -955,7 +931,7 @@ export const rsvpRecords = defineCollection({
             component: "rsvp_records.asoebiReminder",
             description:
               "Generate and send a personalized WhatsApp payment reminder for Aso Ebi fabric & headwear orders.",
-            condition: (data: any) => data.wantsAsoebi === true || data.wantsAsoOke === true,
+            condition: wantsAsoebiOrHeadwearCondition,
           },
         }),
       ],
@@ -971,7 +947,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             component: "rsvp_records.accessCardPreview",
             description: "Live preview of the access card that will be sent to this guest.",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
         defineBooleanField({
@@ -981,7 +957,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             width: "33%",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
         defineDateField({
@@ -990,7 +966,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             width: "33%",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
         defineSelectField({
@@ -1000,7 +976,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             width: "33%",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
       ],
@@ -1017,7 +993,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             width: "50%",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
         defineRelationshipField({
@@ -1027,7 +1003,7 @@ export const rsvpRecords = defineCollection({
           admin: {
             readOnly: true,
             width: "50%",
-            condition: (data: any) => data.attending === true,
+            condition: attendingCondition,
           },
         }),
       ],
