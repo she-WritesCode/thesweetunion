@@ -6,12 +6,6 @@ import {
   defineBooleanField,
   defineJoinField,
   defineTextareaField,
-  // ── Detail View Primitives ──
-  displayGrid,
-  displayField,
-  displayDivider,
-  displaySection,
-  displayCustomComponent,
   when,
 } from "@dyrected/core";
 import { generateGroupSlug } from "../hooks/group-hooks.ts";
@@ -59,7 +53,7 @@ export const rsvpGroups = defineCollection({
           admin: {
             hidden: true,
             hooks: {
-              onChange: when.slugify("name"),
+              onChange: when.slugify("siblingData.name"),
             },
           },
         }),

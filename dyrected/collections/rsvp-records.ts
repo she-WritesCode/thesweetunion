@@ -52,14 +52,14 @@ export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number
 }
 
 // ── Declarative JEXL Expressions using when helper ───────────────────────────
-const fabricPriceExpr = when.then(when("wantsAsoebi").isTrue(), "asoebiYards * 10000", 0);
-const asoOkePriceExpr = when.then(when("wantsAsoOke").isTrue(), "(asoOkeMaleQty * 6000) + (asoOkeFemaleQty * 6000)", 0);
+const fabricPriceExpr = when.then(when.sibling("wantsAsoebi").isTrue(), "siblingData.asoebiYards * 10000", 0);
+const asoOkePriceExpr = when.then(when.sibling("wantsAsoOke").isTrue(), "(siblingData.asoOkeMaleQty * 6000) + (siblingData.asoOkeFemaleQty * 6000)", 0);
 const asoebiFullPriceExpr = `(${fabricPriceExpr}) + (${asoOkePriceExpr})`;
 
 const asoebiAmountPaidOnChange = when.match()
-  .case(when("asoebiPaymentStatus").equals("pending"), 0)
-  .case(when("asoebiPaymentStatus").in("received", "waived"), asoebiFullPriceExpr)
-  .case(when("asoebiPaymentStatus").equals("partial"), `value > 0 ? value : (${asoebiFullPriceExpr})`)
+  .case(when.sibling("asoebiPaymentStatus").equals("pending"), 0)
+  .case(when.sibling("asoebiPaymentStatus").in("received", "waived"), asoebiFullPriceExpr)
+  .case(when.sibling("asoebiPaymentStatus").equals("partial"), `value > 0 ? value : (${asoebiFullPriceExpr})`)
   .otherwise("value");
 
 const wantsAsoebiOrHeadwearCondition = when.any(when("wantsAsoebi").isTrue(), when("wantsAsoOke").isTrue());

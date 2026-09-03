@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { evaluateJexl } from "@dyrected/core";
+import { evaluateJexl, assertValidDeclarativeHooksInConfig } from "@dyrected/core";
+import config from "../../../dyrected.config.ts";
 import { calculateAsoebiFullPrice, rsvpRecords } from "../rsvp-records.ts";
 import { rsvpGroups } from "../rsvp-groups.ts";
 
@@ -10,6 +11,12 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
   const amountPaidField = findField("asoebiAmountPaid");
   const asoebiAmountPaidOnChangeExpr = amountPaidField?.admin?.hooks?.onChange;
+
+  it("passes Dyrected full schema and declarative hooks validation", () => {
+    assert.doesNotThrow(() => {
+      assertValidDeclarativeHooksInConfig(config);
+    });
+  });
 
   it("exports a valid declarative onChange expression for asoebiAmountPaid", () => {
     assert.equal(typeof asoebiAmountPaidOnChangeExpr, "string");
@@ -53,8 +60,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
         // Under 'received' status, onChange evaluates the full calculated price expression
         const jexlPrice = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-          ...item,
-          asoebiPaymentStatus: "received",
+          siblingData: {
+            ...item,
+            asoebiPaymentStatus: "received",
+          },
           value: 0,
         });
 
@@ -79,8 +88,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("resets amount to 0 when status is pending", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "pending",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "pending",
+        },
         value: 20000,
       });
       assert.equal(result, 0);
@@ -88,8 +99,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("sets full price (₦58k) when status is received", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "received",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "received",
+        },
         value: 0,
       });
       assert.equal(result, 58000);
@@ -97,8 +110,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("sets full price (₦58k) when status is waived", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "waived",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "waived",
+        },
         value: 0,
       });
       assert.equal(result, 58000);
@@ -106,8 +121,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("preserves partial payment amount if already entered (> 0)", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "partial",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "partial",
+        },
         value: 25000,
       });
       assert.equal(result, 25000);
@@ -115,8 +132,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("defaults partial payment to full price if current value is 0", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "partial",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "partial",
+        },
         value: 0,
       });
       assert.equal(result, 58000);
@@ -124,8 +143,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
 
     it("preserves value for unhandled/custom status", async () => {
       const result = await evaluateJexl(asoebiAmountPaidOnChangeExpr, {
-        ...baseOrder,
-        asoebiPaymentStatus: "custom_status",
+        siblingData: {
+          ...baseOrder,
+          asoebiPaymentStatus: "custom_status",
+        },
         value: 15000,
       });
       assert.equal(result, 15000);
