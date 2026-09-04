@@ -236,4 +236,50 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
       });
     });
   });
+
+  describe("Asoebi Logistics Proportional Paid Submetrics Calculation", () => {
+    const asoebiView = (rsvpRecords as any).views?.find((v: any) => v.slug === "asoebi_logistics");
+    const revenueCard = asoebiView?.metrics?.find((m: any) => m.label === "Total Expected Revenue");
+    const fabricPaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Fabric)");
+    const malePaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Male Aso Oke)");
+    const femalePaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Female Aso Oke)");
+
+    it("evaluates proportional paid amounts and verifies their sum equals amountPaid", async () => {
+      const aggregates = {
+        totalYards: 7, // 7 * 10,000 = 70,000 (Fabric: 70k / 100k = 70%)
+        maleQty: 3,    // 3 * 6,000  = 18,000 (Male: 18k / 100k = 18%)
+        femaleQty: 2,  // 2 * 6,000  = 12,000 (Female: 12k / 100k = 12%)
+        // Total expected = 100,000
+        amountPaid: 80000, // 80,000 paid so far
+      };
+
+      const fabricPaid = await evaluateJexl(fabricPaidSubMetric.expression, { aggregates });
+      const malePaid = await evaluateJexl(malePaidSubMetric.expression, { aggregates });
+      const femalePaid = await evaluateJexl(femalePaidSubMetric.expression, { aggregates });
+
+      assert.equal(fabricPaid, 56000); // 80,000 * (70,000 / 100,000) = 56,000
+      assert.equal(malePaid, 14400);   // 80,000 * (18,000 / 100,000) = 14,400
+      assert.equal(femalePaid, 9600);  // 80,000 * (12,000 / 100,000) = 9,600
+
+      // The sum of individual paid submetrics must equal the total amount paid
+      assert.equal(fabricPaid + malePaid + femalePaid, aggregates.amountPaid);
+    });
+
+    it("safely returns 0 when total expected items are 0", async () => {
+      const aggregates = {
+        totalYards: 0,
+        maleQty: 0,
+        femaleQty: 0,
+        amountPaid: 0,
+      };
+
+      const fabricPaid = await evaluateJexl(fabricPaidSubMetric.expression, { aggregates });
+      const malePaid = await evaluateJexl(malePaidSubMetric.expression, { aggregates });
+      const femalePaid = await evaluateJexl(femalePaidSubMetric.expression, { aggregates });
+
+      assert.equal(fabricPaid, 0);
+      assert.equal(malePaid, 0);
+      assert.equal(femalePaid, 0);
+    });
+  });
 });

@@ -362,6 +362,34 @@ export const rsvpRecords = defineCollection({
               format: "currency",
               currency: "₦",
             },
+            {
+              label: "Paid",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.totalYards * 10000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
+              format: "currency",
+              currency: "₦",
+            },
           ],
         },
         {
@@ -413,6 +441,34 @@ export const rsvpRecords = defineCollection({
               format: "currency",
               currency: "₦",
             },
+            {
+              label: "Paid",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.maleQty * 6000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
+              format: "currency",
+              currency: "₦",
+            },
           ],
         },
         {
@@ -461,6 +517,34 @@ export const rsvpRecords = defineCollection({
                 where: { wantsAsoOke: { equals: true } },
               },
               transform: "value * 6000",
+              format: "currency",
+              currency: "₦",
+            },
+            {
+              label: "Paid",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.femaleQty * 6000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
               format: "currency",
               currency: "₦",
             },
@@ -537,6 +621,90 @@ export const rsvpRecords = defineCollection({
                 sum: "asoebiAmountPaid",
                 cast: "number",
               },
+              format: "currency",
+              currency: "₦",
+            },
+            {
+              label: "Paid (Fabric)",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.totalYards * 10000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
+              format: "currency",
+              currency: "₦",
+            },
+            {
+              label: "Paid (Male Aso Oke)",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.maleQty * 6000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
+              format: "currency",
+              currency: "₦",
+            },
+            {
+              label: "Paid (Female Aso Oke)",
+              aggregates: {
+                totalYards: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                maleQty: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                femaleQty: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: { wantsAsoOke: { equals: true } },
+                },
+                amountPaid: {
+                  sum: "asoebiAmountPaid",
+                  cast: "number",
+                },
+              },
+              expression:
+                "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) > 0 ? (aggregates.amountPaid * (aggregates.femaleQty * 6000)) / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) : 0",
               format: "currency",
               currency: "₦",
             },
