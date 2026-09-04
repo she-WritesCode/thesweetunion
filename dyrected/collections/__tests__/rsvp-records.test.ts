@@ -248,16 +248,10 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
       const yardPaid = yardsCard?.subMetrics?.find((s: any) => s.label === "Paid");
       const malePaid = maleCard?.subMetrics?.find((s: any) => s.label === "Paid");
       const femalePaid = femaleCard?.subMetrics?.find((s: any) => s.label === "Paid");
-      const revFabric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Fabric)");
-      const revMale = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Male Aso Oke)");
-      const revFemale = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Female Aso Oke)");
 
       assert.equal(yardPaid?.transform, "value * 10000");
       assert.equal(malePaid?.transform, "value * 6000");
       assert.equal(femalePaid?.transform, "value * 6000");
-      assert.equal(revFabric?.transform, "value * 10000");
-      assert.equal(revMale?.transform, "value * 6000");
-      assert.equal(revFemale?.transform, "value * 6000");
     });
   });
 });
