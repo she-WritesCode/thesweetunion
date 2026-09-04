@@ -237,49 +237,27 @@ describe("RSVP Records — Declarative JEXL Expressions & Functions Parity", () 
     });
   });
 
-  describe("Asoebi Logistics Proportional Paid Submetrics Calculation", () => {
+  describe("Asoebi Logistics Paid Submetrics Validation", () => {
     const asoebiView = (rsvpRecords as any).views?.find((v: any) => v.slug === "asoebi_logistics");
+    const yardsCard = asoebiView?.metrics?.find((m: any) => m.label === "Total Yards");
+    const maleCard = asoebiView?.metrics?.find((m: any) => m.label === "Total Male Aso Oke");
+    const femaleCard = asoebiView?.metrics?.find((m: any) => m.label === "Total Female Aso Oke");
     const revenueCard = asoebiView?.metrics?.find((m: any) => m.label === "Total Expected Revenue");
-    const fabricPaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Fabric)");
-    const malePaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Male Aso Oke)");
-    const femalePaidSubMetric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Female Aso Oke)");
 
-    it("evaluates proportional paid amounts and verifies their sum equals amountPaid", async () => {
-      const aggregates = {
-        totalYards: 7, // 7 * 10,000 = 70,000 (Fabric: 70k / 100k = 70%)
-        maleQty: 3,    // 3 * 6,000  = 18,000 (Male: 18k / 100k = 18%)
-        femaleQty: 2,  // 2 * 6,000  = 12,000 (Female: 12k / 100k = 12%)
-        // Total expected = 100,000
-        amountPaid: 80000, // 80,000 paid so far
-      };
+    it("verifies all Paid submetrics use exact whole-integer transform pricing", () => {
+      const yardPaid = yardsCard?.subMetrics?.find((s: any) => s.label === "Paid");
+      const malePaid = maleCard?.subMetrics?.find((s: any) => s.label === "Paid");
+      const femalePaid = femaleCard?.subMetrics?.find((s: any) => s.label === "Paid");
+      const revFabric = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Fabric)");
+      const revMale = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Male Aso Oke)");
+      const revFemale = revenueCard?.subMetrics?.find((s: any) => s.label === "Paid (Female Aso Oke)");
 
-      const fabricPaid = await evaluateJexl(fabricPaidSubMetric.expression, { aggregates });
-      const malePaid = await evaluateJexl(malePaidSubMetric.expression, { aggregates });
-      const femalePaid = await evaluateJexl(femalePaidSubMetric.expression, { aggregates });
-
-      assert.equal(fabricPaid, 56000); // 80,000 * (70,000 / 100,000) = 56,000
-      assert.equal(malePaid, 14400);   // 80,000 * (18,000 / 100,000) = 14,400
-      assert.equal(femalePaid, 9600);  // 80,000 * (12,000 / 100,000) = 9,600
-
-      // The sum of individual paid submetrics must equal the total amount paid
-      assert.equal(fabricPaid + malePaid + femalePaid, aggregates.amountPaid);
-    });
-
-    it("safely returns 0 when total expected items are 0", async () => {
-      const aggregates = {
-        totalYards: 0,
-        maleQty: 0,
-        femaleQty: 0,
-        amountPaid: 0,
-      };
-
-      const fabricPaid = await evaluateJexl(fabricPaidSubMetric.expression, { aggregates });
-      const malePaid = await evaluateJexl(malePaidSubMetric.expression, { aggregates });
-      const femalePaid = await evaluateJexl(femalePaidSubMetric.expression, { aggregates });
-
-      assert.equal(fabricPaid, 0);
-      assert.equal(malePaid, 0);
-      assert.equal(femalePaid, 0);
+      assert.equal(yardPaid?.transform, "value * 10000");
+      assert.equal(malePaid?.transform, "value * 6000");
+      assert.equal(femalePaid?.transform, "value * 6000");
+      assert.equal(revFabric?.transform, "value * 10000");
+      assert.equal(revMale?.transform, "value * 6000");
+      assert.equal(revFemale?.transform, "value * 6000");
     });
   });
 });
