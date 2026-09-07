@@ -1,5 +1,5 @@
 import { defineCollection, defineTextField, defineTextareaField } from "@dyrected/core";
-import { generalFields } from "./utils";
+import { generalFields } from "./utils.ts";
 
 export const media = defineCollection({
   slug: "media",

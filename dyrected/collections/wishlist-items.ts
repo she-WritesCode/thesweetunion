@@ -15,7 +15,7 @@ import {
   displayDivider,
   displaySection,
 } from "@dyrected/core";
-import { generalFields } from "./utils";
+import { generalFields } from "./utils.ts";
 
 export const wishlistItems = defineCollection({
   slug: "wishlist_items",

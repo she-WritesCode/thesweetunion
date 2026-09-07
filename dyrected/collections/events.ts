@@ -7,7 +7,7 @@ import {
   defineRelationshipField,
   defineBooleanField,
 } from "@dyrected/core";
-import { generalFields } from "./utils";
+import { generalFields } from "./utils.ts";
 
 export const events = defineCollection({
   slug: "events",

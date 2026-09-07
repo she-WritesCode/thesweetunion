@@ -658,7 +658,7 @@ export const rsvpRecords = defineCollection({
                 placeholder: "e.g. 20000",
                 description: "Amount received so far in Naira (helpful for partial payments).",
                 hooks: {
-                  // onChange: asoebiAmountPaidOnChange,
+                  onChange: asoebiAmountPaidOnChange,
                 },
               },
             }),

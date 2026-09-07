@@ -1,5 +1,5 @@
 import { defineCollection, defineTextField } from "@dyrected/core";
-import { generalFields } from "./utils";
+import { generalFields } from "./utils.ts";
 
 export const admins = defineCollection({
   slug: "admins",
