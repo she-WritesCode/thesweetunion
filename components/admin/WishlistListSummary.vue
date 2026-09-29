@@ -24,7 +24,7 @@ const sendTestReminder = async () => {
   testSending.value = true;
   testResult.value = null;
   try {
-    await $fetch("/api/reminders/test", {
+    await $fetch("/api/reminders/manual-send", {
       method: "POST",
       headers: adminAuthHeaders(),
       body: { channel: testChannel.value, contact: testContact.value.trim(), guestName: "Test Guest" },
