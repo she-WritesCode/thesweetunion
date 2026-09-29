@@ -197,7 +197,18 @@ export const reservations = defineCollection({
       if (apiKeyHeader || (authHeader && authHeader.includes("Bearer "))) return true;
       return false;
     },
-    update: "user != null",
+    // A plain "user != null" string here rejects our own trusted server routes
+    // (server/api/reminders/run.get.ts, server/api/reminders/send/[id].post.ts)
+    // when they stamp reminderSentAt — those authenticate with the app's own
+    // apiKey, not a logged-in Dyrected user, so `user` is null in that request
+    // context. Mirror the same api-key/bearer allowance already used for `create`.
+    update: ({ user, req }: any) => {
+      if (user != null) return true;
+      const apiKeyHeader = req?.headers?.get?.("x-api-key") || req?.headers?.["x-api-key"];
+      const authHeader = req?.headers?.get?.("authorization") || req?.headers?.authorization;
+      if (apiKeyHeader || (authHeader && authHeader.includes("Bearer "))) return true;
+      return false;
+    },
     delete: "user != null",
   },
   hooks: {
