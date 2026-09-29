@@ -5,6 +5,18 @@ export default defineNuxtConfig({
     transpile: [/@dyrected/],
   },
 
+  nitro: {
+    vercel: {
+      // Raised so /api/reminders/run has room for its throttled, paced WhatsApp
+      // sends (see MAX_WHATSAPP_PER_RUN / randomDelay in that route). Applies to
+      // all routes, since Nitro bundles them into one fallback function here —
+      // that's fine, it's just a ceiling.
+      functions: {
+        maxDuration: 60,
+      },
+    },
+  },
+
   vite: {
     resolve: {
       alias: {

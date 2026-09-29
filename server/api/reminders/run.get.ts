@@ -4,6 +4,17 @@ import { sendWhatsApp } from "~~/dyrected/whatsapp";
 import { sendEmail } from "~~/dyrected/mailer";
 import { wishlistReminderEmail } from "~~/dyrected/emails";
 
+// Sending too many WhatsApp messages back-to-back looks bot-like and risks the
+// connected number being flagged/banned. Throttle: a random human-ish delay
+// between sends, and a per-run cap so a large backlog trickles out over
+// several days instead of firing all at once. Email has no such risk.
+// Cap * MAX_DELAY_MS must stay comfortably under the route's maxDuration (see vercel.json).
+const MAX_WHATSAPP_PER_RUN = 8;
+const MIN_DELAY_MS = 2000;
+const MAX_DELAY_MS = 4000;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const randomDelay = () => sleep(MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS));
+
 // Called daily by Vercel Cron (see vercel.json). Vercel sends `Authorization: Bearer $CRON_SECRET`.
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -45,10 +56,19 @@ export default defineEventHandler(async (event) => {
   }
 
   let sent = 0;
+  let whatsappSentThisRun = 0;
+  let whatsappThrottled = 0;
   const failed: { contact: string; error: string }[] = [];
 
   for (const [key, records] of groups) {
     const [channel, contact] = key.split(":");
+
+    // Cap WhatsApp volume per run — anything over the cap is left unsent and
+    // picked up on tomorrow's run instead of bursting out all at once.
+    if (channel === "whatsapp" && whatsappSentThisRun >= MAX_WHATSAPP_PER_RUN) {
+      whatsappThrottled += records.length;
+      continue;
+    }
     const guestName = records[0].guestName;
     const items = records.map((r) => ({
       name: r.item?.name || "Gift item",
@@ -75,6 +95,9 @@ export default defineEventHandler(async (event) => {
           }),
         });
       } else {
+        // Human-ish pacing: wait before every WhatsApp send but the very first one.
+        if (whatsappSentThisRun > 0) await randomDelay();
+
         const itemLines = items.map((i) => `- ${i.name} — ₦${i.amount.toLocaleString("en-US")}`).join("\n");
         const bankLines = bankName || accountNumber || accountName
           ? `\n\nYou can make payment using the details below:\n\nBank: ${bankName}\nAccount Number: ${accountNumber}\nAccount Name: ${accountName}`
@@ -89,6 +112,7 @@ export default defineEventHandler(async (event) => {
             `${bankLines}\n\n` +
             `Thank you so much for celebrating with ${coupleNames}! \n#thesweetunion 🤍`,
         });
+        whatsappSentThisRun++;
       }
       await Promise.all(
         records.map((r) => client.collection("reservations").update(r.id, { reminderSentAt: new Date().toISOString() })),
@@ -100,5 +124,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { due: due.length, groups: groups.size, sent, failed };
+  return { due: due.length, groups: groups.size, sent, whatsappThrottled, failed };
 });

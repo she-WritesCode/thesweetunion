@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 const props = defineProps<{
   client?: any;
@@ -8,6 +9,33 @@ const props = defineProps<{
   pagination?: any;
   isLoading?: boolean;
 }>();
+
+// ─── Manual test reminder send ────────────────────────────────────────────
+const testChannel = ref<"whatsapp" | "email">("whatsapp");
+const testContact = ref("");
+const testSending = ref(false);
+const testResult = ref<{ ok: boolean; message: string } | null>(null);
+
+const sendTestReminder = async () => {
+  if (!testContact.value.trim()) {
+    testResult.value = { ok: false, message: "Enter a phone number or email first." };
+    return;
+  }
+  testSending.value = true;
+  testResult.value = null;
+  try {
+    await $fetch("/api/reminders/test", {
+      method: "POST",
+      headers: adminAuthHeaders(),
+      body: { channel: testChannel.value, contact: testContact.value.trim(), guestName: "Test Guest" },
+    });
+    testResult.value = { ok: true, message: `Sent via ${testChannel.value === "whatsapp" ? "WhatsApp" : "Email"}.` };
+  } catch (e: any) {
+    testResult.value = { ok: false, message: e?.data?.message || e?.message || "Send failed." };
+  } finally {
+    testSending.value = false;
+  }
+};
 
 const loading = ref(true);
 const summary = ref<any>({
@@ -494,6 +522,44 @@ onMounted(() => {
             <span>{{ summary.crowdfundCount }} Crowdfund</span>
           </div>
         </div>
+      </div>
+
+      <!-- Manual Test Reminder Send -->
+      <div class="mt-4 p-4 bg-white rounded-xl border border-gray-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">Send Test Reminder</div>
+        <p class="text-xs text-gray-500 mb-3">
+          Sends a sample reminder message (fake items) to confirm WhatsApp/email delivery. Does not touch real reservations.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <select
+            v-model="testChannel"
+            class="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white"
+          >
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">Email</option>
+          </select>
+          <input
+            v-model="testContact"
+            type="text"
+            :placeholder="testChannel === 'whatsapp' ? 'e.g. 2348012345678' : 'e.g. you@example.com'"
+            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg"
+          />
+          <button
+            type="button"
+            :disabled="testSending"
+            @click="sendTestReminder"
+            class="px-4 py-2 text-sm font-semibold text-white bg-amber-700 rounded-lg disabled:opacity-50 hover:bg-amber-800"
+          >
+            {{ testSending ? "Sending…" : "Send Test" }}
+          </button>
+        </div>
+        <p
+          v-if="testResult"
+          class="mt-2 text-xs font-medium"
+          :class="testResult.ok ? 'text-green-700' : 'text-red-700'"
+        >
+          {{ testResult.ok ? "✓ " : "✗ " }}{{ testResult.message }}
+        </p>
       </div>
     </div>
   </div>
