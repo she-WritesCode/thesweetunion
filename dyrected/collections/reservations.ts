@@ -1,6 +1,7 @@
 import {
   defineCollection,
   defineTab,
+  defineView,
   defineAction,
   defineRelationshipField,
   defineTextField,
@@ -26,31 +27,53 @@ export const reservations = defineCollection({
     group: "Wishlist",
     features: { duplicate: false, delete: false },
   },
-  actions: [
-    defineAction({
-      name: "sendReminder",
-      label: "Send Reminder",
-      submitLabel: "Done",
-      icon: "MessageSquare",
-      type: "row",
-      fields: [
-        defineJsonField({
-          name: "sendReminderDialog",
+  detail: false,
+  // Operational view carrying the "Send Reminder" row action — `actions` only
+  // renders when attached to a view, not at the top level of the collection.
+  defaultView: "all_reservations",
+  views: [
+    defineView({
+      slug: "all_reservations",
+      label: "All Reservations",
+      icon: "Gift",
+      layout: "table",
+      columns: [
+        "guestName",
+        "item",
+        "intent",
+        "paymentTiming",
+        "reminderAt",
+        "reminderChannel",
+        "reminderSentAt",
+        "reservedAt",
+      ],
+      sort: { field: "reservedAt", direction: "desc" },
+      actions: [
+        defineAction({
+          name: "sendReminder",
           label: "Send Reminder",
-          admin: {
-            component: "reservations.sendReminder",
-            description: "Choose WhatsApp or Email, review and edit the message, then send.",
-          },
+          submitLabel: "Done",
+          icon: "MessageSquare",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "sendReminderDialog",
+              label: "Send Reminder",
+              admin: {
+                component: "reservations.sendReminder",
+                description: "Choose WhatsApp or Email, review and edit the message, then send.",
+              },
+            }),
+          ],
+          // The actual send happens inside the custom "reservations.sendReminder"
+          // component (it calls /api/reminders/send/[id] directly and stamps
+          // reminderSentAt itself) before the admin clicks "Done" — this handler
+          // is only here because @dyrected/core requires one, it has nothing left to do.
+          handler: async () => ({ success: true }),
         }),
       ],
-      // The actual send happens inside the custom "reservations.sendReminder"
-      // component (it calls /api/reminders/send/[id] directly and stamps
-      // reminderSentAt itself) before the admin clicks "Done" — this handler
-      // is only here because @dyrected/core requires one, it has nothing left to do.
-      handler: async () => ({ success: true }),
     }),
   ],
-  detail: false,
   fields: [
     ...defineTab({
       label: "Details",
