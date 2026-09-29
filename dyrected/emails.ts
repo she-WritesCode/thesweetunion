@@ -717,3 +717,51 @@ export function adminWishlistNotificationEmail({
     ctaButton("View Registry in Dashboard", dashboardLink),
   );
 }
+
+// ─── Guest: Wishlist Gift Reminder ────────────────────────────────────
+
+export function wishlistReminderEmail({
+  guestName,
+  senderName,
+  coupleNames,
+  items,
+  total,
+  bankName,
+  accountNumber,
+  accountName,
+  wishlistLink,
+}: {
+  guestName: string;
+  senderName: string;
+  coupleNames: string;
+  items: { name: string; amount: number }[];
+  total: number;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  wishlistLink: string;
+}): string {
+  return layout(
+    heading("A gentle reminder 💛"),
+    paragraph(
+      `Hi ${guestName}, this is ${senderName}. I'm reaching out regarding the wedding of ${coupleNames}. ` +
+        `You recently reserved a gift on their wedding registry and asked for a reminder, so here it is.`,
+    ),
+    divider(),
+    sectionLabel("You Reserved"),
+    table(...items.map((i) => row(i.name, `₦${i.amount.toLocaleString("en-US")}`)), row("Total", `₦${total.toLocaleString("en-US")}`)),
+    bankName || accountNumber || accountName
+      ? [
+          divider(),
+          sectionLabel("Payment Details"),
+          table(
+            bankName ? row("Bank", bankName) : "",
+            accountNumber ? row("Account Number", accountNumber) : "",
+            accountName ? row("Account Name", accountName) : "",
+          ),
+        ].join("")
+      : "",
+    paragraph(`Thank you so much for celebrating with ${coupleNames}! #TheSweetUnion 🤍`),
+    ctaButton("View the Wishlist", wishlistLink),
+  );
+}

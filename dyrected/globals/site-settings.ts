@@ -205,6 +205,14 @@ export const siteSettings = defineGlobal({
           name: "accountName",
           label: "Account Name",
         }),
+        defineTextField({
+          name: "whatsappSenderName",
+          label: "WhatsApp Sender Name",
+          defaultValue: "Busola",
+          admin: {
+            description: "How automated reminder messages introduce themselves, e.g. \"This is [name].\"",
+          },
+        }),
       ],
     }),
   ],

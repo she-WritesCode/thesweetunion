@@ -60,6 +60,10 @@ export default defineNuxtConfig({
     gmailUser: process.env.GMAIL_USER || "",
     gmailAppPassword: process.env.GMAIL_APP_PASSWORD || "",
     emailFrom: process.env.EMAIL_FROM || "",
+    wahaUrl: process.env.WAHA_URL || "https://tsu-waha.dyrected.com",
+    wahaApiKey: process.env.WAHA_API_KEY || "",
+    wahaSession: process.env.WAHA_SESSION || "default",
+    cronSecret: process.env.CRON_SECRET || "",
     public: {
       dyrectedUrl:
         process.env.NUXT_PUBLIC_DYRECTED_URL ||

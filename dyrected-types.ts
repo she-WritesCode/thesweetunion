@@ -86,6 +86,7 @@ export interface Reservations {
   reminderAt?: string;
   reminderChannel?: "whatsapp" | "email";
   reminderContact?: string;
+  reminderSentAt?: string;
   paymentOption?: "bank_transfer" | "purchase_link" | "bring_to_wedding";
   reservedAt?: string;
   createdBy?: Admins | string;
@@ -214,6 +215,7 @@ export interface Site_settingsGlobal {
   bankName?: string;
   accountNumber?: string;
   accountName?: string;
+  whatsappSenderName?: string;
 }
 
 export interface Asoebi_settingsGlobal {

@@ -107,6 +107,15 @@ export const reservations = defineCollection({
             description: "Only collected when the guest asks to be reminded later.",
           },
         }),
+        defineDateTimeField({
+          name: "reminderSentAt",
+          label: "Reminder Sent At",
+          admin: {
+            readOnly: true,
+            width: "50%",
+            description: "Set automatically once the reminder has gone out.",
+          },
+        }),
         defineSelectField({
           name: "paymentOption",
           label: "Payment Option",
