@@ -8,10 +8,17 @@ import { wishlistReminderEmail } from "~~/dyrected/emails";
 // connected number being flagged/banned. Throttle: a random human-ish delay
 // between sends, and a per-run cap so a large backlog trickles out over
 // several days instead of firing all at once. Email has no such risk.
-// Cap * MAX_DELAY_MS must stay comfortably under the route's maxDuration (see vercel.json).
-const MAX_WHATSAPP_PER_RUN = 8;
-const MIN_DELAY_MS = 2000;
-const MAX_DELAY_MS = 4000;
+//
+// The delay is bounded by how long the whole request can run (see
+// nitro.vercel.functions.maxDuration in nuxt.config.ts, currently 60s — the
+// max Vercel allows on the Hobby plan). A realistic "someone typing this out"
+// delay (20-40s) only leaves room for ~2 sends before the function must
+// return; the rest of the backlog is left for tomorrow's run rather than
+// rushed through at an inhuman pace. (MAX_WHATSAPP_PER_RUN - 1) * MAX_DELAY_MS
+// must stay comfortably under maxDuration.
+const MAX_WHATSAPP_PER_RUN = 2;
+const MIN_DELAY_MS = 20_000;
+const MAX_DELAY_MS = 40_000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const randomDelay = () => sleep(MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS));
 
