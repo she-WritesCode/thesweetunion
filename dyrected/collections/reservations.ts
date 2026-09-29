@@ -1,12 +1,14 @@
 import {
   defineCollection,
   defineTab,
+  defineAction,
   defineRelationshipField,
   defineTextField,
   defineSelectField,
   defineNumberField,
   defineDateField,
   defineDateTimeField,
+  defineJsonField,
 } from "@dyrected/core";
 import { reserveItem, releaseReservation } from "../hooks/reservation-hooks.ts";
 import { generalFields } from "./utils.ts";
@@ -22,7 +24,32 @@ export const reservations = defineCollection({
     },
     defaultColumns: ["guestName", "item", "intent", "paymentTiming", "reminderAt", "reservedAt"],
     group: "Wishlist",
+    features: { duplicate: false, delete: false },
   },
+  actions: [
+    defineAction({
+      name: "sendReminder",
+      label: "Send Reminder",
+      submitLabel: "Done",
+      icon: "MessageSquare",
+      type: "row",
+      fields: [
+        defineJsonField({
+          name: "sendReminderDialog",
+          label: "Send Reminder",
+          admin: {
+            component: "reservations.sendReminder",
+            description: "Choose WhatsApp or Email, review and edit the message, then send.",
+          },
+        }),
+      ],
+      // The actual send happens inside the custom "reservations.sendReminder"
+      // component (it calls /api/reminders/send/[id] directly and stamps
+      // reminderSentAt itself) before the admin clicks "Done" — this handler
+      // is only here because @dyrected/core requires one, it has nothing left to do.
+      handler: async () => ({ success: true }),
+    }),
+  ],
   detail: false,
   fields: [
     ...defineTab({

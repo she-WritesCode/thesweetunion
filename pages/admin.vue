@@ -5,6 +5,7 @@ import CountField from "~/components/admin/CountField.vue";
 import CheckInScanner from "~/components/admin/CheckInScanner.vue";
 import AccessCardPreview from "~/components/admin/AccessCardPreview.vue";
 import SendAsoebiReminderButton from "~/components/admin/SendAsoebiReminderButton.vue";
+import SendReminderButton from "~/components/admin/SendReminderButton.vue";
 import SendWhatsAppButton from "~/components/admin/SendWhatsAppButton.vue";
 import SendPassModal from "~/components/admin/SendPassModal.vue";
 import RsvpListSummary from "~/components/admin/RsvpListSummary.vue";
@@ -34,6 +35,7 @@ const adminComponents = {
   // Detail View Custom Components (referenced by displayCustomComponent / displayCustom)
   AccessCardPreview,
   SendAsoebiReminderButton,
+  SendReminderButton,
   SendWhatsAppButton,
   SendPassModal,
   RsvpEditLinkField,
@@ -48,6 +50,9 @@ const adminComponents = {
     "wishlist_items.amountRaised": CountField,
     "wishlist_items.contributorCount": CountField,
     "wishlist_items.reservedCount": CountField,
+    // reservations collection — manual "Send Reminder" action
+    "reservations.sendReminder": SendReminderButton,
+    sendReminder: SendReminderButton,
     // check_ins collection — QR scanner panel
     "check_ins.checkInScanner": CheckInScanner,
     // rsvp_records collection — invitation & reminder tools

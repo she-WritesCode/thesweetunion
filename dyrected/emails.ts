@@ -765,3 +765,29 @@ export function wishlistReminderEmail({
     ctaButton("View the Wishlist", wishlistLink),
   );
 }
+
+// ─── Guest: Freeform Reminder (admin-edited, from the "Send Reminder" action) ──
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Wraps admin-edited freeform text (from the reservations "Send Reminder" action)
+ * in the site's branded email shell. Blank lines become paragraph breaks, single
+ * line breaks become <br>. Text is HTML-escaped since it's admin-entered, not
+ * pre-built markup.
+ */
+export function freeformReminderEmail({ bodyText }: { bodyText: string }): string {
+  const paragraphs = bodyText
+    .split(/\n\s*\n/)
+    .map((block) => escapeHtml(block.trim()).replace(/\n/g, "<br>"))
+    .filter(Boolean);
+
+  return layout(heading("A gentle reminder 💛"), ...paragraphs.map((p) => paragraph(p)));
+}

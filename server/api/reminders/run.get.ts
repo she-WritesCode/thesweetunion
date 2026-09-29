@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import { sendWhatsApp } from "~~/dyrected/whatsapp";
 import { sendEmail } from "~~/dyrected/mailer";
 import { wishlistReminderEmail } from "~~/dyrected/emails";
+import { buildWhatsAppReminderText } from "~~/dyrected/reminder-message";
 
 // Sending too many WhatsApp messages back-to-back looks bot-like and risks the
 // connected number being flagged/banned. Throttle: a random human-ish delay
@@ -105,19 +106,9 @@ export default defineEventHandler(async (event) => {
         // Human-ish pacing: wait before every WhatsApp send but the very first one.
         if (whatsappSentThisRun > 0) await randomDelay();
 
-        const itemLines = items.map((i) => `- ${i.name} — ₦${i.amount.toLocaleString("en-US")}`).join("\n");
-        const bankLines = bankName || accountNumber || accountName
-          ? `\n\nYou can make payment using the details below:\n\nBank: ${bankName}\nAccount Number: ${accountNumber}\nAccount Name: ${accountName}`
-          : "";
         await sendWhatsApp({
           to: contact,
-          text:
-            `Hi ${guestName} 😊\n\n` +
-            `This is ${senderName}. I'm reaching out regarding the wedding of ${coupleNames}. ` +
-            `You recently reserved a gift on their wedding registry and asked for a reminder, so here it is. 😊\n\n` +
-            `You reserved:\n\n${itemLines}\n\nTotal: ₦${total.toLocaleString("en-US")}` +
-            `${bankLines}\n\n` +
-            `Thank you so much for celebrating with ${coupleNames}! \n#thesweetunion 🤍`,
+          text: buildWhatsAppReminderText(guestName, items, { coupleNames, senderName, bankName, accountNumber, accountName }),
         });
         whatsappSentThisRun++;
       }
