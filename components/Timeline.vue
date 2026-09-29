@@ -54,8 +54,12 @@ const hoveredIndex = ref<number | null>(null);
         <div
           class="linen-card overflow-hidden rounded-2xl border border-amber-gold/20 transition-all duration-500 hover:shadow-xl hover:border-amber-gold/45 bg-linen-white"
         >
-          <!-- Polaroid Image Wrapper -->
-          <div class="relative w-full aspect-4/3 overflow-hidden bg-deep-espresso/5 border-b border-amber-gold/10">
+          <!-- Polaroid Image Wrapper — only rendered when a photo/imageUrl actually exists,
+               since DyrectedMedia requires a non-null media value. -->
+          <div
+            v-if="(item as any).photo || item.imageUrl"
+            class="relative w-full aspect-4/3 overflow-hidden bg-deep-espresso/5 border-b border-amber-gold/10"
+          >
             <DyrectedMedia
               :media="(item as any).photo || item.imageUrl"
               :alt="item.title"

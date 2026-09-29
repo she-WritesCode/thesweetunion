@@ -73,8 +73,10 @@ const collageStyles = [
 
         <!-- The Polaroid Card -->
         <div class="bg-white p-4 pb-8 rounded shadow-xl border border-deep-espresso/5 flex flex-col motion-lift">
-          <!-- Photo frame -->
+          <!-- Photo frame — only rendered when a photo/imageUrl actually exists, since
+               DyrectedMedia requires a non-null media value. -->
           <div
+            v-if="(item as any).photo || item.imageUrl"
             class="relative aspect-4/3 w-full overflow-hidden bg-deep-espresso/5 rounded-sm border border-deep-espresso/10 cursor-zoom-in group"
             @click="emit('imageClick', item.imageUrl)"
           >
