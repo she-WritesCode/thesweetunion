@@ -57,6 +57,14 @@ export default defineNuxtConfig({
   dyrected: {
     apiBase: "/api/dyrected",
     adminPath: "admin",
+    // SDK >= 2.20 rewrites a relative baseUrl to http://127.0.0.1:3000 during SSR, which
+    // doesn't exist on Vercel. Give it an absolute URL there (module appends apiBase).
+    baseUrl:
+      process.env.VERCEL_ENV === "production" && process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : undefined,
   },
 
   runtimeConfig: {
