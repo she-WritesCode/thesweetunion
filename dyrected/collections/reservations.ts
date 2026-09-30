@@ -48,6 +48,7 @@ export const reservations = defineCollection({
         "reservedAt",
       ],
       sort: { field: "reservedAt", direction: "desc" },
+      features: { duplicate: false, delete: false },
       actions: [
         defineAction({
           name: "sendReminder",
