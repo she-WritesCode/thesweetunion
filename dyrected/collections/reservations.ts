@@ -10,9 +10,17 @@ import {
   defineDateField,
   defineDateTimeField,
   defineJsonField,
+  defineTextareaField,
 } from "@dyrected/core";
 import { reserveItem, releaseReservation } from "../hooks/reservation-hooks.ts";
 import { generalFields } from "./utils.ts";
+
+export const GIFT_STATUS_OPTIONS = [
+  { label: "Pending / Pledged ⏳", value: "pending" },
+  { label: "Gift Received / Paid ✅", value: "received" },
+  { label: "Delivered at Wedding 🎁", value: "delivered" },
+  { label: "Cancelled / Released ✕", value: "cancelled" },
+];
 
 export const reservations = defineCollection({
   slug: "reservations",
@@ -23,14 +31,13 @@ export const reservations = defineCollection({
     components: {
       beforeListTable: ["WishlistListSummary"],
     },
-    defaultColumns: ["guestName", "item", "intent", "paymentTiming", "reminderAt", "reservedAt"],
+    defaultColumns: ["guestName", "item", "giftStatus", "amountReceived", "intent", "paymentTiming", "reminderAt", "reservedAt"],
     group: "Wishlist",
     features: { duplicate: false, delete: false },
   },
   audit: true,
   detail: false,
-  // Operational view carrying the "Send Reminder" row action — `actions` only
-  // renders when attached to a view, not at the top level of the collection.
+  // Operational view carrying the "Manage Gift" and "Send Reminder" row actions
   defaultView: "all_reservations",
   views: [
     defineView({
@@ -41,6 +48,8 @@ export const reservations = defineCollection({
       columns: [
         "guestName",
         "item",
+        "giftStatus",
+        "amountReceived",
         "intent",
         "paymentTiming",
         "reminderAt",
@@ -51,6 +60,24 @@ export const reservations = defineCollection({
       sort: { field: "reservedAt", direction: "desc" },
       features: { duplicate: false, delete: false },
       actions: [
+        defineAction({
+          name: "manageGift",
+          label: "Manage Gift",
+          submitLabel: "Done",
+          icon: "Gift",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "manageGiftDialog",
+              label: "Manage Gift",
+              admin: {
+                component: "reservations.manageGift",
+                description: "Update fulfillment status, record amount received, add notes, or send a thank you.",
+              },
+            }),
+          ],
+          handler: async () => ({ success: true }),
+        }),
         defineAction({
           name: "sendReminder",
           label: "Send Reminder",
@@ -184,6 +211,41 @@ export const reservations = defineCollection({
           admin: {
             readOnly: true,
             width: "50%",
+          },
+        }),
+        defineSelectField({
+          name: "giftStatus",
+          label: "Gift Status",
+          defaultValue: "pending",
+          options: GIFT_STATUS_OPTIONS,
+          admin: { width: "50%" },
+        }),
+        defineNumberField({
+          name: "amountReceived",
+          label: "Amount Received",
+          admin: {
+            description: "Confirmed amount received in Naira (for monetary gifts, crowdfund, or bank transfers).",
+            width: "50%",
+            format: {
+              type: "currency",
+              currency: "NGN",
+            },
+          },
+        }),
+        defineDateTimeField({
+          name: "giftReceivedAt",
+          label: "Gift Received At",
+          admin: {
+            width: "50%",
+            description: "Date and time the gift or payment was confirmed.",
+          },
+        }),
+        defineTextareaField({
+          name: "giftNotes",
+          label: "Gift Notes",
+          admin: {
+            placeholder: "e.g. Bank transfer verified, or received physical gift at venue...",
+            description: "Fulfillment notes, bank reference, or wedding day check-in details.",
           },
         }),
         ...generalFields,

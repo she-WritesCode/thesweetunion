@@ -4,6 +4,21 @@ import type { Reservations } from "~/dyrected-types";
 export const reserveItem: CollectionBeforeChangeHook<Reservations> = async ({ data, operation }: any) => {
   if (operation === "create") {
     data.reservedAt = new Date().toISOString();
+    if (!data.giftStatus) {
+      data.giftStatus = "pending";
+    }
+  }
+
+  // Auto-fill gift received timestamp and default amount received if marked received or delivered
+  if (data.giftStatus === "received" || data.giftStatus === "delivered") {
+    if (!data.giftReceivedAt) {
+      data.giftReceivedAt = new Date().toISOString();
+    }
+    if (data.amountReceived === undefined || data.amountReceived === null || data.amountReceived === "") {
+      if (data.contributionAmount) {
+        data.amountReceived = data.contributionAmount;
+      }
+    }
   }
   return data;
 };

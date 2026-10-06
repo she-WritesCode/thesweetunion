@@ -13,6 +13,7 @@ import WishlistListSummary from "~/components/admin/WishlistListSummary.vue";
 import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
 import GroupListSummary from "~/components/admin/GroupListSummary.vue";
 import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vue";
+import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
 
 definePageMeta({
   layout: false,
@@ -37,6 +38,7 @@ const adminComponents = {
   AccessCardPreview,
   SendAsoebiReminderButton,
   SendReminderButton,
+  ManageGiftButton,
   SendWhatsAppButton,
   SendPassModal,
   RsvpEditLinkField,
@@ -54,7 +56,9 @@ const adminComponents = {
     "wishlist_items.amountRaised": CountField,
     "wishlist_items.contributorCount": CountField,
     "wishlist_items.reservedCount": CountField,
-    // reservations collection — manual "Send Reminder" action
+    // reservations collection — manual "Manage Gift" and "Send Reminder" actions
+    "reservations.manageGift": ManageGiftButton,
+    manageGift: ManageGiftButton,
     "reservations.sendReminder": SendReminderButton,
     sendReminder: SendReminderButton,
     // check_ins collection — QR scanner panel

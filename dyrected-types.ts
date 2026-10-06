@@ -89,6 +89,10 @@ export interface Reservations {
   reminderSentAt?: string;
   paymentOption?: "bank_transfer" | "purchase_link" | "bring_to_wedding";
   reservedAt?: string;
+  giftStatus?: "pending" | "received" | "delivered" | "cancelled";
+  amountReceived?: number;
+  giftReceivedAt?: string;
+  giftNotes?: string;
   createdBy?: Admins | string;
   updatedBy?: Admins | string;
   createdAt: string;

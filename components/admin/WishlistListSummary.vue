@@ -59,7 +59,10 @@ const summary = ref<any>({
   remindLaterCount: 0,
   whatsappReminderCount: 0,
   emailReminderCount: 0,
-  // 4. Registry Catalog Status
+  // 4. Gifts Confirmed / Received
+  receivedCount: 0,
+  receivedCash: 0,
+  // 5. Registry Catalog Status
   totalItems: 0,
   claimedItemsCount: 0,
   partiallyClaimedCount: 0,
@@ -199,6 +202,15 @@ const fetchSummary = async () => {
           count: "*",
           where: { reminderChannel: { equals: "email" } },
         },
+        receivedCount: {
+          count: "*",
+          where: { giftStatus: { in: ["received", "delivered"] } },
+        },
+        receivedCash: {
+          sum: "amountReceived",
+          cast: "number",
+          where: { giftStatus: { in: ["received", "delivered"] } },
+        },
       }),
     ]);
 
@@ -238,6 +250,9 @@ const fetchSummary = async () => {
     const emailReminderCount = Number(reservationStats?.emailReminderCount) || 0;
     const pledgedValue = remindLaterCash > 0 ? remindLaterCash : remindLaterCount * avgItemPrice;
 
+    const receivedCount = Number(reservationStats?.receivedCount) || 0;
+    const receivedCash = Number(reservationStats?.receivedCash) || 0;
+
     const totalCommittedValue = paidNowCash + weddingDayValue + pledgedValue;
 
     // Percentages of total registry target
@@ -276,7 +291,10 @@ const fetchSummary = async () => {
       remindLaterCount,
       whatsappReminderCount,
       emailReminderCount,
-      // 4. Registry Catalog Status
+      // 4. Gifts Confirmed / Received
+      receivedCount,
+      receivedCash,
+      // 5. Registry Catalog Status
       totalItems,
       claimedItemsCount,
       partiallyClaimedCount,
@@ -425,6 +443,9 @@ onMounted(() => {
                 summary.pledgedPct
               }}%)</span
             >
+          </div>
+          <div v-if="summary.receivedCount > 0" class="flex items-center space-x-1.5 ml-auto text-emerald-900 bg-emerald-100/90 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">
+            <span>✅ <strong>{{ summary.receivedCount }}</strong> Confirmed Received (₦{{ (summary.receivedCash || 0).toLocaleString() }})</span>
           </div>
         </div>
       </div>
