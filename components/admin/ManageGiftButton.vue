@@ -179,8 +179,6 @@ function setStatus(status: "pending" | "received" | "delivered" | "cancelled") {
     if (!amountReceived.value && contributionAmount.value > 0) {
       amountReceived.value = contributionAmount.value;
     }
-  } else if (status === "cancelled") {
-    // If cancelled, keep notes for reference
   }
 }
 
@@ -267,221 +265,243 @@ function copyThankYouText() {
 </script>
 
 <template>
-  <div class="space-y-4 text-gray-900 max-w-lg mx-auto py-1">
-    <!-- Loading skeleton -->
-    <div v-if="loadingDoc" class="animate-pulse space-y-3">
-      <div class="h-6 bg-gray-200 rounded w-1/2"></div>
-      <div class="h-24 bg-gray-100 rounded-lg"></div>
-      <div class="h-10 bg-gray-200 rounded"></div>
+  <div class="mg-modal-root">
+    <!-- Skeleton loader -->
+    <div v-if="loadingDoc" class="mg-skeleton">
+      <div class="mg-skeleton-line short"></div>
+      <div class="mg-skeleton-card"></div>
+      <div class="mg-skeleton-line"></div>
     </div>
 
     <template v-else>
-      <!-- Guest & Item Summary Card -->
-      <div class="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <h4 class="text-sm font-bold text-gray-900">{{ guestName || "Guest" }}</h4>
-            <p class="text-xs text-amber-900 font-medium mt-0.5">
-              {{ itemName }}
-              <span v-if="quantity > 1" class="text-amber-700 font-semibold">(Qty: {{ quantity }})</span>
-            </p>
+      <!-- Summary Header Card -->
+      <div class="mg-card">
+        <div class="mg-card-header">
+          <div class="mg-card-info">
+            <h4 class="mg-guest-name">{{ guestName || "Guest" }}</h4>
+            <div class="mg-item-row">
+              <span class="mg-item-name">{{ itemName }}</span>
+              <span v-if="quantity > 1" class="mg-qty-badge">Qty: {{ quantity }}</span>
+            </div>
           </div>
-          <div class="text-right">
-            <span class="text-xs font-bold text-gray-900">
+          <div class="mg-card-pricing">
+            <span class="mg-amount-display">
               ₦{{ (contributionAmount || itemPrice).toLocaleString("en-US") }}
             </span>
-            <div class="text-[10px] text-gray-500 uppercase tracking-wide">
-              {{ paymentTiming === "now" ? "Paid Now" : "Pay Later" }} &bull;
+            <span class="mg-timing-tag">
+              {{ paymentTiming === "now" ? "Immediate" : "Pledged" }} &bull;
               {{
                 paymentOption === "bring_to_wedding"
-                  ? "At Wedding"
+                  ? "At Venue"
                   : paymentOption === "purchase_link"
                   ? "Direct Buy"
                   : "Bank Transfer"
               }}
-            </div>
+            </span>
           </div>
         </div>
 
-        <div v-if="reminderSentAt" class="mt-2 pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px] text-amber-950">
-          <span>Reminder Sent:</span>
-          <span class="font-semibold text-emerald-800">
-            {{ new Date(reminderSentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) }}
+        <div v-if="reminderSentAt" class="mg-reminder-pill">
+          <svg class="mg-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span>
+            Reminder dispatched:
+            <strong>{{ new Date(reminderSentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) }}</strong>
           </span>
         </div>
       </div>
 
-      <!-- Status Selection Chips -->
-      <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
-          Fulfillment Status
-        </label>
-        <div class="grid grid-cols-2 gap-2">
+      <!-- Status Selection -->
+      <div class="mg-section">
+        <label class="mg-label">Fulfillment Status</label>
+        <div class="mg-status-grid">
+          <!-- Received -->
           <button
             type="button"
+            class="mg-status-btn"
+            :class="{ 'active-received': giftStatus === 'received' }"
             @click="setStatus('received')"
-            :class="[
-              giftStatus === 'received'
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50',
-            ]"
-            class="px-3 py-2 text-xs font-semibold rounded-lg border transition-all text-left flex items-center justify-between cursor-pointer"
           >
-            <span>Gift Received / Paid</span>
-            <span>✅</span>
+            <span class="mg-btn-text">Gift Received</span>
+            <svg class="mg-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </button>
 
+          <!-- Delivered -->
           <button
             type="button"
+            class="mg-status-btn"
+            :class="{ 'active-delivered': giftStatus === 'delivered' }"
             @click="setStatus('delivered')"
-            :class="[
-              giftStatus === 'delivered'
-                ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50/50',
-            ]"
-            class="px-3 py-2 text-xs font-semibold rounded-lg border transition-all text-left flex items-center justify-between cursor-pointer"
           >
-            <span>Delivered at Wedding</span>
-            <span>🎁</span>
+            <span class="mg-btn-text">Delivered at Venue</span>
+            <svg class="mg-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 12 20 22 4 22 4 12" />
+              <rect x="2" y="7" width="20" height="5" />
+              <line x1="12" y1="22" x2="12" y2="7" />
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+            </svg>
           </button>
 
+          <!-- Pending -->
           <button
             type="button"
+            class="mg-status-btn"
+            :class="{ 'active-pending': giftStatus === 'pending' }"
             @click="setStatus('pending')"
-            :class="[
-              giftStatus === 'pending'
-                ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-amber-300 hover:bg-amber-50/50',
-            ]"
-            class="px-3 py-2 text-xs font-semibold rounded-lg border transition-all text-left flex items-center justify-between cursor-pointer"
           >
-            <span>Pending / Pledged</span>
-            <span>⏳</span>
+            <span class="mg-btn-text">Pending / Pledged</span>
+            <svg class="mg-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
           </button>
 
+          <!-- Cancelled -->
           <button
             type="button"
+            class="mg-status-btn"
+            :class="{ 'active-cancelled': giftStatus === 'cancelled' }"
             @click="setStatus('cancelled')"
-            :class="[
-              giftStatus === 'cancelled'
-                ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-rose-300 hover:bg-rose-50/50',
-            ]"
-            class="px-3 py-2 text-xs font-semibold rounded-lg border transition-all text-left flex items-center justify-between cursor-pointer"
           >
-            <span>Cancelled / Released</span>
-            <span>✕</span>
+            <span class="mg-btn-text">Cancelled / Released</span>
+            <svg class="mg-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
       </div>
 
       <!-- Financial & Verification Fields -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="mg-two-cols">
         <!-- Amount Received -->
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-            Amount Received (₦)
-          </label>
-          <div class="relative">
-            <span class="absolute left-3 top-2 text-sm text-gray-400 font-bold">₦</span>
+        <div class="mg-field">
+          <label class="mg-label">Amount Received (₦)</label>
+          <div class="mg-input-prefix-box">
+            <span class="mg-prefix">₦</span>
             <input
               v-model.number="amountReceived"
               type="number"
-              placeholder="e.g. 20000"
-              class="w-full pl-8 pr-3 py-2 text-sm font-semibold border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder="0"
+              class="mg-input with-prefix"
             />
           </div>
-          <p class="text-[11px] text-gray-500 mt-0.5">
-            Confirmed bank payment or cash fund.
-          </p>
+          <span class="mg-hint">Actual payment or cash fund recorded.</span>
         </div>
 
         <!-- Date Received -->
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-            Date &amp; Time Received
-          </label>
+        <div class="mg-field">
+          <label class="mg-label">Date &amp; Time Verified</label>
           <input
             v-model="giftReceivedAt"
             type="datetime-local"
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            class="mg-input"
           />
-          <p class="text-[11px] text-gray-500 mt-0.5">
-            Stamps when payment was verified.
-          </p>
+          <span class="mg-hint">Timestamp when receipt was confirmed.</span>
         </div>
       </div>
 
       <!-- Admin Notes -->
-      <div>
-        <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-          Fulfillment &amp; Verification Notes
-        </label>
+      <div class="mg-field">
+        <label class="mg-label">Verification &amp; Handover Notes</label>
         <textarea
           v-model="giftNotes"
           rows="2"
-          placeholder="e.g. Verified GTBank alert from Tunde, or physical gift handed over at reception..."
-          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+          placeholder="e.g. Verified GTBank bank transfer alert, or received physical box at gift table..."
+          class="mg-textarea"
         ></textarea>
       </div>
 
       <!-- Save Button -->
-      <div class="pt-1">
+      <div class="mg-submit-wrap">
         <button
           type="button"
+          class="mg-submit-btn"
           :disabled="saving"
           @click="saveGiftStatus"
-          class="w-full px-4 py-2.5 text-sm font-bold text-white bg-amber-700 hover:bg-amber-800 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 cursor-pointer shadow-xs"
         >
-          <span v-if="saving" class="animate-spin text-base">⏳</span>
-          <span>{{ saving ? "Saving Updates…" : "Save & Update Gift" }}</span>
+          <svg v-if="saving" class="mg-spinner" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="32" stroke-dashoffset="12" />
+          </svg>
+          <svg v-else class="mg-submit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>{{ saving ? "Updating Records…" : "Save Gift Status" }}</span>
         </button>
       </div>
 
-      <!-- Status Alerts -->
-      <div v-if="error" class="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs font-medium text-red-800">
-        ✕ {{ error }}
+      <!-- Alerts -->
+      <div v-if="error" class="mg-alert mg-alert-error">
+        <svg class="mg-alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>{{ error }}</span>
       </div>
-      <div v-else-if="saved" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800 flex items-center justify-between">
-        <span>✓ Gift status and registry stats successfully updated!</span>
+
+      <div v-else-if="saved" class="mg-alert mg-alert-success">
+        <svg class="mg-alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <span>Gift status updated and wishlist registry metrics synchronized.</span>
       </div>
 
       <!-- WhatsApp Thank You Section -->
-      <div v-if="giftStatus === 'received' || giftStatus === 'delivered'" class="mt-4 pt-3 border-t border-gray-200">
+      <div v-if="giftStatus === 'received' || giftStatus === 'delivered'" class="mg-thankyou-section">
         <button
           type="button"
+          class="mg-thankyou-toggle"
           @click="showThankYou = !showThankYou"
-          class="flex items-center justify-between w-full text-xs font-bold text-amber-900 hover:text-amber-700 py-1 cursor-pointer"
         >
-          <span class="flex items-center space-x-1.5">
-            <span>💬</span>
-            <span>Send WhatsApp Thank You to {{ guestName || "Guest" }}</span>
-          </span>
-          <span class="text-xs">{{ showThankYou ? "▲ Hide" : "▼ Show Message" }}</span>
+          <div class="mg-thankyou-toggle-left">
+            <svg class="mg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            <span>Send WhatsApp Thank You</span>
+          </div>
+          <svg class="mg-chevron" :class="{ 'is-open': showThankYou }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
 
-        <div v-if="showThankYou" class="mt-2.5 p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5">
+        <div v-if="showThankYou" class="mg-thankyou-body">
           <textarea
             :value="thankYouMessage"
             readonly
-            rows="6"
-            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg font-mono bg-white text-gray-800 whitespace-pre-wrap"
+            rows="5"
+            class="mg-thankyou-preview"
           ></textarea>
 
-          <div class="flex items-center gap-2">
+          <div class="mg-thankyou-actions">
             <button
               type="button"
+              class="mg-btn-wa"
               @click="openWhatsAppThankYou"
-              class="flex-1 px-3 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
             >
-              <span>💬 Open WhatsApp</span>
+              <svg class="mg-icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              <span>Open in WhatsApp</span>
             </button>
+
             <button
               type="button"
+              class="mg-btn-copy"
               @click="copyThankYouText"
-              class="px-3 py-2 text-xs font-medium border border-gray-300 bg-white hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
             >
-              {{ thankYouCopied ? "✓ Copied" : "Copy Text" }}
+              <svg v-if="!thankYouCopied" class="mg-icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <svg v-else class="mg-icon-btn text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>{{ thankYouCopied ? "Copied" : "Copy Message" }}</span>
             </button>
           </div>
         </div>
@@ -489,3 +509,472 @@ function copyThankYouText() {
     </template>
   </div>
 </template>
+
+<style scoped>
+/* ── Root Layout & Typography ─────────────────────────────────────────── */
+.mg-modal-root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #0f172a;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 4px 2px;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+.mg-modal-root * {
+  box-sizing: border-box;
+}
+
+/* ── Skeleton Loading ─────────────────────────────────────────────────── */
+.mg-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+.mg-skeleton-line {
+  height: 14px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  animation: mg-pulse 1.4s ease-in-out infinite;
+}
+.mg-skeleton-line.short {
+  width: 40%;
+}
+.mg-skeleton-card {
+  height: 80px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  animation: mg-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ── Summary Card ─────────────────────────────────────────────────────── */
+.mg-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.mg-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mg-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.mg-guest-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.mg-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.mg-item-name {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mg-qty-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.mg-card-pricing {
+  text-align: right;
+  flex-shrink: 0;
+}
+.mg-amount-display {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+.mg-timing-tag {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+.mg-reminder-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 11px;
+  color: #475569;
+}
+.mg-inline-icon {
+  width: 12px;
+  height: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* ── Section & Labels ─────────────────────────────────────────────────── */
+.mg-section {
+  margin-bottom: 14px;
+}
+.mg-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* ── Status Grid & Buttons ────────────────────────────────────────────── */
+.mg-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.mg-status-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  outline: none;
+}
+.mg-status-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.mg-btn-text {
+  white-space: nowrap;
+}
+.mg-status-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: color 120ms ease;
+}
+
+/* Active status states */
+.mg-status-btn.active-received {
+  background: #ecfdf5;
+  border-color: #059669;
+  color: #065f46;
+  font-weight: 600;
+}
+.mg-status-btn.active-received .mg-status-icon {
+  color: #059669;
+}
+
+.mg-status-btn.active-delivered {
+  background: #f5f3ff;
+  border-color: #7c3aed;
+  color: #5b21b6;
+  font-weight: 600;
+}
+.mg-status-btn.active-delivered .mg-status-icon {
+  color: #7c3aed;
+}
+
+.mg-status-btn.active-pending {
+  background: #fffbeb;
+  border-color: #d97706;
+  color: #92400e;
+  font-weight: 600;
+}
+.mg-status-btn.active-pending .mg-status-icon {
+  color: #d97706;
+}
+
+.mg-status-btn.active-cancelled {
+  background: #fff1f2;
+  border-color: #e11d48;
+  color: #9f1239;
+  font-weight: 600;
+}
+.mg-status-btn.active-cancelled .mg-status-icon {
+  color: #e11d48;
+}
+
+/* ── Form Inputs ──────────────────────────────────────────────────────── */
+.mg-two-cols {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mg-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+.mg-input-prefix-box {
+  position: relative;
+  width: 100%;
+}
+.mg-prefix {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.mg-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.mg-input.with-prefix {
+  padding-left: 26px;
+}
+.mg-input:focus,
+.mg-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+.mg-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  resize: vertical;
+  min-height: 56px;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.mg-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* ── Submit Button ────────────────────────────────────────────────────── */
+.mg-submit-wrap {
+  margin-top: 4px;
+}
+.mg-submit-btn {
+  width: 100%;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 120ms, opacity 120ms;
+  outline: none;
+}
+.mg-submit-btn:hover:not(:disabled) {
+  background: #1e293b;
+  border-color: #1e293b;
+}
+.mg-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.mg-submit-icon {
+  width: 14px;
+  height: 14px;
+}
+.mg-spinner {
+  width: 14px;
+  height: 14px;
+  animation: mg-spin 0.7s linear infinite;
+}
+@keyframes mg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Alerts ───────────────────────────────────────────────────────────── */
+.mg-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+.mg-alert-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.mg-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+.mg-alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* ── WhatsApp Thank You Section ───────────────────────────────────────── */
+.mg-thankyou-section {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+.mg-thankyou-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  outline: none;
+  transition: color 120ms ease;
+}
+.mg-thankyou-toggle:hover {
+  color: #0f172a;
+}
+.mg-thankyou-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mg-icon-sm {
+  width: 13px;
+  height: 13px;
+}
+.mg-chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 150ms ease;
+}
+.mg-chevron.is-open {
+  transform: rotate(180deg);
+}
+.mg-thankyou-body {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mg-thankyou-preview {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  color: #334155;
+  outline: none;
+  resize: vertical;
+  line-height: 1.45;
+}
+.mg-thankyou-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mg-btn-wa {
+  flex: 1;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #16a34a;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+.mg-btn-wa:hover {
+  background: #15803d;
+}
+.mg-btn-copy {
+  height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 120ms;
+}
+.mg-btn-copy:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.mg-icon-btn {
+  width: 13px;
+  height: 13px;
+}
+</style>

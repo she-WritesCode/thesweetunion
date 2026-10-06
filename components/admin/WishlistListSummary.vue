@@ -444,8 +444,9 @@ onMounted(() => {
               }}%)</span
             >
           </div>
-          <div v-if="summary.receivedCount > 0" class="flex items-center space-x-1.5 ml-auto text-emerald-900 bg-emerald-100/90 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">
-            <span>✅ <strong>{{ summary.receivedCount }}</strong> Confirmed Received (₦{{ (summary.receivedCash || 0).toLocaleString() }})</span>
+          <div v-if="summary.receivedCount > 0" class="flex items-center space-x-1.5 ml-auto text-emerald-900 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-600 inline-block"></span>
+            <span><strong>{{ summary.receivedCount }}</strong> Confirmed Received (₦{{ (summary.receivedCash || 0).toLocaleString() }})</span>
           </div>
         </div>
       </div>

@@ -45,11 +45,11 @@ export function buildWhatsAppThankYouText(
 ): string {
   const amountStr = amount > 0 ? ` (₦${amount.toLocaleString("en-US")})` : "";
   return (
-    `Hi ${guestName} ❤️\n\n` +
+    `Hi ${guestName},\n\n` +
     `We have received your wonderful wedding gift of ${itemName}${amountStr}!\n\n` +
     `Thank you so very much for your generosity, love, and support as we celebrate our wedding. It truly means the world to us.\n\n` +
     `With love and gratitude,\n` +
-    `${coupleNames}\n#thesweetunion 🤍`
+    `${coupleNames}\n#thesweetunion`
   );
 }
 

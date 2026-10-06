@@ -16,10 +16,10 @@ import { reserveItem, releaseReservation } from "../hooks/reservation-hooks.ts";
 import { generalFields } from "./utils.ts";
 
 export const GIFT_STATUS_OPTIONS = [
-  { label: "Pending / Pledged ⏳", value: "pending" },
-  { label: "Gift Received / Paid ✅", value: "received" },
-  { label: "Delivered at Wedding 🎁", value: "delivered" },
-  { label: "Cancelled / Released ✕", value: "cancelled" },
+  { label: "Pending / Pledged", value: "pending" },
+  { label: "Gift Received / Paid", value: "received" },
+  { label: "Delivered at Wedding", value: "delivered" },
+  { label: "Cancelled / Released", value: "cancelled" },
 ];
 
 export const reservations = defineCollection({
