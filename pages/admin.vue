@@ -12,6 +12,7 @@ import RsvpListSummary from "~/components/admin/RsvpListSummary.vue";
 import WishlistListSummary from "~/components/admin/WishlistListSummary.vue";
 import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
 import GroupListSummary from "~/components/admin/GroupListSummary.vue";
+import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vue";
 
 definePageMeta({
   layout: false,
@@ -41,12 +42,15 @@ const adminComponents = {
   RsvpEditLinkField,
   RsvpLinkField,
   CheckInScanner,
+  RecalculateGroupButton,
 
   fields: {
     // rsvp_groups collection
     "rsvp_groups.rsvpLink": RsvpLinkField,
     "rsvp_groups.confirmedCount": CountField,
     "rsvp_groups.declinedCount": CountField,
+    "rsvp_groups.recalculateAction": RecalculateGroupButton,
+    recalculateAction: RecalculateGroupButton,
     "wishlist_items.amountRaised": CountField,
     "wishlist_items.contributorCount": CountField,
     "wishlist_items.reservedCount": CountField,

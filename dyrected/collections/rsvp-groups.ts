@@ -6,6 +6,9 @@ import {
   defineBooleanField,
   defineJoinField,
   defineTextareaField,
+  defineJsonField,
+  defineView,
+  defineAction,
   when,
 } from "@dyrected/core";
 import { generateGroupSlug } from "../hooks/group-hooks.ts";
@@ -25,7 +28,35 @@ export const rsvpGroups = defineCollection({
     defaultColumns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
     group: "RSVP",
   },
+  audit: true,
   detail: false,
+  views: [
+    defineView({
+      slug: "all_groups",
+      label: "All Groups",
+      layout: "table",
+      columns: ["name", "slug", "maxCapacity", "confirmedCount", "declinedCount", "isActive"],
+      actions: [
+        defineAction({
+          name: "recalculateGroup",
+          label: "Recalculate Counts",
+          icon: "RefreshCw",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "recalculateAction",
+              label: "Recalculate Counts",
+              admin: {
+                component: "rsvp_groups.recalculateAction",
+                description: "Sync and recalculate confirmed and declined counts from guest responses.",
+              },
+            }),
+          ],
+          handler: async () => ({ success: true }),
+        }),
+      ],
+    }),
+  ],
   fields: [
     ...defineTab({
       label: "General",
@@ -92,7 +123,15 @@ export const rsvpGroups = defineCollection({
           name: "declinedCount",
           label: "Declined Count",
           defaultValue: 0,
-          admin: { component: "rsvp_groups.confirmedCount", readOnly: true, width: "50%" },
+          admin: { component: "rsvp_groups.declinedCount", readOnly: true, width: "50%" },
+        }),
+        defineJsonField({
+          name: "recalculateAction",
+          label: "Recalculate Counts",
+          admin: {
+            component: "rsvp_groups.recalculateAction",
+            description: "Sync and recalculate confirmed and declined counts from guest responses.",
+          },
         }),
         defineJoinField({
           name: "guests",

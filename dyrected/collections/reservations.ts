@@ -27,6 +27,7 @@ export const reservations = defineCollection({
     group: "Wishlist",
     features: { duplicate: false, delete: false },
   },
+  audit: true,
   detail: false,
   // Operational view carrying the "Send Reminder" row action — `actions` only
   // renders when attached to a view, not at the top level of the collection.

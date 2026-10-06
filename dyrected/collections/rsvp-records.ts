@@ -93,6 +93,7 @@ export const rsvpRecords = defineCollection({
     ],
     group: "RSVP",
   },
+  audit:true,
   detail: false,
   // ── 📊 Operational Views (Dyrected 2.9.0 Workspaces) ──────────────────────
   defaultView: "all_responses",

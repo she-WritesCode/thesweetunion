@@ -107,6 +107,7 @@ export interface Rsvp_groups {
   updatedBy?: Admins | string;
   confirmedCount?: number;
   declinedCount?: number;
+  recalculateAction?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }

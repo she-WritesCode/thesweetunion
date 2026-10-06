@@ -2,7 +2,7 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { sendEmail } from "~~/dyrected/mailer";
 import { rsvpConfirmationEmail, adminRsvpNotificationEmail } from "~~/dyrected/emails";
-import { syncGroupCounts } from "./_counts";
+import { syncGroupCounts, isAttending as checkIsAttending, hasSpouse as checkHasSpouse } from "./_counts";
 import { formatPhoneNumber } from "~~/utils/phone";
 
 export default defineEventHandler(async (event) => {
@@ -24,6 +24,9 @@ export default defineEventHandler(async (event) => {
     asoOkeMaleQty,
     asoOkeFemaleQty,
   } = body;
+
+  const willAttend = checkIsAttending(attending);
+  const willHaveSpouse = checkHasSpouse(hasSpouse);
 
   if (!groupSlug) {
     throw createError({ statusCode: 400, message: "Missing group slug" });
@@ -75,15 +78,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // Capacity check — live count from records, not the cached field
-  if (attending) {
-    const seats = hasSpouse ? 2 : 1;
+  if (willAttend) {
+    const seats = willHaveSpouse ? 2 : 1;
     const existing = await client.collection("rsvp_records").find({
       where: { group: { equals: group.id } },
-      limit: 500,
+      limit: 1000,
     });
-    const currentSeats = existing.docs
-      .filter((r: any) => r.attending)
-      .reduce((n: number, r: any) => n + (r.hasSpouse ? 2 : 1), 0);
+    const currentSeats = (existing.docs || [])
+      .filter((r: any) => checkIsAttending(r.attending))
+      .reduce((n: number, r: any) => n + (checkHasSpouse(r.hasSpouse) ? 2 : 1), 0);
     if (currentSeats + seats > group.maxCapacity) {
       throw createError({
         statusCode: 409,

@@ -47,6 +47,23 @@ function hasSpouse(val: any): boolean {
   return val === true || val === "true" || val === 1 || val === "1";
 }
 
+function extractGroupId(val: any): string | null {
+  if (!val) return null;
+  if (typeof val === "string") {
+    if (val.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(val);
+        if (parsed?.id) return String(parsed.id);
+      } catch {}
+    }
+    return val.trim();
+  }
+  if (typeof val === "object" && val !== null && val.id) {
+    return String(val.id);
+  }
+  return null;
+}
+
 async function main() {
   console.log("🚀 Starting RSVP group counts recalculation and backfill...\n");
 
@@ -87,7 +104,7 @@ async function main() {
   let unassignedRecords = 0;
   for (const recordRow of recordRows) {
     const data = parseData(recordRow.data);
-    const groupId = typeof data.group === "object" && data.group !== null ? data.group.id : data.group;
+    const groupId = extractGroupId(data.group);
 
     if (!groupId || !groupStatsMap.has(groupId)) {
       unassignedRecords++;
