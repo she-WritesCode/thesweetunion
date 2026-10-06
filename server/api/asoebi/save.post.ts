@@ -119,6 +119,8 @@ export default defineEventHandler(async (event) => {
       asoOkeMaleQty: wantsAsoOke ? asoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
+      asoebiSource: "asoebi",
+      source: existingRecord.source || "rsvp",
       message: message !== undefined ? message : existingRecord.message,
     });
 
@@ -193,12 +195,14 @@ export default defineEventHandler(async (event) => {
       leadEmail: leadEmail.trim().toLowerCase(),
       leadPhone: normalizedPhone,
       attending: attending !== undefined ? attending : false, // Default to false for standalone Asoebi orders
+      source: "asoebi",
       wantsAsoebi: wantsAsoebi ?? false,
       asoebiYards: wantsAsoebi ? asoebiYards : "",
       wantsAsoOke: wantsAsoOke ?? false,
       asoOkeMaleQty: wantsAsoOke ? asoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
+      asoebiSource: "asoebi",
       message,
     });
 

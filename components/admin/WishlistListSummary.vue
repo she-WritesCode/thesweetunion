@@ -115,28 +115,19 @@ const fetchSummary = async () => {
         crowdfundCount: {
           count: "*",
           where: {
-            AND: [
-              { fundingType: { equals: "crowdfund" } },
-              { isHidden: { not_equals: true } },
-            ],
+            AND: [{ fundingType: { equals: "crowdfund" } }, { isHidden: { not_equals: true } }],
           },
         },
         fixedCount: {
           count: "*",
           where: {
-            AND: [
-              { fundingType: { equals: "fixed" } },
-              { isHidden: { not_equals: true } },
-            ],
+            AND: [{ fundingType: { equals: "fixed" } }, { isHidden: { not_equals: true } }],
           },
         },
         claimedItemsCount: {
           count: "*",
           where: {
-            AND: [
-              { reservedCount: { gt: 0 } },
-              { isHidden: { not_equals: true } },
-            ],
+            AND: [{ reservedCount: { gt: 0 } }, { isHidden: { not_equals: true } }],
           },
         },
       }),
@@ -162,19 +153,13 @@ const fetchSummary = async () => {
         paidNowBankCount: {
           count: "*",
           where: {
-            AND: [
-              { paymentTiming: { equals: "now" } },
-              { paymentOption: { equals: "bank_transfer" } },
-            ],
+            AND: [{ paymentTiming: { equals: "now" } }, { paymentOption: { equals: "bank_transfer" } }],
           },
         },
         paidNowLinkCount: {
           count: "*",
           where: {
-            AND: [
-              { paymentTiming: { equals: "now" } },
-              { paymentOption: { equals: "purchase_link" } },
-            ],
+            AND: [{ paymentTiming: { equals: "now" } }, { paymentOption: { equals: "purchase_link" } }],
           },
         },
         // 2. Bringing to Wedding Day
@@ -196,20 +181,14 @@ const fetchSummary = async () => {
         remindLaterCount: {
           count: "*",
           where: {
-            AND: [
-              { paymentTiming: { equals: "later" } },
-              { paymentOption: { not_equals: "bring_to_wedding" } },
-            ],
+            AND: [{ paymentTiming: { equals: "later" } }, { paymentOption: { not_equals: "bring_to_wedding" } }],
           },
         },
         remindLaterCash: {
           sum: "contributionAmount",
           cast: "number",
           where: {
-            AND: [
-              { paymentTiming: { equals: "later" } },
-              { paymentOption: { not_equals: "bring_to_wedding" } },
-            ],
+            AND: [{ paymentTiming: { equals: "later" } }, { paymentOption: { not_equals: "bring_to_wedding" } }],
           },
         },
         whatsappReminderCount: {
@@ -328,10 +307,23 @@ onMounted(() => {
     <!-- Header Strip -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+        <div
+          class="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700"
+        >
           <!-- Gift Icon -->
-          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V4.5a2.5 2.5 0 115 0V8h-5zm0 0V4.5a2.5 2.5 0 10-5 0V8h5zm-7 0h14a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1zm2 5h10v7a1 1 0 01-1 1H8a1 1 0 01-1-1v-7z" />
+          <svg
+            class="w-4 h-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 8v13m0-13V4.5a2.5 2.5 0 115 0V8h-5zm0 0V4.5a2.5 2.5 0 10-5 0V8h5zm-7 0h14a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1zm2 5h10v7a1 1 0 01-1 1H8a1 1 0 01-1-1v-7z"
+            />
           </svg>
         </div>
         <div>
@@ -377,10 +369,14 @@ onMounted(() => {
     <div v-else class="space-y-4">
       <!-- Fulfillment Multi-Segment Progress Bar -->
       <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-200/60">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-bold text-amber-950 mb-2">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-bold text-amber-950 mb-2"
+        >
           <span>Overall Registry Fulfillment</span>
           <span class="text-amber-900 font-semibold">
-            ₦{{ (summary.totalCommittedValue || 0).toLocaleString() }} of ₦{{ (summary.totalRegistryTarget || 0).toLocaleString() }}
+            ₦{{ (summary.totalCommittedValue || 0).toLocaleString() }} of ₦{{
+              (summary.totalRegistryTarget || 0).toLocaleString()
+            }}
             <span class="text-amber-700 font-bold ml-1">({{ summary.totalCommittedPct }}% Committed)</span>
           </span>
         </div>
@@ -408,15 +404,27 @@ onMounted(() => {
         <div class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-700 font-medium">
           <div class="flex items-center space-x-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
-            <span><strong>₦{{ (summary.paidNowCash || 0).toLocaleString() }}</strong> Cash Paid ({{ summary.paidNowPct }}%)</span>
+            <span
+              ><strong>₦{{ (summary.paidNowCash || 0).toLocaleString() }}</strong> Cash Paid ({{
+                summary.paidNowPct
+              }}%)</span
+            >
           </div>
           <div class="flex items-center space-x-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block"></span>
-            <span><strong>₦{{ (summary.weddingDayValue || 0).toLocaleString() }}</strong> Wedding Day ({{ summary.weddingDayPct }}%)</span>
+            <span
+              ><strong>₦{{ (summary.weddingDayValue || 0).toLocaleString() }}</strong> Wedding Day ({{
+                summary.weddingDayPct
+              }}%)</span
+            >
           </div>
           <div class="flex items-center space-x-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
-            <span><strong>₦{{ (summary.pledgedValue || 0).toLocaleString() }}</strong> Pledged ({{ summary.pledgedPct }}%)</span>
+            <span
+              ><strong>₦{{ (summary.pledgedValue || 0).toLocaleString() }}</strong> Pledged ({{
+                summary.pledgedPct
+              }}%)</span
+            >
           </div>
         </div>
       </div>
@@ -429,8 +437,19 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">1. Immediate Payments</span>
               <!-- Credit Card Icon -->
-              <svg class="w-4 h-4 text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              <svg
+                class="w-4 h-4 text-emerald-700"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                />
               </svg>
             </div>
             <div class="mt-2">
@@ -438,7 +457,9 @@ onMounted(() => {
                 ₦{{ (summary.paidNowCash || 0).toLocaleString() }}
               </div>
               <div class="text-xs font-medium text-emerald-800 mt-0.5">
-                {{ summary.paidNowCount }} Payment{{ summary.paidNowCount === 1 ? '' : 's' }} / Transfer{{ summary.paidNowCount === 1 ? '' : 's' }}
+                {{ summary.paidNowCount }} Payment{{ summary.paidNowCount === 1 ? "" : "s" }} / Transfer{{
+                  summary.paidNowCount === 1 ? "" : "s"
+                }}
               </div>
             </div>
           </div>
@@ -454,8 +475,19 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-purple-800">2. Wedding Day Gifts</span>
               <!-- Gift Box Icon -->
-              <svg class="w-4 h-4 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <svg
+                class="w-4 h-4 text-purple-700"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
               </svg>
             </div>
             <div class="mt-2">
@@ -463,13 +495,15 @@ onMounted(() => {
                 ₦{{ (summary.weddingDayValue || 0).toLocaleString() }}
               </div>
               <div class="text-xs font-medium text-purple-800 mt-0.5">
-                {{ summary.weddingDayCount }} Physical Gift{{ summary.weddingDayCount === 1 ? '' : 's' }}
+                {{ summary.weddingDayCount }} Physical Gift{{ summary.weddingDayCount === 1 ? "" : "s" }}
               </div>
             </div>
           </div>
           <div class="mt-3 pt-2 text-xs text-purple-700 flex items-center justify-between border-t border-purple-100">
             <span>Physical gifts at venue</span>
-            <span class="font-semibold">{{ summary.weddingDayQuantity }} Unit{{ summary.weddingDayQuantity === 1 ? '' : 's' }}</span>
+            <span class="font-semibold"
+              >{{ summary.weddingDayQuantity }} Unit{{ summary.weddingDayQuantity === 1 ? "" : "s" }}</span
+            >
           </div>
         </div>
 
@@ -479,7 +513,14 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-amber-800">3. Pledged / Remind Later</span>
               <!-- Clock Icon -->
-              <svg class="w-4 h-4 text-amber-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg
+                class="w-4 h-4 text-amber-700"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -488,7 +529,7 @@ onMounted(() => {
                 ₦{{ (summary.pledgedValue || 0).toLocaleString() }}
               </div>
               <div class="text-xs font-medium text-amber-800 mt-0.5">
-                {{ summary.remindLaterCount }} Scheduled Pledge{{ summary.remindLaterCount === 1 ? '' : 's' }}
+                {{ summary.remindLaterCount }} Scheduled Pledge{{ summary.remindLaterCount === 1 ? "" : "s" }}
               </div>
             </div>
           </div>
@@ -504,14 +545,23 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-800">4. Catalog Status</span>
               <!-- Clipboard List Icon -->
-              <svg class="w-4 h-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              <svg
+                class="w-4 h-4 text-slate-700"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                />
               </svg>
             </div>
             <div class="mt-2">
-              <div class="text-2xl font-black text-slate-950 leading-tight">
-                {{ summary.totalItems }} Total Items
-              </div>
+              <div class="text-2xl font-black text-slate-950 leading-tight">{{ summary.totalItems }} Total Items</div>
               <div class="text-xs font-medium text-slate-700 mt-0.5">
                 {{ summary.claimedItemsCount }} Claimed &bull; {{ summary.unclaimedCount }} Open
               </div>
@@ -523,45 +573,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-
-      <!-- Manual Test Reminder Send -->
-      <div class="mt-4 p-4 bg-white rounded-xl border border-gray-200">
-        <div class="text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">Send Test Reminder</div>
-        <p class="text-xs text-gray-500 mb-3">
-          Sends a sample reminder message (fake items) to confirm WhatsApp/email delivery. Does not touch real reservations.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-2">
-          <select
-            v-model="testChannel"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white"
-          >
-            <option value="whatsapp">WhatsApp</option>
-            <option value="email">Email</option>
-          </select>
-          <input
-            v-model="testContact"
-            type="text"
-            :placeholder="testChannel === 'whatsapp' ? 'e.g. 2348012345678' : 'e.g. you@example.com'"
-            class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg"
-          />
-          <button
-            type="button"
-            :disabled="testSending"
-            @click="sendTestReminder"
-            class="px-4 py-2 text-sm font-semibold text-white bg-amber-700 rounded-lg disabled:opacity-50 hover:bg-amber-800"
-          >
-            {{ testSending ? "Sending…" : "Send Test" }}
-          </button>
-        </div>
-        <p
-          v-if="testResult"
-          class="mt-2 text-xs font-medium"
-          :class="testResult.ok ? 'text-green-700' : 'text-red-700'"
-        >
-          {{ testResult.ok ? "✓ " : "✗ " }}{{ testResult.message }}
-        </p>
-      </div>
     </div>
   </div>
 </template>
-

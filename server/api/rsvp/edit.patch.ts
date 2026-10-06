@@ -85,6 +85,8 @@ export default defineEventHandler(async (event) => {
       asoOkeMaleQty: newWantsAsoOke ? newAsoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: newWantsAsoOke ? newAsoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
+      asoebiSource: record.asoebiSource || (newWantsAsoebi || newWantsAsoOke ? "rsvp" : undefined),
+      source: record.source || "rsvp",
     });
 
     await syncGroupCounts(client, groupId);

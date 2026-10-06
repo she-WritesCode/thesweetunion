@@ -44,6 +44,18 @@ export const INVITATION_SENT_VIA_OPTIONS = [
   { label: "Email", value: "email" },
 ];
 
+export const RSVP_SOURCE_OPTIONS = [
+  { label: "RSVP Form 📝", value: "rsvp" },
+  { label: "Aso Ebi Page 🧵", value: "asoebi" },
+  { label: "Admin Entry ⚙️", value: "admin" },
+];
+
+export const ASOEBI_SOURCE_OPTIONS = [
+  { label: "RSVP Form 📝", value: "rsvp" },
+  { label: "Aso Ebi Page 🧵", value: "asoebi" },
+  { label: "Admin Entry ⚙️", value: "admin" },
+];
+
 export function calculateAsoebiFullPrice(item: Record<string, any> = {}): number {
   const yards = Number(item.asoebiYards) || 0;
   const maleQty = Number(item.asoOkeMaleQty) || 0;
@@ -85,6 +97,7 @@ export const rsvpRecords = defineCollection({
       "leadName",
       "group",
       "attending",
+      "source",
       "wantsAsoebi",
       "asoebiPaymentStatus",
       "asoebiOrderStatus",
@@ -107,6 +120,7 @@ export const rsvpRecords = defineCollection({
         "leadName",
         "group",
         "attending",
+        "source",
         "hasSpouse",
         "spouseName",
         "wantsAsoebi",
@@ -303,6 +317,8 @@ export const rsvpRecords = defineCollection({
       },
       columns: [
         "leadName",
+        "source",
+        "asoebiSource",
         "asoebiPaymentStatus",
         "asoebiYards",
         "asoOkeMaleQty",
@@ -847,6 +863,16 @@ export const rsvpRecords = defineCollection({
           required: true,
           admin: { width: "50%" },
         }),
+        defineSelectField({
+          name: "source",
+          label: "Submission Source",
+          defaultValue: "rsvp",
+          options: RSVP_SOURCE_OPTIONS,
+          admin: {
+            width: "50%",
+            description: "Channel where this guest record was first created.",
+          },
+        }),
         defineRelationshipField({
           name: "group",
           label: "Invitation Group",
@@ -927,6 +953,16 @@ export const rsvpRecords = defineCollection({
           label: "Asoebi & Aso Oke Breakdown Summary",
           admin: {
             description: "Full breakdown of requested fabric and Aso Oke items",
+            condition: wantsAsoebiOrHeadwearCondition,
+          },
+        }),
+        defineSelectField({
+          name: "asoebiSource",
+          label: "Aso Ebi Order Source",
+          options: ASOEBI_SOURCE_OPTIONS,
+          admin: {
+            width: "50%",
+            description: "Channel through which Aso Ebi fabric/headwear was selected or ordered.",
             condition: wantsAsoebiOrHeadwearCondition,
           },
         }),

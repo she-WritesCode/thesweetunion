@@ -121,6 +121,7 @@ export interface Rsvp_records {
   hasSpouse?: boolean;
   spouseName?: string;
   attending: boolean;
+  source?: "rsvp" | "asoebi" | "admin";
   group: Rsvp_groups | string;
   selectedEvents?: Array<Events | string>;
   message?: string;
@@ -134,6 +135,7 @@ export interface Rsvp_records {
   asoOkeMaleQty?: number;
   asoOkeFemaleQty?: number;
   asoebiDetails?: string;
+  asoebiSource?: "rsvp" | "asoebi" | "admin";
   asoebiPaymentStatus?: "pending" | "received" | "partial" | "waived";
   asoebiAmountPaid?: number;
   asoebiOrderStatus?: "unfulfilled" | "ready" | "delivered";
