@@ -101,6 +101,20 @@ const fetchSummary = async () => {
             AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
           },
         },
+        asoebiDeliveredYards: {
+          sum: "asoebiYards",
+          cast: "number",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
+          },
+        },
+        asoebiReadyYards: {
+          sum: "asoebiYards",
+          cast: "number",
+          where: {
+            AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+          },
+        },
         totalAsoOkeMaleQty: {
           sum: "asoOkeMaleQty",
           cast: "number",
@@ -137,6 +151,9 @@ const fetchSummary = async () => {
 
     const asoebiOrderCount = Number(stats.asoebiOrderCount) || 0;
     const totalAsoebiYards = Number(stats.totalAsoebiYards) || 0;
+    const asoebiDeliveredYards = Number(stats.asoebiDeliveredYards) || 0;
+    const asoebiReadyYards = Number(stats.asoebiReadyYards) || 0;
+    const asoebiSentYards = asoebiDeliveredYards + asoebiReadyYards;
     const totalAsoOkeMaleQty = Number(stats.totalAsoOkeMaleQty) || 0;
     const totalAsoOkeFemaleQty = Number(stats.totalAsoOkeFemaleQty) || 0;
 
@@ -156,6 +173,9 @@ const fetchSummary = async () => {
       asoebi: {
         orderCount: asoebiOrderCount,
         totalYards: totalAsoebiYards,
+        deliveredYards: asoebiDeliveredYards,
+        readyYards: asoebiReadyYards,
+        sentYards: asoebiSentYards,
         fabricRevenue,
         maleQty: totalAsoOkeMaleQty,
         femaleQty: totalAsoOkeFemaleQty,
@@ -250,12 +270,24 @@ onMounted(() => fetchSummary());
 
       <!-- Asoebi Fabric & Aso-Oke Quantity -->
       <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-100 flex flex-col justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Asoebi Fabric &amp; Headwear</span>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Asoebi Fabric &amp; Headwear</span>
+          <span
+            v-if="summary.asoebi?.sentYards > 0"
+            class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200"
+          >
+            {{ summary.asoebi?.sentYards }} Yds Sent
+          </span>
+        </div>
         <div class="mt-2 flex items-baseline justify-between">
           <span class="text-3xl font-black text-amber-900"
             >{{ summary.asoebi?.totalYards || 0 }} <span class="text-base font-normal">Yards</span></span
           >
           <span class="text-xs text-amber-800 font-medium">{{ summary.asoebi?.orderCount || 0 }} orders</span>
+        </div>
+        <div class="mt-2 text-xs text-emerald-800 font-medium flex items-center justify-between bg-emerald-50/80 px-2 py-1 rounded-md border border-emerald-100">
+          <span>Sent: <strong>{{ summary.asoebi?.sentYards || 0 }} Yds</strong></span>
+          <span class="text-[11px] text-emerald-600">({{ summary.asoebi?.deliveredYards || 0 }} delivered · {{ summary.asoebi?.readyYards || 0 }} ready)</span>
         </div>
         <div class="mt-2 text-xs text-amber-700 flex items-center justify-between border-t border-amber-100 pt-1.5">
           <span

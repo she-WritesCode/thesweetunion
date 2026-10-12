@@ -133,6 +133,7 @@ export const rsvpRecords = defineCollection({
       features: {
         duplicate: false,
       },
+      metricsScope: "filtered",
       metrics: [
         {
           label: "Attending Guests",
@@ -216,6 +217,34 @@ export const rsvpRecords = defineCollection({
               },
             },
             {
+              label: "Yards Sent (Fulfilled + Ready)",
+              aggregates: {
+                delivered: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { attending: { equals: true } },
+                      { wantsAsoebi: { equals: true } },
+                      { asoebiOrderStatus: { equals: "delivered" } },
+                    ],
+                  },
+                },
+                ready: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { attending: { equals: true } },
+                      { wantsAsoebi: { equals: true } },
+                      { asoebiOrderStatus: { equals: "ready" } },
+                    ],
+                  },
+                },
+              },
+              expression: "aggregates.delivered + aggregates.ready",
+            },
+            {
               label: "Male Caps",
               aggregate: {
                 sum: "asoOkeMaleQty",
@@ -234,6 +263,101 @@ export const rsvpRecords = defineCollection({
                   AND: [{ attending: { equals: true } }, { wantsAsoOke: { equals: true } }],
                 },
               },
+            },
+          ],
+        },
+        {
+          label: "Fabric Sent",
+          color: "teal",
+          unit: "Yds",
+          aggregates: {
+            delivered: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: {
+                AND: [
+                  { attending: { equals: true } },
+                  { wantsAsoebi: { equals: true } },
+                  { asoebiOrderStatus: { equals: "delivered" } },
+                ],
+              },
+            },
+            ready: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: {
+                AND: [
+                  { attending: { equals: true } },
+                  { wantsAsoebi: { equals: true } },
+                  { asoebiOrderStatus: { equals: "ready" } },
+                ],
+              },
+            },
+          },
+          expression: "aggregates.delivered + aggregates.ready",
+          subMetrics: [
+            {
+              label: "Fulfilled / Delivered",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [
+                    { attending: { equals: true } },
+                    { wantsAsoebi: { equals: true } },
+                    { asoebiOrderStatus: { equals: "delivered" } },
+                  ],
+                },
+              },
+            },
+            {
+              label: "Ready for Delivery",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [
+                    { attending: { equals: true } },
+                    { wantsAsoebi: { equals: true } },
+                    { asoebiOrderStatus: { equals: "ready" } },
+                  ],
+                },
+              },
+            },
+            {
+              label: "Pending / Processing",
+              aggregates: {
+                total: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
+                  },
+                },
+                delivered: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { attending: { equals: true } },
+                      { wantsAsoebi: { equals: true } },
+                      { asoebiOrderStatus: { equals: "delivered" } },
+                    ],
+                  },
+                },
+                ready: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [
+                      { attending: { equals: true } },
+                      { wantsAsoebi: { equals: true } },
+                      { asoebiOrderStatus: { equals: "ready" } },
+                    ],
+                  },
+                },
+              },
+              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
             },
           ],
         },
@@ -329,7 +453,85 @@ export const rsvpRecords = defineCollection({
         "asoebiSent",
         "asoebiPaymentNotes",
       ],
+      metricsScope: "filtered",
       metrics: [
+        {
+          label: "Yards Sent",
+          color: "teal",
+          unit: "Yds",
+          aggregates: {
+            delivered: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: {
+                AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
+              },
+            },
+            ready: {
+              sum: "asoebiYards",
+              cast: "number",
+              where: {
+                AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+              },
+            },
+          },
+          expression: "aggregates.delivered + aggregates.ready",
+          subMetrics: [
+            {
+              label: "Fulfilled / Delivered",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
+                },
+              },
+            },
+            {
+              label: "Ready for Delivery",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                },
+              },
+            },
+            {
+              label: "Remaining Pending",
+              aggregates: {
+                total: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: { wantsAsoebi: { equals: true } },
+                },
+                delivered: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
+                  },
+                },
+                ready: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                  },
+                },
+              },
+              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
+            },
+            {
+              label: "Total Requested",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: { wantsAsoebi: { equals: true } },
+              },
+            },
+          ],
+        },
         {
           label: "Total Yards",
           color: "amber",
@@ -351,6 +553,36 @@ export const rsvpRecords = defineCollection({
               },
             },
             {
+              label: "Ready for Delivery",
+              aggregate: {
+                sum: "asoebiYards",
+                cast: "number",
+                where: {
+                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                },
+              },
+            },
+            {
+              label: "Sent (Fulfilled + Ready)",
+              aggregates: {
+                delivered: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
+                  },
+                },
+                ready: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                  },
+                },
+              },
+              expression: "aggregates.delivered + aggregates.ready",
+            },
+            {
               label: "Pending",
               aggregates: {
                 total: {
@@ -358,15 +590,22 @@ export const rsvpRecords = defineCollection({
                   cast: "number",
                   where: { wantsAsoebi: { equals: true } },
                 },
-                fulfilled: {
+                delivered: {
                   sum: "asoebiYards",
                   cast: "number",
                   where: {
                     AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
+                ready: {
+                  sum: "asoebiYards",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                  },
+                },
               },
-              expression: "aggregates.total - aggregates.fulfilled",
+              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
             },
             {
               label: "Expected Revenue",
@@ -753,6 +992,7 @@ export const rsvpRecords = defineCollection({
         "invitationSentAt",
       ],
       sort: { field: "invitationSent", direction: "asc" },
+      metricsScope: "filtered",
       metrics: [
         {
           label: "Dispatched Passes",
