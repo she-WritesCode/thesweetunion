@@ -267,101 +267,6 @@ export const rsvpRecords = defineCollection({
           ],
         },
         {
-          label: "Fabric Sent",
-          color: "teal",
-          unit: "Yds",
-          aggregates: {
-            delivered: {
-              sum: "asoebiYards",
-              cast: "number",
-              where: {
-                AND: [
-                  { attending: { equals: true } },
-                  { wantsAsoebi: { equals: true } },
-                  { asoebiOrderStatus: { equals: "delivered" } },
-                ],
-              },
-            },
-            ready: {
-              sum: "asoebiYards",
-              cast: "number",
-              where: {
-                AND: [
-                  { attending: { equals: true } },
-                  { wantsAsoebi: { equals: true } },
-                  { asoebiOrderStatus: { equals: "ready" } },
-                ],
-              },
-            },
-          },
-          expression: "aggregates.delivered + aggregates.ready",
-          subMetrics: [
-            {
-              label: "Fulfilled / Delivered",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: {
-                  AND: [
-                    { attending: { equals: true } },
-                    { wantsAsoebi: { equals: true } },
-                    { asoebiOrderStatus: { equals: "delivered" } },
-                  ],
-                },
-              },
-            },
-            {
-              label: "Ready for Delivery",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: {
-                  AND: [
-                    { attending: { equals: true } },
-                    { wantsAsoebi: { equals: true } },
-                    { asoebiOrderStatus: { equals: "ready" } },
-                  ],
-                },
-              },
-            },
-            {
-              label: "Pending / Processing",
-              aggregates: {
-                total: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [{ attending: { equals: true } }, { wantsAsoebi: { equals: true } }],
-                  },
-                },
-                delivered: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [
-                      { attending: { equals: true } },
-                      { wantsAsoebi: { equals: true } },
-                      { asoebiOrderStatus: { equals: "delivered" } },
-                    ],
-                  },
-                },
-                ready: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [
-                      { attending: { equals: true } },
-                      { wantsAsoebi: { equals: true } },
-                      { asoebiOrderStatus: { equals: "ready" } },
-                    ],
-                  },
-                },
-              },
-              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
-            },
-          ],
-        },
-        {
           label: "Total Asoebi Revenue",
           color: "rose",
           format: "currency",
@@ -456,26 +361,14 @@ export const rsvpRecords = defineCollection({
       metricsScope: "filtered",
       metrics: [
         {
-          label: "Yards Sent",
-          color: "teal",
+          label: "Total Fabric Yards",
+          color: "amber",
           unit: "Yds",
-          aggregates: {
-            delivered: {
-              sum: "asoebiYards",
-              cast: "number",
-              where: {
-                AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
-              },
-            },
-            ready: {
-              sum: "asoebiYards",
-              cast: "number",
-              where: {
-                AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
-              },
-            },
+          aggregate: {
+            sum: "asoebiYards",
+            cast: "number",
+            where: { wantsAsoebi: { equals: true } },
           },
-          expression: "aggregates.delivered + aggregates.ready",
           subMetrics: [
             {
               label: "Fulfilled / Delivered",
@@ -498,7 +391,7 @@ export const rsvpRecords = defineCollection({
               },
             },
             {
-              label: "Remaining Pending",
+              label: "Pending Fulfillment",
               aggregates: {
                 total: {
                   sum: "asoebiYards",
@@ -521,115 +414,6 @@ export const rsvpRecords = defineCollection({
                 },
               },
               expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
-            },
-            {
-              label: "Total Requested",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: { wantsAsoebi: { equals: true } },
-              },
-            },
-          ],
-        },
-        {
-          label: "Total Yards",
-          color: "amber",
-          unit: "Yds",
-          aggregate: {
-            sum: "asoebiYards",
-            cast: "number",
-            where: { wantsAsoebi: { equals: true } },
-          },
-          subMetrics: [
-            {
-              label: "Fulfilled",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: {
-                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
-                },
-              },
-            },
-            {
-              label: "Ready for Delivery",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: {
-                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
-                },
-              },
-            },
-            {
-              label: "Sent (Fulfilled + Ready)",
-              aggregates: {
-                delivered: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
-                  },
-                },
-                ready: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
-                  },
-                },
-              },
-              expression: "aggregates.delivered + aggregates.ready",
-            },
-            {
-              label: "Pending",
-              aggregates: {
-                total: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: { wantsAsoebi: { equals: true } },
-                },
-                delivered: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
-                  },
-                },
-                ready: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: {
-                    AND: [{ wantsAsoebi: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
-                  },
-                },
-              },
-              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
-            },
-            {
-              label: "Expected Revenue",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: { wantsAsoebi: { equals: true } },
-              },
-              transform: "value * 10000",
-              format: "currency",
-              currency: "₦",
-            },
-            {
-              label: "Paid",
-              aggregate: {
-                sum: "asoebiYards",
-                cast: "number",
-                where: {
-                  AND: [{ wantsAsoebi: { equals: true } }, { asoebiPaymentStatus: { equals: "received" } }],
-                },
-              },
-              transform: "value * 10000",
-              format: "currency",
-              currency: "₦",
             },
           ],
         },
@@ -644,7 +428,7 @@ export const rsvpRecords = defineCollection({
           },
           subMetrics: [
             {
-              label: "Fulfilled",
+              label: "Fulfilled / Delivered",
               aggregate: {
                 sum: "asoOkeMaleQty",
                 cast: "number",
@@ -654,46 +438,39 @@ export const rsvpRecords = defineCollection({
               },
             },
             {
-              label: "Pending",
+              label: "Ready for Delivery",
+              aggregate: {
+                sum: "asoOkeMaleQty",
+                cast: "number",
+                where: {
+                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                },
+              },
+            },
+            {
+              label: "Pending Fulfillment",
               aggregates: {
                 total: {
                   sum: "asoOkeMaleQty",
                   cast: "number",
                   where: { wantsAsoOke: { equals: true } },
                 },
-                fulfilled: {
+                delivered: {
                   sum: "asoOkeMaleQty",
                   cast: "number",
                   where: {
                     AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
-              },
-              expression: "aggregates.total - aggregates.fulfilled",
-            },
-            {
-              label: "Expected Revenue",
-              aggregate: {
-                sum: "asoOkeMaleQty",
-                cast: "number",
-                where: { wantsAsoOke: { equals: true } },
-              },
-              transform: "value * 6000",
-              format: "currency",
-              currency: "₦",
-            },
-            {
-              label: "Paid",
-              aggregate: {
-                sum: "asoOkeMaleQty",
-                cast: "number",
-                where: {
-                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiPaymentStatus: { equals: "received" } }],
+                ready: {
+                  sum: "asoOkeMaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                  },
                 },
               },
-              transform: "value * 6000",
-              format: "currency",
-              currency: "₦",
+              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
             },
           ],
         },
@@ -708,7 +485,7 @@ export const rsvpRecords = defineCollection({
           },
           subMetrics: [
             {
-              label: "Fulfilled",
+              label: "Fulfilled / Delivered",
               aggregate: {
                 sum: "asoOkeFemaleQty",
                 cast: "number",
@@ -718,46 +495,39 @@ export const rsvpRecords = defineCollection({
               },
             },
             {
-              label: "Pending",
+              label: "Ready for Delivery",
+              aggregate: {
+                sum: "asoOkeFemaleQty",
+                cast: "number",
+                where: {
+                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                },
+              },
+            },
+            {
+              label: "Pending Fulfillment",
               aggregates: {
                 total: {
                   sum: "asoOkeFemaleQty",
                   cast: "number",
                   where: { wantsAsoOke: { equals: true } },
                 },
-                fulfilled: {
+                delivered: {
                   sum: "asoOkeFemaleQty",
                   cast: "number",
                   where: {
                     AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "delivered" } }],
                   },
                 },
-              },
-              expression: "aggregates.total - aggregates.fulfilled",
-            },
-            {
-              label: "Expected Revenue",
-              aggregate: {
-                sum: "asoOkeFemaleQty",
-                cast: "number",
-                where: { wantsAsoOke: { equals: true } },
-              },
-              transform: "value * 6000",
-              format: "currency",
-              currency: "₦",
-            },
-            {
-              label: "Paid",
-              aggregate: {
-                sum: "asoOkeFemaleQty",
-                cast: "number",
-                where: {
-                  AND: [{ wantsAsoOke: { equals: true } }, { asoebiPaymentStatus: { equals: "received" } }],
+                ready: {
+                  sum: "asoOkeFemaleQty",
+                  cast: "number",
+                  where: {
+                    AND: [{ wantsAsoOke: { equals: true } }, { asoebiOrderStatus: { equals: "ready" } }],
+                  },
                 },
               },
-              transform: "value * 6000",
-              format: "currency",
-              currency: "₦",
+              expression: "aggregates.total - (aggregates.delivered + aggregates.ready)",
             },
           ],
         },
@@ -862,33 +632,6 @@ export const rsvpRecords = defineCollection({
                 "((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000)) - aggregates.amountPaid",
               format: "currency",
               currency: "₦",
-            },
-            {
-              label: "Collection Rate",
-              aggregates: {
-                totalYards: {
-                  sum: "asoebiYards",
-                  cast: "number",
-                  where: { wantsAsoebi: { equals: true } },
-                },
-                maleQty: {
-                  sum: "asoOkeMaleQty",
-                  cast: "number",
-                  where: { wantsAsoOke: { equals: true } },
-                },
-                femaleQty: {
-                  sum: "asoOkeFemaleQty",
-                  cast: "number",
-                  where: { wantsAsoOke: { equals: true } },
-                },
-                amountPaid: {
-                  sum: "asoebiAmountPaid",
-                  cast: "number",
-                },
-              },
-              expression:
-                "(aggregates.amountPaid / ((aggregates.totalYards * 10000) + (aggregates.maleQty * 6000) + (aggregates.femaleQty * 6000))) * 100",
-              format: "percent",
             },
           ],
         },
