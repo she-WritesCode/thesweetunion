@@ -18,7 +18,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:backfill-asoebi-defaults": "npx tsx scripts/backfill-asoebi-defaults.ts",
-    "db:backfill-invitation-defaults": "npx tsx scripts/backfill-invitation-sent-defaults.ts"
+    "db:backfill-invitation-defaults": "npx tsx scripts/backfill-invitation-sent-defaults.ts",
+    "db:cleanup-asoebi-groups": "npx tsx scripts/cleanup-asoebi-groups.ts"
   },
   "dependencies": {
     "@dyrected/core": "2.22.0",

@@ -860,7 +860,6 @@ export const rsvpRecords = defineCollection({
           name: "group",
           label: "Invitation Group",
           relationTo: "rsvp_groups",
-          required: true,
           admin: { width: "50%" },
         }),
         defineRelationshipField({

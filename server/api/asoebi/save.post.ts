@@ -181,16 +181,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: "Full Name is required for new orders." });
     }
 
-    // Find an active RSVP group to link
-    const groupsRes = await client.collection("rsvp_groups").find({ limit: 50 });
-    const activeGroup = groupsRes.docs.find((g: any) => g.isActive) || groupsRes.docs[0];
-
-    if (!activeGroup) {
-      throw createError({ statusCode: 500, message: "No invitation group available. Please contact admin." });
-    }
-
     const created = await client.collection("rsvp_records").create({
-      group: activeGroup.id,
       leadName,
       leadEmail: leadEmail.trim().toLowerCase(),
       leadPhone: normalizedPhone,

@@ -126,7 +126,7 @@ export interface Rsvp_records {
   spouseName?: string;
   attending: boolean;
   source?: "rsvp" | "asoebi" | "admin";
-  group: Rsvp_groups | string;
+  group?: Rsvp_groups | string;
   selectedEvents?: Array<Events | string>;
   message?: string;
   submittedAt?: string;
