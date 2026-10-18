@@ -119,6 +119,7 @@ export interface Rsvp_groups {
 export interface Rsvp_records {
   id: string;
   rsvpEditLink?: string;
+  resendConfirmationAction?: Record<string, unknown>;
   leadName: string;
   leadEmail: string;
   leadPhone: string;
@@ -261,5 +262,30 @@ export interface DyrectedSchema {
 declare module "@dyrected/sdk" {
   interface Register {
     schema: DyrectedSchema;
+    componentKeys: {
+      fields:
+        | "wishlist_items.amountRaised"
+        | "wishlist_items.contributorCount"
+        | "wishlist_items.reservedCount"
+        | "rsvp_groups.rsvpLink"
+        | "rsvp_groups.confirmedCount"
+        | "rsvp_groups.declinedCount"
+        | "rsvp_groups.recalculateAction"
+        | "rsvp_records.rsvpEditLink"
+        | "rsvp_records.resendConfirmationAction"
+        | "rsvp_records.asoebiReminder"
+        | "rsvp_records.accessCardPreview"
+        | "rsvp_records.sendEmailAction"
+        | "check_ins.checkInScanner"
+        | "asoebi_settings.automatedCampaign";
+      dashboard: string;
+      collectionList:
+        "WishlistListSummary" | "GroupListSummary" | "CheckInListSummary";
+      collectionView: string;
+      forms: string;
+      viewLayouts: string;
+      pages: string;
+      customComponents: string;
+    };
   }
 }

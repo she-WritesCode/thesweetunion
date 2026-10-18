@@ -29,7 +29,7 @@ const props = defineProps<{
   };
 }>();
 
-const dyrected = useDyrected();
+const client = useDyrectedClient();
 const loadingDoc = ref(false);
 const sending = ref(false);
 const sendSuccess = ref("");
@@ -93,8 +93,8 @@ async function fetchRecordIfNeeded() {
 
   loadingDoc.value = true;
   try {
-    if (dyrected?.client) {
-      const res = await dyrected.client.collection("rsvp_records").find({
+    if (client) {
+      const res = await client.collection("rsvp_records").find({
         where: { id: { equals: id } },
         limit: 1,
       });

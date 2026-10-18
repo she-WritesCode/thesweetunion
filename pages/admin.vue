@@ -16,6 +16,7 @@ import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vu
 import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
 import AsoebiCampaignManager from "~/components/admin/AsoebiCampaignManager.vue";
 import SendEmailPassAction from "~/components/admin/SendEmailPassAction.vue";
+import ResendConfirmationAction from "~/components/admin/ResendConfirmationAction.vue";
 
 definePageMeta({
   layout: false,
@@ -49,6 +50,7 @@ const adminComponents = {
   RecalculateGroupButton,
   AsoebiCampaignManager,
   SendEmailPassAction,
+  ResendConfirmationAction,
 
   fields: {
     // asoebi_settings global
@@ -81,6 +83,11 @@ const adminComponents = {
     "rsvp_records.passModal": SendPassModal,
     "rsvp_records.sendEmailAction": SendEmailPassAction,
     "rsvp_records.sendEmailPassModal": SendEmailPassAction,
+    "rsvp_records.resendConfirmationModal": ResendConfirmationAction,
+    "rsvp_records.resendConfirmationAction": ResendConfirmationAction,
+    resendConfirmationModal: ResendConfirmationAction,
+    resendConfirmationAction: ResendConfirmationAction,
+    ResendConfirmationAction,
     sendEmailAction: SendEmailPassAction,
     sendEmailPassModal: SendEmailPassAction,
     SendEmailPassAction,

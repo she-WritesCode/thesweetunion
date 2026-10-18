@@ -135,18 +135,18 @@ export const rsvpRecords = defineCollection({
       },
       actions: [
         defineAction({
-          name: "sendEmailPass",
-          label: "Email Pass",
+          name: "resendConfirmation",
+          label: "Resend RSVP Email",
           submitLabel: "Done",
           icon: "Mail",
           type: "row",
           fields: [
             defineJsonField({
-              name: "sendEmailPassModal",
-              label: "Email Access Pass to Guest",
+              name: "resendConfirmationModal",
+              label: "Resend RSVP Confirmation Email",
               admin: {
-                component: "rsvp_records.sendEmailPassModal",
-                description: "Quickly resend or email the wedding invitation and digital access pass to this guest.",
+                component: "rsvp_records.resendConfirmationModal",
+                description: "Resend the RSVP submission confirmation email with event details, edit link, and Aso Ebi payment instructions.",
               },
             }),
           ],
@@ -869,6 +869,14 @@ export const rsvpRecords = defineCollection({
             readOnly: true,
             description: "Share this link with your guest so they can edit their RSVP.",
             component: "rsvp_records.rsvpEditLink",
+          },
+        }),
+        defineJsonField({
+          name: "resendConfirmationAction",
+          label: "Resend RSVP Confirmation Email",
+          admin: {
+            component: "rsvp_records.resendConfirmationAction",
+            description: "Resend the submission confirmation email with event details, edit link, and Aso Ebi payment instructions to this guest.",
           },
         }),
         defineTextField({ name: "leadName", label: "Full Name", required: true }),
