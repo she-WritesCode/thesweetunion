@@ -4,6 +4,7 @@ import {
   defineNumberField,
   defineRelationshipField,
   defineTextareaField,
+  defineJsonField,
 } from "@dyrected/core";
 
 export const asoebiSettings = defineGlobal({
@@ -92,6 +93,23 @@ export const asoebiSettings = defineGlobal({
         rows: 5,
       },
       defaultValue: `Hi [guest name] , my name is [rep name] a representative of the couple. \n\nThank you for choosing to celebrate #thesweetunion and identifying with the fabric of the day. \nKindly confirm your Asoebi request of; [items] order for #TheSweetUnion. Please pay the total of [total] to [bank] - [account number] ([account name]) and send proof of payment here. Thank you!`,
+    }),
+    defineTextField({
+      name: "wahaSession",
+      label: "Default WAHA WhatsApp Session",
+      defaultValue: "AdunsPhone",
+      admin: {
+        description: "The WAHA WhatsApp session used to send automated messages (e.g. AdunsPhone).",
+        width: "50%",
+      },
+    }),
+    defineJsonField({
+      name: "automatedCampaign",
+      label: "Automated WhatsApp Reminder Campaign",
+      admin: {
+        component: "asoebi_settings.automatedCampaign",
+        description: "Dashboard campaign manager to dispatch 10-minute cadence WhatsApp reminders to unpaid guests.",
+      },
     }),
   ],
   access: {

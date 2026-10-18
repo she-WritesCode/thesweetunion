@@ -6,11 +6,19 @@ export function normalizeWhatsAppNumber(raw: string): string {
 }
 
 /** Send a text message through a self-hosted WAHA instance (https://waha.devlike.pro). */
-export async function sendWhatsApp({ to, text }: { to: string; text: string }) {
+export async function sendWhatsApp({
+  to,
+  text,
+  session,
+}: {
+  to: string;
+  text: string;
+  session?: string;
+}) {
   const config = useRuntimeConfig();
   const baseUrl = (config.wahaUrl as string).replace(/\/+$/, "");
   const apiKey = config.wahaApiKey as string;
-  const session = (config.wahaSession as string) || "default";
+  const targetSession = session || (config.wahaSession as string) || "default";
 
   if (!baseUrl) {
     throw new Error("WAHA is not configured (WAHA_URL).");
@@ -23,7 +31,7 @@ export async function sendWhatsApp({ to, text }: { to: string; text: string }) {
       Accept: "application/json",
       ...(apiKey ? { "X-Api-Key": apiKey } : {}),
     },
-    body: JSON.stringify({ session, chatId: `${normalizeWhatsAppNumber(to)}@c.us`, text }),
+    body: JSON.stringify({ session: targetSession, chatId: `${normalizeWhatsAppNumber(to)}@c.us`, text }),
   });
 
   const json: any = await res.json().catch(() => ({}));

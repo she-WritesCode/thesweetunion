@@ -236,6 +236,8 @@ export interface Asoebi_settingsGlobal {
   representativeName?: string;
   whatsAppContact: string;
   whatsAppTemplate?: string;
+  wahaSession?: string;
+  automatedCampaign?: Record<string, unknown>;
 }
 
 export interface DyrectedSchema {

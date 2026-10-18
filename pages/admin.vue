@@ -14,6 +14,7 @@ import CheckInListSummary from "~/components/admin/CheckInListSummary.vue";
 import GroupListSummary from "~/components/admin/GroupListSummary.vue";
 import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vue";
 import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
+import AsoebiCampaignManager from "~/components/admin/AsoebiCampaignManager.vue";
 
 definePageMeta({
   layout: false,
@@ -45,8 +46,14 @@ const adminComponents = {
   RsvpLinkField,
   CheckInScanner,
   RecalculateGroupButton,
+  AsoebiCampaignManager,
 
   fields: {
+    // asoebi_settings global
+    "asoebi_settings.automatedCampaign": AsoebiCampaignManager,
+    automatedCampaign: AsoebiCampaignManager,
+    AsoebiCampaignManager,
+
     // rsvp_groups collection
     "rsvp_groups.rsvpLink": RsvpLinkField,
     "rsvp_groups.confirmedCount": CountField,
