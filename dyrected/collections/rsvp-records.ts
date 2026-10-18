@@ -133,6 +133,44 @@ export const rsvpRecords = defineCollection({
       features: {
         duplicate: false,
       },
+      actions: [
+        defineAction({
+          name: "sendEmailPass",
+          label: "Email Pass",
+          submitLabel: "Done",
+          icon: "Mail",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "sendEmailPassModal",
+              label: "Email Access Pass to Guest",
+              admin: {
+                component: "rsvp_records.sendEmailPassModal",
+                description: "Quickly resend or email the wedding invitation and digital access pass to this guest.",
+              },
+            }),
+          ],
+          handler: async () => ({ success: true }),
+        }),
+        defineAction({
+          name: "sendPass",
+          label: "Send Pass (WhatsApp)",
+          submitLabel: "Done",
+          icon: "Send",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "passModal",
+              label: "Dispatch Wedding Pass",
+              admin: {
+                component: "rsvp_records.sendPassModal",
+                description: "Preview access card and dispatch digital pass to guest via WhatsApp or Email.",
+              },
+            }),
+          ],
+          handler: async () => ({ success: true }),
+        }),
+      ],
       metricsScope: "filtered",
       metrics: [
         {
@@ -669,6 +707,7 @@ export const rsvpRecords = defineCollection({
               },
             }),
           ],
+          handler: async () => ({ success: true }),
         }),
         defineAction({
           name: "updateFulfillmentStatus",
@@ -691,6 +730,7 @@ export const rsvpRecords = defineCollection({
               },
             }),
           ],
+          handler: async () => ({ success: true }),
         }),
         defineAction({
           name: "sendAsoebiReminder",
@@ -708,6 +748,7 @@ export const rsvpRecords = defineCollection({
               },
             }),
           ],
+          handler: async () => ({ success: true }),
         }),
       ],
       features: {
@@ -741,7 +782,7 @@ export const rsvpRecords = defineCollection({
           label: "Dispatched Passes",
           aggregates: {
             sent: {
-              count: "id",
+              count: "*",
               where: { attending: { equals: true }, invitationSent: { equals: true } },
             },
           },
@@ -751,7 +792,7 @@ export const rsvpRecords = defineCollection({
             {
               label: "Total Attending",
               aggregates: {
-                total: { count: "id", where: { attending: { equals: true } } },
+                total: { count: "*", where: { attending: { equals: true } } },
               },
               expression: "aggregates.total",
               format: "number",
@@ -762,7 +803,7 @@ export const rsvpRecords = defineCollection({
           label: "Pending Dispatch",
           aggregates: {
             pending: {
-              count: "id",
+              count: "*",
               where: { attending: { equals: true }, invitationSent: { equals: false } },
             },
           },
@@ -771,6 +812,24 @@ export const rsvpRecords = defineCollection({
         },
       ],
       actions: [
+        defineAction({
+          name: "sendEmailPass",
+          label: "Email Pass",
+          submitLabel: "Done",
+          icon: "Mail",
+          type: "row",
+          fields: [
+            defineJsonField({
+              name: "sendEmailPassModal",
+              label: "Email Access Pass to Guest",
+              admin: {
+                component: "rsvp_records.sendEmailPassModal",
+                description: "Quickly resend or email the wedding invitation and digital access pass to this guest.",
+              },
+            }),
+          ],
+          handler: async () => ({ success: true }),
+        }),
         defineAction({
           name: "sendPass",
           label: "Send Pass",
@@ -787,6 +846,7 @@ export const rsvpRecords = defineCollection({
               },
             }),
           ],
+          handler: async () => ({ success: true }),
         }),
       ],
       features: {
@@ -1034,6 +1094,15 @@ export const rsvpRecords = defineCollection({
           admin: {
             component: "rsvp_records.accessCardPreview",
             description: "Live preview of the access card that will be sent to this guest.",
+            condition: attendingCondition,
+          },
+        }),
+        defineJsonField({
+          name: "sendEmailAction",
+          label: "Email Access Pass to Guest",
+          admin: {
+            component: "rsvp_records.sendEmailAction",
+            description: "Quickly email or resend the invitation access pass with QR card to this guest.",
             condition: attendingCondition,
           },
         }),

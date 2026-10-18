@@ -15,6 +15,7 @@ import GroupListSummary from "~/components/admin/GroupListSummary.vue";
 import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vue";
 import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
 import AsoebiCampaignManager from "~/components/admin/AsoebiCampaignManager.vue";
+import SendEmailPassAction from "~/components/admin/SendEmailPassAction.vue";
 
 definePageMeta({
   layout: false,
@@ -47,6 +48,7 @@ const adminComponents = {
   CheckInScanner,
   RecalculateGroupButton,
   AsoebiCampaignManager,
+  SendEmailPassAction,
 
   fields: {
     // asoebi_settings global
@@ -77,6 +79,11 @@ const adminComponents = {
     "rsvp_records.sendWhatsApp": SendWhatsAppButton,
     "rsvp_records.sendPassModal": SendPassModal,
     "rsvp_records.passModal": SendPassModal,
+    "rsvp_records.sendEmailAction": SendEmailPassAction,
+    "rsvp_records.sendEmailPassModal": SendEmailPassAction,
+    sendEmailAction: SendEmailPassAction,
+    sendEmailPassModal: SendEmailPassAction,
+    SendEmailPassAction,
     sendPassModal: SendPassModal,
     passModal: SendPassModal,
     asoebiReminder: SendAsoebiReminderButton,

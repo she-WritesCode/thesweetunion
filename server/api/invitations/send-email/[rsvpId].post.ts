@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!rsvpId) throw createError({ statusCode: 400, message: "Missing rsvpId" });
 
   const body = (await readBody(event).catch(() => ({}))) || {};
-  const { imageBase64 } = body;
+  const { imageBase64, email } = body;
 
   const config = useRuntimeConfig();
   const client = createClient({
@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
   });
   const rsvp = result.docs?.[0];
   if (!rsvp) throw createError({ statusCode: 404, message: "RSVP record not found" });
-  if (!rsvp.leadEmail) throw createError({ statusCode: 400, message: "Guest has no email address" });
+
+  const targetEmail = (email && typeof email === "string" && email.trim()) || rsvp.leadEmail;
+  if (!targetEmail) throw createError({ statusCode: 400, message: "Guest has no email address" });
 
   const guestName =
     rsvp.hasSpouse && rsvp.spouseName
@@ -85,17 +87,22 @@ export default defineEventHandler(async (event) => {
 
   await transporter.sendMail({
     from,
-    to: rsvp.leadEmail,
+    to: targetEmail,
     subject: `You're invited, ${rsvp.leadName}! Your access card is inside 🎉`,
     html: invitationEmail({ guestName, accessCode: rsvpId, passUrl, eventNames, wishlistLink }),
     attachments,
   });
 
-  await client.collection("rsvp_records").update(rsvpId, {
+  const updateFields: any = {
     invitationSent: true,
     invitationSentAt: new Date().toISOString(),
     invitationSentVia: "email",
-  });
+  };
+  if (email && typeof email === "string" && email.trim() && email.trim() !== rsvp.leadEmail) {
+    updateFields.leadEmail = email.trim();
+  }
 
-  return { success: true };
+  await client.collection("rsvp_records").update(rsvpId, updateFields);
+
+  return { success: true, emailedTo: targetEmail };
 });

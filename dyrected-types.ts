@@ -148,6 +148,7 @@ export interface Rsvp_records {
   asoebiSentAt?: string;
   asoebiReminder?: Record<string, unknown>;
   accessCardPreview?: Record<string, unknown>;
+  sendEmailAction?: Record<string, unknown>;
   invitationSent?: boolean;
   invitationSentAt?: string;
   invitationSentVia?: "whatsapp" | "email";
