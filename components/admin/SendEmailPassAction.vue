@@ -1,3 +1,4 @@
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useDyrectedClient } from "#imports";
 import { adminAuthHeaders } from "~/utils/admin-auth";
