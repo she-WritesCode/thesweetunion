@@ -79,9 +79,6 @@ export const rsvpGroups = defineCollection({
           name: "slug",
           label: "URL Slug",
           unique: true,
-          hooks: {
-            beforeChange: [({ value }) => value?.toLowerCase()],
-          },
           admin: {
             hidden: true,
             hooks: {

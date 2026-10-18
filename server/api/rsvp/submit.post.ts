@@ -106,17 +106,17 @@ export default defineEventHandler(async (event) => {
     }
     const asoebiDetailsStr = detailsParts.join(" | ");
 
-    const record = await client.collection("rsvp_records").create({
+    const recordPayload: Record<string, any> = {
       group: group?.id,
       leadName,
       leadEmail,
       leadPhone: normalizedPhone,
       attending,
-      hasSpouse,
-      spouseName,
-      dietaryNotes,
-      message,
-      selectedEvents,
+      hasSpouse: willHaveSpouse,
+      spouseName: willHaveSpouse ? (spouseName || "") : "",
+      dietaryNotes: dietaryNotes || "",
+      message: message || "",
+      selectedEvents: Array.isArray(selectedEvents) ? selectedEvents : [],
       source: "rsvp",
       wantsAsoebi: wantsAsoebi ?? false,
       asoebiYards: wantsAsoebi ? asoebiYards : "",
@@ -124,25 +124,37 @@ export default defineEventHandler(async (event) => {
       asoOkeMaleQty: wantsAsoOke ? asoOkeMaleQty || 0 : 0,
       asoOkeFemaleQty: wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
       asoebiDetails: asoebiDetailsStr,
-      asoebiSource: (wantsAsoebi || wantsAsoOke) ? "rsvp" : undefined,
       asoebiPaymentStatus: "pending",
       asoebiOrderStatus: "unfulfilled",
-    });
+    };
+    if (wantsAsoebi || wantsAsoOke) {
+      recordPayload.asoebiSource = "rsvp";
+    }
 
-    await syncGroupCounts(client, group.id);
+    const record = await client.collection("rsvp_records").create(recordPayload);
+
+    await syncGroupCounts(client, group.id).catch((err) => {
+      console.warn("[submit.post.ts] Could not sync group counts:", err);
+    });
 
     // Fetch events for emails
     const eventIds: string[] = Array.isArray(selectedEvents) ? selectedEvents : [];
     let rsvpEvents: any[] = [];
-    const evRes = await client.collection("events").find({ limit: 20 });
-    const allDocs = [...evRes.docs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-    rsvpEvents = allDocs.filter((e: any) => !e.collectsRsvp || eventIds.includes(e.id));
-    if (!rsvpEvents.length) {
-      rsvpEvents = allDocs;
+    try {
+      const evRes = await client.collection("events").find({ limit: 20 });
+      const allDocs = Array.isArray(evRes?.docs)
+        ? [...evRes.docs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+        : [];
+      rsvpEvents = allDocs.filter((e: any) => !e.collectsRsvp || eventIds.includes(e.id));
+      if (!rsvpEvents.length) {
+        rsvpEvents = allDocs;
+      }
+    } catch (e) {
+      console.warn("[submit.post.ts] Failed to fetch events for emails:", e);
     }
 
     const config2 = useRuntimeConfig();
-    const appUrl: string = (config2.public as any).appUrl || "http://localhost:3000";
+    const appUrl: string = (config2.public as any).appUrl || "https://thesweetunion.com";
     const editLink = `${appUrl}/rsvp?token=${record.editToken}`;
     const wishlistLink = `${appUrl}/wishlist`;
 
@@ -157,54 +169,69 @@ export default defineEventHandler(async (event) => {
     }
 
     // Guest confirmation — fire and forget
-    sendEmail({
-      to: leadEmail,
-      subject: attending ? `You're on the list, ${leadName}! 🎉` : `We'll miss you, ${leadName}`,
-      html: rsvpConfirmationEmail({
-        leadName,
-        attending,
-        hasSpouse,
-        spouseName,
-        events: rsvpEvents,
-        editLink,
-        wishlistLink,
-        wantsAsoebi: attending && wantsAsoebi,
-        asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
-        wantsAsoOke: attending && wantsAsoOke,
-        asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
-        asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
-        asoebiDetails: asoebiDetailsStr,
-        asoebiSettings,
-        appUrl,
-      }),
-    }).catch(console.error);
-
-    // Admin notification — fire and forget
-    const adminsRes = await client.collection("admins").find({ limit: 20 });
-    const adminEmails: string[] = adminsRes.docs.map((a: any) => a.email).filter(Boolean);
-    if (adminEmails.length) {
+    try {
       sendEmail({
-        to: adminEmails.join(","),
-        subject: `New RSVP: ${leadName} — ${attending ? "Attending" : "Declined"}`,
-        html: adminRsvpNotificationEmail({
+        to: leadEmail,
+        subject: attending ? `You're on the list, ${leadName}! 🎉` : `We'll miss you, ${leadName}`,
+        html: rsvpConfirmationEmail({
           leadName,
-          leadEmail,
-          leadPhone: normalizedPhone,
-          groupName: group.name,
           attending,
-          hasSpouse,
+          hasSpouse: willHaveSpouse,
           spouseName,
-          eventNames: rsvpEvents.map((e: any) => e.name),
-          message,
-          dashboardLink: `${appUrl}/admin`,
+          events: rsvpEvents,
+          editLink,
+          wishlistLink,
           wantsAsoebi: attending && wantsAsoebi,
           asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
+          wantsAsoOke: attending && wantsAsoOke,
+          asoOkeMaleQty: attending && wantsAsoOke ? asoOkeMaleQty || 0 : 0,
+          asoOkeFemaleQty: attending && wantsAsoOke ? asoOkeFemaleQty || 0 : 0,
+          asoebiDetails: asoebiDetailsStr,
+          asoebiSettings,
+          appUrl,
         }),
-      }).catch(console.error);
+      }).catch((e) => console.error("[submit.post.ts] Failed to send guest email:", e));
+    } catch (err) {
+      console.error("[submit.post.ts] Failed to construct guest confirmation email:", err);
+    }
+
+    // Admin notification — fire and forget
+    try {
+      const adminsRes = await client.collection("admins").find({ limit: 20 });
+      const adminEmails: string[] = Array.isArray(adminsRes?.docs)
+        ? adminsRes.docs.map((a: any) => a.email).filter(Boolean)
+        : [];
+      if (adminEmails.length) {
+        sendEmail({
+          to: adminEmails.join(","),
+          subject: `New RSVP: ${leadName} — ${attending ? "Attending" : "Declined"}`,
+          html: adminRsvpNotificationEmail({
+            leadName,
+            leadEmail,
+            leadPhone: normalizedPhone,
+            groupName: group.name,
+            attending,
+            hasSpouse: willHaveSpouse,
+            spouseName,
+            eventNames: rsvpEvents.map((e: any) => e.name),
+            message,
+            dashboardLink: `${appUrl}/admin`,
+            wantsAsoebi: attending && wantsAsoebi,
+            asoebiYards: attending && wantsAsoebi ? asoebiYards : "",
+          }),
+        }).catch((e) => console.error("[submit.post.ts] Failed to send admin email:", e));
+      }
+    } catch (err) {
+      console.warn("[submit.post.ts] Failed to notify admins:", err);
     }
 
     return { success: true, record };
   } catch (err: any) {
-    throw createError({ statusCode: 400, message: err.message || "Failed to submit RSVP" });
+    console.error("[submit.post.ts] RSVP submission failed:", err);
+    throw createError({
+      statusCode: err.statusCode || 400,
+      statusMessage: err.message || "Failed to submit RSVP",
+      data: { message: err.message || "Failed to submit RSVP" },
+    });
   }
 });

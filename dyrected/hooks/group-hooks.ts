@@ -10,6 +10,8 @@ export const generateGroupSlug: CollectionBeforeChangeHook<Rsvp_groups> = async 
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
     }
+  } else if (data.slug && typeof data.slug === "string") {
+    data.slug = data.slug.toLowerCase();
   }
   return data;
 };

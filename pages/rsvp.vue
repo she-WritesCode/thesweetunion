@@ -641,7 +641,10 @@ const handleSubmit = async () => {
       }
     }
   } catch (err: any) {
-    const msg = err.data?.message || err.message || "An error occurred while submitting your RSVP.";
+    const rawMsg = err.data?.message || err.statusMessage || err.message;
+    const msg = rawMsg && typeof rawMsg === "string" && !rawMsg.includes("undefined")
+      ? rawMsg
+      : "An error occurred while submitting your RSVP. Please check your internet connection or reach out to the couple directly.";
     alert(msg);
   } finally {
     isSubmitting.value = false;

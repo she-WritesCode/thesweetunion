@@ -62,10 +62,14 @@ export async function syncGroupCounts(client: Client, groupId: string) {
 
   const declinedCount = records.filter((r: any) => !isAttending(r.attending)).length;
 
-  await client.collection("rsvp_groups").update(groupId, {
-    confirmedCount,
-    declinedCount,
-  });
+  try {
+    await client.collection("rsvp_groups").update(groupId, {
+      confirmedCount,
+      declinedCount,
+    });
+  } catch (err) {
+    console.warn(`[syncGroupCounts] Could not update group counts for ${groupId}:`, err);
+  }
 
   return { confirmedCount, declinedCount, totalResponses: records.length };
 }
