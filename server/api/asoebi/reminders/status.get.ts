@@ -17,14 +17,50 @@ export default defineEventHandler(async (event) => {
   const malePrice = Number(settings.asoOkeMalePrice) || 6000;
   const femalePrice = Number(settings.asoOkeFemalePrice) || 6000;
 
-  // Fetch all RSVP records
-  const res = await client.collection("rsvp_records").find({ limit: 2000, depth: 1 });
-  const allDocs = res.docs || [];
+  // 1. Fetch targeted count using aggregate with pending payment condition
+  const aggRes = await client.collection("rsvp_records").aggregate({
+    pendingCount: {
+      count: "*",
+      where: { asoebiPaymentStatus: { equals: "pending" } },
+    },
+  }).catch(() => null);
+  const pendingCount = aggRes?.pendingCount || 0;
+
+  // 2. Fetch only records with pending payment status across pages until reaching pendingCount
+  const allDocs: any[] = [];
+  let page = 1;
+  while (allDocs.length < pendingCount) {
+    const res = await client.collection("rsvp_records").find({
+      where: { asoebiPaymentStatus: { equals: "pending" } },
+      limit: 100,
+      page,
+      depth: 0,
+    });
+    const docs = res.docs || [];
+    if (docs.length === 0) break;
+    allDocs.push(...docs);
+    page++;
+  }
+
+  // Fallback if aggregate failed or returned 0
+  if (allDocs.length === 0 && pendingCount === 0) {
+    const fallbackRes = await client.collection("rsvp_records").find({
+      where: { asoebiPaymentStatus: { equals: "pending" } },
+      limit: 100,
+      depth: 0,
+    });
+    allDocs.push(...(fallbackRes.docs || []));
+  }
 
   const unpaidGuests: any[] = [];
   let totalWithOrder = 0;
   let totalPaid = 0;
   let totalNeverSent = 0;
+  let totalNotSentThisMonth = 0;
+  let totalSentThisMonth = 0;
+
+  const now = new Date();
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   for (const rawDoc of allDocs) {
     const doc = rawDoc as any;
@@ -61,8 +97,17 @@ export default defineEventHandler(async (event) => {
     }
 
     const isSent = doc.asoebiSent === true || doc.asoebiSent === "true" || doc.asoebiSent === 1;
+    const sentAt = doc.asoebiSentAt;
+    const sentThisMonth = Boolean(isSent && sentAt && String(sentAt).startsWith(currentYearMonth));
+
     if (!isSent) {
       totalNeverSent++;
+    }
+
+    if (sentThisMonth) {
+      totalSentThisMonth++;
+    } else {
+      totalNotSentThisMonth++;
     }
 
     unpaidGuests.push({
@@ -73,7 +118,8 @@ export default defineEventHandler(async (event) => {
       totalAmount: total,
       paymentStatus: doc.asoebiPaymentStatus || "pending",
       asoebiSent: Boolean(isSent),
-      asoebiSentAt: doc.asoebiSentAt || null,
+      asoebiSentAt: sentAt || null,
+      sentThisMonth,
       wantsAsoebi,
       asoebiYards,
       wantsAsoOke,
@@ -89,6 +135,8 @@ export default defineEventHandler(async (event) => {
       totalPaid,
       totalUnpaid: unpaidGuests.length,
       totalNeverSent,
+      totalNotSentThisMonth,
+      totalSentThisMonth,
     },
     settings: {
       whatsAppTemplate: settings.whatsAppTemplate || "",

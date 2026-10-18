@@ -21,14 +21,16 @@
     "db:backfill-invitation-defaults": "npx tsx scripts/backfill-invitation-sent-defaults.ts",
     "db:cleanup-asoebi-groups": "npx tsx scripts/cleanup-asoebi-groups.ts",
     "reminders:asoebi": "npx tsx scripts/send-asoebi-reminders.ts",
-    "reminders:asoebi:dry-run": "npx tsx scripts/send-asoebi-reminders.ts --dry-run"
+    "reminders:asoebi:dry-run": "npx tsx scripts/send-asoebi-reminders.ts --dry-run",
+    "reminders:asoebi:this-month": "npx tsx scripts/send-asoebi-reminders.ts --not-this-month",
+    "reminders:asoebi:this-month:dry-run": "npx tsx scripts/send-asoebi-reminders.ts --dry-run --not-this-month"
   },
   "dependencies": {
-    "@dyrected/core": "2.22.0",
-    "@dyrected/db-postgres": "2.22.0",
-    "@dyrected/nuxt": "2.22.0",
-    "@dyrected/sdk": "2.22.0",
-    "@dyrected/storage-cloudinary": "2.22.0",
+    "@dyrected/core": "2.24.0",
+    "@dyrected/db-postgres": "2.24.0",
+    "@dyrected/nuxt": "2.24.0",
+    "@dyrected/sdk": "2.24.0",
+    "@dyrected/storage-cloudinary": "2.24.0",
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",

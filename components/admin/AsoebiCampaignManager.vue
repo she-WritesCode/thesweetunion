@@ -18,6 +18,7 @@ interface UnpaidGuest {
   paymentStatus: string;
   asoebiSent: boolean;
   asoebiSentAt: string | null;
+  sentThisMonth?: boolean;
 }
 
 const loading = ref(true);
@@ -46,7 +47,7 @@ const repName = ref("Ololade");
 
 // Guests & Scope
 const allUnpaidGuests = ref<UnpaidGuest[]>([]);
-const scopeFilter = ref<"all" | "never_sent">("all");
+const scopeFilter = ref<"not_sent_this_month" | "never_sent" | "all">("not_sent_this_month");
 const intervalMinutes = ref(5);
 
 // Campaign Engine State
@@ -70,6 +71,9 @@ const activityLog = ref<LogEntry[]>([]);
 const eligibleQueue = computed(() => {
   if (scopeFilter.value === "never_sent") {
     return allUnpaidGuests.value.filter((g) => !g.asoebiSent);
+  }
+  if (scopeFilter.value === "not_sent_this_month") {
+    return allUnpaidGuests.value.filter((g) => !g.sentThisMonth);
   }
   return allUnpaidGuests.value;
 });
@@ -249,6 +253,7 @@ async function dispatchCurrentGuest(): Promise<boolean> {
     if (res?.success) {
       guest.asoebiSent = true;
       guest.asoebiSentAt = res.sentAt || new Date().toISOString();
+      guest.sentThisMonth = true;
 
       activityLog.value.unshift({
         id: guest.id,
@@ -526,10 +531,10 @@ onUnmounted(() => {
                 <input
                   v-model="scopeFilter"
                   type="radio"
-                  value="all"
+                  value="not_sent_this_month"
                   :disabled="campaignStatus === 'running'"
                 />
-                All Unpaid Guests ({{ allUnpaidGuests.length }})
+                Not Reminded This Month ({{ allUnpaidGuests.filter((g) => !g.sentThisMonth).length }})
               </label>
               <label class="radio-label">
                 <input
@@ -538,7 +543,16 @@ onUnmounted(() => {
                   value="never_sent"
                   :disabled="campaignStatus === 'running'"
                 />
-                Only Never Reminded ({{ allUnpaidGuests.filter((g) => !g.asoebiSent).length }})
+                Never Reminded ({{ allUnpaidGuests.filter((g) => !g.asoebiSent).length }})
+              </label>
+              <label class="radio-label">
+                <input
+                  v-model="scopeFilter"
+                  type="radio"
+                  value="all"
+                  :disabled="campaignStatus === 'running'"
+                />
+                All Unpaid Guests ({{ allUnpaidGuests.length }})
               </label>
             </div>
           </div>

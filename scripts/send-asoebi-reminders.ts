@@ -152,16 +152,24 @@ async function main() {
   const args = process.argv.slice(2);
   const isDryRun = args.includes("--dry-run");
   const onlyNeverSent = args.includes("--only-never-sent");
+  const onlyNotThisMonth = args.includes("--not-this-month") || args.includes("--only-not-this-month");
   const intervalArg = args.find((a) => a.startsWith("--interval="));
   const intervalMinutes = intervalArg ? parseFloat(intervalArg.split("=")[1]) : 5;
   const sessionArg = args.find((a) => a.startsWith("--session="));
   const cliSession = sessionArg ? sessionArg.split("=")[1] : undefined;
 
+  let scopeLabel = "All unpaid Asoebi orders";
+  if (onlyNeverSent) {
+    scopeLabel = "Only guests never sent a reminder";
+  } else if (onlyNotThisMonth) {
+    scopeLabel = "Guests not reminded this month (October 2026)";
+  }
+
   console.log("==================================================");
   console.log("👗 ASOEBI WHATSAPP REMINDER DISPATCHER");
   console.log(`⏰ Interval: ${intervalMinutes} minute(s) between sends`);
   console.log(`🔍 Mode: ${isDryRun ? "DRY RUN (No WhatsApp messages will be sent)" : "LIVE SEND"}`);
-  console.log(`🎯 Scope: ${onlyNeverSent ? "Only guests never sent a reminder" : "All unpaid Asoebi orders"}`);
+  console.log(`🎯 Scope: ${scopeLabel}`);
   console.log("==================================================\n");
 
   // Step 1: Pre-flight database backup if LIVE
@@ -207,7 +215,16 @@ async function main() {
       continue;
     }
 
-    if (onlyNeverSent && data.asoebiSent) {
+    const sentAt = data.asoebiSentAt;
+    const isSent = data.asoebiSent === true || data.asoebiSent === "true" || data.asoebiSent === 1;
+    const currentYearMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const sentThisMonth = Boolean(isSent && sentAt && String(sentAt).startsWith(currentYearMonth));
+
+    if (onlyNeverSent && isSent) {
+      continue;
+    }
+
+    if (onlyNotThisMonth && sentThisMonth) {
       continue;
     }
 
