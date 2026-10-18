@@ -110,6 +110,11 @@ const adminComponents = {
     CheckInListSummary: CheckInListSummary,
     GroupListSummary: GroupListSummary,
   },
+  pages: {
+    AsoebiCampaignPage: AsoebiCampaignManager,
+    "asoebi-campaign": AsoebiCampaignManager,
+    AsoebiCampaignManager: AsoebiCampaignManager,
+  },
 };
 </script>
 

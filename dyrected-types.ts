@@ -284,7 +284,7 @@ declare module "@dyrected/sdk" {
       collectionView: string;
       forms: string;
       viewLayouts: string;
-      pages: string;
+      pages: "AsoebiCampaignPage";
       customComponents: string;
     };
   }

@@ -1,4 +1,4 @@
-import { defineConfig } from "@dyrected/core";
+import { defineConfig, definePage } from "@dyrected/core";
 import { PostgresAdapter } from "@dyrected/db-postgres";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
 import { sendEmail } from "./dyrected/mailer.ts";
@@ -53,9 +53,21 @@ export default defineConfig({
   }),
   email: {
     from: process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`,
-    send: ({ to, subject, html }) => sendEmail({ to, subject, html }),
+    send: ({ to, subject, html }: any) => sendEmail({ to, subject, html: html || "" }),
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events, checkIns],
   globals: [siteSettings, asoebiSettings],
-  admin: { branding: { logoText: "TheSweetUnion" } },
+  admin: {
+    branding: { logoText: "TheSweetUnion" },
+    navigation: [
+      definePage({
+        slug: "asoebi-campaign",
+        label: "Aso Ebi Campaign",
+        icon: "Megaphone",
+        group: "RSVP",
+        collection: "rsvp_records",
+        component: "AsoebiCampaignPage",
+      }),
+    ],
+  },
 });
