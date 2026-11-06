@@ -23,8 +23,24 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  // Look up the RSVP record — depth:1 populates group inline
-  const rsvpRes = await client.collection("rsvp_records").find({ where: { id: { equals: rsvpRecordId } }, limit: 1, depth: 1 });
+  const cleanScanKey = rsvpRecordId.trim();
+  const upperScanKey = cleanScanKey.toUpperCase();
+
+  // Look up RSVP record by passCode (6-char) or id
+  let rsvpRes = await client.collection("rsvp_records").find({
+    where: { passCode: { equals: upperScanKey } },
+    limit: 1,
+    depth: 1,
+  });
+
+  if (!rsvpRes.docs || rsvpRes.docs.length === 0) {
+    rsvpRes = await client.collection("rsvp_records").find({
+      where: { id: { equals: cleanScanKey } },
+      limit: 1,
+      depth: 1,
+    });
+  }
+
   const rsvp = rsvpRes.docs?.[0] ?? null;
   if (!rsvp) {
     throw createError({ statusCode: 404, message: "Invalid QR code — guest not found." });

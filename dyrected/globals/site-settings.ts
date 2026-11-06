@@ -7,6 +7,7 @@ import {
   defineTextareaField,
   defineSelectField,
   defineArrayField,
+  defineJsonField,
 } from "@dyrected/core";
 
 export const siteSettings = defineGlobal({
@@ -211,6 +212,13 @@ export const siteSettings = defineGlobal({
           defaultValue: "Busola",
           admin: {
             description: "How automated reminder messages introduce themselves, e.g. \"This is [name].\"",
+          },
+        }),
+        defineJsonField({
+          name: "passCampaignConfig",
+          label: "Pass Campaign Configuration",
+          admin: {
+            description: "Configuration for 4-phone routing and custom template for the wedding pass campaign.",
           },
         }),
       ],

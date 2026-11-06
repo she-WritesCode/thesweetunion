@@ -28,17 +28,27 @@ export default defineEventHandler(async (event) => {
       apiKey: config.dyrectedApiKey,
     });
 
+    const cleanId = id.trim();
+    const upperCode = cleanId.toUpperCase();
+
     const [rsvpRes, sRes] = await Promise.all([
       client.collection("rsvp_records").find({
-        where: { id: { equals: id } },
+        where: { passCode: { equals: upperCode } },
         limit: 1,
         depth: 2,
       }).then(async (res) => {
         if (res.docs && res.docs.length > 0) return res;
         return client.collection("rsvp_records").find({
-          where: { editToken: { equals: id } },
+          where: { id: { equals: cleanId } },
           limit: 1,
           depth: 2,
+        }).then(async (res2) => {
+          if (res2.docs && res2.docs.length > 0) return res2;
+          return client.collection("rsvp_records").find({
+            where: { editToken: { equals: cleanId } },
+            limit: 1,
+            depth: 2,
+          });
         });
       }),
       client.global("site_settings").get().catch(() => null) as Promise<any>,
@@ -54,7 +64,7 @@ export default defineEventHandler(async (event) => {
   const hasSpouse = query.spouse !== undefined ? query.spouse === "true" || query.spouse === "1" : Boolean(rsvp?.hasSpouse);
   const spouseName = (query.spouseName as string) || rsvp?.spouseName || "";
   const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
-  const passCode = ((query.code as string) || rsvp?.id || id).toUpperCase();
+  const passCode = ((query.code as string) || rsvp?.passCode || rsvp?.id || id).toUpperCase();
 
   // Populate events & group
   let eventText = (query.events as string) || "";
@@ -80,7 +90,7 @@ export default defineEventHandler(async (event) => {
   if (!query.hashtag && settingsRes?.hashtag) hashtag = settingsRes.hashtag.toUpperCase();
   if (!query.date && settingsRes?.weddingDateText) weddingDateText = settingsRes.weddingDateText.toUpperCase();
 
-  const passUrl = `${appUrl}/pass/${id.toLowerCase()}`;
+  const passUrl = `${appUrl}/pass/${(rsvp?.passCode || id).toLowerCase()}`;
   let qrDataUrl = "";
   try {
     qrDataUrl = await QRCode.toDataURL(passUrl, {
@@ -167,8 +177,13 @@ export default defineEventHandler(async (event) => {
   <polygon points="300,152 308,160 300,168 292,160" fill="url(#gold)"/>
   <line x1="340" y1="160" x2="480" y2="160" stroke="url(#gold)" stroke-width="1.5" opacity="0.6"/>
 
+  <!-- Access Card Badge -->
+  <text x="300" y="195" text-anchor="middle" font-family="Inter" font-size="13" font-weight="800" fill="url(#gold)" letter-spacing="5">
+    ACCESS CARD
+  </text>
+
   <!-- Guest Name -->
-  <text x="300" y="220" text-anchor="middle" font-family="Cinzel" font-size="28" font-weight="700" fill="#FFFFFF">
+  <text x="300" y="234" text-anchor="middle" font-family="Cinzel" font-size="28" font-weight="700" fill="#FFFFFF">
     ${safeGuestTitle}
   </text>
 

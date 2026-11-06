@@ -947,6 +947,15 @@ export const rsvpRecords = defineCollection({
           admin: { readOnly: true },
         }),
         defineTextField({
+          name: "passCode",
+          label: "Pass Code",
+          unique: true,
+          admin: {
+            readOnly: true,
+            description: "Unique 6-character VIP reception pass code.",
+          },
+        }),
+        defineTextField({
           name: "editToken",
           label: "Edit Token",
           admin: { readOnly: true, hidden: true },

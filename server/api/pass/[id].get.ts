@@ -13,17 +13,27 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  // Query RSVP record by id or editToken
+  const cleanId = id.trim();
+  const upperCode = cleanId.toUpperCase();
+
+  // Query RSVP record by passCode (6-char), primary id, or editToken
   let result = await client.collection("rsvp_records").find({
-    where: { id: { equals: id } },
+    where: { passCode: { equals: upperCode } },
     limit: 1,
     depth: 1,
   });
 
   if (!result.docs || result.docs.length === 0) {
-    // Fallback: search by editToken
     result = await client.collection("rsvp_records").find({
-      where: { editToken: { equals: id } },
+      where: { id: { equals: cleanId } },
+      limit: 1,
+      depth: 1,
+    });
+  }
+
+  if (!result.docs || result.docs.length === 0) {
+    result = await client.collection("rsvp_records").find({
+      where: { editToken: { equals: cleanId } },
       limit: 1,
       depth: 1,
     });
@@ -91,6 +101,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     id: rsvp.id,
+    passCode: (rsvp.passCode || rsvp.id).toUpperCase(),
     leadName,
     hasSpouse,
     spouseName,

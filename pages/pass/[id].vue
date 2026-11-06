@@ -170,10 +170,16 @@ function getGoogleCalendarUrl(event: any) {
       <!-- Loaded Pass View -->
       <div v-else class="w-full flex flex-col items-center">
         <!-- Hero Luxury Access Card Canvas -->
-        <div class="w-full flex justify-center mb-5">
+        <div class="w-full flex flex-col items-center mb-5">
+          <div class="mb-2 text-center">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[11px] font-mono font-bold tracking-[0.2em] text-[#FCE8B3] uppercase">
+              PASS CODE: {{ pass.passCode || pass.id }}
+            </span>
+          </div>
+
           <AccessCard
             ref="cardRef"
-            :rsvp-id="pass.id"
+            :rsvp-id="pass.passCode || pass.id"
             :guest-name="pass.guestName"
             :has-spouse="pass.hasSpouse"
             :spouse-name="pass.spouseName"
@@ -217,11 +223,26 @@ function getGoogleCalendarUrl(event: any) {
           </NuxtLink>
         </div>
 
-        <!-- Minimalist Itinerary & Schedule -->
+        <!-- Important Reception Access Alert -->
+        <div class="w-full max-w-md p-3.5 mb-6 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-start gap-3 text-left">
+          <div class="p-1 rounded-md bg-[#D4AF37]/20 text-[#FCE8B3] shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[#FCE8B3] mb-0.5">Reception Entry Requirement</h4>
+            <p class="text-[11px] text-[#FAF5F8]/80 leading-relaxed">
+              This digital pass code (<span class="font-mono font-bold text-[#FCE8B3]">{{ pass.passCode || pass.id }}</span>) is strictly required for admission at the <strong>Wedding Reception</strong>. Please keep it open or save the image to your phone to present to the ushers at the entrance.
+            </p>
+          </div>
+        </div>
+
+        <!-- Venue Itinerary & Entry Guidelines -->
         <div v-if="pass.events && pass.events.length" class="w-full max-w-md border-t border-[#D4AF37]/15 pt-6 mb-6">
           <div class="text-center mb-5">
             <span class="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">
-              Event Itinerary
+              Venues & Event Itinerary
             </span>
           </div>
 
@@ -229,12 +250,21 @@ function getGoogleCalendarUrl(event: any) {
             <div
               v-for="(ev, idx) in pass.events"
               :key="ev.id || idx"
-              class="p-4 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 space-y-1.5"
+              class="p-4 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 space-y-2 text-left"
             >
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <h3 class="font-cinzel text-sm font-bold text-[#FAF5F8] tracking-wide">{{ ev.name }}</h3>
-                <span v-if="ev.dressCode" class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#865172]/30 text-[#FCE8B3] border border-[#865172]/40">
-                  {{ ev.dressCode }}
+                <span
+                  v-if="ev.name.toLowerCase().includes('reception')"
+                  class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#FCE8B3] border border-[#D4AF37]/40"
+                >
+                  Pass Required
+                </span>
+                <span
+                  v-else
+                  class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-500/30"
+                >
+                  Open to All
                 </span>
               </div>
 
@@ -279,11 +309,26 @@ function getGoogleCalendarUrl(event: any) {
                   <svg class="w-2.5 h-2.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="3 11 22 2 13 21 11 13 3 11"/>
                   </svg>
-                  <span>Maps ↗</span>
+                  <span>Directions (Maps) ↗</span>
                 </a>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Attire & Dress Code Card -->
+        <div class="w-full max-w-md p-4 mb-6 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 text-left space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Attire & Dress Code</span>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-[#865172] border border-white/20" title="Mauve" />
+              <span class="w-3 h-3 rounded-full bg-[#D4AF37] border border-white/20" title="Gold" />
+            </div>
+          </div>
+          <p class="text-xs font-semibold text-[#FAF5F8]">Strictly Formal / African Regal</p>
+          <p class="text-[11px] text-[#FAF5F8]/70 leading-relaxed">
+            Colors of the day: <strong>Mauve & Champagne Gold</strong>. We encourage you to dress regal, elegant, and ready to celebrate with us!
+          </p>
         </div>
 
         <!-- Note to Guests -->

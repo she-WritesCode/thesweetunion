@@ -68,6 +68,14 @@ export default defineConfig({
         collection: "rsvp_records",
         component: "AsoebiCampaignPage",
       }),
+      definePage({
+        slug: "pass-campaign",
+        label: "Pass Distribution Campaign",
+        icon: "Send",
+        group: "RSVP",
+        collection: "rsvp_records",
+        component: "PassCampaignPage",
+      }),
     ],
   },
 });

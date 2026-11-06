@@ -22,18 +22,28 @@ export default defineEventHandler(async (event) => {
       apiKey: config.dyrectedApiKey,
     });
 
+    const cleanId = id.trim();
+    const upperCode = cleanId.toUpperCase();
+
     // Parallel fetch: RSVP record (depth: 2 populates events and group) + site settings
     const [rsvpRes, settingsRes] = await Promise.all([
       client.collection("rsvp_records").find({
-        where: { id: { equals: id } },
+        where: { passCode: { equals: upperCode } },
         limit: 1,
         depth: 2,
       }).then(async (res) => {
         if (res.docs && res.docs.length > 0) return res;
         return client.collection("rsvp_records").find({
-          where: { editToken: { equals: id } },
+          where: { id: { equals: cleanId } },
           limit: 1,
           depth: 2,
+        }).then(async (res2) => {
+          if (res2.docs && res2.docs.length > 0) return res2;
+          return client.collection("rsvp_records").find({
+            where: { editToken: { equals: cleanId } },
+            limit: 1,
+            depth: 2,
+          });
         });
       }),
       client.global("site_settings").get().catch(() => null) as Promise<any>,
@@ -44,7 +54,7 @@ export default defineEventHandler(async (event) => {
     const hasSpouse = Boolean(rsvp?.hasSpouse);
     const spouseName = rsvp?.spouseName || "";
     const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
-    const passCode = (rsvp?.id || id).toUpperCase();
+    const passCode = ((rsvp?.passCode || rsvp?.id || id) as string).toUpperCase();
 
     // Populate events & group from populated depth: 2
     let eventText = "";
@@ -201,8 +211,13 @@ export default defineEventHandler(async (event) => {
     <polygon points="200,103 205,108 200,113 195,108" fill="url(#gold)"/>
     <line x1="225" y1="108" x2="320" y2="108" stroke="url(#gold)" stroke-width="1" opacity="0.6"/>
 
+    <!-- Access Card Badge -->
+    <text x="200" y="130" text-anchor="middle" font-family="Inter" font-size="9" font-weight="800" fill="url(#gold)" letter-spacing="3">
+      ACCESS CARD
+    </text>
+
     <!-- Guest Name -->
-    <text x="200" y="150" text-anchor="middle" font-family="Cinzel" font-size="20" font-weight="700" fill="#FFFFFF">
+    <text x="200" y="156" text-anchor="middle" font-family="Cinzel" font-size="19" font-weight="700" fill="#FFFFFF">
       ${safeGuestTitle}
     </text>
 

@@ -15,6 +15,7 @@ import GroupListSummary from "~/components/admin/GroupListSummary.vue";
 import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vue";
 import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
 import AsoebiCampaignManager from "~/components/admin/AsoebiCampaignManager.vue";
+import PassCampaignManager from "~/components/admin/PassCampaignManager.vue";
 import SendEmailPassAction from "~/components/admin/SendEmailPassAction.vue";
 import ResendConfirmationAction from "~/components/admin/ResendConfirmationAction.vue";
 
@@ -49,6 +50,7 @@ const adminComponents = {
   CheckInScanner,
   RecalculateGroupButton,
   AsoebiCampaignManager,
+  PassCampaignManager,
   SendEmailPassAction,
   ResendConfirmationAction,
 
@@ -114,6 +116,9 @@ const adminComponents = {
     AsoebiCampaignPage: AsoebiCampaignManager,
     "asoebi-campaign": AsoebiCampaignManager,
     AsoebiCampaignManager: AsoebiCampaignManager,
+    PassCampaignPage: PassCampaignManager,
+    "pass-campaign": PassCampaignManager,
+    PassCampaignManager: PassCampaignManager,
   },
 };
 </script>
