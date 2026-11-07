@@ -1,230 +1,621 @@
+<template>
+  <div class="space-y-4 text-slate-800">
+    <!-- Top Bar: Sender Segmented Controls + Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      <!-- Senders Tabs -->
+      <div class="flex flex-wrap items-center gap-1">
+        <button
+          type="button"
+          @click="activeSenderTab = 'all'"
+          class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+          :class="activeSenderTab === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+        >
+          All Senders
+          <span class="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full" :class="activeSenderTab === 'all' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'">
+            {{ totalGuests }}
+          </span>
+        </button>
+
+        <button
+          v-for="s in config.senders"
+          :key="s.id"
+          type="button"
+          @click="activeSenderTab = s.id"
+          class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5"
+          :class="activeSenderTab === s.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+        >
+          <span>{{ s.name }}</span>
+          <span
+            class="px-1.5 py-0.2 rounded-full text-[10px]"
+            :class="activeSenderTab === s.id ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'"
+          >
+            {{ senderPendingCount(s.id) }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="showSettings = !showSettings"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition"
+        >
+          <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>{{ showSettings ? "Hide Settings" : "Configure Routing" }}</span>
+        </button>
+
+        <button
+          type="button"
+          @click="fetchData"
+          :disabled="loading"
+          class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
+          title="Refresh Data"
+        >
+          <svg class="w-3.5 h-3.5 text-slate-500" :class="{ 'animate-spin': loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Settings Panel -->
+    <div v-if="showSettings" class="p-4 border border-slate-200 bg-slate-50 rounded-lg space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Campaign Routing & Dispatch Settings</h3>
+        <span class="text-xs text-slate-500">Divides send volume across 4 phones to prevent WhatsApp rate limits</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Phone Senders -->
+        <div class="space-y-2">
+          <label class="text-xs font-semibold text-slate-700 block">Dispatch Phones</label>
+          <div class="space-y-2">
+            <div
+              v-for="s in config.senders"
+              :key="s.id"
+              class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded text-xs"
+            >
+              <span class="w-20 font-medium text-slate-800">{{ s.name }}</span>
+              <input
+                type="text"
+                v-model="s.phone"
+                placeholder="23480..."
+                class="flex-1 px-2 py-1 border border-slate-200 rounded text-xs text-slate-800 font-mono focus:border-slate-400 focus:outline-none"
+              />
+              <span class="text-[10px] text-slate-400 font-mono">{{ s.wahaSession }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RSVP Group Mappings -->
+        <div class="space-y-2">
+          <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
+          <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div
+              v-for="grp in rsvpGroups"
+              :key="grp.id"
+              class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded text-xs"
+            >
+              <div class="flex flex-col">
+                <span class="font-medium text-slate-800">{{ grp.name }}</span>
+                <span class="text-[10px] text-slate-400">{{ grp.guestCount || 0 }} confirmed guests</span>
+              </div>
+              <select
+                v-model="config.groupSenderMap[grp.id]"
+                class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
+              >
+                <option v-for="s in config.senders" :key="s.id" :value="s.id">
+                  {{ s.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Send Bar -->
+      <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium text-slate-700">Test Send:</span>
+          <input
+            type="text"
+            v-model="testPhone"
+            placeholder="2348012345678"
+            class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-44 focus:border-slate-400 focus:outline-none"
+          />
+          <button
+            type="button"
+            @click="sendTestPass"
+            :disabled="testing || !testPhone"
+            class="px-3 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
+          >
+            <svg v-if="testing" class="w-3 h-3 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
+              <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+            </svg>
+            <span>Send Test Pass</span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          @click="saveSettings"
+          :disabled="savingSettings"
+          class="px-4 py-1 text-xs font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1"
+        >
+          <svg v-if="savingSettings" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
+            <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+          </svg>
+          <span>Save Routing Configuration</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Execution Bar / Progress Stats -->
+    <div class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div class="space-y-1 flex-1">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-slate-900">
+              {{ sentCount }} / {{ totalGuests }} passes dispatched
+            </span>
+            <span class="text-slate-400">·</span>
+            <span class="text-slate-600">{{ progressPercent }}% completed</span>
+          </div>
+          <span class="text-[11px] text-slate-500 font-mono">
+            Active view: {{ activeSenderLabel }} ({{ filteredGuests.length }} guests)
+          </span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+          <div
+            class="bg-slate-900 h-2 rounded-full transition-all duration-300"
+            :style="{ width: `${progressPercent}%` }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Auto-dispatch Controls -->
+      <div class="flex items-center gap-2">
+        <template v-if="!isDispatching">
+          <button
+            type="button"
+            @click="startAutoDispatch"
+            :disabled="pendingGuestsInView.length === 0"
+            class="px-3.5 py-1.5 text-xs font-medium rounded-md bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+          >
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span>Start Auto-Send ({{ pendingGuestsInView.length }})</span>
+          </button>
+        </template>
+        <template v-else>
+          <button
+            type="button"
+            @click="pauseAutoDispatch"
+            class="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 hover:bg-amber-700 text-white inline-flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+            <span>{{ isPaused ? "Resume" : "Pause" }}</span>
+          </button>
+          <button
+            type="button"
+            @click="stopAutoDispatch"
+            class="px-3 py-1.5 text-xs font-medium rounded-md bg-rose-600 hover:bg-rose-700 text-white inline-flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="4" width="16" height="16" />
+            </svg>
+            <span>Stop</span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Table Search & Filter Bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="relative w-full sm:w-72">
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Filter by name, pass code, or phone..."
+          class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <select
+          v-model="statusFilter"
+          class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-slate-400"
+        >
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending Only ({{ pendingTotalCount }})</option>
+          <option value="sent">Sent Only ({{ sentCount }})</option>
+        </select>
+        <span class="text-xs text-slate-500">{{ displayedGuests.length }} of {{ filteredGuests.length }}</span>
+      </div>
+    </div>
+
+    <!-- Guests Table -->
+    <div class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-xs">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+            <tr>
+              <th class="px-3.5 py-2.5">Guest</th>
+              <th class="px-3.5 py-2.5">Pass Code</th>
+              <th class="px-3.5 py-2.5">Phone Number</th>
+              <th class="px-3.5 py-2.5">Group</th>
+              <th class="px-3.5 py-2.5">Assigned Sender</th>
+              <th class="px-3.5 py-2.5">Delivery Status</th>
+              <th class="px-3.5 py-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-if="displayedGuests.length === 0">
+              <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                No confirmed guests found matching criteria.
+              </td>
+            </tr>
+            <tr
+              v-for="guest in displayedGuests"
+              :key="guest.id"
+              class="hover:bg-slate-50/75 transition-colors"
+              :class="{ 'bg-emerald-50/30': currentProcessingId === guest.id }"
+            >
+              <!-- Guest Name -->
+              <td class="px-3.5 py-2.5 font-medium text-slate-900">
+                <div class="flex items-center gap-1.5">
+                  <span>{{ guest.leadName }}</span>
+                  <span
+                    v-if="guest.hasSpouse && guest.spouseName"
+                    class="text-[10px] px-1 py-0.2 bg-slate-100 text-slate-600 rounded font-normal"
+                  >
+                    + {{ guest.spouseName }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Pass Code -->
+              <td class="px-3.5 py-2.5 font-mono font-semibold text-slate-800">
+                <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[11px] border border-slate-200/60">
+                  {{ guest.passCode || "—" }}
+                </span>
+              </td>
+
+              <!-- Phone -->
+              <td class="px-3.5 py-2.5 font-mono text-slate-600">
+                {{ formatPhoneDisplay(guest.leadPhone) }}
+              </td>
+
+              <!-- Group -->
+              <td class="px-3.5 py-2.5 text-slate-600">
+                {{ getGroupName(guest.group) }}
+              </td>
+
+              <!-- Assigned Sender -->
+              <td class="px-3.5 py-2.5">
+                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  {{ getAssignedSenderName(guest.group) }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td class="px-3.5 py-2.5">
+                <span
+                  v-if="guest.invitationSent"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Sent</span>
+                  <span v-if="guest.invitationSentAt" class="text-emerald-500 font-mono">
+                    ({{ formatDate(guest.invitationSentAt) }})
+                  </span>
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  <span>Pending</span>
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-3.5 py-2.5 text-right space-x-1.5">
+                <!-- Direct WhatsApp Click-to-Send Link -->
+                <a
+                  :href="buildWaLink(guest)"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition"
+                  title="Open direct WhatsApp conversation"
+                >
+                  <span>Open WhatsApp</span>
+                  <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+
+                <!-- Automated Send via WAHA -->
+                <button
+                  type="button"
+                  @click="sendSinglePass(guest)"
+                  :disabled="sendingId === guest.id || isDispatching"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition"
+                >
+                  <svg v-if="sendingId === guest.id" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+                  </svg>
+                  <span>{{ guest.invitationSent ? "Resend" : "Send Pass" }}</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        <div>
+          Showing {{ paginationStart }} - {{ paginationEnd }} of {{ filteredGuests.length }} guests
+        </div>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            @click="currentPage--"
+            :disabled="currentPage <= 1"
+            class="px-2 py-1 border border-slate-200 rounded bg-white hover:bg-slate-50 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span class="px-2 font-mono text-[11px]">Page {{ currentPage }} of {{ totalPages || 1 }}</span>
+          <button
+            type="button"
+            @click="currentPage++"
+            :disabled="currentPage >= totalPages"
+            class="px-2 py-1 border border-slate-200 rounded bg-white hover:bg-slate-50 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { adminAuthHeaders } from "~/utils/admin-auth";
-
-interface WahaSession {
-  name: string;
-  status: string;
-  phone: string | null;
-  pushName: string;
-}
-
-interface RsvpGroup {
-  id: string;
-  name: string;
-  slug: string;
-  maxCapacity: number;
-}
-
-interface CampaignGuest {
-  id: string;
-  passCode: string;
-  leadName: string;
-  leadPhone: string;
-  hasSpouse: boolean;
-  spouseName: string;
-  groupId: string;
-  groupName: string;
-  invitationSent: boolean;
-  invitationSentAt: string | null;
-  invitationSentVia: string | null;
-}
+import { ref, computed, onMounted } from "vue";
 
 interface SenderConfig {
-  id: "bride" | "groom" | "adun" | "me";
-  label: string;
-  subtitle: string;
-  session: string;
-  assignedGroupIds: string[];
-}
-
-const DEFAULT_TEMPLATE = `[Greeting]
-
-We can't wait to celebrate with you at #TheSweetUnion! 💍✨
-
-🎟️ YOUR RECEPTION PASS:
-Your digital pass code is [PASS_CODE].
-Access your official entry card and itinerary here:
-[PASS_URL]
-
-⚠️ IMPORTANT VENUE & ENTRY INFO:
-• Church Ceremony: [Church Venue & Time] (Open to all friends and family)
-• Wedding Reception: [Reception Venue & Time]
-  *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
-
-❓ FREQUENTLY ASKED QUESTIONS:
-• Colors / Dress Code: [Dress Code]
-• Gifts & Registry: [Wishlist Link]
-
-With love,
-Adun & Uche`;
-
-// State
-const loading = ref(true);
-const savingSettings = ref(false);
-const saveSuccess = ref(false);
-const error = ref("");
-const successMsg = ref("");
-
-const sessions = ref<WahaSession[]>([]);
-const groups = ref<RsvpGroup[]>([]);
-const allGuests = ref<CampaignGuest[]>([]);
-const rawTemplate = ref(DEFAULT_TEMPLATE);
-const attachImage = ref(true);
-const intervalSeconds = ref(45);
-
-// 4 Senders Config
-const senders = ref<SenderConfig[]>([
-  {
-    id: "bride",
-    label: "Bride's Phone",
-    subtitle: "Bride's Family & Friends",
-    session: "",
-    assignedGroupIds: [],
-  },
-  {
-    id: "groom",
-    label: "Groom's Phone",
-    subtitle: "Groom's Family & Friends",
-    session: "",
-    assignedGroupIds: [],
-  },
-  {
-    id: "adun",
-    label: "Adun's Phone",
-    subtitle: "VIPs & Church Groups",
-    session: "AdunsPhone",
-    assignedGroupIds: [],
-  },
-  {
-    id: "me",
-    label: "My Phone",
-    subtitle: "Colleagues & General Guests",
-    session: "",
-    assignedGroupIds: [],
-  },
-]);
-
-const activeSenderId = ref<"bride" | "groom" | "adun" | "me">("bride");
-const currentSender = computed(() => senders.value.find((s) => s.id === activeSenderId.value) || senders.value[0]);
-
-// Test Message State
-const testPhone = ref("");
-const sendingTest = ref(false);
-const testSuccess = ref(false);
-const testError = ref("");
-
-// Automated Runner Engine
-const engineStatus = ref<"idle" | "running" | "paused" | "finished">("idle");
-const currentQueueIndex = ref(0);
-const countdown = ref(0);
-let timerHandle: any = null;
-
-// Activity Log
-interface LogItem {
   id: string;
-  time: string;
-  guestName: string;
+  name: string;
   phone: string;
-  passCode: string;
-  status: "success" | "failed" | "skipped";
-  session: string;
-  notes?: string;
+  wahaSession: string;
 }
-const activityLog = ref<LogItem[]>([]);
 
-// Filter Guests for Active Sender
-const senderGuests = computed(() => {
-  const assigned = new Set(currentSender.value.assignedGroupIds);
-  return allGuests.value.filter((g) => assigned.has(g.groupId));
+interface CampaignSettings {
+  senders: SenderConfig[];
+  groupSenderMap: Record<string, string>;
+  paceSeconds: number;
+  messageTemplate: string;
+}
+
+interface RSVPGroup {
+  id: string;
+  name: string;
+  guestCount?: number;
+}
+
+interface GuestRecord {
+  id: string;
+  leadName: string;
+  leadEmail?: string;
+  leadPhone?: string;
+  hasSpouse?: boolean;
+  spouseName?: string;
+  passCode?: string;
+  group?: any;
+  attending?: boolean;
+  invitationSent?: boolean;
+  invitationSentAt?: string;
+  invitationSentVia?: string;
+}
+
+const loading = ref(false);
+const savingSettings = ref(false);
+const testing = ref(false);
+const showSettings = ref(false);
+
+const activeSenderTab = ref<string>("all");
+const searchQuery = ref("");
+const statusFilter = ref<"all" | "pending" | "sent">("all");
+const testPhone = ref("");
+
+const sendingId = ref<string | null>(null);
+const currentProcessingId = ref<string | null>(null);
+
+const isDispatching = ref(false);
+const isPaused = ref(false);
+
+const currentPage = ref(1);
+const pageSize = ref(25);
+
+const config = ref<CampaignSettings>({
+  senders: [
+    { id: "groom", name: "Groom", phone: "2348000000001", wahaSession: "groom" },
+    { id: "bride", name: "Bride", phone: "2348000000002", wahaSession: "bride" },
+    { id: "adun", name: "Adun", phone: "2348000000003", wahaSession: "adun" },
+    { id: "busola", name: "My Phone", phone: "2348000000004", wahaSession: "default" },
+  ],
+  groupSenderMap: {},
+  paceSeconds: 8,
+  messageTemplate: "",
 });
 
-const senderPendingGuests = computed(() => {
-  return senderGuests.value.filter((g) => !g.invitationSent);
+const rsvpGroups = ref<RSVPGroup[]>([]);
+const guests = ref<GuestRecord[]>([]);
+
+const totalGuests = computed(() => guests.value.length);
+const sentCount = computed(() => guests.value.filter((g) => g.invitationSent).length);
+const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
+const progressPercent = computed(() => {
+  if (totalGuests.value === 0) return 0;
+  return Math.round((sentCount.value / totalGuests.value) * 100);
 });
 
-const senderSentGuests = computed(() => {
-  return senderGuests.value.filter((g) => g.invitationSent);
+const activeSenderLabel = computed(() => {
+  if (activeSenderTab.value === "all") return "All Senders";
+  const s = config.value.senders.find((s) => s.id === activeSenderTab.value);
+  return s ? s.name : "Assigned Sender";
 });
 
-// Overall Stats
-const totalConfirmed = computed(() => allGuests.value.length);
-const totalSent = computed(() => allGuests.value.filter((g) => g.invitationSent).length);
-const totalRemaining = computed(() => allGuests.value.filter((g) => !g.invitationSent).length);
+function senderPendingCount(senderId: string): number {
+  return guests.value.filter((g) => {
+    if (g.invitationSent) return false;
+    const assigned = resolveSenderForGuest(g);
+    return assigned === senderId;
+  }).length;
+}
 
-// Unassigned Groups
-const unassignedGroups = computed(() => {
-  const allAssigned = new Set(senders.value.flatMap((s) => s.assignedGroupIds));
-  return groups.value.filter((g) => !allAssigned.has(g.id));
-});
-
-// Current Guest in Runner
-const runnerTargetGuest = computed<CampaignGuest | null>(() => {
-  if (currentQueueIndex.value < senderPendingGuests.value.length) {
-    return senderPendingGuests.value[currentQueueIndex.value];
+function resolveSenderForGuest(guest: GuestRecord): string {
+  const groupId = typeof guest.group === "object" && guest.group ? guest.group.id : guest.group;
+  if (groupId && config.value.groupSenderMap[groupId]) {
+    return config.value.groupSenderMap[groupId];
   }
-  return null;
-});
+  return "default";
+}
 
-// Live Preview
-const previewGuest = computed(() => {
-  return senderPendingGuests.value[0] || senderGuests.value[0] || allGuests.value[0] || null;
-});
+function getAssignedSenderName(group: any): string {
+  const groupId = typeof group === "object" && group ? group.id : group;
+  const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
+  const s = config.value.senders.find((x) => x.id === senderId);
+  return s ? s.name : "Default";
+}
 
-const renderedPreviewText = computed(() => {
-  const g = previewGuest.value;
-  const name = g ? (g.hasSpouse && g.spouseName ? `${g.leadName} & ${g.spouseName}` : g.leadName) : "Guest Name";
-  const passCode = g ? g.passCode : "K7P9X2";
-  const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
-  const church = "Saturday, Nov 21, 2026 @ 09:30 AM — RCCG Victory Center, No 58 Iju Road, Agege, Lagos";
-  const reception = "Saturday, Nov 21, 2026 @ 02:00 PM — Agege, Lagos (Details on Pass Card)";
-  const dressCode = "Strictly Formal / African Regal (Mauve & Gold)";
-  const wishlist = "https://thesweetunion.com/wishlist";
+function getGroupName(group: any): string {
+  if (!group) return "General";
+  if (typeof group === "object") return group.name || "General";
+  const match = rsvpGroups.value.find((g) => g.id === group);
+  return match ? match.name : "General";
+}
 
-  let text = rawTemplate.value || DEFAULT_TEMPLATE;
-  text = text.replace(/\[Greeting[^\]]*\]/gi, `Dear ${name},`).replace(/\{Greeting[^\}]*\}/gi, `Dear ${name},`);
-  text = text
-    .replace(/\[Guest Name\]/gi, name)
-    .replace(/\[PASS_CODE\]/gi, passCode)
-    .replace(/\[PASS_URL\]/gi, passUrl)
-    .replace(/\[Church Venue & Time\]/gi, church)
-    .replace(/\[Reception Venue & Time\]/gi, reception)
-    .replace(/\[Dress Code\]/gi, dressCode)
-    .replace(/\[Wishlist Link\]/gi, wishlist);
+function formatPhoneDisplay(phone?: string): string {
+  if (!phone) return "—";
+  return phone.replace(/[^\d+]/g, "");
+}
 
-  return text;
-});
-
-async function loadData() {
-  loading.value = true;
-  error.value = "";
+function formatDate(isoStr?: string): string {
+  if (!isoStr) return "";
   try {
-    const res = await $fetch<any>("/api/pass-campaign/status", {
-      headers: adminAuthHeaders(),
+    const d = new Date(isoStr);
+    return d.toLocaleDateString("en-GB", { month: "short", day: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
+const filteredGuests = computed(() => {
+  let list = guests.value;
+
+  // Sender tab filter
+  if (activeSenderTab.value !== "all") {
+    list = list.filter((g) => resolveSenderForGuest(g) === activeSenderTab.value);
+  }
+
+  // Status filter
+  if (statusFilter.value === "pending") {
+    list = list.filter((g) => !g.invitationSent);
+  } else if (statusFilter.value === "sent") {
+    list = list.filter((g) => g.invitationSent);
+  }
+
+  // Search filter
+  const q = searchQuery.value.trim().toLowerCase();
+  if (q) {
+    list = list.filter((g) => {
+      const name = (g.leadName || "").toLowerCase();
+      const spouse = (g.spouseName || "").toLowerCase();
+      const code = (g.passCode || "").toLowerCase();
+      const phone = (g.leadPhone || "").toLowerCase();
+      return name.includes(q) || spouse.includes(q) || code.includes(q) || phone.includes(q);
     });
+  }
 
-    if (res.sessions) sessions.value = res.sessions;
-    if (res.groups) groups.value = res.groups;
-    if (res.guests) allGuests.value = res.guests;
+  return list;
+});
 
-    // Load saved config if any
-    if (res.config) {
-      if (res.config.template) rawTemplate.value = res.config.template;
-      if (res.config.attachImage !== undefined) attachImage.value = res.config.attachImage;
-      if (res.config.intervalSeconds) intervalSeconds.value = res.config.intervalSeconds;
-      if (Array.isArray(res.config.senders) && res.config.senders.length > 0) {
-        // Merge saved senders
-        for (const s of senders.value) {
-          const match = res.config.senders.find((saved: any) => saved.id === s.id);
-          if (match) {
-            s.session = match.session || "";
-            s.assignedGroupIds = match.assignedGroupIds || [];
-          }
-        }
-      }
+const pendingGuestsInView = computed(() => {
+  return filteredGuests.value.filter((g) => !g.invitationSent);
+});
+
+const totalPages = computed(() => Math.ceil(filteredGuests.value.length / pageSize.value));
+const paginationStart = computed(() => {
+  if (filteredGuests.value.length === 0) return 0;
+  return (currentPage.value - 1) * pageSize.value + 1;
+});
+const paginationEnd = computed(() => {
+  return Math.min(currentPage.value * pageSize.value, filteredGuests.value.length);
+});
+
+const displayedGuests = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredGuests.value.slice(start, start + pageSize.value);
+});
+
+function buildWaLink(guest: GuestRecord): string {
+  const phone = (guest.leadPhone || "").replace(/[^\d]/g, "");
+  const passCode = guest.passCode || guest.id;
+  const guestName = guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : guest.leadName;
+  const passUrl = `https://thesweetunion.com/pass/${passCode}`;
+
+  const text = [
+    `Dear ${guestName},`,
+    ``,
+    `We are delighted to confirm your RSVP for our wedding celebration!`,
+    ``,
+    `Your VIP Reception Access Pass is ready:`,
+    `Pass Code: ${passCode}`,
+    `Digital Pass & Entry Card: ${passUrl}`,
+    ``,
+    `CHURCH CEREMONY: 10:00 AM (Open to all friends & family)`,
+    `RECEPTION: Strictly by digital access card or pass code.`,
+    `DRESS CODE: Mauve & Gold / African Regal`,
+    ``,
+    `We can't wait to celebrate with you!`,
+  ].join("\n");
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
+async function fetchData() {
+  loading.value = true;
+  try {
+    const res: any = await $fetch("/api/pass-campaign/status");
+    if (res.success) {
+      if (res.config) config.value = { ...config.value, ...res.config };
+      rsvpGroups.value = res.rsvpGroups || [];
+      guests.value = res.guests || [];
     }
   } catch (err: any) {
-    error.value = err?.data?.message || err.message || "Failed to load campaign data.";
+    console.error("Failed to load pass campaign data:", err);
   } finally {
     loading.value = false;
   }
@@ -232,1573 +623,116 @@ async function loadData() {
 
 async function saveSettings() {
   savingSettings.value = true;
-  saveSuccess.value = false;
   try {
     await $fetch("/api/pass-campaign/settings", {
       method: "POST",
-      headers: adminAuthHeaders(),
       body: {
-        template: rawTemplate.value,
-        attachImage: attachImage.value,
-        intervalSeconds: intervalSeconds.value,
-        senders: senders.value.map((s) => ({
-          id: s.id,
-          session: s.session,
-          assignedGroupIds: s.assignedGroupIds,
-        })),
+        senders: config.value.senders,
+        groupSenderMap: config.value.groupSenderMap,
+        paceSeconds: config.value.paceSeconds,
       },
     });
-    saveSuccess.value = true;
-    setTimeout(() => {
-      saveSuccess.value = false;
-    }, 3000);
+    showSettings.value = false;
   } catch (err: any) {
-    alert("Failed to save settings: " + (err?.data?.message || err.message));
+    alert("Failed to save settings: " + (err.data?.message || err.message));
   } finally {
     savingSettings.value = false;
   }
 }
 
-function toggleGroupAssignment(groupId: string) {
-  const current = currentSender.value.assignedGroupIds;
-  const idx = current.indexOf(groupId);
-  if (idx > -1) {
-    current.splice(idx, 1);
-  } else {
-    // Remove from other senders first to keep routing 1-to-1
-    for (const s of senders.value) {
-      const otherIdx = s.assignedGroupIds.indexOf(groupId);
-      if (otherIdx > -1) s.assignedGroupIds.splice(otherIdx, 1);
-    }
-    current.push(groupId);
-  }
-}
-
-async function sendSingle(guest: CampaignGuest, mode: "automated" | "manual" = "manual") {
-  try {
-    const res = await $fetch<any>("/api/pass-campaign/send", {
-      method: "POST",
-      headers: adminAuthHeaders(),
-      body: {
-        rsvpId: guest.id,
-        session: currentSender.value.session || undefined,
-        customTemplate: rawTemplate.value,
-        attachImage: attachImage.value,
-        mode,
-      },
-    });
-
-    // Mark locally
-    guest.invitationSent = true;
-    guest.invitationSentAt = res.sentAt;
-    guest.invitationSentVia = "whatsapp";
-
-    activityLog.value.unshift({
-      id: Math.random().toString(),
-      time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      guestName: guest.leadName,
-      phone: guest.leadPhone,
-      passCode: guest.passCode,
-      status: "success",
-      session: currentSender.value.session || "Manual",
-      notes: mode === "manual" ? "Opened in WhatsApp (wa.me)" : "Dispatched via WAHA",
-    });
-
-    if (mode === "manual" && res.waUrl) {
-      window.open(res.waUrl, "_blank", "noopener,noreferrer");
-    }
-
-    return true;
-  } catch (err: any) {
-    activityLog.value.unshift({
-      id: Math.random().toString(),
-      time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      guestName: guest.leadName,
-      phone: guest.leadPhone,
-      passCode: guest.passCode,
-      status: "failed",
-      session: currentSender.value.session || "Manual",
-      notes: err?.data?.message || err.message,
-    });
-    return false;
-  }
-}
-
-// Automated Runner
-async function startAutomatedRunner() {
-  if (senderPendingGuests.value.length === 0) {
-    alert("No pending guests in this sender's assigned groups!");
-    return;
-  }
-  if (!currentSender.value.session) {
-    alert("Please select an active WAHA session for this sender profile before starting automated dispatch.");
-    return;
-  }
-
-  engineStatus.value = "running";
-  currentQueueIndex.value = 0;
-  runNextAutomatedStep();
-}
-
-async function runNextAutomatedStep() {
-  if (engineStatus.value !== "running") return;
-
-  const guest = runnerTargetGuest.value;
-  if (!guest) {
-    engineStatus.value = "finished";
-    return;
-  }
-
-  // Send current guest
-  await sendSingle(guest, "automated");
-
-  // Check if more remaining
-  if (currentQueueIndex.value >= senderPendingGuests.value.length) {
-    engineStatus.value = "finished";
-    return;
-  }
-
-  // Random human jitter (e.g. intervalSeconds + 5 to 15s)
-  const jitter = Math.floor(Math.random() * 12) + 4;
-  countdown.value = intervalSeconds.value + jitter;
-
-  clearInterval(timerHandle);
-  timerHandle = setInterval(() => {
-    if (engineStatus.value !== "running") {
-      clearInterval(timerHandle);
-      return;
-    }
-    countdown.value--;
-    if (countdown.value <= 0) {
-      clearInterval(timerHandle);
-      runNextAutomatedStep();
-    }
-  }, 1000);
-}
-
-function pauseRunner() {
-  engineStatus.value = "paused";
-  clearInterval(timerHandle);
-}
-
-function resumeRunner() {
-  engineStatus.value = "running";
-  runNextAutomatedStep();
-}
-
-function stopRunner() {
-  engineStatus.value = "idle";
-  clearInterval(timerHandle);
-  countdown.value = 0;
-}
-
-function skipCurrentGuest() {
-  if (runnerTargetGuest.value) {
-    activityLog.value.unshift({
-      id: Math.random().toString(),
-      time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }),
-      guestName: runnerTargetGuest.value.leadName,
-      phone: runnerTargetGuest.value.leadPhone,
-      passCode: runnerTargetGuest.value.passCode,
-      status: "skipped",
-      session: currentSender.value.session || "Manual",
-      notes: "Skipped by admin",
-    });
-  }
-  currentQueueIndex.value++;
-}
-
-async function sendTestMessage() {
+async function sendTestPass() {
   if (!testPhone.value) return;
-  sendingTest.value = true;
-  testError.value = "";
-  testSuccess.value = false;
-
+  testing.value = true;
   try {
-    await $fetch("/api/pass-campaign/test", {
+    const res: any = await $fetch("/api/pass-campaign/test", {
       method: "POST",
-      headers: adminAuthHeaders(),
-      body: {
-        phone: testPhone.value,
-        session: currentSender.value.session || undefined,
-        customTemplate: rawTemplate.value,
-        attachImage: attachImage.value,
-      },
+      body: { phone: testPhone.value },
     });
-    testSuccess.value = true;
-    setTimeout(() => {
-      testSuccess.value = false;
-    }, 4000);
+    if (res.success) {
+      alert(`Test pass sent to ${testPhone.value}`);
+    } else {
+      alert("Test send failed: " + (res.message || "Unknown error"));
+    }
   } catch (err: any) {
-    testError.value = err?.data?.message || err.message || "Failed to send test message.";
+    alert("Test send failed: " + (err.data?.message || err.message));
   } finally {
-    sendingTest.value = false;
+    testing.value = false;
   }
+}
+
+async function sendSinglePass(guest: GuestRecord) {
+  sendingId.value = guest.id;
+  try {
+    const res: any = await $fetch("/api/pass-campaign/send", {
+      method: "POST",
+      body: { guestId: guest.id },
+    });
+    if (res.success) {
+      guest.invitationSent = true;
+      guest.invitationSentAt = new Date().toISOString();
+      guest.invitationSentVia = "whatsapp";
+    } else {
+      alert("Failed to dispatch pass: " + (res.message || "Error"));
+    }
+  } catch (err: any) {
+    alert("Failed to dispatch: " + (err.data?.message || err.message));
+  } finally {
+    sendingId.value = null;
+  }
+}
+
+async function startAutoDispatch() {
+  if (pendingGuestsInView.value.length === 0) return;
+  isDispatching.value = true;
+  isPaused.value = false;
+
+  const targetList = [...pendingGuestsInView.value];
+
+  for (const guest of targetList) {
+    if (!isDispatching.value) break;
+
+    while (isPaused.value) {
+      await new Promise((r) => setTimeout(r, 500));
+      if (!isDispatching.value) break;
+    }
+    if (!isDispatching.value) break;
+
+    currentProcessingId.value = guest.id;
+    try {
+      const res: any = await $fetch("/api/pass-campaign/send", {
+        method: "POST",
+        body: { guestId: guest.id },
+      });
+      if (res.success) {
+        guest.invitationSent = true;
+        guest.invitationSentAt = new Date().toISOString();
+        guest.invitationSentVia = "whatsapp";
+      }
+    } catch (e) {
+      console.error(`Failed to send to ${guest.leadName}:`, e);
+    }
+
+    // Pacing delay (8-15 seconds)
+    const delay = (config.value.paceSeconds || 8) * 1000;
+    await new Promise((r) => setTimeout(r, delay));
+  }
+
+  currentProcessingId.value = null;
+  isDispatching.value = false;
+  isPaused.value = false;
+}
+
+function pauseAutoDispatch() {
+  isPaused.value = !isPaused.value;
+}
+
+function stopAutoDispatch() {
+  isDispatching.value = false;
+  isPaused.value = false;
+  currentProcessingId.value = null;
 }
 
 onMounted(() => {
-  loadData();
-});
-
-onUnmounted(() => {
-  clearInterval(timerHandle);
+  fetchData();
 });
 </script>
-
-<template>
-  <div class="pass-campaign-app">
-    <!-- Top Action Bar -->
-    <div class="campaign-action-bar">
-      <div />
-      <button type="button" class="btn-refresh" :disabled="loading" @click="loadData">
-        <svg v-if="loading" class="w-3.5 h-3.5 spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/>
-          <polyline points="1 20 1 14 7 14"/>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-        </svg>
-        <span>Refresh Data</span>
-      </button>
-    </div>
-
-    <!-- Top KPI Row -->
-    <section class="kpi-grid">
-      <div class="kpi-card">
-        <span class="kpi-label">Confirmed Attending Guests</span>
-        <span class="kpi-val">{{ totalConfirmed }}</span>
-        <span class="kpi-sub">Total RSVP Confirmed</span>
-      </div>
-      <div class="kpi-card kpi-sent">
-        <span class="kpi-label">Passes Dispatched</span>
-        <span class="kpi-val">{{ totalSent }}</span>
-        <span class="kpi-sub">{{ Math.round((totalSent / (totalConfirmed || 1)) * 100) }}% Completed</span>
-      </div>
-      <div class="kpi-card kpi-remaining">
-        <span class="kpi-label">Pending Passes</span>
-        <span class="kpi-val">{{ totalRemaining }}</span>
-        <span class="kpi-sub">Ready to Dispatch</span>
-      </div>
-      <div class="kpi-card" :class="{ 'kpi-alert': unassignedGroups.length > 0 }">
-        <span class="kpi-label">Group Assignment Health</span>
-        <span class="kpi-val">{{ unassignedGroups.length === 0 ? "100%" : `${unassignedGroups.length} Unassigned` }}</span>
-        <span class="kpi-sub">{{ unassignedGroups.length === 0 ? "All groups mapped to a phone" : "Assign remaining groups below" }}</span>
-      </div>
-    </section>
-
-    <!-- 4 Senders Switcher Tabs -->
-    <section class="sender-tabs-bar">
-      <div class="tabs-list">
-        <button
-          v-for="s in senders"
-          :key="s.id"
-          type="button"
-          class="sender-tab-btn"
-          :class="{ active: activeSenderId === s.id }"
-          @click="activeSenderId = s.id"
-        >
-          <span class="tab-icon-wrap">
-            <svg v-if="s.id === 'bride'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            <svg v-else-if="s.id === 'groom'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-            <svg v-else-if="s.id === 'adun'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-              <line x1="12" y1="18" x2="12.01" y2="18"/>
-            </svg>
-            <svg v-else class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </span>
-          <div class="tab-info">
-            <span class="tab-label">{{ s.label }}</span>
-            <span class="tab-count">
-              {{ allGuests.filter(g => new Set(s.assignedGroupIds).has(g.groupId) && !g.invitationSent).length }} pending /
-              {{ allGuests.filter(g => new Set(s.assignedGroupIds).has(g.groupId)).length }} total
-            </span>
-          </div>
-        </button>
-      </div>
-    </section>
-
-    <!-- Main Workspace Grid -->
-    <div class="campaign-workspace">
-      <!-- Left Column: Sender Routing & Dispatch Controls -->
-      <div class="workspace-col-main">
-        <!-- Sender Configuration Card -->
-        <div class="card-box">
-          <div class="card-header">
-            <div class="sender-pill">
-              <span class="pill-icon-wrap">
-                <svg v-if="currentSender.id === 'bride'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                <svg v-else-if="currentSender.id === 'groom'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <svg v-else-if="currentSender.id === 'adun'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                  <line x1="12" y1="18" x2="12.01" y2="18"/>
-                </svg>
-                <svg v-else class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <div>
-                <h3 class="card-title">{{ currentSender.label }} Settings</h3>
-                <p class="card-desc">{{ currentSender.subtitle }}</p>
-              </div>
-            </div>
-
-            <div class="session-picker">
-              <label class="session-label">WAHA Session:</label>
-              <select v-model="currentSender.session" class="select-session">
-                <option value="">Manual Only (wa.me)</option>
-                <option v-for="sess in sessions" :key="sess.name" :value="sess.name">
-                  {{ sess.name }} ({{ sess.status }})
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Group Assignment Checklist -->
-          <div class="group-assignment-box">
-            <div class="group-assignment-head">
-              <h4 class="subhead">Assigned Invitation Groups for {{ currentSender.label }}</h4>
-              <span class="assigned-counter">{{ currentSender.assignedGroupIds.length }} groups selected</span>
-            </div>
-            <p class="subdesc">
-              Guests in these RSVP groups will be routed to this phone number.
-            </p>
-
-            <div class="groups-checkbox-grid">
-              <label
-                v-for="grp in groups"
-                :key="grp.id"
-                class="group-checkbox-pill"
-                :class="{ selected: currentSender.assignedGroupIds.includes(grp.id) }"
-              >
-                <input
-                  type="checkbox"
-                  :checked="currentSender.assignedGroupIds.includes(grp.id)"
-                  @change="toggleGroupAssignment(grp.id)"
-                />
-                <span class="grp-name">{{ grp.name }}</span>
-                <span class="grp-count">({{ allGuests.filter(g => g.groupId === grp.id).length }} guests)</span>
-              </label>
-            </div>
-
-            <div class="save-bar">
-              <button
-                type="button"
-                class="btn-save-settings inline-flex items-center gap-1.5"
-                :disabled="savingSettings"
-                @click="saveSettings"
-              >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
-                <span>{{ savingSettings ? "Saving..." : saveSuccess ? "Settings Saved" : "Save Group Routing & Template" }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dispatcher Controls: Mode A & Mode B -->
-        <div class="card-box">
-          <h3 class="card-title flex items-center gap-2">
-            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-            </svg>
-            <span>Dispatch Center for {{ currentSender.label }}</span>
-          </h3>
-          <p class="card-desc">
-            Choose whether to automate sending via WAHA with paced human delays, or tap through manually via WhatsApp Web.
-          </p>
-
-          <div class="dispatch-modes-grid">
-            <!-- Mode A: Automated Runner -->
-            <div class="mode-card">
-              <div class="mode-head">
-                <h4 class="mode-title flex items-center gap-2">
-                  <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                    <line x1="8" y1="21" x2="16" y2="21"/>
-                    <line x1="12" y1="17" x2="12" y2="21"/>
-                  </svg>
-                  <span>Mode A: Automated WAHA Runner</span>
-                </h4>
-                <span v-if="currentSender.session" class="session-status-badge online">
-                  ● Session: {{ currentSender.session }}
-                </span>
-                <span v-else class="session-status-badge offline">
-                  Select a session above to automate
-                </span>
-              </div>
-              <p class="mode-desc">
-                Dispatches each pass sequentially with random human jitter delay (e.g. 45–60s) to keep this WhatsApp number completely safe.
-              </p>
-
-              <div class="runner-controls-row">
-                <div class="timing-input">
-                  <label>Base Delay (s):</label>
-                  <input v-model.number="intervalSeconds" type="number" min="25" max="120" class="input-delay" />
-                </div>
-
-                <div class="runner-actions">
-                  <button
-                    v-if="engineStatus === 'idle' || engineStatus === 'finished'"
-                    type="button"
-                    class="btn-start flex items-center gap-1.5"
-                    :disabled="senderPendingGuests.length === 0 || !currentSender.session"
-                    @click="startAutomatedRunner"
-                  >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    <span>Start Automated Dispatch</span>
-                  </button>
-
-                  <template v-else-if="engineStatus === 'running'">
-                    <button type="button" class="btn-pause flex items-center gap-1.5" @click="pauseRunner">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16"/>
-                        <rect x="14" y="4" width="4" height="16"/>
-                      </svg>
-                      <span>Pause</span>
-                    </button>
-                    <button type="button" class="btn-skip flex items-center gap-1.5" @click="skipCurrentGuest">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 4 15 12 5 20 5 4"/>
-                        <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                      <span>Skip</span>
-                    </button>
-                    <button type="button" class="btn-stop flex items-center gap-1.5" @click="stopRunner">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="4" y="4" width="16" height="16"/>
-                      </svg>
-                      <span>Stop</span>
-                    </button>
-                  </template>
-
-                  <template v-else-if="engineStatus === 'paused'">
-                    <button type="button" class="btn-resume flex items-center gap-1.5" @click="resumeRunner">
-                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                      </svg>
-                      <span>Resume</span>
-                    </button>
-                    <button type="button" class="btn-stop flex items-center gap-1.5" @click="stopRunner">
-                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="4" y="4" width="16" height="16"/>
-                      </svg>
-                      <span>Stop</span>
-                    </button>
-                  </template>
-                </div>
-              </div>
-
-              <!-- Live Runner Status Box -->
-              <div v-if="engineStatus === 'running' || engineStatus === 'paused'" class="runner-live-box">
-                <div class="live-pulse">
-                  <span class="pulsing-dot" />
-                  <strong>{{ engineStatus === 'running' ? `Sending next pass in ${countdown}s...` : 'Paused by operator' }}</strong>
-                </div>
-                <div v-if="runnerTargetGuest" class="target-guest-card">
-                  <span class="tg-label">Current Target Guest:</span>
-                  <div class="tg-info">
-                    <strong>{{ runnerTargetGuest.leadName }}</strong>
-                    <span>{{ runnerTargetGuest.leadPhone }}</span>
-                    <span class="tg-code">Pass: {{ runnerTargetGuest.passCode }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Mode B: Manual Click-to-Send -->
-            <div class="mode-card">
-              <div class="mode-head">
-                <h4 class="mode-title flex items-center gap-2">
-                  <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span>Mode B: Assisted Click-to-Send (wa.me)</span>
-                </h4>
-                <span class="tag-safe">100% Ban-Proof</span>
-              </div>
-              <p class="mode-desc">
-                Click to open each guest's pre-filled chat in WhatsApp Web/Desktop. The guest is marked as Sent automatically upon click.
-              </p>
-
-              <div class="manual-queue-container">
-                <div v-if="senderPendingGuests.length === 0" class="empty-queue-msg flex items-center justify-center gap-2">
-                  <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                  <span>All passes in this sender's groups have been dispatched!</span>
-                </div>
-                <div v-else class="queue-list">
-                  <div
-                    v-for="guest in senderPendingGuests.slice(0, 15)"
-                    :key="guest.id"
-                    class="queue-item"
-                  >
-                    <div class="qi-info">
-                      <div class="qi-name-row">
-                        <strong class="qi-name">{{ guest.leadName }}</strong>
-                        <span v-if="guest.hasSpouse" class="admits-pill">+ Spouse</span>
-                        <span class="qi-code">{{ guest.passCode }}</span>
-                      </div>
-                      <div class="qi-sub">
-                        <span>{{ guest.leadPhone }}</span>
-                        <span>·</span>
-                        <span>{{ guest.groupName }}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      class="btn-send-wame"
-                      @click="sendSingle(guest, 'manual')"
-                    >
-                      <span>Send in WhatsApp ↗</span>
-                    </button>
-                  </div>
-                </div>
-                <p v-if="senderPendingGuests.length > 15" class="queue-more-text">
-                  + {{ senderPendingGuests.length - 15 }} more guests remaining in queue
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Activity Log -->
-        <div class="card-box">
-          <div class="log-header">
-            <h3 class="card-title flex items-center gap-2">
-              <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              <span>Dispatch Delivery Log</span>
-            </h3>
-            <span class="log-count">{{ activityLog.length }} events recorded</span>
-          </div>
-
-          <div v-if="activityLog.length === 0" class="empty-log">
-            No activity yet in this session. Start automated dispatch or send via Mode B to view live delivery logs.
-          </div>
-          <div v-else class="log-table-wrapper">
-            <table class="log-table">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Guest</th>
-                  <th>Pass Code</th>
-                  <th>Phone</th>
-                  <th>Sender</th>
-                  <th>Status</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="log in activityLog" :key="log.id" :class="log.status">
-                  <td class="cell-time">{{ log.time }}</td>
-                  <td class="cell-name">{{ log.guestName }}</td>
-                  <td class="cell-code">{{ log.passCode }}</td>
-                  <td class="cell-phone">{{ log.phone }}</td>
-                  <td class="cell-sess">{{ log.session }}</td>
-                  <td class="cell-status">
-                    <span :class="['status-pill', log.status]">{{ log.status }}</span>
-                  </td>
-                  <td class="cell-notes">{{ log.notes }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: Template Editor, Live Preview & Test Send -->
-      <div class="workspace-col-side">
-        <!-- Live Preview Card -->
-        <div class="card-box">
-          <div class="preview-header">
-            <h3 class="card-title flex items-center gap-2">
-              <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
-              <span>WhatsApp Message Preview</span>
-            </h3>
-            <span class="badge-preview">Live Render</span>
-          </div>
-
-          <!-- Attach Image Option -->
-          <div class="toggle-image-box">
-            <label class="toggle-label">
-              <input v-model="attachImage" type="checkbox" />
-              <span>Attach Generated VIP Access Card (Image)</span>
-            </label>
-            <p class="toggle-desc">
-              When checked, WAHA sends the personalized Gold Access Card image with the message text below as its caption!
-            </p>
-          </div>
-
-          <!-- Image Card Thumbnail Preview -->
-          <div v-if="attachImage && previewGuest" class="preview-image-container">
-            <img
-              :src="`/api/pass/card-image/${previewGuest.passCode.toLowerCase()}.png`"
-              alt="Pass Card Preview"
-              class="preview-card-img"
-            />
-          </div>
-
-          <!-- Message Bubble Mockup -->
-          <div class="whatsapp-mockup-bubble">
-            <div class="bubble-content">
-              <pre class="preview-text">{{ renderedPreviewText }}</pre>
-            </div>
-            <span class="bubble-time">12:00 PM ✓✓</span>
-          </div>
-        </div>
-
-        <!-- Template Editor -->
-        <div class="card-box">
-          <h3 class="card-title flex items-center gap-2">
-            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20h9"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-            <span>Message Template Editor</span>
-          </h3>
-          <p class="card-desc">
-            Available tags: <code class="tag-code">[Greeting]</code>, <code class="tag-code">[Guest Name]</code>, <code class="tag-code">[PASS_CODE]</code>, <code class="tag-code">[PASS_URL]</code>, <code class="tag-code">[Church Venue & Time]</code>, <code class="tag-code">[Reception Venue & Time]</code>, <code class="tag-code">[Dress Code]</code>, <code class="tag-code">[Wishlist Link]</code>
-          </p>
-
-          <textarea
-            v-model="rawTemplate"
-            class="template-textarea"
-            rows="16"
-            placeholder="Type your WhatsApp message template here..."
-          />
-
-          <div class="template-actions">
-            <button
-              type="button"
-              class="btn-reset"
-              @click="rawTemplate = DEFAULT_TEMPLATE"
-            >
-              Reset to Default Template
-            </button>
-            <button
-              type="button"
-              class="btn-save-sm"
-              :disabled="savingSettings"
-              @click="saveSettings"
-            >
-              {{ savingSettings ? "Saving..." : "Save Template" }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Test Message Box -->
-        <div class="card-box">
-          <h3 class="card-title flex items-center gap-2">
-            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 2v7.31L4.35 18A2 2 0 0 0 6.07 21h11.86a2 2 0 0 0 1.72-3L14 9.31V2"/>
-              <line x1="8" y1="2" x2="16" y2="2"/>
-            </svg>
-            <span>Send Test Pass to Phone</span>
-          </h3>
-          <p class="card-desc">
-            Send a sample pass card and rendered message directly to your phone to preview how it arrives in WhatsApp.
-          </p>
-
-          <div class="test-row">
-            <input
-              v-model="testPhone"
-              type="tel"
-              placeholder="+2348012345678"
-              class="input-test-phone"
-            />
-            <button
-              type="button"
-              class="btn-test"
-              :disabled="sendingTest || !testPhone"
-              @click="sendTestMessage"
-            >
-              {{ sendingTest ? "Sending..." : "Send Test" }}
-            </button>
-          </div>
-
-          <p v-if="testSuccess" class="test-status success">✓ Test message sent successfully via {{ currentSender.session || "default session" }}!</p>
-          <p v-if="testError" class="test-status error">✗ {{ testError }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.pass-campaign-app {
-  padding: 0;
-  background: transparent;
-  color: #faf5f8;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* Action Bar */
-.campaign-action-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.btn-refresh {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: rgba(212, 175, 55, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  color: #fce8b3;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-refresh:hover {
-  background: rgba(212, 175, 55, 0.25);
-}
-
-/* KPI Grid */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.kpi-card {
-  background: #20121b;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.kpi-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(250, 245, 248, 0.6);
-  margin-bottom: 8px;
-}
-
-.kpi-val {
-  font-size: 1.85rem;
-  font-weight: 800;
-  color: #fce8b3;
-  line-height: 1.1;
-  margin-bottom: 4px;
-}
-
-.kpi-sub {
-  font-size: 0.75rem;
-  color: rgba(250, 245, 248, 0.5);
-}
-
-.kpi-sent .kpi-val {
-  color: #4ade80;
-}
-
-.kpi-remaining .kpi-val {
-  color: #facc15;
-}
-
-.kpi-alert {
-  border-color: rgba(248, 113, 113, 0.4);
-}
-
-.kpi-alert .kpi-val {
-  color: #f87171;
-}
-
-/* Sender Tabs */
-.sender-tabs-bar {
-  margin-bottom: 24px;
-}
-
-.tabs-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.sender-tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: #1c1018;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  color: #faf5f8;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
-}
-
-.sender-tab-btn:hover {
-  background: #251620;
-  border-color: rgba(212, 175, 55, 0.4);
-}
-
-.sender-tab-btn.active {
-  background: #2b1725;
-  border-color: #d4af37;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
-}
-
-.tab-icon {
-  font-size: 1.6rem;
-}
-
-.tab-label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #fce8b3;
-}
-
-.tab-count {
-  display: block;
-  font-size: 0.75rem;
-  color: rgba(250, 245, 248, 0.6);
-}
-
-/* Workspace Grid */
-.campaign-workspace {
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: 24px;
-}
-
-@media (max-width: 1080px) {
-  .campaign-workspace {
-    grid-template-columns: 1fr;
-  }
-}
-
-.workspace-col-main,
-.workspace-col-side {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* Card Box */
-.card-box {
-  background: #1c1018;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 14px;
-  padding: 22px;
-}
-
-.card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #fce8b3;
-  margin: 0 0 4px 0;
-}
-
-.card-desc {
-  font-size: 0.8rem;
-  color: rgba(250, 245, 248, 0.65);
-  margin: 0 0 16px 0;
-  line-height: 1.4;
-}
-
-/* Sender Header */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-}
-
-.sender-pill {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pill-icon {
-  font-size: 2rem;
-}
-
-.session-picker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.session-label {
-  font-size: 0.8rem;
-  color: #fce8b3;
-  font-weight: 600;
-}
-
-.select-session {
-  background: #251620;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #faf5f8;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-}
-
-/* Group Assignment Box */
-.group-assignment-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.subhead {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #faf5f8;
-  margin: 0;
-}
-
-.assigned-counter {
-  font-size: 0.75rem;
-  color: #d4af37;
-  font-weight: 600;
-}
-
-.subdesc {
-  font-size: 0.775rem;
-  color: rgba(250, 245, 248, 0.5);
-  margin: 0 0 12px 0;
-}
-
-.groups-checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.group-checkbox-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #251620;
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.group-checkbox-pill.selected {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
-}
-
-.grp-name {
-  font-weight: 600;
-  color: #faf5f8;
-}
-
-.grp-count {
-  font-size: 0.7rem;
-  color: rgba(250, 245, 248, 0.5);
-}
-
-.save-bar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-save-settings {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #fce8b3, #d4af37);
-  color: #30222a;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-save-settings:hover {
-  filter: brightness(1.1);
-}
-
-/* Dispatch Modes Grid */
-.dispatch-modes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 800px) {
-  .dispatch-modes-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mode-card {
-  background: #251620;
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.mode-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.mode-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #fce8b3;
-  margin: 0;
-}
-
-.mode-desc {
-  font-size: 0.775rem;
-  color: rgba(250, 245, 248, 0.6);
-  margin: 0 0 14px 0;
-  line-height: 1.4;
-}
-
-.session-status-badge {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-.session-status-badge.online {
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
-}
-
-.session-status-badge.offline {
-  background: rgba(248, 113, 113, 0.15);
-  color: #f87171;
-}
-
-.tag-safe {
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  font-weight: 700;
-}
-
-.runner-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.timing-input {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: #fce8b3;
-}
-
-.input-delay {
-  width: 54px;
-  background: #1c1018;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #faf5f8;
-  border-radius: 6px;
-  padding: 4px;
-  text-align: center;
-}
-
-.runner-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-start {
-  padding: 8px 14px;
-  background: #16a34a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-pause {
-  padding: 8px 12px;
-  background: #ca8a04;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-resume {
-  padding: 8px 12px;
-  background: #16a34a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-skip {
-  padding: 8px 12px;
-  background: #4b5563;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-stop {
-  padding: 8px 12px;
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.runner-live-box {
-  background: #1c1018;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 10px;
-}
-
-.live-pulse {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #facc15;
-  margin-bottom: 8px;
-}
-
-.pulsing-dot {
-  width: 8px;
-  height: 8px;
-  background: #facc15;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #facc15;
-}
-
-.target-guest-card {
-  font-size: 0.775rem;
-}
-
-.tg-label {
-  color: rgba(250, 245, 248, 0.5);
-  display: block;
-}
-
-.tg-info {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  color: #faf5f8;
-  margin-top: 2px;
-}
-
-.tg-code {
-  background: rgba(212, 175, 55, 0.2);
-  color: #fce8b3;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-/* Manual Queue List */
-.manual-queue-container {
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.queue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.queue-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #1c1018;
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  border-radius: 8px;
-}
-
-.qi-name-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.825rem;
-}
-
-.admits-pill {
-  font-size: 0.65rem;
-  padding: 1px 4px;
-  background: #865172;
-  color: #fff;
-  border-radius: 4px;
-}
-
-.qi-code {
-  font-family: monospace;
-  font-size: 0.7rem;
-  color: #d4af37;
-}
-
-.qi-sub {
-  font-size: 0.725rem;
-  color: rgba(250, 245, 248, 0.5);
-  display: flex;
-  gap: 4px;
-}
-
-.btn-send-wame {
-  padding: 6px 12px;
-  background: #25d366;
-  color: #0b2212;
-  font-weight: 700;
-  font-size: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-send-wame:hover {
-  filter: brightness(1.1);
-}
-
-.empty-queue-msg {
-  text-align: center;
-  padding: 32px 16px;
-  font-size: 0.85rem;
-  color: #4ade80;
-}
-
-.queue-more-text {
-  text-align: center;
-  font-size: 0.75rem;
-  color: rgba(250, 245, 248, 0.5);
-  margin-top: 8px;
-}
-
-/* Activity Log Table */
-.log-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.log-count {
-  font-size: 0.75rem;
-  color: rgba(250, 245, 248, 0.5);
-}
-
-.empty-log {
-  text-align: center;
-  padding: 24px;
-  font-size: 0.8rem;
-  color: rgba(250, 245, 248, 0.4);
-}
-
-.log-table-wrapper {
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.log-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.75rem;
-}
-
-.log-table th {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  color: #fce8b3;
-  font-weight: 600;
-}
-
-.log-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.status-pill {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.status-pill.success {
-  background: rgba(74, 222, 128, 0.2);
-  color: #4ade80;
-}
-
-.status-pill.failed {
-  background: rgba(248, 113, 113, 0.2);
-  color: #f87171;
-}
-
-.status-pill.skipped {
-  background: rgba(156, 163, 175, 0.2);
-  color: #9ca3af;
-}
-
-/* Side Column: Preview & Editor */
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.badge-preview {
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(212, 175, 55, 0.2);
-  color: #fce8b3;
-  font-weight: 600;
-}
-
-.toggle-image-box {
-  background: #251620;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #fce8b3;
-  cursor: pointer;
-}
-
-.toggle-desc {
-  font-size: 0.7rem;
-  color: rgba(250, 245, 248, 0.55);
-  margin: 4px 0 0 24px;
-  line-height: 1.3;
-}
-
-.preview-image-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-  background: #140c12;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.15);
-}
-
-.preview-card-img {
-  max-width: 180px;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.whatsapp-mockup-bubble {
-  background: #005c4b;
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: #e9edef;
-  font-size: 0.775rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.preview-text {
-  white-space: pre-wrap;
-  font-family: inherit;
-  margin: 0;
-  line-height: 1.45;
-}
-
-.bubble-time {
-  display: block;
-  text-align: right;
-  font-size: 0.65rem;
-  color: rgba(233, 237, 239, 0.6);
-  margin-top: 6px;
-}
-
-/* Template Editor */
-.tag-code {
-  background: rgba(212, 175, 55, 0.15);
-  color: #fce8b3;
-  padding: 1px 4px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-}
-
-.template-textarea {
-  width: 100%;
-  background: #140c12;
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 8px;
-  color: #faf5f8;
-  padding: 10px;
-  font-size: 0.775rem;
-  line-height: 1.45;
-  font-family: monospace;
-  box-sizing: border-box;
-  resize: vertical;
-}
-
-.template-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.btn-reset {
-  background: none;
-  border: none;
-  color: rgba(250, 245, 248, 0.5);
-  font-size: 0.75rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.btn-save-sm {
-  padding: 6px 12px;
-  background: #d4af37;
-  color: #30222a;
-  border: none;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-/* Test Row */
-.test-row {
-  display: flex;
-  gap: 8px;
-}
-
-.input-test-phone {
-  flex: 1;
-  background: #140c12;
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: 8px;
-  color: #faf5f8;
-  padding: 8px 12px;
-  font-size: 0.8rem;
-}
-
-.btn-test {
-  padding: 8px 16px;
-  background: #4b5563;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-test:hover:not(:disabled) {
-  background: #374151;
-}
-
-.test-status {
-  font-size: 0.75rem;
-  margin-top: 8px;
-}
-
-.test-status.success {
-  color: #4ade80;
-}
-
-.test-status.error {
-  color: #f87171;
-}
-
-.spin {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
-}
-</style>
