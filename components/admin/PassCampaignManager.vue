@@ -47,6 +47,10 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
+        <span v-if="syncMessage" class="text-[11px] text-emerald-600 font-medium hidden sm:inline">
+          {{ syncMessage }}
+        </span>
+
         <button
           type="button"
           @click="fetchData"
@@ -682,19 +686,40 @@ function buildWaLink(guest: GuestRecord): string {
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
+const syncMessage = ref<string | null>(null);
+
 function syncWahaSessionsIntoSenders(sessions: WahaSessionInfo[]) {
+  if (!Array.isArray(sessions)) return;
   wahaSessions.value = sessions;
+
+  const currentSenders = Array.isArray(config.value.senders) ? [...config.value.senders] : [];
+
+  const updatedSenders = currentSenders.map((s) => {
+    const sSession = (s.wahaSession || s.id || s.name || "").toLowerCase();
+    const match = sessions.find((sess) => {
+      const sessName = (sess.name || "").toLowerCase();
+      return sessName === sSession || sessName.includes(sSession) || sSession.includes(sessName);
+    });
+
+    if (match) {
+      return {
+        ...s,
+        wahaSession: match.name,
+        status: match.status,
+        phone: match.phone || s.phone || "",
+      };
+    }
+    return s;
+  });
+
+  // Also include any sessions from WAHA not yet in senders
   for (const sess of sessions) {
-    const existing = config.value.senders.find(
-      (s) => s.wahaSession.toLowerCase() === sess.name.toLowerCase()
+    const exists = updatedSenders.some(
+      (s) => (s.wahaSession || s.id || "").toLowerCase() === (sess.name || "").toLowerCase()
     );
-    if (existing) {
-      existing.status = sess.status;
-      if (sess.phone) existing.phone = sess.phone;
-    } else {
-      // Add as new sender if session is configured in WAHA
-      config.value.senders.push({
-        id: sess.name.toLowerCase(),
+    if (!exists) {
+      updatedSenders.push({
+        id: (sess.name || "").toLowerCase(),
         name: sess.pushName || sess.name,
         phone: sess.phone || "",
         wahaSession: sess.name,
@@ -702,19 +727,33 @@ function syncWahaSessionsIntoSenders(sessions: WahaSessionInfo[]) {
       });
     }
   }
+
+  config.value = {
+    ...config.value,
+    senders: updatedSenders,
+  };
 }
 
 async function fetchData() {
   loading.value = true;
+  syncMessage.value = null;
   try {
-    const res: any = await $fetch("/api/pass-campaign/status");
+    const res: any = await $fetch(`/api/pass-campaign/status?_t=${Date.now()}`);
     if (res.success) {
-      if (res.config) config.value = { ...config.value, ...res.config };
+      if (res.config) {
+        config.value = { ...config.value, ...res.config };
+      }
       rsvpGroups.value = res.rsvpGroups || res.groups || [];
       guests.value = res.guests || [];
       if (Array.isArray(res.sessions)) {
         syncWahaSessionsIntoSenders(res.sessions);
       }
+
+      const workingCount = (config.value.senders || []).filter((s) => s.status === "WORKING").length;
+      syncMessage.value = `WAHA Synced: ${workingCount} active sender(s) connected`;
+      setTimeout(() => {
+        syncMessage.value = null;
+      }, 4000);
     }
   } catch (err: any) {
     console.error("Failed to load pass campaign data:", err);

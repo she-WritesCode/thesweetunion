@@ -1,9 +1,19 @@
-import { defineEventHandler, createError } from "h3";
+import { defineEventHandler, createError, setHeader } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { requireAdmin } from "~~/server/utils/require-admin";
 
+const DEFAULT_SENDERS = [
+  { id: "groom", name: "Groom", phone: "", wahaSession: "Groom", status: "SCAN_QR_CODE" },
+  { id: "bride", name: "Bride", phone: "", wahaSession: "Bride", status: "SCAN_QR_CODE" },
+  { id: "adun", name: "Adun", phone: "2347086492639", wahaSession: "AdunsPhone", status: "FAILED" },
+  { id: "busola", name: "My Phone", phone: "2347065055605", wahaSession: "default", status: "WORKING" },
+];
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
+
+  // Prevent caching of live status
+  setHeader(event, "Cache-Control", "no-store, no-cache, must-revalidate");
 
   const config = useRuntimeConfig();
   const baseUrl = (config.wahaUrl as string)?.replace(/\/+$/, "");
@@ -13,7 +23,7 @@ export default defineEventHandler(async (event) => {
   let sessions: any[] = [];
   if (baseUrl) {
     try {
-      const res = await fetch(`${baseUrl}/api/sessions`, {
+      const res = await fetch(`${baseUrl}/api/sessions?all=true`, {
         headers: {
           Accept: "application/json",
           ...(apiKey ? { "X-Api-Key": apiKey } : {}),
@@ -77,7 +87,49 @@ export default defineEventHandler(async (event) => {
       };
     });
 
-  const savedConfig = settingsRes?.passCampaignConfig || null;
+  const savedConfig = settingsRes?.passCampaignConfig || {};
+
+  // Merge live WAHA sessions into senders list
+  const baseSenders = Array.isArray(savedConfig.senders) && savedConfig.senders.length > 0
+    ? savedConfig.senders
+    : DEFAULT_SENDERS;
+
+  const mergedSenders = baseSenders.map((s: any) => {
+    const sSession = (s.wahaSession || s.id || s.name || "").toLowerCase();
+    const liveMatch = sessions.find((ws: any) => {
+      const wsName = (ws.name || "").toLowerCase();
+      return wsName === sSession || wsName.includes(sSession) || sSession.includes(wsName);
+    });
+
+    return {
+      id: s.id || s.name?.toLowerCase() || "sender",
+      name: s.name || liveMatch?.pushName || "Sender",
+      wahaSession: liveMatch?.name || s.wahaSession || s.id,
+      phone: liveMatch?.phone || s.phone || "",
+      status: liveMatch?.status || s.status || "SCAN_QR_CODE",
+    };
+  });
+
+  // Also include any sessions from WAHA not already present
+  for (const sess of sessions) {
+    const exists = mergedSenders.some(
+      (s: any) => (s.wahaSession || "").toLowerCase() === sess.name.toLowerCase()
+    );
+    if (!exists) {
+      mergedSenders.push({
+        id: sess.name.toLowerCase(),
+        name: sess.pushName || sess.name,
+        wahaSession: sess.name,
+        phone: sess.phone || "",
+        status: sess.status,
+      });
+    }
+  }
+
+  const mergedConfig = {
+    ...savedConfig,
+    senders: mergedSenders,
+  };
 
   return {
     success: true,
@@ -88,6 +140,6 @@ export default defineEventHandler(async (event) => {
     totalGuests: attendingGuests.length,
     sentCount: attendingGuests.filter((g) => g.invitationSent).length,
     remainingCount: attendingGuests.filter((g) => !g.invitationSent).length,
-    config: savedConfig,
+    config: mergedConfig,
   };
 });
