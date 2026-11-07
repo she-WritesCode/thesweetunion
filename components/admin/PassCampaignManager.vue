@@ -50,6 +50,9 @@
         <span v-if="syncMessage" class="text-[11px] text-emerald-600 font-medium hidden sm:inline">
           {{ syncMessage }}
         </span>
+        <span v-if="syncError" class="text-[11px] text-rose-600 font-medium">
+          {{ syncError }}
+        </span>
 
         <button
           type="button"
@@ -460,6 +463,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { adminAuthHeaders } from "~/utils/admin-auth";
 
 interface WahaSessionInfo {
   name: string;
@@ -734,11 +738,16 @@ function syncWahaSessionsIntoSenders(sessions: WahaSessionInfo[]) {
   };
 }
 
+const syncError = ref<string | null>(null);
+
 async function fetchData() {
   loading.value = true;
   syncMessage.value = null;
+  syncError.value = null;
   try {
-    const res: any = await $fetch(`/api/pass-campaign/status?_t=${Date.now()}`);
+    const res: any = await $fetch(`/api/pass-campaign/status?_t=${Date.now()}`, {
+      headers: adminAuthHeaders(),
+    });
     if (res.success) {
       if (res.config) {
         config.value = { ...config.value, ...res.config };
@@ -757,6 +766,7 @@ async function fetchData() {
     }
   } catch (err: any) {
     console.error("Failed to load pass campaign data:", err);
+    syncError.value = err?.data?.message || err?.message || "Failed to authenticate or fetch status";
   } finally {
     loading.value = false;
   }
@@ -767,6 +777,7 @@ async function saveSettings() {
   try {
     await $fetch("/api/pass-campaign/settings", {
       method: "POST",
+      headers: adminAuthHeaders(),
       body: {
         senders: config.value.senders,
         groupSenderMap: config.value.groupSenderMap,
@@ -787,6 +798,7 @@ async function sendTestPass() {
   try {
     const res: any = await $fetch("/api/pass-campaign/test", {
       method: "POST",
+      headers: adminAuthHeaders(),
       body: { phone: testPhone.value },
     });
     if (res.success) {
@@ -810,6 +822,7 @@ async function sendSinglePass(guest: GuestRecord) {
   try {
     const res: any = await $fetch("/api/pass-campaign/send", {
       method: "POST",
+      headers: adminAuthHeaders(),
       body: {
         rsvpId: guest.id,
         session: wahaSession,
@@ -853,6 +866,7 @@ async function startAutoDispatch() {
     try {
       const res: any = await $fetch("/api/pass-campaign/send", {
         method: "POST",
+        headers: adminAuthHeaders(),
         body: {
           rsvpId: guest.id,
           session: wahaSession,
