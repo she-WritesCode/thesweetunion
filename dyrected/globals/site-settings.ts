@@ -226,6 +226,6 @@ export const siteSettings = defineGlobal({
   ],
   access: {
     read: "true",
-    update: "user != null",
+    update: "true",
   },
 });

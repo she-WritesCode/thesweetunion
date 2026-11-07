@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from "h3";
+import { defineEventHandler, readBody, createError, getHeader, getCookie } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { requireAdmin } from "~~/server/utils/require-admin";
 
@@ -10,10 +10,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Invalid payload" });
   }
 
+  const token =
+    getHeader(event, "authorization")?.replace(/^Bearer\s+/i, "") ||
+    getCookie(event, "__dyrected_token") ||
+    getCookie(event, "dyrected_token");
+
   const config = useRuntimeConfig();
   const client = createClient({
     baseUrl: config.dyrectedUrl,
     apiKey: config.dyrectedApiKey,
+    token: token || undefined,
   });
 
   try {

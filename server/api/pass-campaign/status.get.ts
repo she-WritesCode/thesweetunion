@@ -10,136 +10,172 @@ const DEFAULT_SENDERS = [
 ];
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event);
+  try {
+    await requireAdmin(event);
+  } catch (authErr: any) {
+    throw authErr;
+  }
 
   // Prevent caching of live status
-  setHeader(event, "Cache-Control", "no-store, no-cache, must-revalidate");
-
-  const config = useRuntimeConfig();
-  const baseUrl = (config.wahaUrl as string)?.replace(/\/+$/, "");
-  const apiKey = config.wahaApiKey as string;
-
-  // 1. Fetch WAHA sessions
-  let sessions: any[] = [];
-  if (baseUrl) {
-    try {
-      const res = await fetch(`${baseUrl}/api/sessions?all=true`, {
-        headers: {
-          Accept: "application/json",
-          ...(apiKey ? { "X-Api-Key": apiKey } : {}),
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          sessions = data.map((s: any) => ({
-            name: s.name,
-            status: s.status,
-            phone: s.me?.id ? s.me.id.replace(/@.*$/, "") : null,
-            pushName: s.me?.pushName || s.name,
-          }));
-        }
-      }
-    } catch (err: any) {
-      console.warn("Could not fetch WAHA sessions:", err.message);
-    }
+  try {
+    setHeader(event, "Cache-Control", "no-store, no-cache, must-revalidate");
+  } catch {
+    // ignore
   }
 
-  // 2. Fetch Dyrected Collections & Globals
-  const client = createClient({
-    baseUrl: config.dyrectedUrl,
-    apiKey: config.dyrectedApiKey,
-  });
+  try {
+    const config = useRuntimeConfig();
+    const baseUrl = (config.wahaUrl as string)?.replace(/\/+$/, "");
+    const apiKey = config.wahaApiKey as string;
 
-  const [groupsRes, allRsvpRes, settingsRes] = await Promise.all([
-    client.collection("rsvp_groups").find({ limit: 200, depth: 0 }).catch(() => ({ docs: [] })),
-    // Fetch all records and filter attending in JS per AGENTS.md boolean filter rule
-    client.collection("rsvp_records").find({ limit: 1000, depth: 1 }).catch(() => ({ docs: [] })),
-    client.global("site_settings").get().catch(() => null) as Promise<any>,
-  ]);
+    // 1. Fetch WAHA sessions safely
+    let sessions: any[] = [];
+    if (baseUrl) {
+      try {
+        const res = await fetch(`${baseUrl}/api/sessions?all=true`, {
+          headers: {
+            Accept: "application/json",
+            ...(apiKey ? { "X-Api-Key": apiKey } : {}),
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            sessions = data
+              .filter((s: any) => s && typeof s === "object")
+              .map((s: any) => ({
+                name: String(s.name || ""),
+                status: String(s.status || "UNKNOWN"),
+                phone: s.me?.id ? String(s.me.id).replace(/@.*$/, "") : null,
+                pushName: s.me?.pushName || s.name || "",
+              }))
+              .filter((s) => Boolean(s.name));
+          }
+        }
+      } catch (err: any) {
+        console.warn("Could not fetch WAHA sessions:", err.message);
+      }
+    }
 
-  const groups = (groupsRes.docs || []).map((g: any) => ({
-    id: g.id,
-    name: g.name,
-    slug: g.slug,
-    maxCapacity: g.maxCapacity,
-  }));
-
-  const allRecords = allRsvpRes.docs || [];
-  const attendingGuests = allRecords
-    .filter((r: any) => r.attending === true || r.attending === "true")
-    .map((r: any) => {
-      const groupId = typeof r.group === "object" ? r.group?.id : r.group;
-      const groupName = typeof r.group === "object" ? r.group?.name : "";
-      return {
-        id: r.id,
-        passCode: (r.passCode || r.id).toUpperCase(),
-        leadName: r.leadName || "Guest",
-        leadPhone: r.leadPhone || "",
-        hasSpouse: Boolean(r.hasSpouse),
-        spouseName: r.spouseName || "",
-        group: r.group,
-        groupId: groupId || "",
-        groupName: groupName || "",
-        invitationSent: Boolean(r.invitationSent),
-        invitationSentAt: r.invitationSentAt || null,
-        invitationSentVia: r.invitationSentVia || null,
-      };
+    // 2. Fetch Dyrected Collections & Globals
+    const client = createClient({
+      baseUrl: config.dyrectedUrl,
+      apiKey: config.dyrectedApiKey,
     });
 
-  const savedConfig = settingsRes?.passCampaignConfig || {};
+    const [groupsRes, allRsvpRes, settingsRes] = await Promise.all([
+      client.collection("rsvp_groups").find({ limit: 200, depth: 0 }).catch(() => ({ docs: [] })),
+      client.collection("rsvp_records").find({ limit: 1000, depth: 1 }).catch(() => ({ docs: [] })),
+      client.global("site_settings").get().catch(() => null) as Promise<any>,
+    ]);
 
-  // Merge live WAHA sessions into senders list
-  const baseSenders = Array.isArray(savedConfig.senders) && savedConfig.senders.length > 0
-    ? savedConfig.senders
-    : DEFAULT_SENDERS;
+    const groupsList = Array.isArray(groupsRes) ? groupsRes : (groupsRes?.docs || []);
+    const groups = groupsList.map((g: any) => ({
+      id: g.id,
+      name: g.name || "Group",
+      slug: g.slug || "",
+      maxCapacity: g.maxCapacity,
+    }));
 
-  const mergedSenders = baseSenders.map((s: any) => {
-    const sSession = (s.wahaSession || s.id || s.name || "").toLowerCase();
-    const liveMatch = sessions.find((ws: any) => {
-      const wsName = (ws.name || "").toLowerCase();
-      return wsName === sSession || wsName.includes(sSession) || sSession.includes(wsName);
-    });
+    const recordsList = Array.isArray(allRsvpRes) ? allRsvpRes : (allRsvpRes?.docs || []);
+    const attendingGuests = recordsList
+      .filter((r: any) => r && (r.attending === true || r.attending === "true"))
+      .map((r: any) => {
+        const groupId = typeof r.group === "object" ? r.group?.id : r.group;
+        const groupName = typeof r.group === "object" ? r.group?.name : "";
+        const code = String(r.passCode || r.id || "").toUpperCase();
+        return {
+          id: String(r.id),
+          passCode: code,
+          leadName: r.leadName || "Guest",
+          leadPhone: r.leadPhone || "",
+          hasSpouse: Boolean(r.hasSpouse),
+          spouseName: r.spouseName || "",
+          group: r.group,
+          groupId: groupId || "",
+          groupName: groupName || "",
+          invitationSent: Boolean(r.invitationSent),
+          invitationSentAt: r.invitationSentAt || null,
+          invitationSentVia: r.invitationSentVia || null,
+        };
+      });
+
+    // Safely parse saved passCampaignConfig
+    let savedConfig: any = settingsRes?.passCampaignConfig || {};
+    if (typeof savedConfig === "string") {
+      try {
+        savedConfig = JSON.parse(savedConfig);
+      } catch {
+        savedConfig = {};
+      }
+    }
+    if (!savedConfig || typeof savedConfig !== "object") {
+      savedConfig = {};
+    }
+
+    // Merge live WAHA sessions into senders list
+    const baseSenders: any[] = Array.isArray(savedConfig.senders) && savedConfig.senders.length > 0
+      ? savedConfig.senders
+      : DEFAULT_SENDERS;
+
+    const mergedSenders = baseSenders
+      .filter((s) => s && typeof s === "object")
+      .map((s: any) => {
+        const sSession = String(s.wahaSession || s.id || s.name || "").toLowerCase();
+        const liveMatch = sessions.find((ws: any) => {
+          const wsName = String(ws?.name || "").toLowerCase();
+          return wsName === sSession || wsName.includes(sSession) || sSession.includes(wsName);
+        });
+
+        return {
+          id: String(s.id || s.name || "sender").toLowerCase(),
+          name: s.name || liveMatch?.pushName || "Sender",
+          wahaSession: liveMatch?.name || s.wahaSession || s.id || "default",
+          phone: liveMatch?.phone || s.phone || "",
+          status: liveMatch?.status || s.status || "SCAN_QR_CODE",
+        };
+      });
+
+    // Also include any sessions from WAHA not already present
+    for (const sess of sessions) {
+      if (!sess?.name) continue;
+      const sessNameLower = String(sess.name).toLowerCase();
+      const exists = mergedSenders.some(
+        (s: any) => String(s?.wahaSession || "").toLowerCase() === sessNameLower
+      );
+      if (!exists) {
+        mergedSenders.push({
+          id: sessNameLower,
+          name: sess.pushName || sess.name,
+          wahaSession: sess.name,
+          phone: sess.phone || "",
+          status: sess.status || "SCAN_QR_CODE",
+        });
+      }
+    }
+
+    const mergedConfig = {
+      ...savedConfig,
+      senders: mergedSenders,
+    };
 
     return {
-      id: s.id || s.name?.toLowerCase() || "sender",
-      name: s.name || liveMatch?.pushName || "Sender",
-      wahaSession: liveMatch?.name || s.wahaSession || s.id,
-      phone: liveMatch?.phone || s.phone || "",
-      status: liveMatch?.status || s.status || "SCAN_QR_CODE",
+      success: true,
+      sessions,
+      groups,
+      rsvpGroups: groups,
+      guests: attendingGuests,
+      totalGuests: attendingGuests.length,
+      sentCount: attendingGuests.filter((g) => g.invitationSent).length,
+      remainingCount: attendingGuests.filter((g) => !g.invitationSent).length,
+      config: mergedConfig,
     };
-  });
-
-  // Also include any sessions from WAHA not already present
-  for (const sess of sessions) {
-    const exists = mergedSenders.some(
-      (s: any) => (s.wahaSession || "").toLowerCase() === sess.name.toLowerCase()
-    );
-    if (!exists) {
-      mergedSenders.push({
-        id: sess.name.toLowerCase(),
-        name: sess.pushName || sess.name,
-        wahaSession: sess.name,
-        phone: sess.phone || "",
-        status: sess.status,
-      });
-    }
+  } catch (err: any) {
+    console.error("status.get unhandled error:", err);
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Internal Server Error",
+      message: `Failed to load campaign status: ${err?.message || String(err)}`,
+    });
   }
-
-  const mergedConfig = {
-    ...savedConfig,
-    senders: mergedSenders,
-  };
-
-  return {
-    success: true,
-    sessions,
-    groups,
-    rsvpGroups: groups,
-    guests: attendingGuests,
-    totalGuests: attendingGuests.length,
-    sentCount: attendingGuests.filter((g) => g.invitationSent).length,
-    remainingCount: attendingGuests.filter((g) => !g.invitationSent).length,
-    config: mergedConfig,
-  };
 });
