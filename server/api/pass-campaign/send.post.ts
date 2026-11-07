@@ -24,16 +24,16 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
   const body = await readBody(event);
+  const targetId = body?.rsvpId || body?.guestId;
   const {
-    rsvpId,
-    session,
     customTemplate,
     attachImage = true,
     mode = "automated", // "automated" | "manual"
   } = body || {};
+  let targetSession = body?.session;
 
-  if (!rsvpId) {
-    throw createError({ statusCode: 400, message: "rsvpId is required" });
+  if (!targetId) {
+    throw createError({ statusCode: 400, message: "rsvpId or guestId is required" });
   }
 
   const config = useRuntimeConfig();
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   });
 
   const res = await client.collection("rsvp_records").find({
-    where: { id: { equals: rsvpId } },
+    where: { id: { equals: targetId } },
     limit: 1,
     depth: 1,
   });
@@ -51,6 +51,24 @@ export default defineEventHandler(async (event) => {
 
   if (!rsvp) {
     throw createError({ statusCode: 404, message: "Guest RSVP record not found" });
+  }
+
+  // If session wasn't explicitly passed, check campaign routing in site_settings
+  if (!targetSession) {
+    try {
+      const settings = (await client.global("site_settings").get()) as any;
+      const passConfig = settings?.passCampaignConfig;
+      const groupId = typeof rsvp.group === "object" ? rsvp.group?.id : rsvp.group;
+      if (groupId && passConfig?.groupSenderMap?.[groupId]) {
+        const senderId = passConfig.groupSenderMap[groupId];
+        const match = (passConfig.senders || []).find((s: any) => s.id === senderId);
+        if (match?.wahaSession) {
+          targetSession = match.wahaSession;
+        }
+      }
+    } catch {
+      // fallback to default
+    }
   }
 
   const rawPhone = (rsvp.leadPhone || "").trim();
@@ -135,13 +153,13 @@ Adun & Uche`;
       to: rawPhone,
       text: rendered,
       imageUrl: attachImage ? cardImageUrl : undefined,
-      session: session || undefined,
+      session: targetSession || undefined,
     });
   }
 
   // Stamp record as sent
   const nowIso = new Date().toISOString();
-  await client.collection("rsvp_records").update(rsvpId, {
+  await client.collection("rsvp_records").update(targetId, {
     invitationSent: true,
     invitationSentAt: nowIso,
     invitationSentVia: "whatsapp",
@@ -155,7 +173,7 @@ Adun & Uche`;
     renderedMessage: rendered,
     waUrl,
     cardImageUrl,
-    sessionUsed: session || "default",
+    sessionUsed: targetSession || "default",
     sentAt: nowIso,
   };
 });

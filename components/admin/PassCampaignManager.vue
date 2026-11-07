@@ -3,7 +3,7 @@
     <!-- Top Bar: Sender Segmented Controls + Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
       <!-- Senders Tabs -->
-      <div class="flex flex-wrap items-center gap-1">
+      <div class="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           @click="activeSenderTab = 'all'"
@@ -24,6 +24,17 @@
           class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5"
           :class="activeSenderTab === s.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
         >
+          <!-- Session Status Indicator -->
+          <span
+            class="w-2 h-2 rounded-full shrink-0"
+            :class="{
+              'bg-emerald-500': s.status === 'WORKING',
+              'bg-amber-400': s.status === 'SCAN_QR_CODE',
+              'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
+              'bg-slate-300': !s.status || s.status === 'UNKNOWN'
+            }"
+            :title="`WAHA Session: ${s.wahaSession} (${s.status || 'Offline'})`"
+          />
           <span>{{ s.name }}</span>
           <span
             class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -38,6 +49,19 @@
       <div class="flex items-center gap-2">
         <button
           type="button"
+          @click="fetchData"
+          :disabled="loading"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
+          title="Fetch latest phones and session statuses from WAHA"
+        >
+          <svg class="w-3.5 h-3.5 text-slate-500" :class="{ 'animate-spin': loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Sync from WAHA</span>
+        </button>
+
+        <button
+          type="button"
           @click="showSettings = !showSettings"
           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition"
         >
@@ -47,19 +71,6 @@
           </svg>
           <span>{{ showSettings ? "Hide Settings" : "Configure Routing" }}</span>
         </button>
-
-        <button
-          type="button"
-          @click="fetchData"
-          :disabled="loading"
-          class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
-          title="Refresh Data"
-        >
-          <svg class="w-3.5 h-3.5 text-slate-500" :class="{ 'animate-spin': loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Refresh</span>
-        </button>
       </div>
     </div>
 
@@ -67,27 +78,61 @@
     <div v-if="showSettings" class="p-4 border border-slate-200 bg-slate-50 rounded-lg space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 pb-2">
         <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Campaign Routing & Dispatch Settings</h3>
-        <span class="text-xs text-slate-500">Divides send volume across 4 phones to prevent WhatsApp rate limits</span>
+        <span class="text-xs text-slate-500">Live phone numbers retrieved from WAHA WhatsApp sessions</span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Phone Senders -->
+        <!-- Live WAHA Senders -->
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-slate-700 block">Dispatch Phones</label>
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-slate-700">Dispatch Phones (WAHA)</label>
+            <span class="text-[10px] text-slate-500 font-mono">{{ wahaSessions.length }} active session(s)</span>
+          </div>
+
           <div class="space-y-2">
             <div
               v-for="s in config.senders"
               :key="s.id"
-              class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded text-xs"
+              class="p-2.5 bg-white border border-slate-200 rounded text-xs space-y-1.5"
             >
-              <span class="w-20 font-medium text-slate-800">{{ s.name }}</span>
-              <input
-                type="text"
-                v-model="s.phone"
-                placeholder="23480..."
-                class="flex-1 px-2 py-1 border border-slate-200 rounded text-xs text-slate-800 font-mono focus:border-slate-400 focus:outline-none"
-              />
-              <span class="text-[10px] text-slate-400 font-mono">{{ s.wahaSession }}</span>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 font-medium text-slate-800">
+                  <span
+                    class="w-2 h-2 rounded-full shrink-0"
+                    :class="{
+                      'bg-emerald-500': s.status === 'WORKING',
+                      'bg-amber-400': s.status === 'SCAN_QR_CODE',
+                      'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
+                      'bg-slate-300': !s.status || s.status === 'UNKNOWN'
+                    }"
+                  />
+                  <span>{{ s.name }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-[10px]">
+                  <span class="font-mono text-slate-400">{{ s.wahaSession }}</span>
+                  <span
+                    class="px-1.5 py-0.2 rounded font-medium"
+                    :class="{
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200': s.status === 'WORKING',
+                      'bg-amber-50 text-amber-700 border border-amber-200': s.status === 'SCAN_QR_CODE',
+                      'bg-rose-50 text-rose-700 border border-rose-200': s.status === 'FAILED' || s.status === 'STOPPED',
+                      'bg-slate-100 text-slate-600': !s.status
+                    }"
+                  >
+                    {{ s.status || "DISCONNECTED" }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] text-slate-500">Phone:</span>
+                <input
+                  type="text"
+                  v-model="s.phone"
+                  placeholder="Awaiting QR Scan..."
+                  class="flex-1 px-2 py-1 border border-slate-200 rounded text-xs text-slate-800 font-mono bg-slate-50/50 focus:border-slate-400 focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -95,7 +140,7 @@
         <!-- RSVP Group Mappings -->
         <div class="space-y-2">
           <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
-          <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
             <div
               v-for="grp in rsvpGroups"
               :key="grp.id"
@@ -103,14 +148,14 @@
             >
               <div class="flex flex-col">
                 <span class="font-medium text-slate-800">{{ grp.name }}</span>
-                <span class="text-[10px] text-slate-400">{{ grp.guestCount || 0 }} confirmed guests</span>
+                <span class="text-[10px] text-slate-400">{{ getGroupGuestCount(grp.id) }} confirmed guests</span>
               </div>
               <select
                 v-model="config.groupSenderMap[grp.id]"
                 class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
               >
                 <option v-for="s in config.senders" :key="s.id" :value="s.id">
-                  {{ s.name }}
+                  {{ s.name }} ({{ s.phone ? formatPhoneDisplay(s.phone) : s.wahaSession }})
                 </option>
               </select>
             </div>
@@ -308,9 +353,17 @@
 
               <!-- Assigned Sender -->
               <td class="px-3.5 py-2.5">
-                <span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700">
-                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  {{ getAssignedSenderName(guest.group) }}
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700">
+                  <span
+                    class="w-1.5 h-1.5 rounded-full shrink-0"
+                    :class="{
+                      'bg-emerald-500': getAssignedSenderStatus(guest.group) === 'WORKING',
+                      'bg-amber-400': getAssignedSenderStatus(guest.group) === 'SCAN_QR_CODE',
+                      'bg-rose-500': getAssignedSenderStatus(guest.group) === 'FAILED',
+                      'bg-slate-300': !getAssignedSenderStatus(guest.group)
+                    }"
+                  />
+                  <span>{{ getAssignedSenderName(guest.group) }}</span>
                 </span>
               </td>
 
@@ -404,11 +457,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 
+interface WahaSessionInfo {
+  name: string;
+  status: string;
+  phone: string | null;
+  pushName?: string;
+}
+
 interface SenderConfig {
   id: string;
   name: string;
   phone: string;
   wahaSession: string;
+  status?: string;
 }
 
 interface CampaignSettings {
@@ -458,12 +519,14 @@ const isPaused = ref(false);
 const currentPage = ref(1);
 const pageSize = ref(25);
 
+const wahaSessions = ref<WahaSessionInfo[]>([]);
+
 const config = ref<CampaignSettings>({
   senders: [
-    { id: "groom", name: "Groom", phone: "2348000000001", wahaSession: "groom" },
-    { id: "bride", name: "Bride", phone: "2348000000002", wahaSession: "bride" },
-    { id: "adun", name: "Adun", phone: "2348000000003", wahaSession: "adun" },
-    { id: "busola", name: "My Phone", phone: "2348000000004", wahaSession: "default" },
+    { id: "groom", name: "Groom", phone: "", wahaSession: "Groom", status: "SCAN_QR_CODE" },
+    { id: "bride", name: "Bride", phone: "", wahaSession: "Bride", status: "SCAN_QR_CODE" },
+    { id: "adun", name: "Adun", phone: "2347086492639", wahaSession: "AdunsPhone", status: "FAILED" },
+    { id: "busola", name: "My Phone", phone: "2347065055605", wahaSession: "default", status: "WORKING" },
   ],
   groupSenderMap: {},
   paceSeconds: 8,
@@ -487,6 +550,13 @@ const activeSenderLabel = computed(() => {
   return s ? s.name : "Assigned Sender";
 });
 
+function getGroupGuestCount(groupId: string): number {
+  return guests.value.filter((g) => {
+    const gid = typeof g.group === "object" && g.group ? g.group.id : g.group;
+    return gid === groupId;
+  }).length;
+}
+
 function senderPendingCount(senderId: string): number {
   return guests.value.filter((g) => {
     if (g.invitationSent) return false;
@@ -500,14 +570,21 @@ function resolveSenderForGuest(guest: GuestRecord): string {
   if (groupId && config.value.groupSenderMap[groupId]) {
     return config.value.groupSenderMap[groupId];
   }
-  return "default";
+  return "busola"; // default to My Phone / default session
 }
 
 function getAssignedSenderName(group: any): string {
   const groupId = typeof group === "object" && group ? group.id : group;
   const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
-  const s = config.value.senders.find((x) => x.id === senderId);
+  const s = config.value.senders.find((x) => x.id === (senderId || "busola"));
   return s ? s.name : "Default";
+}
+
+function getAssignedSenderStatus(group: any): string {
+  const groupId = typeof group === "object" && group ? group.id : group;
+  const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
+  const s = config.value.senders.find((x) => x.id === (senderId || "busola"));
+  return s?.status || "";
 }
 
 function getGroupName(group: any): string {
@@ -584,7 +661,7 @@ function buildWaLink(guest: GuestRecord): string {
   const phone = (guest.leadPhone || "").replace(/[^\d]/g, "");
   const passCode = guest.passCode || guest.id;
   const guestName = guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : guest.leadName;
-  const passUrl = `https://thesweetunion.com/pass/${passCode}`;
+  const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
 
   const text = [
     `Dear ${guestName},`,
@@ -605,14 +682,39 @@ function buildWaLink(guest: GuestRecord): string {
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
+function syncWahaSessionsIntoSenders(sessions: WahaSessionInfo[]) {
+  wahaSessions.value = sessions;
+  for (const sess of sessions) {
+    const existing = config.value.senders.find(
+      (s) => s.wahaSession.toLowerCase() === sess.name.toLowerCase()
+    );
+    if (existing) {
+      existing.status = sess.status;
+      if (sess.phone) existing.phone = sess.phone;
+    } else {
+      // Add as new sender if session is configured in WAHA
+      config.value.senders.push({
+        id: sess.name.toLowerCase(),
+        name: sess.pushName || sess.name,
+        phone: sess.phone || "",
+        wahaSession: sess.name,
+        status: sess.status,
+      });
+    }
+  }
+}
+
 async function fetchData() {
   loading.value = true;
   try {
     const res: any = await $fetch("/api/pass-campaign/status");
     if (res.success) {
       if (res.config) config.value = { ...config.value, ...res.config };
-      rsvpGroups.value = res.rsvpGroups || [];
+      rsvpGroups.value = res.rsvpGroups || res.groups || [];
       guests.value = res.guests || [];
+      if (Array.isArray(res.sessions)) {
+        syncWahaSessionsIntoSenders(res.sessions);
+      }
     }
   } catch (err: any) {
     console.error("Failed to load pass campaign data:", err);
@@ -662,10 +764,17 @@ async function sendTestPass() {
 
 async function sendSinglePass(guest: GuestRecord) {
   sendingId.value = guest.id;
+  const senderId = resolveSenderForGuest(guest);
+  const sender = config.value.senders.find((s) => s.id === senderId);
+  const wahaSession = sender?.wahaSession || "default";
+
   try {
     const res: any = await $fetch("/api/pass-campaign/send", {
       method: "POST",
-      body: { guestId: guest.id },
+      body: {
+        rsvpId: guest.id,
+        session: wahaSession,
+      },
     });
     if (res.success) {
       guest.invitationSent = true;
@@ -698,10 +807,17 @@ async function startAutoDispatch() {
     if (!isDispatching.value) break;
 
     currentProcessingId.value = guest.id;
+    const senderId = resolveSenderForGuest(guest);
+    const sender = config.value.senders.find((s) => s.id === senderId);
+    const wahaSession = sender?.wahaSession || "default";
+
     try {
       const res: any = await $fetch("/api/pass-campaign/send", {
         method: "POST",
-        body: { guestId: guest.id },
+        body: {
+          rsvpId: guest.id,
+          session: wahaSession,
+        },
       });
       if (res.success) {
         guest.invitationSent = true;
