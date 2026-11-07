@@ -34,7 +34,6 @@ interface SenderConfig {
   id: "bride" | "groom" | "adun" | "me";
   label: string;
   subtitle: string;
-  icon: string;
   session: string;
   assignedGroupIds: string[];
 }
@@ -80,7 +79,6 @@ const senders = ref<SenderConfig[]>([
     id: "bride",
     label: "Bride's Phone",
     subtitle: "Bride's Family & Friends",
-    icon: "👰",
     session: "",
     assignedGroupIds: [],
   },
@@ -88,7 +86,6 @@ const senders = ref<SenderConfig[]>([
     id: "groom",
     label: "Groom's Phone",
     subtitle: "Groom's Family & Friends",
-    icon: "🤵",
     session: "",
     assignedGroupIds: [],
   },
@@ -96,7 +93,6 @@ const senders = ref<SenderConfig[]>([
     id: "adun",
     label: "Adun's Phone",
     subtitle: "VIPs & Church Groups",
-    icon: "📱",
     session: "AdunsPhone",
     assignedGroupIds: [],
   },
@@ -104,7 +100,6 @@ const senders = ref<SenderConfig[]>([
     id: "me",
     label: "My Phone",
     subtitle: "Colleagues & General Guests",
-    icon: "🛠️",
     session: "",
     assignedGroupIds: [],
   },
@@ -452,22 +447,21 @@ onUnmounted(() => {
 
 <template>
   <div class="pass-campaign-app">
-    <!-- Header -->
-    <header class="campaign-header">
-      <div class="header-titles">
-        <h1 class="header-title">🎉 Wedding Pass Distribution Campaign</h1>
-        <p class="header-desc">
-          Safely dispatch personalized VIP Access Cards and Reception FAQs across 4 phones to prevent WhatsApp bot detection.
-        </p>
-      </div>
-
-      <div class="header-actions">
-        <button type="button" class="btn-refresh" :disabled="loading" @click="loadData">
-          <span v-if="loading" class="spin">↻</span>
-          <span v-else>↻ Refresh Data</span>
-        </button>
-      </div>
-    </header>
+    <!-- Top Action Bar -->
+    <div class="campaign-action-bar">
+      <div />
+      <button type="button" class="btn-refresh" :disabled="loading" @click="loadData">
+        <svg v-if="loading" class="w-3.5 h-3.5 spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        <span>Refresh Data</span>
+      </button>
+    </div>
 
     <!-- Top KPI Row -->
     <section class="kpi-grid">
@@ -488,7 +482,7 @@ onUnmounted(() => {
       </div>
       <div class="kpi-card" :class="{ 'kpi-alert': unassignedGroups.length > 0 }">
         <span class="kpi-label">Group Assignment Health</span>
-        <span class="kpi-val">{{ unassignedGroups.length === 0 ? "✓ 100%" : `${unassignedGroups.length} Unassigned` }}</span>
+        <span class="kpi-val">{{ unassignedGroups.length === 0 ? "100%" : `${unassignedGroups.length} Unassigned` }}</span>
         <span class="kpi-sub">{{ unassignedGroups.length === 0 ? "All groups mapped to a phone" : "Assign remaining groups below" }}</span>
       </div>
     </section>
@@ -504,7 +498,22 @@ onUnmounted(() => {
           :class="{ active: activeSenderId === s.id }"
           @click="activeSenderId = s.id"
         >
-          <span class="tab-icon">{{ s.icon }}</span>
+          <span class="tab-icon-wrap">
+            <svg v-if="s.id === 'bride'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <svg v-else-if="s.id === 'groom'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <svg v-else-if="s.id === 'adun'" class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+            <svg v-else class="w-5 h-5 text-[#FCE8B3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
           <div class="tab-info">
             <span class="tab-label">{{ s.label }}</span>
             <span class="tab-count">
@@ -524,7 +533,22 @@ onUnmounted(() => {
         <div class="card-box">
           <div class="card-header">
             <div class="sender-pill">
-              <span class="pill-icon">{{ currentSender.icon }}</span>
+              <span class="pill-icon-wrap">
+                <svg v-if="currentSender.id === 'bride'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <svg v-else-if="currentSender.id === 'groom'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <svg v-else-if="currentSender.id === 'adun'" class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <svg v-else class="w-6 h-6 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
               <div>
                 <h3 class="card-title">{{ currentSender.label }} Settings</h3>
                 <p class="card-desc">{{ currentSender.subtitle }}</p>
@@ -572,11 +596,16 @@ onUnmounted(() => {
             <div class="save-bar">
               <button
                 type="button"
-                class="btn-save-settings"
+                class="btn-save-settings inline-flex items-center gap-1.5"
                 :disabled="savingSettings"
                 @click="saveSettings"
               >
-                {{ savingSettings ? "Saving..." : saveSuccess ? "✓ Settings Saved!" : "💾 Save Group Routing & Template" }}
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                <span>{{ savingSettings ? "Saving..." : saveSuccess ? "Settings Saved" : "Save Group Routing & Template" }}</span>
               </button>
             </div>
           </div>
@@ -584,7 +613,12 @@ onUnmounted(() => {
 
         <!-- Dispatcher Controls: Mode A & Mode B -->
         <div class="card-box">
-          <h3 class="card-title">🚀 Dispatch Center for {{ currentSender.label }}</h3>
+          <h3 class="card-title flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
+            <span>Dispatch Center for {{ currentSender.label }}</span>
+          </h3>
           <p class="card-desc">
             Choose whether to automate sending via WAHA with paced human delays, or tap through manually via WhatsApp Web.
           </p>
@@ -593,7 +627,14 @@ onUnmounted(() => {
             <!-- Mode A: Automated Runner -->
             <div class="mode-card">
               <div class="mode-head">
-                <h4 class="mode-title">🤖 Mode A: Automated WAHA Runner</h4>
+                <h4 class="mode-title flex items-center gap-2">
+                  <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                  </svg>
+                  <span>Mode A: Automated WAHA Runner</span>
+                </h4>
                 <span v-if="currentSender.session" class="session-status-badge online">
                   ● Session: {{ currentSender.session }}
                 </span>
@@ -615,22 +656,52 @@ onUnmounted(() => {
                   <button
                     v-if="engineStatus === 'idle' || engineStatus === 'finished'"
                     type="button"
-                    class="btn-start"
+                    class="btn-start flex items-center gap-1.5"
                     :disabled="senderPendingGuests.length === 0 || !currentSender.session"
                     @click="startAutomatedRunner"
                   >
-                    ▶ Start Automated Dispatch
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <span>Start Automated Dispatch</span>
                   </button>
 
                   <template v-else-if="engineStatus === 'running'">
-                    <button type="button" class="btn-pause" @click="pauseRunner">⏸ Pause</button>
-                    <button type="button" class="btn-skip" @click="skipCurrentGuest">⏭ Skip</button>
-                    <button type="button" class="btn-stop" @click="stopRunner">⏹ Stop</button>
+                    <button type="button" class="btn-pause flex items-center gap-1.5" @click="pauseRunner">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                      </svg>
+                      <span>Pause</span>
+                    </button>
+                    <button type="button" class="btn-skip flex items-center gap-1.5" @click="skipCurrentGuest">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 4 15 12 5 20 5 4"/>
+                        <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      <span>Skip</span>
+                    </button>
+                    <button type="button" class="btn-stop flex items-center gap-1.5" @click="stopRunner">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="4" y="4" width="16" height="16"/>
+                      </svg>
+                      <span>Stop</span>
+                    </button>
                   </template>
 
                   <template v-else-if="engineStatus === 'paused'">
-                    <button type="button" class="btn-resume" @click="resumeRunner">▶ Resume</button>
-                    <button type="button" class="btn-stop" @click="stopRunner">⏹ Stop</button>
+                    <button type="button" class="btn-resume flex items-center gap-1.5" @click="resumeRunner">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                      <span>Resume</span>
+                    </button>
+                    <button type="button" class="btn-stop flex items-center gap-1.5" @click="stopRunner">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="4" y="4" width="16" height="16"/>
+                      </svg>
+                      <span>Stop</span>
+                    </button>
                   </template>
                 </div>
               </div>
@@ -655,7 +726,12 @@ onUnmounted(() => {
             <!-- Mode B: Manual Click-to-Send -->
             <div class="mode-card">
               <div class="mode-head">
-                <h4 class="mode-title">💬 Mode B: Assisted Click-to-Send (wa.me)</h4>
+                <h4 class="mode-title flex items-center gap-2">
+                  <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span>Mode B: Assisted Click-to-Send (wa.me)</span>
+                </h4>
                 <span class="tag-safe">100% Ban-Proof</span>
               </div>
               <p class="mode-desc">
@@ -663,8 +739,12 @@ onUnmounted(() => {
               </p>
 
               <div class="manual-queue-container">
-                <div v-if="senderPendingGuests.length === 0" class="empty-queue-msg">
-                  🎉 All passes in this sender's groups have been dispatched!
+                <div v-if="senderPendingGuests.length === 0" class="empty-queue-msg flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  <span>All passes in this sender's groups have been dispatched!</span>
                 </div>
                 <div v-else class="queue-list">
                   <div
@@ -705,7 +785,15 @@ onUnmounted(() => {
         <!-- Activity Log -->
         <div class="card-box">
           <div class="log-header">
-            <h3 class="card-title">📜 Dispatch Delivery Log</h3>
+            <h3 class="card-title flex items-center gap-2">
+              <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              <span>Dispatch Delivery Log</span>
+            </h3>
             <span class="log-count">{{ activityLog.length }} events recorded</span>
           </div>
 
@@ -748,7 +836,13 @@ onUnmounted(() => {
         <!-- Live Preview Card -->
         <div class="card-box">
           <div class="preview-header">
-            <h3 class="card-title">📱 WhatsApp Message Preview</h3>
+            <h3 class="card-title flex items-center gap-2">
+              <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+              </svg>
+              <span>WhatsApp Message Preview</span>
+            </h3>
             <span class="badge-preview">Live Render</span>
           </div>
 
@@ -783,7 +877,13 @@ onUnmounted(() => {
 
         <!-- Template Editor -->
         <div class="card-box">
-          <h3 class="card-title">✏️ Message Template Editor</h3>
+          <h3 class="card-title flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            <span>Message Template Editor</span>
+          </h3>
           <p class="card-desc">
             Available tags: <code class="tag-code">[Greeting]</code>, <code class="tag-code">[Guest Name]</code>, <code class="tag-code">[PASS_CODE]</code>, <code class="tag-code">[PASS_URL]</code>, <code class="tag-code">[Church Venue & Time]</code>, <code class="tag-code">[Reception Venue & Time]</code>, <code class="tag-code">[Dress Code]</code>, <code class="tag-code">[Wishlist Link]</code>
           </p>
@@ -816,7 +916,13 @@ onUnmounted(() => {
 
         <!-- Test Message Box -->
         <div class="card-box">
-          <h3 class="card-title">🧪 Send Test Pass to Your Phone</h3>
+          <h3 class="card-title flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2v7.31L4.35 18A2 2 0 0 0 6.07 21h11.86a2 2 0 0 0 1.72-3L14 9.31V2"/>
+              <line x1="8" y1="2" x2="16" y2="2"/>
+            </svg>
+            <span>Send Test Pass to Phone</span>
+          </h3>
           <p class="card-desc">
             Send a sample pass card and rendered message directly to your phone to preview how it arrives in WhatsApp.
           </p>
@@ -848,34 +954,18 @@ onUnmounted(() => {
 
 <style scoped>
 .pass-campaign-app {
-  padding: 24px;
-  background: #140c12;
+  padding: 0;
+  background: transparent;
   color: #faf5f8;
-  min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Header */
-.campaign-header {
+/* Action Bar */
+.campaign-action-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #fce8b3;
-  margin: 0 0 4px 0;
-}
-
-.header-desc {
-  font-size: 0.875rem;
-  color: rgba(250, 245, 248, 0.7);
-  margin: 0;
+  margin-bottom: 16px;
 }
 
 .btn-refresh {
