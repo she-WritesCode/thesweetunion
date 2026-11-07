@@ -9,6 +9,27 @@ const DEFAULT_SENDERS = [
   { id: "busola", name: "My Phone", phone: "2347065055605", wahaSession: "default", status: "WORKING" },
 ];
 
+const DEFAULT_MESSAGE_TEMPLATE = `Dear [Guest Name],
+
+We are delighted to confirm your RSVP for our wedding celebration!
+
+Your VIP Reception Access Pass is ready:
+Pass Code: [PASS_CODE]
+Digital Pass & Entry Card: [PASS_URL]
+
+CHURCH CEREMONY: [Church Venue & Time]
+(Open to all friends & family)
+
+RECEPTION: [Reception Venue & Time]
+(Strictly by digital access card or pass code)
+
+DRESS CODE: [Dress Code]
+GIFTS & REGISTRY: [Wishlist Link]
+
+We can't wait to celebrate with you!
+With love,
+Adun & Uche`;
+
 export default defineEventHandler(async (event) => {
   try {
     await requireAdmin(event);
@@ -57,16 +78,34 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 2. Fetch Dyrected Collections & Globals
+    // 2. Fetch Dyrected Collections & Globals safely using async handlers
     const client = createClient({
       baseUrl: config.dyrectedUrl,
       apiKey: config.dyrectedApiKey,
     });
 
     const [groupsRes, allRsvpRes, settingsRes] = await Promise.all([
-      client.collection("rsvp_groups").find({ limit: 200, depth: 0 }).catch(() => ({ docs: [] })),
-      client.collection("rsvp_records").find({ limit: 1000, depth: 1 }).catch(() => ({ docs: [] })),
-      client.global("site_settings").get().catch(() => null) as Promise<any>,
+      (async () => {
+        try {
+          return await client.collection("rsvp_groups").find({ limit: 200, depth: 0 });
+        } catch {
+          return { docs: [] };
+        }
+      })(),
+      (async () => {
+        try {
+          return await client.collection("rsvp_records").find({ limit: 1000, depth: 1 });
+        } catch {
+          return { docs: [] };
+        }
+      })(),
+      (async () => {
+        try {
+          return await client.global("site_settings").get();
+        } catch {
+          return null;
+        }
+      })(),
     ]);
 
     const groupsList = Array.isArray(groupsRes) ? groupsRes : (groupsRes?.docs || []);
@@ -157,6 +196,8 @@ export default defineEventHandler(async (event) => {
     const mergedConfig = {
       ...savedConfig,
       senders: mergedSenders,
+      messageTemplate: savedConfig.messageTemplate || DEFAULT_MESSAGE_TEMPLATE,
+      paceSeconds: savedConfig.paceSeconds || 8,
     };
 
     return {

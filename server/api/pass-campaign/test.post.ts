@@ -23,24 +23,24 @@ export default defineEventHandler(async (event) => {
   const receptionInfo = "Saturday, Nov 21, 2026 @ 02:00 PM — Agege, Lagos (Details on Pass Card)";
   const dressCode = "Strictly Formal / African Regal (Mauve & Gold)";
 
-  const defaultTemplate = `[Greeting]
+  const defaultTemplate = `Dear [Guest Name],
 
-We can't wait to celebrate with you at #TheSweetUnion! 💍✨
+We are delighted to confirm your RSVP for our wedding celebration!
 
-🎟️ YOUR RECEPTION PASS:
-Your digital pass code is [PASS_CODE].
-Access your official entry card and itinerary here:
-[PASS_URL]
+Your VIP Reception Access Pass is ready:
+Pass Code: [PASS_CODE]
+Digital Pass & Entry Card: [PASS_URL]
 
-⚠️ IMPORTANT VENUE & ENTRY INFO:
-• Church Ceremony: [Church Venue & Time] (Open to all friends and family)
-• Wedding Reception: [Reception Venue & Time]
-  *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
+CHURCH CEREMONY: [Church Venue & Time]
+(Open to all friends & family)
 
-❓ FREQUENTLY ASKED QUESTIONS:
-• Colors / Dress Code: [Dress Code]
-• Gifts & Registry: [Wishlist Link]
+RECEPTION: [Reception Venue & Time]
+(Strictly by digital access card or pass code)
 
+DRESS CODE: [Dress Code]
+GIFTS & REGISTRY: [Wishlist Link]
+
+We can't wait to celebrate with you!
 With love,
 Adun & Uche`;
 

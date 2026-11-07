@@ -70,7 +70,7 @@ export default defineConfig({
       }),
       definePage({
         slug: "pass-campaign",
-        label: "Pass Distribution Campaign",
+        label: "Access Card Campaign",
         icon: "Send",
         group: "RSVP",
         collection: "rsvp_records",

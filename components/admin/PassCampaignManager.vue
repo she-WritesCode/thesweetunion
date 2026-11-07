@@ -76,136 +76,254 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span>{{ showSettings ? "Hide Settings" : "Configure Routing" }}</span>
+          <span>{{ showSettings ? "Hide Settings" : "Configure Routing & Message Template" }}</span>
         </button>
       </div>
     </div>
 
     <!-- Collapsible Settings Panel -->
-    <div v-if="showSettings" class="p-4 border border-slate-200 bg-slate-50 rounded-lg space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Campaign Routing & Dispatch Settings</h3>
-        <span class="text-xs text-slate-500">Live phone numbers retrieved from WAHA WhatsApp sessions</span>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Live WAHA Senders -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold text-slate-700">Dispatch Phones (WAHA)</label>
-            <span class="text-[10px] text-slate-500 font-mono">{{ wahaSessions.length }} active session(s)</span>
-          </div>
-
-          <div class="space-y-2">
-            <div
-              v-for="s in config.senders"
-              :key="s.id"
-              class="p-2.5 bg-white border border-slate-200 rounded text-xs space-y-1.5"
+    <div v-if="showSettings" class="p-4 border border-slate-200 bg-slate-50 rounded-lg space-y-4 shadow-xs">
+      <!-- Settings Panel Header with Tab Switcher -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-3">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Campaign Settings</h3>
+          <div class="inline-flex rounded-md p-0.5 bg-slate-200/80">
+            <button
+              type="button"
+              @click="settingsTab = 'template'"
+              class="px-2.5 py-1 text-xs font-medium rounded transition inline-flex items-center gap-1.5"
+              :class="settingsTab === 'template' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
             >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 font-medium text-slate-800">
-                  <span
-                    class="w-2 h-2 rounded-full shrink-0"
-                    :class="{
-                      'bg-emerald-500': s.status === 'WORKING',
-                      'bg-amber-400': s.status === 'SCAN_QR_CODE',
-                      'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
-                      'bg-slate-300': !s.status || s.status === 'UNKNOWN'
-                    }"
-                  />
-                  <span>{{ s.name }}</span>
-                </div>
-                <div class="flex items-center gap-1.5 text-[10px]">
-                  <span class="font-mono text-slate-400">{{ s.wahaSession }}</span>
-                  <span
-                    class="px-1.5 py-0.2 rounded font-medium"
-                    :class="{
-                      'bg-emerald-50 text-emerald-700 border border-emerald-200': s.status === 'WORKING',
-                      'bg-amber-50 text-amber-700 border border-amber-200': s.status === 'SCAN_QR_CODE',
-                      'bg-rose-50 text-rose-700 border border-rose-200': s.status === 'FAILED' || s.status === 'STOPPED',
-                      'bg-slate-100 text-slate-600': !s.status
-                    }"
-                  >
-                    {{ s.status || "DISCONNECTED" }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <span class="text-[11px] text-slate-500">Phone:</span>
-                <input
-                  type="text"
-                  v-model="s.phone"
-                  placeholder="Awaiting QR Scan..."
-                  class="flex-1 px-2 py-1 border border-slate-200 rounded text-xs text-slate-800 font-mono bg-slate-50/50 focus:border-slate-400 focus:outline-none"
-                />
-              </div>
-            </div>
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span>Message Template & Pacing</span>
+            </button>
+            <button
+              type="button"
+              @click="settingsTab = 'routing'"
+              class="px-2.5 py-1 text-xs font-medium rounded transition inline-flex items-center gap-1.5"
+              :class="settingsTab === 'routing' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span>Routing & Senders</span>
+            </button>
           </div>
         </div>
 
-        <!-- RSVP Group Mappings -->
-        <div class="space-y-2">
-          <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
-          <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
-            <div
-              v-for="grp in rsvpGroups"
-              :key="grp.id"
-              class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded text-xs"
-            >
-              <div class="flex flex-col">
-                <span class="font-medium text-slate-800">{{ grp.name }}</span>
-                <span class="text-[10px] text-slate-400">{{ getGroupGuestCount(grp.id) }} confirmed guests</span>
-              </div>
-              <select
-                v-model="config.groupSenderMap[grp.id]"
-                class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
-              >
-                <option v-for="s in config.senders" :key="s.id" :value="s.id">
-                  {{ s.name }} ({{ s.phone ? formatPhoneDisplay(s.phone) : s.wahaSession }})
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Test Send Bar -->
-      <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-medium text-slate-700">Test Send:</span>
-          <input
-            type="text"
-            v-model="testPhone"
-            placeholder="2348012345678"
-            class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-44 focus:border-slate-400 focus:outline-none"
-          />
           <button
             type="button"
-            @click="sendTestPass"
-            :disabled="testing || !testPhone"
-            class="px-3 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
+            @click="saveSettings"
+            :disabled="savingSettings"
+            class="px-3 py-1 text-xs font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1 shadow-xs transition"
           >
-            <svg v-if="testing" class="w-3 h-3 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg v-if="savingSettings" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
               <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
             </svg>
-            <span>Send Test Pass</span>
+            <span>Save Settings</span>
           </button>
         </div>
+      </div>
 
-        <button
-          type="button"
-          @click="saveSettings"
-          :disabled="savingSettings"
-          class="px-4 py-1 text-xs font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1"
-        >
-          <svg v-if="savingSettings" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
-            <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
-          </svg>
-          <span>Save Routing Configuration</span>
-        </button>
+      <!-- Tab 1: Message Template & Pacing -->
+      <div v-if="settingsTab === 'template'" class="space-y-4">
+        <div class="bg-white p-3.5 border border-slate-200 rounded-md space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label class="text-xs font-semibold text-slate-800 block">WhatsApp Invitation Message Template</label>
+              <p class="text-[11px] text-slate-500">
+                Click any tag below to insert it. The personalized Access Card image is automatically attached to each message.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="resetTemplateToDefault"
+              class="text-[11px] font-medium text-slate-500 hover:text-slate-800 underline self-start sm:self-auto"
+            >
+              Reset to Default
+            </button>
+          </div>
+
+          <!-- Clickable Placeholder Chips -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1">
+            <span class="text-[10px] uppercase font-semibold text-slate-400 mr-1">Insert Tag:</span>
+            <button
+              v-for="tag in templateTags"
+              :key="tag.value"
+              type="button"
+              @click="insertTag(tag.value)"
+              class="px-2 py-1 text-[11px] font-mono bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hover:border-slate-300 rounded transition inline-flex items-center gap-1"
+              :title="tag.desc"
+            >
+              <svg class="w-2.5 h-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>{{ tag.value }}</span>
+            </button>
+          </div>
+
+          <!-- Textarea Editor -->
+          <div class="space-y-1">
+            <textarea
+              ref="templateTextarea"
+              v-model="config.messageTemplate"
+              rows="11"
+              class="w-full p-3 font-mono text-xs border border-slate-200 rounded-md bg-white text-slate-900 focus:outline-none focus:border-slate-400 leading-relaxed"
+              placeholder="Enter message template..."
+            ></textarea>
+          </div>
+
+          <!-- Pacing Delay & Preview Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-medium text-slate-700">Dispatch Delay (Pacing):</label>
+              <select
+                v-model="config.paceSeconds"
+                class="px-2.5 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:outline-none focus:border-slate-400"
+              >
+                <option :value="5">5 seconds (Fast)</option>
+                <option :value="8">8 seconds (Recommended)</option>
+                <option :value="10">10 seconds</option>
+                <option :value="15">15 seconds (Safe)</option>
+                <option :value="20">20 seconds (Extra Safe)</option>
+              </select>
+              <span class="text-[11px] text-slate-400 hidden md:inline">Spreads send volume to avoid WhatsApp anti-spam flags.</span>
+            </div>
+
+            <button
+              type="button"
+              @click="showPreview = !showPreview"
+              class="px-2.5 py-1 text-xs font-medium border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded transition"
+            >
+              {{ showPreview ? "Hide Preview" : "Show Guest Preview" }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div v-if="showPreview" class="p-3 bg-white border border-slate-200 rounded-md space-y-2">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-semibold uppercase tracking-wider text-slate-600">Sample Guest Preview</span>
+            <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-medium">
+              + VIP ACCESS CARD (PNG attached)
+            </span>
+          </div>
+          <pre class="font-sans text-xs whitespace-pre-wrap text-slate-800 bg-slate-50/80 p-3 rounded border border-slate-200/80 leading-relaxed max-h-48 overflow-y-auto">{{ previewRendered }}</pre>
+        </div>
+      </div>
+
+      <!-- Tab 2: Routing & Senders -->
+      <div v-if="settingsTab === 'routing'" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Live WAHA Senders -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-700">Dispatch Phones (WAHA)</label>
+              <span class="text-[10px] text-slate-500 font-mono">{{ wahaSessions.length }} active session(s)</span>
+            </div>
+
+            <div class="space-y-2">
+              <div
+                v-for="s in config.senders"
+                :key="s.id"
+                class="p-2.5 bg-white border border-slate-200 rounded text-xs space-y-1.5"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 font-medium text-slate-800">
+                    <span
+                      class="w-2 h-2 rounded-full shrink-0"
+                      :class="{
+                        'bg-emerald-500': s.status === 'WORKING',
+                        'bg-amber-400': s.status === 'SCAN_QR_CODE',
+                        'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
+                        'bg-slate-300': !s.status || s.status === 'UNKNOWN'
+                      }"
+                    />
+                    <span>{{ s.name }}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[10px]">
+                    <span class="font-mono text-slate-400">{{ s.wahaSession }}</span>
+                    <span
+                      class="px-1.5 py-0.2 rounded font-medium"
+                      :class="{
+                        'bg-emerald-50 text-emerald-700 border border-emerald-200': s.status === 'WORKING',
+                        'bg-amber-50 text-amber-700 border border-amber-200': s.status === 'SCAN_QR_CODE',
+                        'bg-rose-50 text-rose-700 border border-rose-200': s.status === 'FAILED' || s.status === 'STOPPED',
+                        'bg-slate-100 text-slate-600': !s.status
+                      }"
+                    >
+                      {{ s.status || "DISCONNECTED" }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-500">Phone:</span>
+                  <input
+                    type="text"
+                    v-model="s.phone"
+                    placeholder="Awaiting QR Scan..."
+                    class="flex-1 px-2 py-1 border border-slate-200 rounded text-xs text-slate-800 font-mono bg-slate-50/50 focus:border-slate-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RSVP Group Mappings -->
+          <div class="space-y-2">
+            <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
+            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+              <div
+                v-for="grp in rsvpGroups"
+                :key="grp.id"
+                class="flex items-center justify-between p-2 bg-white border border-slate-200 rounded text-xs"
+              >
+                <div class="flex flex-col">
+                  <span class="font-medium text-slate-800">{{ grp.name }}</span>
+                  <span class="text-[10px] text-slate-400">{{ getGroupGuestCount(grp.id) }} confirmed guests</span>
+                </div>
+                <select
+                  v-model="config.groupSenderMap[grp.id]"
+                  class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
+                >
+                  <option v-for="s in config.senders" :key="s.id" :value="s.id">
+                    {{ s.name }} ({{ s.phone ? formatPhoneDisplay(s.phone) : s.wahaSession }})
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Send Bar -->
+        <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-medium text-slate-700">Test Send:</span>
+            <input
+              type="text"
+              v-model="testPhone"
+              placeholder="2348012345678"
+              class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-44 focus:border-slate-400 focus:outline-none"
+            />
+            <button
+              type="button"
+              @click="sendTestPass"
+              :disabled="testing || !testPhone"
+              class="px-3 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              <svg v-if="testing" class="w-3 h-3 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
+                <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+              </svg>
+              <span>Send Test Pass</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -512,6 +630,95 @@ const loading = ref(false);
 const savingSettings = ref(false);
 const testing = ref(false);
 const showSettings = ref(false);
+const settingsTab = ref<"template" | "routing">("template");
+const showPreview = ref(true);
+const templateTextarea = ref<HTMLTextAreaElement | null>(null);
+
+const DEFAULT_MESSAGE_TEMPLATE = `Dear [Guest Name],
+
+We are delighted to confirm your RSVP for our wedding celebration!
+
+Your VIP Reception Access Pass is ready:
+Pass Code: [PASS_CODE]
+Digital Pass & Entry Card: [PASS_URL]
+
+CHURCH CEREMONY: [Church Venue & Time]
+(Open to all friends & family)
+
+RECEPTION: [Reception Venue & Time]
+(Strictly by digital access card or pass code)
+
+DRESS CODE: [Dress Code]
+GIFTS & REGISTRY: [Wishlist Link]
+
+We can't wait to celebrate with you!
+With love,
+Adun & Uche`;
+
+const templateTags = [
+  { value: "[Guest Name]", desc: "Lead guest name (+ spouse if attending)" },
+  { value: "[PASS_CODE]", desc: "6-character unique access code" },
+  { value: "[PASS_URL]", desc: "Link to digital VIP access card & itinerary" },
+  { value: "[Church Venue & Time]", desc: "Church ceremony details" },
+  { value: "[Reception Venue & Time]", desc: "Reception entry details" },
+  { value: "[Dress Code]", desc: "Colors & attire instructions" },
+  { value: "[Wishlist Link]", desc: "Link to wedding gift registry" },
+];
+
+function insertTag(tag: string) {
+  const el = templateTextarea.value;
+  const current = config.value.messageTemplate || DEFAULT_MESSAGE_TEMPLATE;
+  if (!el) {
+    config.value.messageTemplate = current + (current ? " " : "") + tag;
+    return;
+  }
+  const start = el.selectionStart ?? current.length;
+  const end = el.selectionEnd ?? current.length;
+  config.value.messageTemplate = current.substring(0, start) + tag + current.substring(end);
+  setTimeout(() => {
+    el.focus();
+    el.setSelectionRange(start + tag.length, start + tag.length);
+  }, 0);
+}
+
+function resetTemplateToDefault() {
+  if (confirm("Reset WhatsApp message template back to the standard default?")) {
+    config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
+  }
+}
+
+function renderTemplateForGuest(template: string, guest: GuestRecord): string {
+  const tpl = (template || DEFAULT_MESSAGE_TEMPLATE).trim();
+  const passCode = (guest.passCode || guest.id).toUpperCase();
+  const guestName = guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : (guest.leadName || "Guest");
+  const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
+  const wishlistUrl = `https://thesweetunion.com/wishlist`;
+  const churchInfo = "Saturday, Nov 21, 2026 @ 09:30 AM — RCCG Victory Center, No 58 Iju Road, Agege, Lagos";
+  const receptionInfo = "Saturday, Nov 21, 2026 @ 02:00 PM — Agege, Lagos (Details on Pass Card)";
+  const dressCode = "Strictly Formal / African Regal (Mauve & Gold)";
+
+  return tpl
+    .replace(/\[Guest Name\]|\{Guest Name\}|\[guest_name\]|\{guest_name\}/gi, guestName)
+    .replace(/\[PASS_CODE\]|\{PASS_CODE\}|\[pass_code\]|\{pass_code\}/gi, passCode)
+    .replace(/\[PASS_URL\]|\{PASS_URL\}|\[pass_url\]|\{pass_url\}/gi, passUrl)
+    .replace(/\[Church Venue & Time\]|\{Church Venue & Time\}/gi, churchInfo)
+    .replace(/\[Reception Venue & Time\]|\{Reception Venue & Time\}/gi, receptionInfo)
+    .replace(/\[Dress Code\]|\{Dress Code\}|\[dress_code\]|\{dress_code\}/gi, dressCode)
+    .replace(/\[Wishlist Link\]|\{Wishlist Link\}|\[wishlist_link\]|\{wishlist_link\}/gi, wishlistUrl)
+    .replace(/\[Greeting[^\]]*\]|\{Greeting[^\}]*\}/gi, `Dear ${guestName},`);
+}
+
+const previewRendered = computed(() => {
+  const sampleGuest: GuestRecord = {
+    id: "sample",
+    leadName: "Dr. Oluwaseun Adeleke",
+    hasSpouse: true,
+    spouseName: "Mrs. Folashade Adeleke",
+    passCode: "WD6DUF",
+    leadPhone: "2348012345678",
+  };
+  return renderTemplateForGuest(config.value.messageTemplate, sampleGuest);
+});
 
 const activeSenderTab = ref<string>("all");
 const searchQuery = ref("");
@@ -667,26 +874,7 @@ const displayedGuests = computed(() => {
 
 function buildWaLink(guest: GuestRecord): string {
   const phone = (guest.leadPhone || "").replace(/[^\d]/g, "");
-  const passCode = guest.passCode || guest.id;
-  const guestName = guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : guest.leadName;
-  const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
-
-  const text = [
-    `Dear ${guestName},`,
-    ``,
-    `We are delighted to confirm your RSVP for our wedding celebration!`,
-    ``,
-    `Your VIP Reception Access Pass is ready:`,
-    `Pass Code: ${passCode}`,
-    `Digital Pass & Entry Card: ${passUrl}`,
-    ``,
-    `CHURCH CEREMONY: 10:00 AM (Open to all friends & family)`,
-    `RECEPTION: Strictly by digital access card or pass code.`,
-    `DRESS CODE: Mauve & Gold / African Regal`,
-    ``,
-    `We can't wait to celebrate with you!`,
-  ].join("\n");
-
+  const text = renderTemplateForGuest(config.value.messageTemplate, guest);
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
@@ -750,7 +938,14 @@ async function fetchData() {
     });
     if (res.success) {
       if (res.config) {
-        config.value = { ...config.value, ...res.config };
+        config.value = {
+          ...config.value,
+          ...res.config,
+          messageTemplate: res.config.messageTemplate || DEFAULT_MESSAGE_TEMPLATE,
+          paceSeconds: res.config.paceSeconds || 8,
+        };
+      } else if (!config.value.messageTemplate) {
+        config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
       }
       rsvpGroups.value = res.rsvpGroups || res.groups || [];
       guests.value = res.guests || [];
@@ -782,9 +977,10 @@ async function saveSettings() {
         senders: config.value.senders,
         groupSenderMap: config.value.groupSenderMap,
         paceSeconds: config.value.paceSeconds,
+        messageTemplate: config.value.messageTemplate,
       },
     });
-    showSettings.value = false;
+    alert("Campaign settings and message template saved successfully!");
   } catch (err: any) {
     alert("Failed to save settings: " + (err.data?.message || err.message));
   } finally {
@@ -799,7 +995,10 @@ async function sendTestPass() {
     const res: any = await $fetch("/api/pass-campaign/test", {
       method: "POST",
       headers: adminAuthHeaders(),
-      body: { phone: testPhone.value },
+      body: {
+        phone: testPhone.value,
+        customTemplate: config.value.messageTemplate,
+      },
     });
     if (res.success) {
       alert(`Test pass sent to ${testPhone.value}`);
@@ -826,6 +1025,7 @@ async function sendSinglePass(guest: GuestRecord) {
       body: {
         rsvpId: guest.id,
         session: wahaSession,
+        customTemplate: config.value.messageTemplate,
       },
     });
     if (res.success) {
@@ -870,6 +1070,7 @@ async function startAutoDispatch() {
         body: {
           rsvpId: guest.id,
           session: wahaSession,
+          customTemplate: config.value.messageTemplate,
         },
       });
       if (res.success) {
