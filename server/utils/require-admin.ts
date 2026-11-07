@@ -1,9 +1,14 @@
-import { createError, getHeader, type H3Event } from "h3";
+import { createError, getHeader, getCookie, type H3Event } from "h3";
 import { jwtVerify } from "jose";
 
 export async function requireAdmin(event: H3Event) {
   const authorization = getHeader(event, "authorization");
-  const token = authorization?.replace(/^Bearer\s+/i, "");
+  let token = authorization?.replace(/^Bearer\s+/i, "");
+
+  if (!token) {
+    token = getCookie(event, "__dyrected_token") || getCookie(event, "dyrected_token");
+  }
+
   const secret = process.env.DYRECTED_JWT_SECRET || process.env.JWT_SECRET;
 
   if (!token || !secret) {
