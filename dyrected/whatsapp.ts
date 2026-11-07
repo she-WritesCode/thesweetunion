@@ -1,8 +1,30 @@
 /** Normalise a Nigerian/E.164 phone number to digits only, country code first (e.g. 2348012345678). */
 export function normalizeWhatsAppNumber(raw: string): string {
-  const value = (raw || "").trim();
-  if (value.startsWith("+")) return value.replace(/\D/g, "");
-  return `234${value.replace(/^0/, "").replace(/\D/g, "")}`;
+  let digits = (raw || "").trim().replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Guard against duplicate country codes (e.g. 2342348...)
+  while (digits.startsWith("234234")) {
+    digits = digits.slice(3);
+  }
+
+  // Nigerian local standard: 080..., 070..., 081..., 090... -> strip 0 and prepend 234
+  if (digits.startsWith("0")) {
+    return `234${digits.slice(1)}`;
+  }
+
+  // Already prefixed with 234 (e.g. 2348012345678)
+  if (digits.startsWith("234")) {
+    return digits;
+  }
+
+  // 10-digit Nigerian number without leading 0 (e.g. 8012345678)
+  if (digits.length === 10) {
+    return `234${digits}`;
+  }
+
+  // Any other international number
+  return digits;
 }
 
 /** Send a text or image message through a self-hosted WAHA instance (https://waha.devlike.pro). */

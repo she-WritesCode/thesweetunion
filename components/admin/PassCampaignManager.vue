@@ -17,6 +17,21 @@
         </button>
 
         <button
+          type="button"
+          @click="activeSenderTab = 'unassigned'"
+          class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5"
+          :class="activeSenderTab === 'unassigned' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+        >
+          <span>Unassigned</span>
+          <span
+            class="px-1.5 py-0.2 rounded-full text-[10px]"
+            :class="activeSenderTab === 'unassigned' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'"
+          >
+            {{ unassignedPendingCount }}
+          </span>
+        </button>
+
+        <button
           v-for="s in config.senders"
           :key="s.id"
           type="button"
@@ -276,7 +291,17 @@
 
           <!-- RSVP Group Mappings -->
           <div class="space-y-2">
-            <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
+              <button
+                type="button"
+                @click="unassignAllGroups"
+                class="text-[11px] text-rose-600 hover:text-rose-700 font-medium underline"
+                title="Clear all sender assignments"
+              >
+                Unassign All Groups
+              </button>
+            </div>
             <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
               <div
                 v-for="grp in rsvpGroups"
@@ -291,6 +316,7 @@
                   v-model="config.groupSenderMap[grp.id]"
                   class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
                 >
+                  <option value="">-- Unassigned --</option>
                   <option v-for="s in config.senders" :key="s.id" :value="s.id">
                     {{ s.name }} ({{ s.phone ? formatPhoneDisplay(s.phone) : s.wahaSession }})
                   </option>
@@ -302,13 +328,22 @@
 
         <!-- Test Send Bar -->
         <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-medium text-slate-700">Test Send:</span>
+            <select
+              v-model="testSenderSession"
+              class="px-2 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
+              title="Select which WhatsApp session sends the test message"
+            >
+              <option v-for="s in config.senders" :key="s.id" :value="s.wahaSession">
+                From: {{ s.name }} ({{ s.wahaSession }})
+              </option>
+            </select>
             <input
               type="text"
               v-model="testPhone"
-              placeholder="2348012345678"
-              class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-44 focus:border-slate-400 focus:outline-none"
+              placeholder="e.g. 08105733592 or 2348105733592"
+              class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-52 focus:border-slate-400 focus:outline-none"
             />
             <button
               type="button"
@@ -478,7 +513,10 @@
 
               <!-- Assigned Sender -->
               <td class="px-3.5 py-2.5">
-                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700">
+                <span
+                  v-if="getAssignedSenderName(guest.group) !== 'Unassigned'"
+                  class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
+                >
                   <span
                     class="w-1.5 h-1.5 rounded-full shrink-0"
                     :class="{
@@ -489,6 +527,9 @@
                     }"
                   />
                   <span>{{ getAssignedSenderName(guest.group) }}</span>
+                </span>
+                <span v-else class="text-[11px] text-slate-400 italic">
+                  Unassigned
                 </span>
               </td>
 
@@ -724,6 +765,7 @@ const activeSenderTab = ref<string>("all");
 const searchQuery = ref("");
 const statusFilter = ref<"all" | "pending" | "sent">("all");
 const testPhone = ref("");
+const testSenderSession = ref<string>("default");
 
 const sendingId = ref<string | null>(null);
 const currentProcessingId = ref<string | null>(null);
@@ -761,9 +803,20 @@ const progressPercent = computed(() => {
 
 const activeSenderLabel = computed(() => {
   if (activeSenderTab.value === "all") return "All Senders";
+  if (activeSenderTab.value === "unassigned") return "Unassigned Guests";
   const s = config.value.senders.find((s) => s.id === activeSenderTab.value);
   return s ? s.name : "Assigned Sender";
 });
+
+const unassignedPendingCount = computed(() => {
+  return guests.value.filter((g) => !g.invitationSent && resolveSenderForGuest(g) === "unassigned").length;
+});
+
+function unassignAllGroups() {
+  if (confirm("Are you sure you want to unassign all groups?")) {
+    config.value.groupSenderMap = {};
+  }
+}
 
 function getGroupGuestCount(groupId: string): number {
   return guests.value.filter((g) => {
@@ -785,20 +838,22 @@ function resolveSenderForGuest(guest: GuestRecord): string {
   if (groupId && config.value.groupSenderMap[groupId]) {
     return config.value.groupSenderMap[groupId];
   }
-  return "busola"; // default to My Phone / default session
+  return "unassigned";
 }
 
 function getAssignedSenderName(group: any): string {
   const groupId = typeof group === "object" && group ? group.id : group;
   const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
-  const s = config.value.senders.find((x) => x.id === (senderId || "busola"));
-  return s ? s.name : "Default";
+  if (!senderId || senderId === "unassigned") return "Unassigned";
+  const s = config.value.senders.find((x) => x.id === senderId);
+  return s ? s.name : "Unassigned";
 }
 
 function getAssignedSenderStatus(group: any): string {
   const groupId = typeof group === "object" && group ? group.id : group;
   const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
-  const s = config.value.senders.find((x) => x.id === (senderId || "busola"));
+  if (!senderId || senderId === "unassigned") return "";
+  const s = config.value.senders.find((x) => x.id === senderId);
   return s?.status || "";
 }
 
@@ -997,6 +1052,7 @@ async function sendTestPass() {
       headers: adminAuthHeaders(),
       body: {
         phone: testPhone.value,
+        session: testSenderSession.value || undefined,
         customTemplate: config.value.messageTemplate,
       },
     });
@@ -1013,8 +1069,13 @@ async function sendTestPass() {
 }
 
 async function sendSinglePass(guest: GuestRecord) {
-  sendingId.value = guest.id;
   const senderId = resolveSenderForGuest(guest);
+  if (senderId === "unassigned") {
+    alert(`This guest belongs to "${getGroupName(guest.group)}", which is currently Unassigned. Please assign this group to a dispatch phone in "Configure Routing & Message Template" first.`);
+    return;
+  }
+
+  sendingId.value = guest.id;
   const sender = config.value.senders.find((s) => s.id === senderId);
   const wahaSession = sender?.wahaSession || "default";
 
@@ -1060,6 +1121,10 @@ async function startAutoDispatch() {
 
     currentProcessingId.value = guest.id;
     const senderId = resolveSenderForGuest(guest);
+    if (senderId === "unassigned") {
+      console.warn(`Skipping ${guest.leadName}: Group is unassigned.`);
+      continue;
+    }
     const sender = config.value.senders.find((s) => s.id === senderId);
     const wahaSession = sender?.wahaSession || "default";
 

@@ -69,12 +69,26 @@ Adun & Uche`;
 
   const cardImageUrl = `${appUrl}/api/pass/card-image/${samplePassCode.toLowerCase()}.png?name=Test+Guest&code=${samplePassCode}`;
 
-  await sendWhatsApp({
-    to: phone,
-    text: rendered,
-    imageUrl: attachImage ? cardImageUrl : undefined,
-    session: session || undefined,
-  });
+  try {
+    await sendWhatsApp({
+      to: phone,
+      text: rendered,
+      imageUrl: attachImage ? cardImageUrl : undefined,
+      session: session || undefined,
+    });
+  } catch (err: any) {
+    const rawMsg = err.message || "";
+    if (rawMsg.includes("No LID for user")) {
+      throw createError({
+        statusCode: 400,
+        message: `The phone number "${phone}" is not registered on WhatsApp or was rejected by WhatsApp. Please verify the digits.`,
+      });
+    }
+    throw createError({
+      statusCode: 500,
+      message: `WhatsApp dispatch failed: ${err.message}`,
+    });
+  }
 
   return {
     success: true,
