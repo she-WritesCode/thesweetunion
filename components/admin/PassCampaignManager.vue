@@ -675,35 +675,36 @@ const settingsTab = ref<"template" | "routing">("template");
 const showPreview = ref(true);
 const templateTextarea = ref<HTMLTextAreaElement | null>(null);
 
-const DEFAULT_MESSAGE_TEMPLATE = `Dear [Guest Name],
+const DEFAULT_MESSAGE_TEMPLATE = `[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]
 
-We are delighted to confirm your RSVP for our wedding celebration!
+We can't wait to celebrate with you at #TheSweetUnion! 💍✨
 
-Your VIP Reception Access Pass is ready:
-Pass Code: [PASS_CODE]
-Digital Pass & Entry Card: [PASS_URL]
+🎟️ YOUR RECEPTION PASS:
+Your digital pass code is *[PASS_CODE]*.
+Access your official entry card and itinerary here:
+[PASS_URL]
 
-CHURCH CEREMONY: [Church Venue & Time]
-(Open to all friends & family)
+⚠️ IMPORTANT VENUE & ENTRY INFO:
+• *Church Ceremony:* [Church Venue & Time] (Open to all friends and family)
+• *Wedding Reception:* [Reception Venue & Time]
+  *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
 
-RECEPTION: [Reception Venue & Time]
-(Strictly by digital access card or pass code)
+❓ FREQUENTLY ASKED QUESTIONS:
+• Colors / Dress Code: [Details...]
+• Gifts & Registry: [Wishlist Link...]
 
-DRESS CODE: [Dress Code]
-GIFTS & REGISTRY: [Wishlist Link]
-
-We can't wait to celebrate with you!
 With love,
 Adun & Uche`;
 
 const templateTags = [
+  { value: "[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]", desc: "Personalized greeting" },
   { value: "[Guest Name]", desc: "Lead guest name (+ spouse if attending)" },
   { value: "[PASS_CODE]", desc: "6-character unique access code" },
   { value: "[PASS_URL]", desc: "Link to digital VIP access card & itinerary" },
   { value: "[Church Venue & Time]", desc: "Church ceremony details" },
   { value: "[Reception Venue & Time]", desc: "Reception entry details" },
-  { value: "[Dress Code]", desc: "Colors & attire instructions" },
-  { value: "[Wishlist Link]", desc: "Link to wedding gift registry" },
+  { value: "[Details...]", desc: "Colors & dress code instructions" },
+  { value: "[Wishlist Link...]", desc: "Link to wedding gift registry" },
 ];
 
 function insertTag(tag: string) {
@@ -739,14 +740,14 @@ function renderTemplateForGuest(template: string, guest: GuestRecord): string {
   const dressCode = "Strictly Formal / African Regal (Mauve & Gold)";
 
   return tpl
+    .replace(/\[Greeting[^\]]*\]|\{Greeting[^\}]*\}/gi, `Dear ${guestName},`)
     .replace(/\[Guest Name\]|\{Guest Name\}|\[guest_name\]|\{guest_name\}/gi, guestName)
     .replace(/\[PASS_CODE\]|\{PASS_CODE\}|\[pass_code\]|\{pass_code\}/gi, passCode)
     .replace(/\[PASS_URL\]|\{PASS_URL\}|\[pass_url\]|\{pass_url\}/gi, passUrl)
     .replace(/\[Church Venue & Time\]|\{Church Venue & Time\}/gi, churchInfo)
     .replace(/\[Reception Venue & Time\]|\{Reception Venue & Time\}/gi, receptionInfo)
-    .replace(/\[Dress Code\]|\{Dress Code\}|\[dress_code\]|\{dress_code\}/gi, dressCode)
-    .replace(/\[Wishlist Link\]|\{Wishlist Link\}|\[wishlist_link\]|\{wishlist_link\}/gi, wishlistUrl)
-    .replace(/\[Greeting[^\]]*\]|\{Greeting[^\}]*\}/gi, `Dear ${guestName},`);
+    .replace(/\[Details\.\.\.\]|\[Details\]|\[Dress Code\]|\{Dress Code\}|\[dress_code\]|\{dress_code\}/gi, dressCode)
+    .replace(/\[Wishlist Link\.\.\.\]|\[Wishlist Link\]|\{Wishlist Link\}|\[wishlist_link\]|\{wishlist_link\}/gi, wishlistUrl);
 }
 
 const previewRendered = computed(() => {

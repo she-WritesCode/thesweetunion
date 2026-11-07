@@ -96,24 +96,24 @@ export default defineEventHandler(async (event) => {
     leadName,
   );
 
-  const defaultTemplate = `Dear [Guest Name],
+  const defaultTemplate = `[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]
 
-We are delighted to confirm your RSVP for our wedding celebration!
+We can't wait to celebrate with you at #TheSweetUnion! 💍✨
 
-Your VIP Reception Access Pass is ready:
-Pass Code: [PASS_CODE]
-Digital Pass & Entry Card: [PASS_URL]
+🎟️ YOUR RECEPTION PASS:
+Your digital pass code is *[PASS_CODE]*.
+Access your official entry card and itinerary here:
+[PASS_URL]
 
-CHURCH CEREMONY: [Church Venue & Time]
-(Open to all friends & family)
+⚠️ IMPORTANT VENUE & ENTRY INFO:
+• *Church Ceremony:* [Church Venue & Time] (Open to all friends and family)
+• *Wedding Reception:* [Reception Venue & Time]
+  *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
 
-RECEPTION: [Reception Venue & Time]
-(Strictly by digital access card or pass code)
+❓ FREQUENTLY ASKED QUESTIONS:
+• Colors / Dress Code: [Details...]
+• Gifts & Registry: [Wishlist Link...]
 
-DRESS CODE: [Dress Code]
-GIFTS & REGISTRY: [Wishlist Link]
-
-We can't wait to celebrate with you!
 With love,
 Adun & Uche`;
 
@@ -141,8 +141,11 @@ Adun & Uche`;
     passUrl: passUrl,
     "Church Venue & Time": churchInfo,
     "Reception Venue & Time": receptionInfo,
+    "Details...": dressCode,
+    "Details": dressCode,
     "Dress Code": dressCode,
     dress_code: dressCode,
+    "Wishlist Link...": wishlistUrl,
     "Wishlist Link": wishlistUrl,
     wishlist_link: wishlistUrl,
   });
