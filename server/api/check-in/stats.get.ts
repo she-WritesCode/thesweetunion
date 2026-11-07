@@ -10,23 +10,23 @@ export default defineEventHandler(async (event) => {
   });
 
   const [allRsvps, allCheckIns] = await Promise.all([
-    client.collection("rsvp_records").find({ limit: 1000 }),
-    client.collection("check_ins").find({ limit: 1000 }),
+    fetchAllDocs(client, "rsvp_records", { depth: 0 }),
+    fetchAllDocs(client, "check_ins", { depth: 0 }),
   ]);
 
-  const attendingRsvps = allRsvps.docs.filter((r: any) => r.attending === true || r.attending === "true");
+  const attendingRsvps = allRsvps.filter((r: any) => r.attending === true || r.attending === "true");
 
   const totalExpected = attendingRsvps.reduce(
     (n: number, r: any) => n + (r.hasSpouse ? 2 : 1),
     0
   );
 
-  const totalCheckedIn = allCheckIns.docs.reduce(
+  const totalCheckedIn = allCheckIns.reduce(
     (n: number, c: any) => n + (c.partySize || 1),
     0
   );
 
-  const recentCheckIns = [...allCheckIns.docs]
+  const recentCheckIns = [...allCheckIns]
     .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 

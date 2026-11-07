@@ -78,27 +78,15 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 2. Fetch Dyrected Collections & Globals safely using async handlers
+    // 2. Fetch Dyrected Collections & Globals across all pages (Dyrected caps find() at 100/page)
     const client = createClient({
       baseUrl: config.dyrectedUrl,
       apiKey: config.dyrectedApiKey,
     });
 
-    const [groupsRes, allRsvpRes, settingsRes] = await Promise.all([
-      (async () => {
-        try {
-          return await client.collection("rsvp_groups").find({ limit: 200, depth: 0 });
-        } catch {
-          return { docs: [] };
-        }
-      })(),
-      (async () => {
-        try {
-          return await client.collection("rsvp_records").find({ limit: 1000, depth: 1 });
-        } catch {
-          return { docs: [] };
-        }
-      })(),
+    const [groupsList, recordsList, settingsRes] = await Promise.all([
+      fetchAllDocs(client, "rsvp_groups", { depth: 0 }),
+      fetchAllDocs(client, "rsvp_records", { depth: 1 }),
       (async () => {
         try {
           return await client.global("site_settings").get();
@@ -108,15 +96,12 @@ export default defineEventHandler(async (event) => {
       })(),
     ]);
 
-    const groupsList = Array.isArray(groupsRes) ? groupsRes : (groupsRes?.docs || []);
     const groups = groupsList.map((g: any) => ({
       id: g.id,
       name: g.name || "Group",
       slug: g.slug || "",
       maxCapacity: g.maxCapacity,
     }));
-
-    const recordsList = Array.isArray(allRsvpRes) ? allRsvpRes : (allRsvpRes?.docs || []);
     const attendingGuests = recordsList
       .filter((r: any) => r && (r.attending === true || r.attending === "true"))
       .map((r: any) => {

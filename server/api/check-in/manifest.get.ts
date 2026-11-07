@@ -9,8 +9,8 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  const allRsvps = await client.collection("rsvp_records").find({ limit: 1000, depth: 1 });
-  const attending = allRsvps.docs.filter((r: any) => r.attending === true || r.attending === "true");
+  const allRsvps = await fetchAllDocs(client, "rsvp_records", { depth: 1 });
+  const attending = allRsvps.filter((r: any) => r.attending === true || r.attending === "true");
 
   const manifest = attending.map((r: any) => ({
     id: r.id,
