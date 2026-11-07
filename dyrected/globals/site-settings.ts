@@ -13,6 +13,7 @@ import {
 export const siteSettings = defineGlobal({
   slug: "site_settings",
   label: "Site Settings",
+  detail: false,
   fields: [
     // ─── Wedding Tab ─────────────────────────────────────────────
     ...defineTab({
@@ -211,7 +212,7 @@ export const siteSettings = defineGlobal({
           label: "WhatsApp Sender Name",
           defaultValue: "Busola",
           admin: {
-            description: "How automated reminder messages introduce themselves, e.g. \"This is [name].\"",
+            description: 'How automated reminder messages introduce themselves, e.g. "This is [name]."',
           },
         }),
         defineJsonField({
