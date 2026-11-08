@@ -293,25 +293,14 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
-              <div class="flex items-center gap-2">
-                <button
-                  type="button"
-                  @click="assignGroupsRoundRobin"
-                  class="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium underline"
-                  title="Evenly split groups across connected phones (1 Groom, 1 Bride, 1 My Phone)"
-                >
-                  Auto-Split Groups
-                </button>
-                <span class="text-slate-300">·</span>
-                <button
-                  type="button"
-                  @click="unassignAllGroups"
-                  class="text-[11px] text-rose-600 hover:text-rose-700 font-medium underline"
-                  title="Clear all sender assignments"
-                >
-                  Unassign All
-                </button>
-              </div>
+              <button
+                type="button"
+                @click="unassignAllGroups"
+                class="text-[11px] text-rose-600 hover:text-rose-700 font-medium underline"
+                title="Clear all sender assignments"
+              >
+                Unassign All Groups
+              </button>
             </div>
             <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
               <div
@@ -399,14 +388,14 @@
       <!-- Auto-dispatch Controls -->
       <div class="flex flex-wrap items-center gap-2">
         <div v-if="!isDispatching" class="flex items-center gap-1.5">
-          <label class="text-[11px] font-medium text-slate-600 hidden sm:inline">Strategy:</label>
+          <label class="text-[11px] font-medium text-slate-600 hidden sm:inline">Pacing:</label>
           <select
             v-model="dispatchStrategy"
             class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
-            title="Choose how passes are distributed across sender phones"
+            title="Choose how the sending queue is paced across phones"
           >
-            <option value="round-robin">🔄 Round-Robin (1 Groom ➔ 1 Bride ➔ 1 My Phone)</option>
-            <option value="group">📁 By Assigned Group</option>
+            <option value="interleaved">🔄 Interleaved Pacing (1 Groom ➔ 1 Bride ➔ 1 My Phone)</option>
+            <option value="sequential">📁 Sequential (Group by Group)</option>
           </select>
         </div>
 
@@ -562,26 +551,19 @@
                   <span>My Phone (Asoebi)</span>
                 </span>
                 <span
-                  v-else-if="dispatchStrategy === 'round-robin'"
-                  class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded"
-                  title="Will rotate across Groom & Bride"
-                >
-                  <span>🔄 Round-Robin</span>
-                </span>
-                <span
-                  v-else-if="getAssignedSenderName(guest.group) !== 'Unassigned'"
+                  v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
                   class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
                 >
                   <span
                     class="w-1.5 h-1.5 rounded-full shrink-0"
                     :class="{
-                      'bg-emerald-500': getAssignedSenderStatus(guest.group) === 'WORKING',
-                      'bg-amber-400': getAssignedSenderStatus(guest.group) === 'SCAN_QR_CODE',
-                      'bg-rose-500': getAssignedSenderStatus(guest.group) === 'FAILED',
-                      'bg-slate-300': !getAssignedSenderStatus(guest.group)
+                      'bg-emerald-500': getSenderStatus(resolveSenderForGuest(guest)) === 'WORKING',
+                      'bg-amber-400': getSenderStatus(resolveSenderForGuest(guest)) === 'SCAN_QR_CODE',
+                      'bg-rose-500': getSenderStatus(resolveSenderForGuest(guest)) === 'FAILED',
+                      'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest))
                     }"
                   />
-                  <span>{{ getAssignedSenderName(guest.group) }}</span>
+                  <span>{{ getSenderName(resolveSenderForGuest(guest)) }}</span>
                 </span>
                 <span v-else class="text-[11px] text-slate-400 italic">
                   Unassigned
@@ -831,7 +813,7 @@ const currentProcessingId = ref<string | null>(null);
 
 const isDispatching = ref(false);
 const isPaused = ref(false);
-const dispatchStrategy = ref<"round-robin" | "group">("round-robin");
+const dispatchStrategy = ref<"interleaved" | "sequential">("interleaved");
 const currentSenderNotice = ref<string>("");
 
 function formatSentVia(via?: string): string {
@@ -945,6 +927,18 @@ function getAssignedSenderName(group: any): string {
 function getAssignedSenderStatus(group: any): string {
   const groupId = typeof group === "object" && group ? group.id : group;
   const senderId = groupId ? config.value.groupSenderMap[groupId] : undefined;
+  if (!senderId || senderId === "unassigned") return "";
+  const s = config.value.senders.find((x) => x.id === senderId);
+  return s?.status || "";
+}
+
+function getSenderName(senderId: string): string {
+  if (!senderId || senderId === "unassigned") return "Unassigned";
+  const s = config.value.senders.find((x) => x.id === senderId);
+  return s ? s.name : "Unassigned";
+}
+
+function getSenderStatus(senderId: string): string {
   if (!senderId || senderId === "unassigned") return "";
   const s = config.value.senders.find((x) => x.id === senderId);
   return s?.status || "";
@@ -1200,19 +1194,47 @@ async function sendSinglePass(guest: GuestRecord) {
 async function startAutoDispatch() {
   if (pendingGuestsInView.value.length === 0) return;
 
-  const workingSenders = (config.value.senders || []).filter((s) => s.status === "WORKING");
-  const pool = workingSenders.length > 0 ? workingSenders : (config.value.senders || []).filter((s) => s.id !== "adun");
-
-  if (dispatchStrategy.value === "round-robin" && pool.length === 0) {
-    alert("No active WhatsApp sender sessions are connected. Please connect at least one phone first.");
-    return;
-  }
-
   isDispatching.value = true;
   isPaused.value = false;
 
-  const targetList = [...pendingGuestsInView.value];
-  let senderIndex = 0;
+  let targetList: GuestRecord[] = [];
+
+  if (dispatchStrategy.value === "interleaved") {
+    // Separate pending guests strictly by their assigned sender
+    const queues: Record<string, GuestRecord[]> = {};
+    for (const guest of pendingGuestsInView.value) {
+      const senderId = resolveSenderForGuest(guest);
+      if (senderId === "unassigned") continue;
+      if (!queues[senderId]) queues[senderId] = [];
+      queues[senderId].push(guest);
+    }
+
+    // Interleave across sender phones: Groom -> Bride -> My Phone -> repeat
+    const senderOrder = ["groom", "bride", "busola"];
+    for (const key of Object.keys(queues)) {
+      if (!senderOrder.includes(key)) senderOrder.push(key);
+    }
+
+    let hasRemaining = true;
+    while (hasRemaining) {
+      hasRemaining = false;
+      for (const sId of senderOrder) {
+        if (queues[sId] && queues[sId].length > 0) {
+          targetList.push(queues[sId].shift()!);
+          hasRemaining = true;
+        }
+      }
+    }
+  } else {
+    // Sequential order (as displayed)
+    targetList = pendingGuestsInView.value.filter((g) => resolveSenderForGuest(g) !== "unassigned");
+  }
+
+  if (targetList.length === 0) {
+    alert("All guests in the current view are currently Unassigned. Please assign groups in Group Routing first.");
+    isDispatching.value = false;
+    return;
+  }
 
   for (const guest of targetList) {
     if (!isDispatching.value) break;
@@ -1225,29 +1247,10 @@ async function startAutoDispatch() {
 
     currentProcessingId.value = guest.id;
 
-    let sender: any = null;
-    const assignedId = resolveSenderForGuest(guest);
-
-    // All who received messages for Asoebi (or explicit overrides) are sent via My Phone ("busola")
-    if (guest.asoebiSent || (config.value.guestSenderMap && config.value.guestSenderMap[guest.id])) {
-      sender = config.value.senders.find((s) => s.id === assignedId) || pool.find((s) => s.id === "busola") || pool[0];
-    } else if (dispatchStrategy.value === "round-robin") {
-      // The remaining guests rotate across the other connected phones (Groom & Bride)
-      const nonBusolaPool = pool.filter((s) => s.id !== "busola");
-      const rotationPool = nonBusolaPool.length > 0 ? nonBusolaPool : pool;
-      sender = rotationPool[senderIndex % rotationPool.length];
-      senderIndex++;
-    } else {
-      if (assignedId === "unassigned") {
-        console.warn(`Skipping ${guest.leadName}: Group is unassigned.`);
-        continue;
-      }
-      sender = config.value.senders.find((s) => s.id === assignedId);
-    }
-
-    if (!sender) {
-      continue;
-    }
+    // Sender is GUARANTEED to be the guest's assigned sender (Groom, Bride, or My Phone)
+    const senderId = resolveSenderForGuest(guest);
+    const sender = config.value.senders.find((s) => s.id === senderId);
+    if (!sender) continue;
 
     const wahaSession = sender?.wahaSession || "default";
     currentSenderNotice.value = `${sender.name} (${sender.phone ? formatPhoneDisplay(sender.phone) : wahaSession})`;
