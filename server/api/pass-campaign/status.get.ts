@@ -123,6 +123,8 @@ export default defineEventHandler(async (event) => {
           invitationSent: Boolean(r.invitationSent),
           invitationSentAt: r.invitationSentAt || null,
           invitationSentVia: r.invitationSentVia || null,
+          previousInvitationSentAt: r.previousInvitationSentAt || null,
+          previousInvitationSentVia: r.previousInvitationSentVia || null,
         };
       });
 

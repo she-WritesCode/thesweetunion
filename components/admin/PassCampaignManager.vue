@@ -366,12 +366,28 @@
     <div class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div class="space-y-1 flex-1">
         <div class="flex items-center justify-between text-xs">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="font-semibold text-slate-900">
               {{ sentCount }} / {{ totalGuests }} passes dispatched
             </span>
             <span class="text-slate-400">·</span>
             <span class="text-slate-600">{{ progressPercent }}% completed</span>
+            <template v-if="sentCount > 0 && !isDispatching">
+              <span class="text-slate-400">·</span>
+              <button
+                type="button"
+                @click="confirmResetCampaign"
+                :disabled="resetting"
+                class="text-[11px] text-amber-700 hover:text-amber-800 font-medium underline inline-flex items-center gap-1"
+                title="Mark all sent passes as pending to re-send without wiping historical timestamps"
+              >
+                <svg v-if="resetting" class="w-3 h-3 animate-spin text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+                </svg>
+                <span>Reset for Re-send (Keep History)</span>
+              </button>
+            </template>
           </div>
           <span class="text-[11px] text-slate-500 font-mono">
             Active view: {{ activeSenderLabel }} ({{ filteredGuests.length }} guests)
@@ -585,6 +601,13 @@
                   </span>
                 </span>
                 <span
+                  v-else-if="guest.previousInvitationSentAt"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80"
+                  :title="'Previously sent ' + formatDate(guest.previousInvitationSentAt) + '. Queued for re-send.'"
+                >
+                  <span>Pending Re-send</span>
+                </span>
+                <span
                   v-else
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
                 >
@@ -705,6 +728,8 @@ interface GuestRecord {
   invitationSent?: boolean;
   invitationSentAt?: string;
   invitationSentVia?: string;
+  previousInvitationSentAt?: string;
+  previousInvitationSentVia?: string;
 }
 
 const loading = ref(false);
@@ -1128,6 +1153,31 @@ async function saveSettings() {
     alert("Failed to save settings: " + (err.data?.message || err.message));
   } finally {
     savingSettings.value = false;
+  }
+}
+
+const resetting = ref(false);
+
+async function confirmResetCampaign() {
+  if (!confirm(`Are you sure you want to mark all ${sentCount.value} sent passes as Pending to re-send?\n\nYour previous send history and timestamps will be safely preserved.`)) {
+    return;
+  }
+  resetting.value = true;
+  try {
+    const res: any = await $fetch("/api/pass-campaign/reset", {
+      method: "POST",
+      headers: adminAuthHeaders(),
+    });
+    if (res.success) {
+      alert(res.message || "Passes have been reset to pending. Send history is preserved.");
+      await fetchData();
+    } else {
+      alert("Failed to reset: " + (res.message || "Unknown error"));
+    }
+  } catch (err: any) {
+    alert("Failed to reset: " + (err.data?.message || err.message));
+  } finally {
+    resetting.value = false;
   }
 }
 
