@@ -293,14 +293,25 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label class="text-xs font-semibold text-slate-700 block">Group Routing to Senders</label>
-              <button
-                type="button"
-                @click="unassignAllGroups"
-                class="text-[11px] text-rose-600 hover:text-rose-700 font-medium underline"
-                title="Clear all sender assignments"
-              >
-                Unassign All Groups
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="assignGroupsRoundRobin"
+                  class="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium underline"
+                  title="Evenly split groups across connected phones (1 Groom, 1 Bride, 1 My Phone)"
+                >
+                  Auto-Split Groups
+                </button>
+                <span class="text-slate-300">·</span>
+                <button
+                  type="button"
+                  @click="unassignAllGroups"
+                  class="text-[11px] text-rose-600 hover:text-rose-700 font-medium underline"
+                  title="Clear all sender assignments"
+                >
+                  Unassign All
+                </button>
+              </div>
             </div>
             <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
               <div
@@ -386,7 +397,19 @@
       </div>
 
       <!-- Auto-dispatch Controls -->
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <div v-if="!isDispatching" class="flex items-center gap-1.5">
+          <label class="text-[11px] font-medium text-slate-600 hidden sm:inline">Strategy:</label>
+          <select
+            v-model="dispatchStrategy"
+            class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
+            title="Choose how passes are distributed across sender phones"
+          >
+            <option value="round-robin">🔄 Round-Robin (1 Groom ➔ 1 Bride ➔ 1 My Phone)</option>
+            <option value="group">📁 By Assigned Group</option>
+          </select>
+        </div>
+
         <template v-if="!isDispatching">
           <button
             type="button"
@@ -401,6 +424,10 @@
           </button>
         </template>
         <template v-else>
+          <div v-if="currentSenderNotice" class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Sending via {{ currentSenderNotice }}</span>
+          </div>
           <button
             type="button"
             @click="pauseAutoDispatch"
@@ -514,7 +541,20 @@
               <!-- Assigned Sender -->
               <td class="px-3.5 py-2.5">
                 <span
-                  v-if="getAssignedSenderName(guest.group) !== 'Unassigned'"
+                  v-if="guest.invitationSent && guest.invitationSentVia"
+                  class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
+                >
+                  <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
+                </span>
+                <span
+                  v-else-if="dispatchStrategy === 'round-robin'"
+                  class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded"
+                  title="Will rotate across connected phones (1 Groom, 1 Bride, 1 My Phone)"
+                >
+                  <span>🔄 Round-Robin</span>
+                </span>
+                <span
+                  v-else-if="getAssignedSenderName(guest.group) !== 'Unassigned'"
                   class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
                 >
                   <span
@@ -773,6 +813,16 @@ const currentProcessingId = ref<string | null>(null);
 
 const isDispatching = ref(false);
 const isPaused = ref(false);
+const dispatchStrategy = ref<"round-robin" | "group">("round-robin");
+const currentSenderNotice = ref<string>("");
+
+function formatSentVia(via?: string): string {
+  if (!via) return "Sent";
+  if (via.includes("Groom") || via.includes("groom")) return "Sent: Groom";
+  if (via.includes("Bride") || via.includes("bride")) return "Sent: Bride";
+  if (via.includes("default") || via.includes("busola")) return "Sent: My Phone";
+  return via.replace("whatsapp:", "Sent: ");
+}
 
 const currentPage = ref(1);
 const pageSize = ref(25);
@@ -817,6 +867,21 @@ function unassignAllGroups() {
   if (confirm("Are you sure you want to unassign all groups?")) {
     config.value.groupSenderMap = {};
   }
+}
+
+function assignGroupsRoundRobin() {
+  const workingSenders = (config.value.senders || []).filter((s) => s.status === "WORKING");
+  const pool = workingSenders.length > 0 ? workingSenders : (config.value.senders || []).filter((s) => s.id !== "adun");
+  if (pool.length === 0) {
+    alert("No active senders found to distribute across.");
+    return;
+  }
+  const newMap: Record<string, string> = {};
+  rsvpGroups.value.forEach((grp, idx) => {
+    const s = pool[idx % pool.length];
+    newMap[grp.id] = s.id;
+  });
+  config.value.groupSenderMap = newMap;
 }
 
 function getGroupGuestCount(groupId: string): number {
@@ -1106,10 +1171,20 @@ async function sendSinglePass(guest: GuestRecord) {
 
 async function startAutoDispatch() {
   if (pendingGuestsInView.value.length === 0) return;
+
+  const workingSenders = (config.value.senders || []).filter((s) => s.status === "WORKING");
+  const pool = workingSenders.length > 0 ? workingSenders : (config.value.senders || []).filter((s) => s.id !== "adun");
+
+  if (dispatchStrategy.value === "round-robin" && pool.length === 0) {
+    alert("No active WhatsApp sender sessions are connected. Please connect at least one phone first.");
+    return;
+  }
+
   isDispatching.value = true;
   isPaused.value = false;
 
   const targetList = [...pendingGuestsInView.value];
+  let senderIndex = 0;
 
   for (const guest of targetList) {
     if (!isDispatching.value) break;
@@ -1121,13 +1196,26 @@ async function startAutoDispatch() {
     if (!isDispatching.value) break;
 
     currentProcessingId.value = guest.id;
-    const senderId = resolveSenderForGuest(guest);
-    if (senderId === "unassigned") {
-      console.warn(`Skipping ${guest.leadName}: Group is unassigned.`);
+
+    let sender: any = null;
+    if (dispatchStrategy.value === "round-robin") {
+      sender = pool[senderIndex % pool.length];
+      senderIndex++;
+    } else {
+      const senderId = resolveSenderForGuest(guest);
+      if (senderId === "unassigned") {
+        console.warn(`Skipping ${guest.leadName}: Group is unassigned.`);
+        continue;
+      }
+      sender = config.value.senders.find((s) => s.id === senderId);
+    }
+
+    if (!sender) {
       continue;
     }
-    const sender = config.value.senders.find((s) => s.id === senderId);
+
     const wahaSession = sender?.wahaSession || "default";
+    currentSenderNotice.value = `${sender.name} (${sender.phone ? formatPhoneDisplay(sender.phone) : wahaSession})`;
 
     try {
       const res: any = await $fetch("/api/pass-campaign/send", {
@@ -1142,7 +1230,7 @@ async function startAutoDispatch() {
       if (res.success) {
         guest.invitationSent = true;
         guest.invitationSentAt = new Date().toISOString();
-        guest.invitationSentVia = "whatsapp";
+        guest.invitationSentVia = `whatsapp:${wahaSession}`;
       }
     } catch (e) {
       console.error(`Failed to send to ${guest.leadName}:`, e);
@@ -1154,6 +1242,7 @@ async function startAutoDispatch() {
   }
 
   currentProcessingId.value = null;
+  currentSenderNotice.value = "";
   isDispatching.value = false;
   isPaused.value = false;
 }
