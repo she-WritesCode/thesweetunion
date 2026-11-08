@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
     // Site settings
     let coupleName = "ADUN & UCHE";
     let hashtag = "#THESWEETUNION";
-    let weddingDateText = "OCTOBER 22 & 24, 2026";
+    let weddingDateText = "SATURDAY, NOVEMBER 21, 2026";
     if (settingsRes?.partnerOneName && settingsRes?.partnerTwoName) {
       coupleName = `${settingsRes.partnerOneName} & ${settingsRes.partnerTwoName}`.toUpperCase();
     }

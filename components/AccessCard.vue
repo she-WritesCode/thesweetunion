@@ -24,7 +24,7 @@ const props = withDefaults(
     eventNames: () => [],
     coupleName: "Adun & Uche",
     hashtag: "#TheSweetUnion",
-    weddingDateText: "October 22 & 24, 2026",
+    weddingDateText: "Saturday, November 21, 2026",
     loading: false,
     idPrefix: "access-card",
   },

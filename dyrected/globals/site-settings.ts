@@ -37,7 +37,7 @@ export const siteSettings = defineGlobal({
         defineTextField({
           name: "weddingDateText",
           label: "Wedding Date Display Text",
-          defaultValue: "October 22 & 24, 2026",
+          defaultValue: "Saturday, November 21, 2026",
           admin: { description: "How the date appears on the site, e.g. October 22 & 24, 2026" },
         }),
         defineTextField({

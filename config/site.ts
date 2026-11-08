@@ -73,7 +73,7 @@ export const siteConfig: SiteConfig = {
     hashtag: "#TheSweetUnion",
   },
   weddingDate: "2026-10-22T14:00:00", // Start of the wedding celebration (Traditional)
-  weddingDateText: "October 22 & 24, 2026",
+  weddingDateText: "Saturday, November 21, 2026",
   weddingLocation: "Lagos, Nigeria",
   rsvpCutoffDate: "2026-09-15T23:59:59",
   storyTitle: "Our Story",

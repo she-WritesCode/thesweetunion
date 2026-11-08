@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
   let coupleName = (query.couple as string) || "ADUN & UCHE";
   let hashtag = (query.hashtag as string) || "#THESWEETUNION";
-  let weddingDateText = (query.date as string) || "OCTOBER 22 & 24, 2026";
+  let weddingDateText = (query.date as string) || "SATURDAY, NOVEMBER 21, 2026";
 
   if (!query.couple && settingsRes?.partnerOneName && settingsRes?.partnerTwoName) {
     coupleName = `${settingsRes.partnerOneName} & ${settingsRes.partnerTwoName}`.toUpperCase();

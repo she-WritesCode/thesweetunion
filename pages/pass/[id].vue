@@ -16,7 +16,7 @@ const downloading = ref(false);
 const guestName = computed(() => pass.value?.guestName || "Honoured Guest");
 const coupleName = computed(() => pass.value?.siteSettings?.coupleName || "Adun & Uche");
 const hashtag = computed(() => pass.value?.siteSettings?.hashtag || "#TheSweetUnion");
-const weddingDateText = computed(() => pass.value?.siteSettings?.weddingDateText || "October 22 & 24, 2026");
+const weddingDateText = computed(() => pass.value?.siteSettings?.weddingDateText || "Saturday, November 21, 2026");
 const eventNames = computed(() => (pass.value?.events || []).map((e: any) => e.name));
 
 const requestUrl = useRequestURL();

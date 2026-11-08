@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
   // Site Settings
   let coupleName = "Adun & Uche";
   let hashtag = "#TheSweetUnion";
-  let weddingDateText = "October 22 & 24, 2026";
+  let weddingDateText = "Saturday, November 21, 2026";
   try {
     const settings = await client.global("site_settings").get();
     if (settings) {

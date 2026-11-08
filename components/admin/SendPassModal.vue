@@ -47,7 +47,7 @@ const eventNames = ref<string[]>([]);
 const groupName = ref("");
 const coupleName = ref("Adun & Uche");
 const hashtag = ref("#TheSweetUnion");
-const weddingDateText = ref("October 22 & 24, 2026");
+const weddingDateText = ref("Saturday, November 21, 2026");
 
 const cardRef = ref<any>(null);
 
