@@ -510,13 +510,20 @@
             >
               <!-- Guest Name -->
               <td class="px-3.5 py-2.5 font-medium text-slate-900">
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
                   <span>{{ guest.leadName }}</span>
                   <span
                     v-if="guest.hasSpouse && guest.spouseName"
                     class="text-[10px] px-1 py-0.2 bg-slate-100 text-slate-600 rounded font-normal"
                   >
                     + {{ guest.spouseName }}
+                  </span>
+                  <span
+                    v-if="guest.asoebiSent"
+                    class="text-[10px] px-1.5 py-0.2 bg-purple-50 text-purple-700 border border-purple-200/60 rounded font-medium inline-flex items-center gap-1"
+                    title="Sent Asoebi message · Assigned to My Phone"
+                  >
+                    <span>👗 Asoebi</span>
                   </span>
                 </div>
               </td>
@@ -547,9 +554,17 @@
                   <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
                 </span>
                 <span
+                  v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
+                  class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
+                  title="Directly assigned to My Phone because of Asoebi interaction"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span>My Phone (Asoebi)</span>
+                </span>
+                <span
                   v-else-if="dispatchStrategy === 'round-robin'"
                   class="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded"
-                  title="Will rotate across connected phones (1 Groom, 1 Bride, 1 My Phone)"
+                  title="Will rotate across Groom & Bride"
                 >
                   <span>🔄 Round-Robin</span>
                 </span>
@@ -682,6 +697,7 @@ interface SenderConfig {
 interface CampaignSettings {
   senders: SenderConfig[];
   groupSenderMap: Record<string, string>;
+  guestSenderMap?: Record<string, string>;
   paceSeconds: number;
   messageTemplate: string;
 }
@@ -701,6 +717,8 @@ interface GuestRecord {
   spouseName?: string;
   passCode?: string;
   group?: any;
+  asoebiSent?: boolean;
+  wantsAsoebi?: boolean;
   attending?: boolean;
   invitationSent?: boolean;
   invitationSentAt?: string;
@@ -900,6 +918,15 @@ function senderPendingCount(senderId: string): number {
 }
 
 function resolveSenderForGuest(guest: GuestRecord): string {
+  // 1. Explicit guest-level assignment
+  if (config.value.guestSenderMap && config.value.guestSenderMap[guest.id]) {
+    return config.value.guestSenderMap[guest.id];
+  }
+  // 2. All who received messages for Asoebi are assigned to My Phone ("busola")
+  if (guest.asoebiSent) {
+    return "busola";
+  }
+  // 3. Fallback to group routing
   const groupId = typeof guest.group === "object" && guest.group ? guest.group.id : guest.group;
   if (groupId && config.value.groupSenderMap[groupId]) {
     return config.value.groupSenderMap[groupId];
@@ -1097,6 +1124,7 @@ async function saveSettings() {
       body: {
         senders: config.value.senders,
         groupSenderMap: config.value.groupSenderMap,
+        guestSenderMap: config.value.guestSenderMap || {},
         paceSeconds: config.value.paceSeconds,
         messageTemplate: config.value.messageTemplate,
       },
@@ -1198,16 +1226,23 @@ async function startAutoDispatch() {
     currentProcessingId.value = guest.id;
 
     let sender: any = null;
-    if (dispatchStrategy.value === "round-robin") {
-      sender = pool[senderIndex % pool.length];
+    const assignedId = resolveSenderForGuest(guest);
+
+    // All who received messages for Asoebi (or explicit overrides) are sent via My Phone ("busola")
+    if (guest.asoebiSent || (config.value.guestSenderMap && config.value.guestSenderMap[guest.id])) {
+      sender = config.value.senders.find((s) => s.id === assignedId) || pool.find((s) => s.id === "busola") || pool[0];
+    } else if (dispatchStrategy.value === "round-robin") {
+      // The remaining guests rotate across the other connected phones (Groom & Bride)
+      const nonBusolaPool = pool.filter((s) => s.id !== "busola");
+      const rotationPool = nonBusolaPool.length > 0 ? nonBusolaPool : pool;
+      sender = rotationPool[senderIndex % rotationPool.length];
       senderIndex++;
     } else {
-      const senderId = resolveSenderForGuest(guest);
-      if (senderId === "unassigned") {
+      if (assignedId === "unassigned") {
         console.warn(`Skipping ${guest.leadName}: Group is unassigned.`);
         continue;
       }
-      sender = config.value.senders.find((s) => s.id === senderId);
+      sender = config.value.senders.find((s) => s.id === assignedId);
     }
 
     if (!sender) {

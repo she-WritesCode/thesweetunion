@@ -118,6 +118,8 @@ export default defineEventHandler(async (event) => {
           group: r.group,
           groupId: groupId || "",
           groupName: groupName || "",
+          asoebiSent: Boolean(r.asoebiSent === true || r.asoebiSent === "true" || r.asoebiSent === 1),
+          wantsAsoebi: Boolean(r.wantsAsoebi === true || r.wantsAsoebi === "true" || r.wantsAsoebi === 1),
           invitationSent: Boolean(r.invitationSent),
           invitationSentAt: r.invitationSentAt || null,
           invitationSentVia: r.invitationSentVia || null,

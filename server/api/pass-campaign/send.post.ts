@@ -60,12 +60,30 @@ export default defineEventHandler(async (event) => {
     const settings = (await client.global("site_settings").get()) as any;
     const passConfig = settings?.passCampaignConfig;
     if (!targetSession && passConfig) {
-      const groupId = typeof rsvp.group === "object" ? rsvp.group?.id : rsvp.group;
-      if (groupId && passConfig.groupSenderMap?.[groupId]) {
-        const senderId = passConfig.groupSenderMap[groupId];
+      // 1. Check direct guest assignment
+      if (passConfig.guestSenderMap?.[rsvp.id]) {
+        const senderId = passConfig.guestSenderMap[rsvp.id];
         const match = (passConfig.senders || []).find((s: any) => s.id === senderId);
         if (match?.wahaSession) {
           targetSession = match.wahaSession;
+        }
+      }
+      // 2. If guest was sent asoebi, route to "busola" (My Phone)
+      else if (rsvp.asoebiSent === true || rsvp.asoebiSent === "true" || rsvp.asoebiSent === 1) {
+        const busolaMatch = (passConfig.senders || []).find((s: any) => s.id === "busola" || s.wahaSession === "default");
+        if (busolaMatch?.wahaSession) {
+          targetSession = busolaMatch.wahaSession;
+        }
+      }
+      // 3. Otherwise use group sender mapping
+      else {
+        const groupId = typeof rsvp.group === "object" ? rsvp.group?.id : rsvp.group;
+        if (groupId && passConfig.groupSenderMap?.[groupId]) {
+          const senderId = passConfig.groupSenderMap[groupId];
+          const match = (passConfig.senders || []).find((s: any) => s.id === senderId);
+          if (match?.wahaSession) {
+            targetSession = match.wahaSession;
+          }
         }
       }
     }
