@@ -392,6 +392,49 @@
       </div>
     </div>
 
+    <!-- Dedicated Dispatch Mode Bar: Full Passes vs Date Clarification Notice -->
+    <div class="p-3 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm border border-slate-800">
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Campaign Mode:</span>
+        <div class="inline-flex rounded-md p-0.5 bg-slate-950 border border-slate-700">
+          <button
+            type="button"
+            @click="setCampaignMode('pass')"
+            class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
+            :class="campaignMode === 'pass' ? 'bg-emerald-600 text-white shadow-xs font-semibold' : 'text-slate-300 hover:text-white'"
+          >
+            <span>🎟️ Full Pass Invitations</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900 text-emerald-200">
+              Fresh Guests ({{ neverSentCount }})
+            </span>
+          </button>
+          <button
+            type="button"
+            @click="setCampaignMode('clarification')"
+            class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
+            :class="campaignMode === 'clarification' ? 'bg-amber-600 text-white shadow-xs font-semibold' : 'text-slate-300 hover:text-white'"
+          >
+            <span>📢 Date Clarification Notice</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900 text-amber-200">
+              Sent Earlier ({{ previouslySentCount }})
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mode Explanation -->
+      <div class="text-xs text-slate-300 flex items-center gap-2">
+        <template v-if="campaignMode === 'clarification'">
+          <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span>Short text note (Nov 21, 2026 clarification · text only). Targets earlier batch.</span>
+        </template>
+        <template v-else>
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Full pass invitation + attached VIP Access Card image.</span>
+        </template>
+      </div>
+    </div>
+
     <!-- Execution Bar / Progress Stats -->
     <div class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div class="space-y-1 flex-1">
@@ -450,12 +493,14 @@
             type="button"
             @click="startAutoDispatch"
             :disabled="pendingGuestsInView.length === 0"
-            class="px-3.5 py-1.5 text-xs font-medium rounded-md bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+            class="px-3.5 py-1.5 text-xs font-medium rounded-md text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+            :class="campaignMode === 'clarification' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-700 hover:bg-emerald-800'"
           >
             <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            <span>Start Auto-Send ({{ pendingGuestsInView.length }})</span>
+            <span v-if="campaignMode === 'clarification'">Send Date Clarification ({{ pendingGuestsInView.length }})</span>
+            <span v-else>Start Auto-Send ({{ pendingGuestsInView.length }})</span>
           </button>
         </template>
         <template v-else>
@@ -800,15 +845,28 @@ Kindly disregard the date printed on the access card image sent earlier. Our wed
 
 Thanks.`;
 
+const campaignMode = ref<"pass" | "clarification">("pass");
+
+function setCampaignMode(mode: "pass" | "clarification") {
+  campaignMode.value = mode;
+  if (mode === "clarification") {
+    config.value.messageTemplate = CORRECTION_MESSAGE_TEMPLATE;
+    config.value.attachImage = false;
+    statusFilter.value = "previously_sent";
+  } else {
+    config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
+    config.value.attachImage = true;
+    statusFilter.value = "never_sent";
+  }
+}
+
 function loadCorrectionTemplate() {
-  config.value.messageTemplate = CORRECTION_MESSAGE_TEMPLATE;
-  config.value.attachImage = false;
+  setCampaignMode("clarification");
 }
 
 function resetTemplateToDefault() {
   if (confirm("Reset WhatsApp message template back to the standard pass invitation default?")) {
-    config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
-    config.value.attachImage = true;
+    setCampaignMode("pass");
   }
 }
 

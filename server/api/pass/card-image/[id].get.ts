@@ -113,7 +113,49 @@ export default defineEventHandler(async (event) => {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&apos;");
 
-  const safeGuestTitle = escapeXml(guestTitle);
+  function wrapGuestName(text: string, maxChars = 22): string[] {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return ["Honoured Guest"];
+    if (trimmed.length <= maxChars) return [trimmed];
+
+    // If contains " & " or " + ", break at conjunction first
+    const conjMatch = trimmed.match(/\s+([&+])\s+/);
+    if (conjMatch && conjMatch.index !== undefined) {
+      const conj = conjMatch[1];
+      const part1 = trimmed.slice(0, conjMatch.index).trim();
+      const part2 = trimmed.slice(conjMatch.index + conjMatch[0].length).trim();
+      const lines1 = wrapGuestName(part1, maxChars);
+      const lines2 = wrapGuestName(part2, maxChars);
+      if (lines2.length > 0) {
+        lines2[0] = `${conj} ${lines2[0]}`;
+      }
+      return [...lines1, ...lines2];
+    }
+
+    const words = trimmed.split(/\s+/);
+    const lines: string[] = [];
+    let current = "";
+    for (const w of words) {
+      if (!current) {
+        current = w;
+      } else if ((current + " " + w).length <= maxChars) {
+        current += " " + w;
+      } else {
+        lines.push(current);
+        current = w;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  }
+
+  const nameLines = wrapGuestName(guestTitle, 22);
+  const nameLineCount = nameLines.length;
+  const nameFontSize = nameLineCount === 1 ? 28 : nameLineCount === 2 ? 22 : 18;
+  const nameLineHeight = nameLineCount === 1 ? 32 : nameLineCount === 2 ? 26 : 22;
+  const nameStartY = nameLineCount === 1 ? 234 : nameLineCount === 2 ? 222 : 214;
+  const nameExtraHeight = Math.max(0, (nameLineCount - 1) * 26);
+
   const safeCoupleName = escapeXml(coupleName);
   const safeHashtag = escapeXml(hashtag);
   const safePassCode = escapeXml(passCode);
@@ -183,14 +225,19 @@ export default defineEventHandler(async (event) => {
   </text>
 
   <!-- Guest Name -->
-  <text x="300" y="234" text-anchor="middle" font-family="Cinzel" font-size="28" font-weight="700" fill="#FFFFFF">
-    ${safeGuestTitle}
-  </text>
+  ${nameLines
+    .map(
+      (line, idx) => `
+  <text x="300" y="${nameStartY + idx * nameLineHeight}" text-anchor="middle" font-family="Cinzel" font-size="${nameFontSize}" font-weight="700" fill="#FFFFFF">
+    ${escapeXml(line)}
+  </text>`
+    )
+    .join("")}
 
   <!-- Admits 2 Pill -->
   ${
     hasSpouse
-      ? `<g transform="translate(300, 246)">
+      ? `<g transform="translate(300, ${246 + nameExtraHeight})">
       <rect x="-60" y="0" width="120" height="24" rx="4" fill="#653853" stroke="url(#gold)" stroke-width="1.5"/>
       <text x="0" y="17" text-anchor="middle" font-family="Inter" font-size="12" font-weight="800" fill="url(#gold)" letter-spacing="2">ADMITS 2</text>
     </g>`
@@ -200,19 +247,19 @@ export default defineEventHandler(async (event) => {
   <!-- Group Name -->
   ${
     safeGroup
-      ? `<text x="300" y="${hasSpouse ? 298 : 270}" text-anchor="middle" font-family="Inter" font-size="15" font-weight="700" fill="url(#gold)" letter-spacing="3">${safeGroup}</text>`
+      ? `<text x="300" y="${(hasSpouse ? 298 : 270) + nameExtraHeight}" text-anchor="middle" font-family="Inter" font-size="15" font-weight="700" fill="url(#gold)" letter-spacing="3">${safeGroup}</text>`
       : ""
   }
 
   <!-- Events -->
   ${
     safeEvents
-      ? `<text x="300" y="${hasSpouse ? (safeGroup ? 324 : 298) : safeGroup ? 296 : 270}" text-anchor="middle" font-family="Inter" font-size="14" font-weight="500" fill="#F5EDF1" opacity="0.95">${safeEvents}</text>`
+      ? `<text x="300" y="${(hasSpouse ? (safeGroup ? 324 : 298) : safeGroup ? 296 : 270) + nameExtraHeight}" text-anchor="middle" font-family="Inter" font-size="14" font-weight="500" fill="#F5EDF1" opacity="0.95">${safeEvents}</text>`
       : ""
   }
 
   <!-- QR Code Frame -->
-  <g transform="translate(180, ${hasSpouse ? 350 : 320})">
+  <g transform="translate(180, ${(hasSpouse ? 350 : 320) + Math.min(nameExtraHeight, 28)})">
     <rect x="0" y="0" width="240" height="240" rx="12" fill="#F5EDF1" stroke="url(#gold)" stroke-width="2"/>
     ${
       qrDataUrl
@@ -222,21 +269,21 @@ export default defineEventHandler(async (event) => {
   </g>
 
   <!-- Pass Code -->
-  <text x="300" y="${hasSpouse ? 628 : 598}" text-anchor="middle" font-family="Inter" font-size="19" font-weight="800" fill="url(#gold)" letter-spacing="4">
+  <text x="300" y="${(hasSpouse ? 628 : 598) + Math.min(nameExtraHeight, 28)}" text-anchor="middle" font-family="Inter" font-size="19" font-weight="800" fill="url(#gold)" letter-spacing="4">
     ${safePassCode}
   </text>
 
   <!-- Footer Rule -->
-  <line x1="90" y1="${hasSpouse ? 665 : 640}" x2="510" y2="${hasSpouse ? 665 : 640}" stroke="url(#gold)" stroke-width="1.2" opacity="0.5"/>
+  <line x1="90" y1="${(hasSpouse ? 665 : 640) + Math.min(nameExtraHeight, 28)}" x2="510" y2="${(hasSpouse ? 665 : 640) + Math.min(nameExtraHeight, 28)}" stroke="url(#gold)" stroke-width="1.2" opacity="0.5"/>
 
   <!-- Date & Welcome -->
-  <text x="300" y="${hasSpouse ? 706 : 685}" text-anchor="middle" font-family="Inter" font-size="16" font-weight="600" fill="url(#gold)" letter-spacing="3">
+  <text x="300" y="${(hasSpouse ? 706 : 685) + Math.min(nameExtraHeight, 28)}" text-anchor="middle" font-family="Inter" font-size="16" font-weight="600" fill="url(#gold)" letter-spacing="3">
     ${safeDate}
   </text>
-  <text x="300" y="${hasSpouse ? 738 : 718}" text-anchor="middle" font-family="Inter" font-size="14" font-style="italic" fill="#E8D7E1" opacity="0.85">
+  <text x="300" y="${(hasSpouse ? 738 : 718) + Math.min(nameExtraHeight, 28)}" text-anchor="middle" font-family="Inter" font-size="14" font-style="italic" fill="#E8D7E1" opacity="0.85">
     Welcome to our celebration
   </text>
-  <text x="300" y="${hasSpouse ? 770 : 750}" text-anchor="middle" font-family="Inter" font-size="13" font-weight="600" fill="url(#gold)" letter-spacing="3" opacity="0.75">
+  <text x="300" y="${(hasSpouse ? 770 : 750) + Math.min(nameExtraHeight, 28)}" text-anchor="middle" font-family="Inter" font-size="13" font-weight="600" fill="url(#gold)" letter-spacing="3" opacity="0.75">
     ${safeHashtag}
   </text>
 </svg>`;
