@@ -92,17 +92,13 @@ const record = computed<Record<string, any>>(() => {
 });
 
 const appUrl = computed(() => {
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "thesweetunion.com" || host === "www.thesweetunion.com") {
-      return "https://thesweetunion.com";
+  if (typeof window !== "undefined" && window.location?.origin) {
+    const origin = window.location.origin;
+    if (!origin.includes("thesweetunion.com") && !origin.includes("localhost")) {
+      return origin;
     }
   }
-  const configured = (config.public as any).appUrl;
-  if (configured && !configured.includes("-") && !configured.includes("localhost")) {
-    return configured;
-  }
-  return "https://thesweetunion.com";
+  return "https://thesweetunion.vercel.app";
 });
 
 async function fetchRecordIfNeeded() {

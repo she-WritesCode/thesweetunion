@@ -94,9 +94,9 @@ export default defineNuxtConfig({
       appUrl:
         process.env.NUXT_PUBLIC_APP_URL ||
         process.env.APP_URL ||
-        (process.env.VERCEL_PROJECT_PRODUCTION_URL
+        (process.env.VERCEL_PROJECT_PRODUCTION_URL && !process.env.VERCEL_PROJECT_PRODUCTION_URL.includes("thesweetunion.com")
           ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-          : "https://thesweetunion.com"),
+          : "https://thesweetunion.vercel.app"),
     },
   },
 

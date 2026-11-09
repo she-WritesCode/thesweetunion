@@ -86,6 +86,21 @@ export default defineEventHandler(async (event) => {
   if (!rsvp) {
     try {
       const res = await client.collection("rsvp_records").find({
+        where: { id: { equals: cleanId.toLowerCase() } },
+        limit: 1,
+        depth: 1,
+      });
+      if (res.docs && res.docs.length > 0) {
+        rsvp = res.docs[0];
+      }
+    } catch (err) {
+      console.warn("lowercase id query failed:", err);
+    }
+  }
+
+  if (!rsvp) {
+    try {
+      const res = await client.collection("rsvp_records").find({
         where: { editToken: { equals: cleanId } },
         limit: 1,
         depth: 1,
@@ -95,6 +110,35 @@ export default defineEventHandler(async (event) => {
       }
     } catch (err) {
       console.warn("editToken query failed:", err);
+    }
+  }
+
+  if (!rsvp && cleanId.includes("@")) {
+    try {
+      const res = await client.collection("rsvp_records").find({
+        where: { leadEmail: { equals: cleanId.toLowerCase() } },
+        limit: 1,
+        depth: 1,
+      });
+      if (res.docs && res.docs.length > 0) {
+        rsvp = res.docs[0];
+      }
+    } catch (err) {
+      console.warn("email query failed:", err);
+    }
+  }
+
+  const digits = cleanId.replace(/\D/g, "");
+  if (!rsvp && digits.length >= 8) {
+    try {
+      const res = await client.collection("rsvp_records").find({ limit: 1000, depth: 1 });
+      const match = (res.docs || []).find((r: any) => {
+        const p = (r.leadPhone || "").replace(/\D/g, "");
+        return p && (p.endsWith(digits) || digits.endsWith(p));
+      });
+      if (match) rsvp = match;
+    } catch (err) {
+      console.warn("phone fallback failed:", err);
     }
   }
 

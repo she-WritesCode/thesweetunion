@@ -14,7 +14,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig();
-  const appUrl = ((config.public as any).appUrl || "https://thesweetunion.com").replace(/\/+$/, "");
+  let appUrl = ((config.public as any).appUrl || "https://thesweetunion.vercel.app").replace(/\/+$/, "");
+  if (!appUrl || appUrl.includes("thesweetunion.com") || appUrl.includes("localhost")) {
+    appUrl = "https://thesweetunion.vercel.app";
+  }
 
   const samplePassCode = "DEMO99";
   const passUrl = `${appUrl}/pass/${samplePassCode.toLowerCase()}`;

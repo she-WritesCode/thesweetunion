@@ -3,11 +3,11 @@ import { ref, computed } from "vue";
 
 const route = useRoute();
 const config = useRuntimeConfig();
-const passId = computed(() => String(route.params.id || ""));
+const passId = computed(() => String(route.params.id || "").trim());
 
 const { data: pass, pending, error } = await useAsyncData(
-  `wedding-pass-${passId.value}`,
-  () => $fetch<any>(`/api/pass/${passId.value}`),
+  () => `wedding-pass-${passId.value.toLowerCase()}`,
+  () => $fetch<any>(`/api/pass/${encodeURIComponent(passId.value)}`),
 );
 
 const cardRef = ref<any>(null);
@@ -21,10 +21,10 @@ const eventNames = computed(() => (pass.value?.events || []).map((e: any) => e.n
 
 const requestUrl = useRequestURL();
 const baseUrl = computed(() => {
-  if (requestUrl?.origin && !requestUrl.origin.includes("localhost")) {
+  if (requestUrl?.origin && !requestUrl.origin.includes("localhost") && !requestUrl.origin.includes("thesweetunion.com")) {
     return requestUrl.origin;
   }
-  return (config.public as any).appUrl || "https://thesweetunion.com";
+  return "https://thesweetunion.vercel.app";
 });
 const ogImageUrl = computed(() => `${baseUrl.value}/api/pass/og-image/${passId.value}.png`);
 const pageUrl = computed(() => `${baseUrl.value}/pass/${passId.value}`);

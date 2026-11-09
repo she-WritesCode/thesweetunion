@@ -1023,13 +1023,24 @@ function insertTag(tag: string) {
   }, 0);
 }
 
+function getCampaignBaseUrl(): string {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    const origin = window.location.origin;
+    if (!origin.includes("thesweetunion.com") && !origin.includes("localhost")) {
+      return origin;
+    }
+  }
+  return "https://thesweetunion.vercel.app";
+}
+
 function renderTemplateForGuest(template: string, guest: GuestRecord): string {
   const tpl = (template || DEFAULT_MESSAGE_TEMPLATE).trim();
   const passCode = (guest.passCode || guest.id).toUpperCase();
   const guestName =
     guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : guest.leadName || "Guest";
-  const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
-  const wishlistUrl = `https://thesweetunion.com/wishlist`;
+  const baseUrl = getCampaignBaseUrl();
+  const passUrl = `${baseUrl}/pass/${passCode.toLowerCase()}`;
+  const wishlistUrl = `${baseUrl}/wishlist`;
   const churchInfo = "Saturday, Nov 21, 2026 @ 09:30 AM — RCCG Victory Center, No 58 Iju Road, Agege, Lagos";
   const receptionInfo = "Saturday, Nov 21, 2026 @ 02:00 PM — Agege, Lagos (Details on Pass Card)";
   const dressCode = "Strictly Formal / African Regal (Mauve & Gold)";

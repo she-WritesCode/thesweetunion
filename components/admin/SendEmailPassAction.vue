@@ -173,7 +173,7 @@ const passUrl = computed(() => {
     const origin = window.location.origin;
     return `${origin}/pass/${id.toLowerCase()}`;
   }
-  return `https://thesweetunion.com/pass/${id.toLowerCase()}`;
+  return `https://thesweetunion.vercel.app/pass/${id.toLowerCase()}`;
 });
 
 function copyPassLink() {

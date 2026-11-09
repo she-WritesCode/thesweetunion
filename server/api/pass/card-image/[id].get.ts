@@ -17,7 +17,10 @@ export default defineEventHandler(async (event) => {
   const isDownload = query.download === "true" || query.download === "1";
 
   const config = useRuntimeConfig();
-  const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
+  let appUrl = ((config.public as any).appUrl || "https://thesweetunion.vercel.app").replace(/\/+$/, "");
+  if (!appUrl || appUrl.includes("thesweetunion.com") || appUrl.includes("localhost")) {
+    appUrl = "https://thesweetunion.vercel.app";
+  }
 
   let rsvp: any = null;
   let settingsRes: any = null;

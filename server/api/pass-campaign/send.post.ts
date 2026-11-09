@@ -104,7 +104,10 @@ export default defineEventHandler(async (event) => {
   const guestName = hasSpouse ? `${leadName} & ${rsvp.spouseName.trim()}` : leadName;
   const passCode = ((rsvp.passCode || rsvp.id) as string).toUpperCase();
 
-  const appUrl = ((config.public as any).appUrl || "https://thesweetunion.com").replace(/\/+$/, "");
+  let appUrl = ((config.public as any).appUrl || "https://thesweetunion.vercel.app").replace(/\/+$/, "");
+  if (!appUrl || appUrl.includes("thesweetunion.com") || appUrl.includes("localhost")) {
+    appUrl = "https://thesweetunion.vercel.app";
+  }
   const passUrl = `${appUrl}/pass/${passCode.toLowerCase()}`;
   const wishlistUrl = `${appUrl}/wishlist`;
 
