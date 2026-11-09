@@ -1,6 +1,5 @@
 import { defineEventHandler, getRouterParam, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
-import postgres from "postgres";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -55,57 +54,47 @@ export default defineEventHandler(async (event) => {
   });
 
   // Query RSVP record by passCode (6-char), primary id, or editToken
-  let result = await client.collection("rsvp_records").find({
-    where: { passCode: { equals: upperCode } },
-    limit: 1,
-    depth: 1,
-  }).catch(() => ({ docs: [] }));
-
-  if (!result.docs || result.docs.length === 0) {
-    result = await client.collection("rsvp_records").find({
-      where: { id: { equals: cleanId } },
+  let rsvp: any = null;
+  try {
+    const res = await client.collection("rsvp_records").find({
+      where: { passCode: { equals: upperCode } },
       limit: 1,
       depth: 1,
-    }).catch(() => ({ docs: [] }));
+    });
+    if (res.docs && res.docs.length > 0) {
+      rsvp = res.docs[0];
+    }
+  } catch (err) {
+    console.warn("passCode query failed:", err);
   }
 
-  if (!result.docs || result.docs.length === 0) {
-    result = await client.collection("rsvp_records").find({
-      where: { editToken: { equals: cleanId } },
-      limit: 1,
-      depth: 1,
-    }).catch(() => ({ docs: [] }));
-  }
-
-  let rsvp = result.docs?.[0];
-
-  // Direct PostgreSQL lookup fallback if SDK didn't locate the record
   if (!rsvp) {
     try {
-      const dbUrl = process.env.DATABASE_URL || (config as any).databaseUrl;
-      if (dbUrl) {
-        const sql = postgres(dbUrl);
-        const rows = await sql`
-          SELECT id, "passCode", data
-          FROM collection_rsvp_records
-          WHERE "passCode" ILIKE ${upperCode}
-             OR id = ${cleanId}
-             OR data->>'passCode' ILIKE ${upperCode}
-             OR data->>'editToken' = ${cleanId}
-          LIMIT 1
-        `;
-        await sql.end();
-        if (rows && rows.length > 0) {
-          const row = rows[0];
-          rsvp = {
-            id: row.id,
-            passCode: row.passCode || row.data?.passCode,
-            ...row.data,
-          };
-        }
+      const res = await client.collection("rsvp_records").find({
+        where: { id: { equals: cleanId } },
+        limit: 1,
+        depth: 1,
+      });
+      if (res.docs && res.docs.length > 0) {
+        rsvp = res.docs[0];
       }
-    } catch (pgErr) {
-      console.warn("Direct PG fallback lookup error in /api/pass/[id]:", pgErr);
+    } catch (err) {
+      console.warn("id query failed:", err);
+    }
+  }
+
+  if (!rsvp) {
+    try {
+      const res = await client.collection("rsvp_records").find({
+        where: { editToken: { equals: cleanId } },
+        limit: 1,
+        depth: 1,
+      });
+      if (res.docs && res.docs.length > 0) {
+        rsvp = res.docs[0];
+      }
+    } catch (err) {
+      console.warn("editToken query failed:", err);
     }
   }
 
