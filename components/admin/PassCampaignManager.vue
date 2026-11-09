@@ -151,16 +151,26 @@
             <div>
               <label class="text-xs font-semibold text-slate-800 block">WhatsApp Invitation Message Template</label>
               <p class="text-[11px] text-slate-500">
-                Click any tag below to insert it. The personalized Access Card image is automatically attached to each message.
+                Click any tag below to insert it. The personalized Access Card image is attached when enabled below.
               </p>
             </div>
-            <button
-              type="button"
-              @click="resetTemplateToDefault"
-              class="text-[11px] font-medium text-slate-500 hover:text-slate-800 underline self-start sm:self-auto"
-            >
-              Reset to Default
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                @click="loadCorrectionTemplate"
+                class="text-[11px] font-medium text-amber-700 hover:text-amber-800 underline self-start sm:self-auto"
+                title="Load date clarification notice template for guests who received previous card"
+              >
+                Use Date Clarification Message
+              </button>
+              <button
+                type="button"
+                @click="resetTemplateToDefault"
+                class="text-[11px] font-medium text-slate-500 hover:text-slate-800 underline self-start sm:self-auto"
+              >
+                Reset to Full Invitation
+              </button>
+            </div>
           </div>
 
           <!-- Clickable Placeholder Chips -->
@@ -194,19 +204,30 @@
 
           <!-- Pacing Delay & Preview Controls -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-            <div class="flex items-center gap-2">
-              <label class="text-xs font-medium text-slate-700">Dispatch Delay (Pacing):</label>
-              <select
-                v-model="config.paceSeconds"
-                class="px-2.5 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:outline-none focus:border-slate-400"
-              >
-                <option :value="5">5 seconds (Fast)</option>
-                <option :value="8">8 seconds (Recommended)</option>
-                <option :value="10">10 seconds</option>
-                <option :value="15">15 seconds (Safe)</option>
-                <option :value="20">20 seconds (Extra Safe)</option>
-              </select>
-              <span class="text-[11px] text-slate-400 hidden md:inline">Spreads send volume to avoid WhatsApp anti-spam flags.</span>
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-medium text-slate-700">Dispatch Delay (Pacing):</label>
+                <select
+                  v-model="config.paceSeconds"
+                  class="px-2.5 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:outline-none focus:border-slate-400"
+                >
+                  <option :value="5">5 seconds (Fast)</option>
+                  <option :value="8">8 seconds (Recommended)</option>
+                  <option :value="10">10 seconds</option>
+                  <option :value="15">15 seconds (Safe)</option>
+                  <option :value="20">20 seconds (Extra Safe)</option>
+                </select>
+                <span class="text-[11px] text-slate-400 hidden md:inline">Spreads send volume to avoid WhatsApp anti-spam flags.</span>
+              </div>
+
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  v-model="config.attachImage"
+                  class="rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+                />
+                <span>Attach VIP Access Card Image (.png)</span>
+              </label>
             </div>
 
             <button
@@ -223,8 +244,17 @@
         <div v-if="showPreview" class="p-3 bg-white border border-slate-200 rounded-md space-y-2">
           <div class="flex items-center justify-between text-[11px]">
             <span class="font-semibold uppercase tracking-wider text-slate-600">Sample Guest Preview</span>
-            <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-medium">
+            <span
+              v-if="config.attachImage !== false"
+              class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-medium"
+            >
               + VIP ACCESS CARD (PNG attached)
+            </span>
+            <span
+              v-else
+              class="text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-medium"
+            >
+              Text Only (No image attached)
             </span>
           </div>
           <pre class="font-sans text-xs whitespace-pre-wrap text-slate-800 bg-slate-50/80 p-3 rounded border border-slate-200/80 leading-relaxed max-h-48 overflow-y-auto">{{ previewRendered }}</pre>
@@ -476,11 +506,13 @@
       <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
         <select
           v-model="statusFilter"
-          class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-slate-400"
+          class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-slate-400 font-medium"
         >
-          <option value="all">All Statuses</option>
-          <option value="pending">Pending Only ({{ pendingTotalCount }})</option>
-          <option value="sent">Sent Only ({{ sentCount }})</option>
+          <option value="all">All Guests ({{ totalGuests }})</option>
+          <option value="previously_sent">Sent Earlier (Needs Date Clarification) ({{ previouslySentCount }})</option>
+          <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
+          <option value="pending">All Pending ({{ pendingTotalCount }})</option>
+          <option value="sent">Marked as Sent ({{ sentCount }})</option>
         </select>
         <span class="text-xs text-slate-500">{{ displayedGuests.length }} of {{ filteredGuests.length }}</span>
       </div>
@@ -705,6 +737,7 @@ interface CampaignSettings {
   guestSenderMap?: Record<string, string>;
   paceSeconds: number;
   messageTemplate: string;
+  attachImage?: boolean;
 }
 
 interface RSVPGroup {
@@ -761,6 +794,24 @@ Access your official entry card and itinerary here:
 With love,
 Adun & Uche`;
 
+const CORRECTION_MESSAGE_TEMPLATE = `Please note a quick clarification regarding your wedding access card:
+
+Kindly disregard the date printed on the access card image sent earlier. Our wedding celebration is on: Saturday, November 21, 2026
+
+Thanks.`;
+
+function loadCorrectionTemplate() {
+  config.value.messageTemplate = CORRECTION_MESSAGE_TEMPLATE;
+  config.value.attachImage = false;
+}
+
+function resetTemplateToDefault() {
+  if (confirm("Reset WhatsApp message template back to the standard pass invitation default?")) {
+    config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
+    config.value.attachImage = true;
+  }
+}
+
 const templateTags = [
   { value: "[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]", desc: "Personalized greeting" },
   { value: "[Guest Name]", desc: "Lead guest name (+ spouse if attending)" },
@@ -788,11 +839,6 @@ function insertTag(tag: string) {
   }, 0);
 }
 
-function resetTemplateToDefault() {
-  if (confirm("Reset WhatsApp message template back to the standard default?")) {
-    config.value.messageTemplate = DEFAULT_MESSAGE_TEMPLATE;
-  }
-}
 
 function renderTemplateForGuest(template: string, guest: GuestRecord): string {
   const tpl = (template || DEFAULT_MESSAGE_TEMPLATE).trim();
@@ -829,7 +875,7 @@ const previewRendered = computed(() => {
 
 const activeSenderTab = ref<string>("all");
 const searchQuery = ref("");
-const statusFilter = ref<"all" | "pending" | "sent">("all");
+const statusFilter = ref<"all" | "pending" | "sent" | "previously_sent" | "never_sent">("all");
 const testPhone = ref("");
 const testSenderSession = ref<string>("default");
 
@@ -872,6 +918,8 @@ const guests = ref<GuestRecord[]>([]);
 const totalGuests = computed(() => guests.value.length);
 const sentCount = computed(() => guests.value.filter((g) => g.invitationSent).length);
 const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
+const previouslySentCount = computed(() => guests.value.filter((g) => Boolean(g.previousInvitationSentAt || g.invitationSent)).length);
+const neverSentCount = computed(() => guests.value.filter((g) => !g.invitationSent && !g.previousInvitationSentAt).length);
 const progressPercent = computed(() => {
   if (totalGuests.value === 0) return 0;
   return Math.round((sentCount.value / totalGuests.value) * 100);
@@ -1004,6 +1052,10 @@ const filteredGuests = computed(() => {
     list = list.filter((g) => !g.invitationSent);
   } else if (statusFilter.value === "sent") {
     list = list.filter((g) => g.invitationSent);
+  } else if (statusFilter.value === "previously_sent") {
+    list = list.filter((g) => Boolean(g.previousInvitationSentAt || (g.invitationSent && !g.previousInvitationSentAt)));
+  } else if (statusFilter.value === "never_sent") {
+    list = list.filter((g) => !g.invitationSent && !g.previousInvitationSentAt);
   }
 
   // Search filter
@@ -1022,6 +1074,9 @@ const filteredGuests = computed(() => {
 });
 
 const pendingGuestsInView = computed(() => {
+  if (statusFilter.value === "previously_sent") {
+    return filteredGuests.value;
+  }
   return filteredGuests.value.filter((g) => !g.invitationSent);
 });
 
@@ -1192,6 +1247,7 @@ async function sendTestPass() {
         phone: testPhone.value,
         session: testSenderSession.value || undefined,
         customTemplate: config.value.messageTemplate,
+        attachImage: config.value.attachImage ?? true,
       },
     });
     if (res.success) {
@@ -1225,6 +1281,7 @@ async function sendSinglePass(guest: GuestRecord) {
         rsvpId: guest.id,
         session: wahaSession,
         customTemplate: config.value.messageTemplate,
+        attachImage: config.value.attachImage ?? true,
       },
     });
     if (res.success) {
@@ -1313,6 +1370,7 @@ async function startAutoDispatch() {
           rsvpId: guest.id,
           session: wahaSession,
           customTemplate: config.value.messageTemplate,
+          attachImage: config.value.attachImage ?? true,
         },
       });
       if (res.success) {
