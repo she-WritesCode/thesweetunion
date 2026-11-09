@@ -1,10 +1,51 @@
 import { defineEventHandler, getRouterParam, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import postgres from "postgres";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
   if (!id) {
     throw createError({ statusCode: 400, message: "Missing pass ID" });
+  }
+
+  const cleanId = id.trim();
+  const upperCode = cleanId.toUpperCase();
+
+  // Test / Demo Pass Handler (e.g. /pass/demo99)
+  if (upperCode === "DEMO99" || upperCode === "DEMO" || upperCode === "SAMPLE") {
+    return {
+      id: "demo99",
+      passCode: "DEMO99",
+      leadName: "Test Guest",
+      hasSpouse: true,
+      spouseName: "Partner",
+      guestName: "Test Guest & Partner",
+      attending: true,
+      groupName: "Special Guests",
+      events: [
+        {
+          id: "ceremony",
+          name: "Church Wedding Ceremony",
+          date: "2026-11-21T08:00:00.000Z",
+          venueName: "RCCG Victory Center",
+          venueAddress: "No 58 Iju Road, Agege, Lagos",
+          dressCode: "Mauve & Gold",
+        },
+        {
+          id: "reception",
+          name: "Wedding Reception",
+          date: "2026-11-21T12:00:00.000Z",
+          venueName: "Ronnie Dee Event Centre",
+          venueAddress: "67 Iju Rd, Pen Cinema Zone, beside Eterna Petrol Station, Agege, Lagos",
+          dressCode: "Mauve & Gold",
+        },
+      ],
+      siteSettings: {
+        coupleName: "Adun & Uche",
+        hashtag: "#TheSweetUnion",
+        weddingDateText: "Saturday, November 21, 2026",
+      },
+    };
   }
 
   const config = useRuntimeConfig();
@@ -13,22 +54,19 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  const cleanId = id.trim();
-  const upperCode = cleanId.toUpperCase();
-
   // Query RSVP record by passCode (6-char), primary id, or editToken
   let result = await client.collection("rsvp_records").find({
     where: { passCode: { equals: upperCode } },
     limit: 1,
     depth: 1,
-  });
+  }).catch(() => ({ docs: [] }));
 
   if (!result.docs || result.docs.length === 0) {
     result = await client.collection("rsvp_records").find({
       where: { id: { equals: cleanId } },
       limit: 1,
       depth: 1,
-    });
+    }).catch(() => ({ docs: [] }));
   }
 
   if (!result.docs || result.docs.length === 0) {
@@ -36,10 +74,41 @@ export default defineEventHandler(async (event) => {
       where: { editToken: { equals: cleanId } },
       limit: 1,
       depth: 1,
-    });
+    }).catch(() => ({ docs: [] }));
   }
 
-  const rsvp = result.docs?.[0];
+  let rsvp = result.docs?.[0];
+
+  // Direct PostgreSQL lookup fallback if SDK didn't locate the record
+  if (!rsvp) {
+    try {
+      const dbUrl = process.env.DATABASE_URL || (config as any).databaseUrl;
+      if (dbUrl) {
+        const sql = postgres(dbUrl);
+        const rows = await sql`
+          SELECT id, "passCode", data
+          FROM collection_rsvp_records
+          WHERE "passCode" ILIKE ${upperCode}
+             OR id = ${cleanId}
+             OR data->>'passCode' ILIKE ${upperCode}
+             OR data->>'editToken' = ${cleanId}
+          LIMIT 1
+        `;
+        await sql.end();
+        if (rows && rows.length > 0) {
+          const row = rows[0];
+          rsvp = {
+            id: row.id,
+            passCode: row.passCode || row.data?.passCode,
+            ...row.data,
+          };
+        }
+      }
+    } catch (pgErr) {
+      console.warn("Direct PG fallback lookup error in /api/pass/[id]:", pgErr);
+    }
+  }
+
   if (!rsvp) {
     throw createError({ statusCode: 404, message: "Pass not found" });
   }
