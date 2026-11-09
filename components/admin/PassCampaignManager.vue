@@ -8,10 +8,17 @@
           type="button"
           @click="activeSenderTab = 'all'"
           class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-          :class="activeSenderTab === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+          :class="
+            activeSenderTab === 'all'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          "
         >
           All Senders
-          <span class="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full" :class="activeSenderTab === 'all' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'">
+          <span
+            class="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full"
+            :class="activeSenderTab === 'all' ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'"
+          >
             {{ totalGuests }}
           </span>
         </button>
@@ -20,7 +27,11 @@
           type="button"
           @click="activeSenderTab = 'unassigned'"
           class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5"
-          :class="activeSenderTab === 'unassigned' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+          :class="
+            activeSenderTab === 'unassigned'
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          "
         >
           <span>Unassigned</span>
           <span
@@ -37,7 +48,11 @@
           type="button"
           @click="activeSenderTab = s.id"
           class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5"
-          :class="activeSenderTab === s.id ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'"
+          :class="
+            activeSenderTab === s.id
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          "
         >
           <!-- Session Status Indicator -->
           <span
@@ -46,7 +61,7 @@
               'bg-emerald-500': s.status === 'WORKING',
               'bg-amber-400': s.status === 'SCAN_QR_CODE',
               'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
-              'bg-slate-300': !s.status || s.status === 'UNKNOWN'
+              'bg-slate-300': !s.status || s.status === 'UNKNOWN',
             }"
             :title="`WAHA Session: ${s.wahaSession} (${s.status || 'Offline'})`"
           />
@@ -76,8 +91,19 @@
           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
           title="Fetch latest phones and session statuses from WAHA"
         >
-          <svg class="w-3.5 h-3.5 text-slate-500" :class="{ 'animate-spin': loading }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            class="w-3.5 h-3.5 text-slate-500"
+            :class="{ 'animate-spin': loading }"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           <span>Sync from WAHA</span>
         </button>
@@ -87,8 +113,18 @@
           @click="showSettings = !showSettings"
           class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 rounded-md bg-white hover:bg-slate-50 text-slate-700 transition"
         >
-          <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <svg
+            class="w-3.5 h-3.5 text-slate-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span>{{ showSettings ? "Hide Settings" : "Configure Routing & Message Template" }}</span>
@@ -107,10 +143,16 @@
               type="button"
               @click="settingsTab = 'template'"
               class="px-2.5 py-1 text-xs font-medium rounded transition inline-flex items-center gap-1.5"
-              :class="settingsTab === 'template' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+              :class="
+                settingsTab === 'template' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              "
             >
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
               </svg>
               <span>Message Template & Pacing</span>
             </button>
@@ -118,10 +160,16 @@
               type="button"
               @click="settingsTab = 'routing'"
               class="px-2.5 py-1 text-xs font-medium rounded transition inline-flex items-center gap-1.5"
-              :class="settingsTab === 'routing' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+              :class="
+                settingsTab === 'routing' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              "
             >
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
               <span>Routing & Senders</span>
             </button>
@@ -135,9 +183,15 @@
             :disabled="savingSettings"
             class="px-3 py-1 text-xs font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1 shadow-xs transition"
           >
-            <svg v-if="savingSettings" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
-              <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+            <svg
+              v-if="savingSettings"
+              class="w-3 h-3 animate-spin text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+              <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
             </svg>
             <span>Save Settings</span>
           </button>
@@ -184,7 +238,13 @@
               class="px-2 py-1 text-[11px] font-mono bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 hover:border-slate-300 rounded transition inline-flex items-center gap-1"
               :title="tag.desc"
             >
-              <svg class="w-2.5 h-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="w-2.5 h-2.5 text-slate-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path d="M12 5v14M5 12h14" />
               </svg>
               <span>{{ tag.value }}</span>
@@ -217,7 +277,9 @@
                   <option :value="15">15 seconds (Safe)</option>
                   <option :value="20">20 seconds (Extra Safe)</option>
                 </select>
-                <span class="text-[11px] text-slate-400 hidden md:inline">Spreads send volume to avoid WhatsApp anti-spam flags.</span>
+                <span class="text-[11px] text-slate-400 hidden md:inline"
+                  >Spreads send volume to avoid WhatsApp anti-spam flags.</span
+                >
               </div>
 
               <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
@@ -257,7 +319,10 @@
               Text Only (No image attached)
             </span>
           </div>
-          <pre class="font-sans text-xs whitespace-pre-wrap text-slate-800 bg-slate-50/80 p-3 rounded border border-slate-200/80 leading-relaxed max-h-48 overflow-y-auto">{{ previewRendered }}</pre>
+          <pre
+            class="font-sans text-xs whitespace-pre-wrap text-slate-800 bg-slate-50/80 p-3 rounded border border-slate-200/80 leading-relaxed max-h-48 overflow-y-auto"
+            >{{ previewRendered }}</pre
+          >
         </div>
       </div>
 
@@ -285,7 +350,7 @@
                         'bg-emerald-500': s.status === 'WORKING',
                         'bg-amber-400': s.status === 'SCAN_QR_CODE',
                         'bg-rose-500': s.status === 'FAILED' || s.status === 'STOPPED',
-                        'bg-slate-300': !s.status || s.status === 'UNKNOWN'
+                        'bg-slate-300': !s.status || s.status === 'UNKNOWN',
                       }"
                     />
                     <span>{{ s.name }}</span>
@@ -297,8 +362,9 @@
                       :class="{
                         'bg-emerald-50 text-emerald-700 border border-emerald-200': s.status === 'WORKING',
                         'bg-amber-50 text-amber-700 border border-amber-200': s.status === 'SCAN_QR_CODE',
-                        'bg-rose-50 text-rose-700 border border-rose-200': s.status === 'FAILED' || s.status === 'STOPPED',
-                        'bg-slate-100 text-slate-600': !s.status
+                        'bg-rose-50 text-rose-700 border border-rose-200':
+                          s.status === 'FAILED' || s.status === 'STOPPED',
+                        'bg-slate-100 text-slate-600': !s.status,
                       }"
                     >
                       {{ s.status || "DISCONNECTED" }}
@@ -381,9 +447,15 @@
               :disabled="testing || !testPhone"
               class="px-3 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
             >
-              <svg v-if="testing" class="w-3 h-3 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
-                <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+              <svg
+                v-if="testing"
+                class="w-3 h-3 animate-spin text-slate-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
               </svg>
               <span>Send Test Pass</span>
             </button>
@@ -393,7 +465,9 @@
     </div>
 
     <!-- Dedicated Dispatch Mode Bar: Full Passes vs Date Clarification Notice -->
-    <div class="p-3 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm border border-slate-800">
+    <div
+      class="p-3 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm border border-slate-800"
+    >
       <div class="flex items-center gap-2.5 flex-wrap">
         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Campaign Mode:</span>
         <div class="inline-flex rounded-md p-0.5 bg-slate-950 border border-slate-700">
@@ -401,9 +475,13 @@
             type="button"
             @click="setCampaignMode('pass')"
             class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
-            :class="campaignMode === 'pass' ? 'bg-emerald-600 text-white shadow-xs font-semibold' : 'text-slate-300 hover:text-white'"
+            :class="
+              campaignMode === 'pass'
+                ? 'bg-emerald-600 text-white shadow-xs font-semibold'
+                : 'text-slate-300 hover:text-white'
+            "
           >
-            <span>🎟️ Full Pass Invitations</span>
+            <span>Full Pass Invitations</span>
             <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900 text-emerald-200">
               Fresh Guests ({{ neverSentCount }})
             </span>
@@ -412,11 +490,15 @@
             type="button"
             @click="setCampaignMode('clarification')"
             class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
-            :class="campaignMode === 'clarification' ? 'bg-amber-600 text-white shadow-xs font-semibold' : 'text-slate-300 hover:text-white'"
+            :class="
+              campaignMode === 'clarification'
+                ? 'bg-amber-600 text-white shadow-xs font-semibold'
+                : 'text-slate-300 hover:text-white'
+            "
           >
-            <span>📢 Date Clarification Notice</span>
+            <span>Date Clarification Notice</span>
             <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-900 text-amber-200">
-              Sent Earlier ({{ previouslySentCount }})
+              Sent Yesterday ({{ previouslySentCount }})
             </span>
           </button>
         </div>
@@ -436,13 +518,13 @@
     </div>
 
     <!-- Execution Bar / Progress Stats -->
-    <div class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div
+      class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3"
+    >
       <div class="space-y-1 flex-1">
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-semibold text-slate-900">
-              {{ sentCount }} / {{ totalGuests }} passes dispatched
-            </span>
+            <span class="font-semibold text-slate-900"> {{ sentCount }} / {{ totalGuests }} passes dispatched </span>
             <span class="text-slate-400">·</span>
             <span class="text-slate-600">{{ progressPercent }}% completed</span>
             <template v-if="sentCount > 0 && !isDispatching">
@@ -454,9 +536,15 @@
                 class="text-[11px] text-amber-700 hover:text-amber-800 font-medium underline inline-flex items-center gap-1"
                 title="Mark all sent passes as pending to re-send without wiping historical timestamps"
               >
-                <svg v-if="resetting" class="w-3 h-3 animate-spin text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
-                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+                <svg
+                  v-if="resetting"
+                  class="w-3 h-3 animate-spin text-amber-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
                 </svg>
                 <span>Reset for Re-send (Keep History)</span>
               </button>
@@ -483,8 +571,8 @@
             class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
             title="Choose how the sending queue is paced across phones"
           >
-            <option value="interleaved">🔄 Interleaved Pacing (1 Groom ➔ 1 Bride ➔ 1 My Phone)</option>
-            <option value="sequential">📁 Sequential (Group by Group)</option>
+            <option value="interleaved">Interleaved Pacing (1 Groom -> 1 Bride -> 1 My Phone)</option>
+            <option value="sequential">Sequential (Group by Group)</option>
           </select>
         </div>
 
@@ -494,17 +582,26 @@
             @click="startAutoDispatch"
             :disabled="pendingGuestsInView.length === 0"
             class="px-3.5 py-1.5 text-xs font-medium rounded-md text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition"
-            :class="campaignMode === 'clarification' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-700 hover:bg-emerald-800'"
+            :class="
+              campaignMode === 'clarification'
+                ? 'bg-amber-600 hover:bg-amber-700'
+                : 'bg-emerald-700 hover:bg-emerald-800'
+            "
           >
             <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            <span v-if="campaignMode === 'clarification'">Send Date Clarification ({{ pendingGuestsInView.length }})</span>
+            <span v-if="campaignMode === 'clarification'"
+              >Send Date Clarification ({{ pendingGuestsInView.length }})</span
+            >
             <span v-else>Start Auto-Send ({{ pendingGuestsInView.length }})</span>
           </button>
         </template>
         <template v-else>
-          <div v-if="currentSenderNotice" class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5">
+          <div
+            v-if="currentSenderNotice"
+            class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5"
+          >
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Sending via {{ currentSenderNotice }}</span>
           </div>
@@ -536,7 +633,13 @@
     <!-- Table Search & Filter Bar -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
       <div class="relative w-full sm:w-72">
-        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
@@ -554,10 +657,11 @@
           class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-slate-400 font-medium"
         >
           <option value="all">All Guests ({{ totalGuests }})</option>
-          <option value="previously_sent">Sent Earlier (Needs Date Clarification) ({{ previouslySentCount }})</option>
+          <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
           <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
+          <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
           <option value="pending">All Pending ({{ pendingTotalCount }})</option>
-          <option value="sent">Marked as Sent ({{ sentCount }})</option>
+          <option value="sent">All Marked Sent ({{ sentCount }})</option>
         </select>
         <span class="text-xs text-slate-500">{{ displayedGuests.length }} of {{ filteredGuests.length }}</span>
       </div>
@@ -605,7 +709,7 @@
                     class="text-[10px] px-1.5 py-0.2 bg-purple-50 text-purple-700 border border-purple-200/60 rounded font-medium inline-flex items-center gap-1"
                     title="Sent Asoebi message · Assigned to My Phone"
                   >
-                    <span>👗 Asoebi</span>
+                    <span>Asoebi</span>
                   </span>
                 </div>
               </td>
@@ -653,43 +757,49 @@
                       'bg-emerald-500': getSenderStatus(resolveSenderForGuest(guest)) === 'WORKING',
                       'bg-amber-400': getSenderStatus(resolveSenderForGuest(guest)) === 'SCAN_QR_CODE',
                       'bg-rose-500': getSenderStatus(resolveSenderForGuest(guest)) === 'FAILED',
-                      'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest))
+                      'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest)),
                     }"
                   />
                   <span>{{ getSenderName(resolveSenderForGuest(guest)) }}</span>
                 </span>
-                <span v-else class="text-[11px] text-slate-400 italic">
-                  Unassigned
-                </span>
+                <span v-else class="text-[11px] text-slate-400 italic"> Unassigned </span>
               </td>
 
               <!-- Status -->
               <td class="px-3.5 py-2.5">
                 <span
-                  v-if="guest.invitationSent"
+                  v-if="isSentThisAfternoon(guest)"
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  title="Sent this afternoon with the correct Nov 21 date. Does NOT need clarification."
                 >
-                  <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    class="w-3 h-3 text-emerald-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Sent</span>
+                  <span>Sent (Correct Card)</span>
                   <span v-if="guest.invitationSentAt" class="text-emerald-500 font-mono">
                     ({{ formatDate(guest.invitationSentAt) }})
                   </span>
                 </span>
                 <span
-                  v-else-if="guest.previousInvitationSentAt"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80"
-                  :title="'Previously sent ' + formatDate(guest.previousInvitationSentAt) + '. Queued for re-send.'"
+                  v-else-if="needsDateClarification(guest)"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-300"
+                  :title="'Sent yesterday with previous date card. Needs quick date clarification note.'"
                 >
-                  <span>Pending Re-send</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span>Sent Yesterday (Needs Clarification)</span>
                 </span>
                 <span
                   v-else
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
                 >
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                  <span>Pending</span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <span>Pending (Never Sent)</span>
                 </span>
               </td>
 
@@ -704,8 +814,18 @@
                   title="Open direct WhatsApp conversation"
                 >
                   <span>Open WhatsApp</span>
-                  <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    class="w-3 h-3 text-slate-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
 
@@ -716,9 +836,15 @@
                   :disabled="sendingId === guest.id || isDispatching"
                   class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition"
                 >
-                  <svg v-if="sendingId === guest.id" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"/>
-                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75"/>
+                  <svg
+                    v-if="sendingId === guest.id"
+                    class="w-3 h-3 animate-spin text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
                   </svg>
                   <span>{{ guest.invitationSent ? "Resend" : "Send Pass" }}</span>
                 </button>
@@ -729,10 +855,10 @@
       </div>
 
       <!-- Pagination -->
-      <div class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
-        <div>
-          Showing {{ paginationStart }} - {{ paginationEnd }} of {{ filteredGuests.length }} guests
-        </div>
+      <div
+        class="px-3.5 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600"
+      >
+        <div>Showing {{ paginationStart }} - {{ paginationEnd }} of {{ filteredGuests.length }} guests</div>
         <div class="flex items-center gap-1">
           <button
             type="button"
@@ -820,19 +946,19 @@ const templateTextarea = ref<HTMLTextAreaElement | null>(null);
 
 const DEFAULT_MESSAGE_TEMPLATE = `[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]
 
-We can't wait to celebrate with you at #TheSweetUnion! 💍✨
+We can't wait to celebrate with you at #TheSweetUnion!
 
-🎟️ YOUR RECEPTION PASS:
+YOUR RECEPTION PASS:
 Your digital pass code is *[PASS_CODE]*.
 Access your official entry card and itinerary here:
 [PASS_URL]
 
-⚠️ IMPORTANT VENUE & ENTRY INFO:
+IMPORTANT VENUE & ENTRY INFO:
 • *Church Ceremony:* [Church Venue & Time] (Open to all friends and family)
 • *Wedding Reception:* [Reception Venue & Time]
   *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
 
-❓ FREQUENTLY ASKED QUESTIONS:
+FREQUENTLY ASKED QUESTIONS:
 • Colors / Dress Code: [Details...]
 • Gifts & Registry: [Wishlist Link...]
 
@@ -897,11 +1023,11 @@ function insertTag(tag: string) {
   }, 0);
 }
 
-
 function renderTemplateForGuest(template: string, guest: GuestRecord): string {
   const tpl = (template || DEFAULT_MESSAGE_TEMPLATE).trim();
   const passCode = (guest.passCode || guest.id).toUpperCase();
-  const guestName = guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : (guest.leadName || "Guest");
+  const guestName =
+    guest.hasSpouse && guest.spouseName ? `${guest.leadName} & ${guest.spouseName}` : guest.leadName || "Guest";
   const passUrl = `https://thesweetunion.com/pass/${passCode.toLowerCase()}`;
   const wishlistUrl = `https://thesweetunion.com/wishlist`;
   const churchInfo = "Saturday, Nov 21, 2026 @ 09:30 AM — RCCG Victory Center, No 58 Iju Road, Agege, Lagos";
@@ -916,7 +1042,10 @@ function renderTemplateForGuest(template: string, guest: GuestRecord): string {
     .replace(/\[Church Venue & Time\]|\{Church Venue & Time\}/gi, churchInfo)
     .replace(/\[Reception Venue & Time\]|\{Reception Venue & Time\}/gi, receptionInfo)
     .replace(/\[Details\.\.\.\]|\[Details\]|\[Dress Code\]|\{Dress Code\}|\[dress_code\]|\{dress_code\}/gi, dressCode)
-    .replace(/\[Wishlist Link\.\.\.\]|\[Wishlist Link\]|\{Wishlist Link\}|\[wishlist_link\]|\{wishlist_link\}/gi, wishlistUrl);
+    .replace(
+      /\[Wishlist Link\.\.\.\]|\[Wishlist Link\]|\{Wishlist Link\}|\[wishlist_link\]|\{wishlist_link\}/gi,
+      wishlistUrl,
+    );
 }
 
 const previewRendered = computed(() => {
@@ -933,9 +1062,27 @@ const previewRendered = computed(() => {
 
 const activeSenderTab = ref<string>("all");
 const searchQuery = ref("");
-const statusFilter = ref<"all" | "pending" | "sent" | "previously_sent" | "never_sent">("all");
+const statusFilter = ref<"all" | "pending" | "sent" | "previously_sent" | "never_sent" | "sent_today">("all");
 const testPhone = ref("");
 const testSenderSession = ref<string>("default");
+
+const DATE_FIX_CUTOFF_ISO = "2026-11-09T12:00:00.000Z";
+
+function isSentThisAfternoon(guest: GuestRecord): boolean {
+  return Boolean(guest.invitationSentAt && guest.invitationSentAt >= DATE_FIX_CUTOFF_ISO);
+}
+
+function needsDateClarification(guest: GuestRecord): boolean {
+  if (isSentThisAfternoon(guest)) return false;
+  const hadOldSend =
+    (guest.previousInvitationSentAt && guest.previousInvitationSentAt < DATE_FIX_CUTOFF_ISO) ||
+    (guest.invitationSentAt && guest.invitationSentAt < DATE_FIX_CUTOFF_ISO);
+  return Boolean(hadOldSend);
+}
+
+function isNeverSent(guest: GuestRecord): boolean {
+  return !guest.invitationSentAt && !guest.previousInvitationSentAt;
+}
 
 const sendingId = ref<string | null>(null);
 const currentProcessingId = ref<string | null>(null);
@@ -976,8 +1123,9 @@ const guests = ref<GuestRecord[]>([]);
 const totalGuests = computed(() => guests.value.length);
 const sentCount = computed(() => guests.value.filter((g) => g.invitationSent).length);
 const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
-const previouslySentCount = computed(() => guests.value.filter((g) => Boolean(g.previousInvitationSentAt || g.invitationSent)).length);
-const neverSentCount = computed(() => guests.value.filter((g) => !g.invitationSent && !g.previousInvitationSentAt).length);
+const previouslySentCount = computed(() => guests.value.filter(needsDateClarification).length);
+const neverSentCount = computed(() => guests.value.filter(isNeverSent).length);
+const sentThisAfternoonCount = computed(() => guests.value.filter(isSentThisAfternoon).length);
 const progressPercent = computed(() => {
   if (totalGuests.value === 0) return 0;
   return Math.round((sentCount.value / totalGuests.value) * 100);
@@ -1111,9 +1259,11 @@ const filteredGuests = computed(() => {
   } else if (statusFilter.value === "sent") {
     list = list.filter((g) => g.invitationSent);
   } else if (statusFilter.value === "previously_sent") {
-    list = list.filter((g) => Boolean(g.previousInvitationSentAt || (g.invitationSent && !g.previousInvitationSentAt)));
+    list = list.filter(needsDateClarification);
   } else if (statusFilter.value === "never_sent") {
-    list = list.filter((g) => !g.invitationSent && !g.previousInvitationSentAt);
+    list = list.filter(isNeverSent);
+  } else if (statusFilter.value === "sent_today") {
+    list = list.filter(isSentThisAfternoon);
   }
 
   // Search filter
@@ -1132,8 +1282,8 @@ const filteredGuests = computed(() => {
 });
 
 const pendingGuestsInView = computed(() => {
-  if (statusFilter.value === "previously_sent") {
-    return filteredGuests.value;
+  if (campaignMode.value === "clarification" || statusFilter.value === "previously_sent") {
+    return filteredGuests.value.filter(needsDateClarification);
   }
   return filteredGuests.value.filter((g) => !g.invitationSent);
 });
@@ -1187,7 +1337,7 @@ function syncWahaSessionsIntoSenders(sessions: WahaSessionInfo[]) {
   // Also include any sessions from WAHA not yet in senders
   for (const sess of sessions) {
     const exists = updatedSenders.some(
-      (s) => (s.wahaSession || s.id || "").toLowerCase() === (sess.name || "").toLowerCase()
+      (s) => (s.wahaSession || s.id || "").toLowerCase() === (sess.name || "").toLowerCase(),
     );
     if (!exists) {
       updatedSenders.push({
@@ -1272,7 +1422,11 @@ async function saveSettings() {
 const resetting = ref(false);
 
 async function confirmResetCampaign() {
-  if (!confirm(`Are you sure you want to mark all ${sentCount.value} sent passes as Pending to re-send?\n\nYour previous send history and timestamps will be safely preserved.`)) {
+  if (
+    !confirm(
+      `Are you sure you want to mark all ${sentCount.value} sent passes as Pending to re-send?\n\nYour previous send history and timestamps will be safely preserved.`,
+    )
+  ) {
     return;
   }
   resetting.value = true;
@@ -1323,7 +1477,9 @@ async function sendTestPass() {
 async function sendSinglePass(guest: GuestRecord) {
   const senderId = resolveSenderForGuest(guest);
   if (senderId === "unassigned") {
-    alert(`This guest belongs to "${getGroupName(guest.group)}", which is currently Unassigned. Please assign this group to a dispatch phone in "Configure Routing & Message Template" first.`);
+    alert(
+      `This guest belongs to "${getGroupName(guest.group)}", which is currently Unassigned. Please assign this group to a dispatch phone in "Configure Routing & Message Template" first.`,
+    );
     return;
   }
 

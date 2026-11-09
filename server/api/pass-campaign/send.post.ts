@@ -116,19 +116,19 @@ export default defineEventHandler(async (event) => {
 
   const defaultTemplate = `[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]
 
-We can't wait to celebrate with you at #TheSweetUnion! 💍✨
+We can't wait to celebrate with you at #TheSweetUnion!
 
-🎟️ YOUR RECEPTION PASS:
+YOUR RECEPTION PASS:
 Your digital pass code is *[PASS_CODE]*.
 Access your official entry card and itinerary here:
 [PASS_URL]
 
-⚠️ IMPORTANT VENUE & ENTRY INFO:
+IMPORTANT VENUE & ENTRY INFO:
 • *Church Ceremony:* [Church Venue & Time] (Open to all friends and family)
 • *Wedding Reception:* [Reception Venue & Time]
   *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
 
-❓ FREQUENTLY ASKED QUESTIONS:
+FREQUENTLY ASKED QUESTIONS:
 • Colors / Dress Code: [Details...]
 • Gifts & Registry: [Wishlist Link...]
 
