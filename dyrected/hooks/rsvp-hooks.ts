@@ -21,8 +21,13 @@ export const enforceRsvpCapacity: CollectionBeforeChangeHook = ({ data, operatio
     data.leadPhone = formatPhoneNumber(data.leadPhone);
   }
 
-  // Ensure passCode is always set for guests
-  if (!data.passCode) {
+  // Always normalize passCode to uppercase if provided
+  if (data.passCode && typeof data.passCode === "string") {
+    data.passCode = data.passCode.toUpperCase().trim();
+  }
+
+  // Ensure passCode is only generated on initial create, NEVER regenerated on update
+  if (operation === "create" && !data.passCode) {
     data.passCode = generatePassCode();
   }
 

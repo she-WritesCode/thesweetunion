@@ -53,19 +53,23 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  // Query RSVP record by passCode (6-char), primary id, or editToken
+  // Query RSVP record by passCode (uppercase, lowercase, raw)
   let rsvp: any = null;
-  try {
-    const res = await client.collection("rsvp_records").find({
-      where: { passCode: { equals: upperCode } },
-      limit: 1,
-      depth: 1,
-    });
-    if (res.docs && res.docs.length > 0) {
-      rsvp = res.docs[0];
+  const passVariants = Array.from(new Set([upperCode, cleanId.toLowerCase(), cleanId]));
+  for (const code of passVariants) {
+    if (rsvp) break;
+    try {
+      const res = await client.collection("rsvp_records").find({
+        where: { passCode: { equals: code } },
+        limit: 1,
+        depth: 1,
+      });
+      if (res.docs && res.docs.length > 0) {
+        rsvp = res.docs[0];
+      }
+    } catch (err) {
+      console.warn("passCode query failed for variant:", code, err);
     }
-  } catch (err) {
-    console.warn("passCode query failed:", err);
   }
 
   if (!rsvp) {
@@ -139,6 +143,39 @@ export default defineEventHandler(async (event) => {
       if (match) rsvp = match;
     } catch (err) {
       console.warn("phone fallback failed:", err);
+    }
+  }
+
+  // Historical passCode check via audit log (resolves previous codes if an update changed them)
+  if (!rsvp && process.env.DATABASE_URL) {
+    try {
+      const postgres = (await import("postgres")).default;
+      const sql = postgres(process.env.DATABASE_URL, { ssl: "prefer", max: 1 });
+      const auditRows = await sql`
+        SELECT data->>'documentId' as doc_id
+        FROM collection___audit
+        WHERE data->>'collection' = 'rsvp_records'
+          AND (
+            data->>'changes' ILIKE ${'%"passCode":"' + upperCode + '"%'}
+            OR data->>'changes' ILIKE ${'%"passCode":"' + cleanId + '"%'}
+          )
+        ORDER BY created_at DESC
+        LIMIT 1
+      `;
+      if (auditRows.length > 0 && auditRows[0].doc_id) {
+        const foundId = auditRows[0].doc_id;
+        const res = await client.collection("rsvp_records").find({
+          where: { id: { equals: foundId } },
+          limit: 1,
+          depth: 1,
+        });
+        if (res.docs && res.docs.length > 0) {
+          rsvp = res.docs[0];
+        }
+      }
+      await sql.end();
+    } catch (auditErr) {
+      console.warn("Audit passCode fallback failed:", auditErr);
     }
   }
 
