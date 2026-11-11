@@ -117,23 +117,30 @@ export default defineEventHandler(async (event) => {
     leadName,
   );
 
-  const defaultTemplate = `[Greeting, e.g. Dear [Guest Name] / Hi [Guest Name]!]
+  const defaultTemplate = `[Greeting, e.g. Dear [Guest Name]
 
-We can't wait to celebrate with you at #TheSweetUnion!
+We can't wait to celebrate with you at #TheSweetUnion! 💍✨
 
-YOUR RECEPTION PASS:
-Your digital pass code is *[PASS_CODE]*.
-Access your official entry card and itinerary here:
-[PASS_URL]
+Your Reception Access Card is ready. Kindly save the image attached to this message and this pass code to show at the reception:
+Pass Code: *[PASS_CODE]*.
 
-IMPORTANT VENUE & ENTRY INFO:
-• *Church Ceremony:* [Church Venue & Time] (Open to all friends and family)
-• *Wedding Reception:* [Reception Venue & Time]
-  *Please note: The digital pass above is strictly required for entry at the reception venue. Kindly have it ready on your phone.*
 
-FREQUENTLY ASKED QUESTIONS:
-• Colors / Dress Code: [Details...]
-• Gifts & Registry: [Wishlist Link...]
+*Venue Details*
+CHURCH CEREMONY: 
+Saturday, Nov 21, 2026 @ 09:00 AM
+RCCG Victory Center, No 58 Iju Road, Agege, Lagos
+(Open to all friends & family)
+
+RECEPTION: 
+Saturday, Nov 21, 2026 @ 01:00 PM 
+*Ronnie Dee Event Centre, 67 Iju Rd, Pen Cinema Zone, beside Eterna Petrol Station, Agege, Lagos 101232, Lagos*
+(Strictly by digital access card or pass code)
+
+
+DRESS CODE: Mauve & Gold
+GIFTS & REGISTRY: https://thesweetunion.vercel.app/wishlist
+
+Want to read about our love story? Check here: https://thesweetunion.vercel.app/
 
 With love,
 Adun & Uche`;

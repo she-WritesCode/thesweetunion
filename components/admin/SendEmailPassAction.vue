@@ -167,13 +167,13 @@ const sentBadgeLabel = computed(() => {
 });
 
 const passUrl = computed(() => {
-  const id = rsvpId.value;
-  if (!id) return "";
+  const code = (record.value.passCode || rsvpId.value || "").toString().toLowerCase();
+  if (!code) return "";
   if (typeof window !== "undefined") {
     const origin = window.location.origin;
-    return `${origin}/pass/${id.toLowerCase()}`;
+    return `${origin}/pass/${code}`;
   }
-  return `https://thesweetunion.vercel.app/pass/${id.toLowerCase()}`;
+  return `https://thesweetunion.vercel.app/pass/${code}`;
 });
 
 function copyPassLink() {

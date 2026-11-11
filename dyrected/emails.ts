@@ -491,45 +491,61 @@ export function invitationEmail({
   accessCode,
   passUrl,
   eventNames,
-  wishlistLink,
+  wishlistLink = "https://thesweetunion.vercel.app/wishlist",
+  storyLink = "https://thesweetunion.vercel.app/",
 }: {
   guestName: string;
   accessCode: string;
   passUrl: string;
-  eventNames: string[];
-  wishlistLink: string;
+  eventNames?: string[];
+  wishlistLink?: string;
+  storyLink?: string;
 }): string {
   return layout(
-    heading(`You're invited, ${guestName}! 🎉`),
-    paragraph(
-      "We're so excited to celebrate with you. Your personal access pass card is below — please save it to your photos or show it at the entrance.",
-    ),
-    divider(),
+    `<h1 style="margin:0 0 12px;font-size:22px;font-family:Georgia,serif;color:${TEXT};font-weight:normal;">Dear ${guestName},</h1>`,
+    `<p style="margin:0 0 16px;font-size:15px;color:${TEXT};line-height:1.75;font-family:Georgia,serif;">We can't wait to celebrate with you at #TheSweetUnion! 💍✨</p>`,
+    `<p style="margin:0 0 16px;font-size:14px;color:${MUTED};line-height:1.75;font-family:Georgia,serif;">Your Reception Access Card is ready. Kindly save the image attached to this message and this pass code to show at the reception:</p>`,
+    `<div style="background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:12px 16px;margin:16px 0;text-align:center;">
+      <p style="margin:0;font-size:12px;color:${MUTED};font-family:Georgia,serif;letter-spacing:1px;text-transform:uppercase;">Pass Code</p>
+      <p style="margin:4px 0 0;font-size:24px;font-family:'Courier New',monospace;font-weight:bold;color:${TEXT};letter-spacing:3px;">*${accessCode}*</p>
+    </div>`,
     `<table cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0;">
       <tr>
         <td align="center">
           <a href="${passUrl}" target="_blank" style="text-decoration:none;">
-            <img src="cid:accesscard@thesweetunion" alt="Wedding Access Card for ${guestName}" style="max-width:320px;width:100%;height:auto;display:block;border-radius:0;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
+            <img src="cid:accesscard@thesweetunion" alt="Wedding Access Card for ${guestName}" style="max-width:320px;width:100%;height:auto;display:block;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.18);" />
           </a>
         </td>
       </tr>
     </table>`,
-    `<p align="center" style="margin:8px 0 16px;">
-      <a href="${passUrl}" style="color:${ACCENT};font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:underline;">View Online Pass &amp; Directions ↗</a>
+    `<p align="center" style="margin:8px 0 20px;">
+      <a href="${passUrl}" target="_blank" style="color:${ACCENT};font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:underline;font-family:Georgia,serif;">View Online Pass &amp; Directions ↗</a>
     </p>`,
-    sectionLabel("Your access code"),
-    `<p style="margin:0 0 16px;font-size:18px;font-family:'Courier New',monospace;color:${TEXT};letter-spacing:2px;background:${BASE};border:1px solid ${BORDER};border-radius:6px;padding:10px 16px;display:inline-block;">${accessCode}</p>`,
-    eventNames.length ? sectionLabel("Events you're attending") + eventList(eventNames) : "",
     divider(),
-    paragraph(
-      "Present this pass at the entrance to be scanned for check-in. We cannot wait to celebrate with you!",
-    ),
+    `<p style="margin:16px 0 10px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:${TEXT};font-weight:bold;font-family:Georgia,serif;">Venue Details</p>`,
+    `<div style="background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+      <p style="margin:0 0 4px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:${MUTED};font-weight:bold;font-family:Georgia,serif;">CHURCH CEREMONY:</p>
+      <p style="margin:0 0 4px;font-size:14px;color:${TEXT};font-weight:600;font-family:Georgia,serif;">Saturday, Nov 21, 2026 @ 09:00 AM</p>
+      <p style="margin:0 0 4px;font-size:13px;color:${TEXT};font-family:Georgia,serif;">RCCG Victory Center, No 58 Iju Road, Agege, Lagos</p>
+      <p style="margin:0;font-size:12px;color:${MUTED};font-style:italic;font-family:Georgia,serif;">(Open to all friends &amp; family)</p>
+    </div>`,
+    `<div style="background:${BASE};border:1px solid ${BORDER};border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+      <p style="margin:0 0 4px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:${MUTED};font-weight:bold;font-family:Georgia,serif;">RECEPTION:</p>
+      <p style="margin:0 0 4px;font-size:14px;color:${TEXT};font-weight:600;font-family:Georgia,serif;">Saturday, Nov 21, 2026 @ 01:00 PM</p>
+      <p style="margin:0 0 4px;font-size:13px;color:${TEXT};font-weight:bold;font-family:Georgia,serif;">Ronnie Dee Event Centre, 67 Iju Rd, Pen Cinema Zone, beside Eterna Petrol Station, Agege, Lagos 101232, Lagos</p>
+      <p style="margin:0;font-size:12px;color:${MUTED};font-style:italic;font-family:Georgia,serif;">(Strictly by digital access card or pass code)</p>
+    </div>`,
     divider(),
-    sectionLabel("Our Registry"),
-    paragraph(
-      "Your love, presence, and prayers are our greatest gifts. If you would like to help us bless our new home, we have curated a wishlist of items we need.",
-    ),
-    ctaButton("Browse Our Wishlist", wishlistLink),
+    `<div style="margin:16px 0;line-height:1.8;font-family:Georgia,serif;font-size:13px;color:${TEXT};">
+      <p style="margin:0 0 8px;"><strong>DRESS CODE:</strong> Mauve &amp; Gold</p>
+      <p style="margin:0 0 8px;"><strong>GIFTS &amp; REGISTRY:</strong> <a href="${wishlistLink}" target="_blank" style="color:${ACCENT};text-decoration:underline;">${wishlistLink}</a></p>
+      <p style="margin:0 0 8px;">Want to read about our love story? Check here: <a href="${storyLink}" target="_blank" style="color:${ACCENT};text-decoration:underline;">${storyLink}</a></p>
+    </div>`,
+    divider(),
+    `<p style="margin:20px 0 0;font-size:14px;color:${TEXT};font-family:Georgia,serif;line-height:1.6;">
+      With love,<br/>
+      <strong>Adun &amp; Uche</strong>
+    </p>`,
   );
 }
 

@@ -33,6 +33,8 @@ export default defineEventHandler(async (event) => {
       ? `${rsvp.leadName} & ${rsvp.spouseName}`
       : rsvp.leadName;
 
+  const passCode = ((rsvp.passCode || rsvp.id) as string).toUpperCase();
+
   const eventNames: string[] = Array.isArray(rsvp.selectedEvents)
     ? rsvp.selectedEvents.map((e: any) => (typeof e === "object" ? e.name : e)).filter(Boolean)
     : [];
@@ -44,7 +46,7 @@ export default defineEventHandler(async (event) => {
   } else {
     // Generate pass card image automatically on the server via dedicated Resvg card-image endpoint
     try {
-      const fetchedPng = await $fetch<Buffer>(`/api/pass/card-image/${rsvpId}.png`, {
+      const fetchedPng = await $fetch<Buffer>(`/api/pass/card-image/${passCode.toLowerCase()}.png`, {
         responseType: "arrayBuffer",
       });
       imageBuffer = Buffer.from(fetchedPng);
@@ -63,21 +65,53 @@ export default defineEventHandler(async (event) => {
   });
 
   const from = process.env.EMAIL_FROM || `TheSweetUnion <${process.env.GMAIL_USER}>`;
-  const appUrl = (config.public as any).appUrl || "https://thesweetunion.com";
-  const passUrl = `${appUrl}/pass/${rsvpId.toLowerCase()}`;
-  const wishlistLink = `${appUrl}/wishlist`;
+  let appUrl = ((config.public as any).appUrl || "https://thesweetunion.vercel.app").replace(/\/+$/, "");
+  if (!appUrl || appUrl.includes("thesweetunion.com") || appUrl.includes("localhost")) {
+    appUrl = "https://thesweetunion.vercel.app";
+  }
+  const passUrl = `${appUrl}/pass/${passCode.toLowerCase()}`;
+  const wishlistLink = "https://thesweetunion.vercel.app/wishlist";
+  const storyLink = "https://thesweetunion.vercel.app/";
+
+  const textMessage = `Dear ${guestName},
+
+We can't wait to celebrate with you at #TheSweetUnion! 💍✨
+
+Your Reception Access Card is ready. Kindly save the image attached to this message and this pass code to show at the reception:
+Pass Code: *${passCode}*.
+
+
+*Venue Details*
+CHURCH CEREMONY: 
+Saturday, Nov 21, 2026 @ 09:00 AM
+RCCG Victory Center, No 58 Iju Road, Agege, Lagos
+(Open to all friends & family)
+
+RECEPTION: 
+Saturday, Nov 21, 2026 @ 01:00 PM 
+*Ronnie Dee Event Centre, 67 Iju Rd, Pen Cinema Zone, beside Eterna Petrol Station, Agege, Lagos 101232, Lagos*
+(Strictly by digital access card or pass code)
+
+
+DRESS CODE: Mauve & Gold
+GIFTS & REGISTRY: https://thesweetunion.vercel.app/wishlist
+
+Want to read about our love story? Check here: https://thesweetunion.vercel.app/
+
+With love,
+Adun & Uche`;
 
   const attachments: any[] = [];
   if (imageBuffer.length > 0) {
     attachments.push(
       {
-        filename: `access-card-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        filename: `access-card-${passCode.toLowerCase()}.png`,
         content: imageBuffer,
         contentType: "image/png",
         cid: "accesscard@thesweetunion",
       },
       {
-        filename: `wedding-pass-${rsvp.leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`,
+        filename: `wedding-pass-${passCode.toLowerCase()}.png`,
         content: imageBuffer,
         contentType: "image/png",
         contentDisposition: "attachment",
@@ -88,8 +122,16 @@ export default defineEventHandler(async (event) => {
   await transporter.sendMail({
     from,
     to: targetEmail,
-    subject: `You're invited, ${rsvp.leadName}! Your access card is inside 🎉`,
-    html: invitationEmail({ guestName, accessCode: rsvpId, passUrl, eventNames, wishlistLink }),
+    subject: `Your Reception Access Card · #TheSweetUnion`,
+    text: textMessage,
+    html: invitationEmail({
+      guestName,
+      accessCode: passCode,
+      passUrl,
+      eventNames,
+      wishlistLink,
+      storyLink,
+    }),
     attachments,
   });
 
