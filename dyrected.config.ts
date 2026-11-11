@@ -76,6 +76,14 @@ export default defineConfig({
         collection: "rsvp_records",
         component: "PassCampaignPage",
       }),
+      definePage({
+        slug: "seating-planner",
+        label: "Seating Planner",
+        icon: "Armchair",
+        group: "RSVP",
+        collection: "rsvp_records",
+        component: "SeatingPlannerPage",
+      }),
     ],
   },
 });

@@ -129,8 +129,10 @@ export interface Rsvp_records {
   source?: "rsvp" | "asoebi" | "admin";
   group?: Rsvp_groups | string;
   selectedEvents?: Array<Events | string>;
+  tableNumber?: number;
   message?: string;
   submittedAt?: string;
+  passCode?: string;
   editToken?: string;
   createdBy?: Admins | string;
   updatedBy?: Admins | string;
@@ -225,6 +227,7 @@ export interface Site_settingsGlobal {
   accountNumber?: string;
   accountName?: string;
   whatsappSenderName?: string;
+  passCampaignConfig?: Record<string, unknown>;
 }
 
 export interface Asoebi_settingsGlobal {
@@ -284,7 +287,7 @@ declare module "@dyrected/sdk" {
       collectionView: string;
       forms: string;
       viewLayouts: string;
-      pages: "AsoebiCampaignPage";
+      pages: "AsoebiCampaignPage" | "PassCampaignPage" | "SeatingPlannerPage";
       customComponents: string;
     };
   }

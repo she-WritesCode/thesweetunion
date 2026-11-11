@@ -936,6 +936,14 @@ export const rsvpRecords = defineCollection({
           relationTo: "events",
           hasMany: true,
         }),
+        defineNumberField({
+          name: "tableNumber",
+          label: "Reception Table",
+          admin: {
+            width: "50%",
+            description: "Set from the Seating Planner page. Leave empty if not yet seated.",
+          },
+        }),
         defineTextareaField({
           name: "message",
           label: "Message to Couple",

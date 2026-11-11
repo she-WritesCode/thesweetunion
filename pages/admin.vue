@@ -16,6 +16,7 @@ import RecalculateGroupButton from "~/components/admin/RecalculateGroupButton.vu
 import ManageGiftButton from "~/components/admin/ManageGiftButton.vue";
 import AsoebiCampaignManager from "~/components/admin/AsoebiCampaignManager.vue";
 import PassCampaignManager from "~/components/admin/PassCampaignManager.vue";
+import SeatingPlanner from "~/components/admin/SeatingPlanner.vue";
 import SendEmailPassAction from "~/components/admin/SendEmailPassAction.vue";
 import ResendConfirmationAction from "~/components/admin/ResendConfirmationAction.vue";
 
@@ -119,6 +120,8 @@ const adminComponents = {
     PassCampaignPage: PassCampaignManager,
     "pass-campaign": PassCampaignManager,
     PassCampaignManager: PassCampaignManager,
+    SeatingPlannerPage: SeatingPlanner,
+    "seating-planner": SeatingPlanner,
   },
 };
 </script>
