@@ -168,14 +168,19 @@ async function handleScanResult(rsvpRecordId: string) {
     if (props.onChange) props.onChange({ checkInId: data.checkIn?.id });
     step.value = "confirmed";
   } catch (err: any) {
-    const status = err?.response?.status || err?.statusCode;
+    const status = err?.response?.status || err?.statusCode || err?.data?.statusCode;
     if (status === 409) {
       scanState.value = "duplicate";
-      errorMessage.value = err?.data?.message || err.message;
+      errorMessage.value = err?.data?.statusMessage || err?.data?.message || err.message;
       lastResult.value = { guest: { name: err?.data?.data?.guestName } };
     } else {
       scanState.value = "error";
-      errorMessage.value = err?.data?.message || err.message || "Scan failed. Please try again.";
+      errorMessage.value =
+        err?.data?.statusMessage ||
+        err?.data?.message ||
+        err?.statusMessage ||
+        err.message ||
+        "Scan failed. Please try again.";
     }
   }
 }

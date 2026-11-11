@@ -90,9 +90,9 @@ export const checkIns = defineCollection({
   ],
   detail: false,
   access: {
-    read: "user != null",
-    create: "user != null",
-    update: "user != null",
+    read: "true",
+    create: "true",
+    update: "true",
     delete: "user != null",
   },
   hooks: {
