@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-3 text-slate-800">
     <!-- Header / stats -->
-    <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-xs">
+    <div
+      class="flex flex-wrap items-center justify-between gap-3 p-3 bg-white rounded-lg border border-slate-200 shadow-xs"
+    >
       <div class="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
         <div>
           <span class="text-2xl font-bold text-purple-900">{{ seatedSeats }}</span>
@@ -39,7 +41,9 @@
             type="button"
             class="px-3 py-1.5 text-xs font-semibold border-l border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
             :disabled="!redoStack.length"
-            :title="redoStack.length ? `Redo: ${redoStack[redoStack.length - 1].label}  (Ctrl/⌘+Shift+Z)` : 'Nothing to redo'"
+            :title="
+              redoStack.length ? `Redo: ${redoStack[redoStack.length - 1].label}  (Ctrl/⌘+Shift+Z)` : 'Nothing to redo'
+            "
             @click="redo"
           >
             ↷ Redo<span v-if="redoStack.length" class="ml-1 text-slate-400 font-normal">{{ redoStack.length }}</span>
@@ -49,7 +53,10 @@
           type="button"
           class="px-3 py-1.5 text-xs font-semibold rounded border border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100"
           :disabled="!unseatedGuests.length"
-          @click="autoOpen = !autoOpen; autoPlan = null"
+          @click="
+            autoOpen = !autoOpen;
+            autoPlan = null;
+          "
         >
           ✨ Auto-seat
         </button>
@@ -78,23 +85,36 @@
       <div class="flex flex-wrap items-end gap-2">
         <label class="text-xs font-semibold text-purple-900">
           Which guests?
-          <select v-model="autoGroup" class="block mt-1 px-2 py-1.5 text-sm border border-purple-300 rounded bg-white font-normal" @change="autoPlan = null">
+          <select
+            v-model="autoGroup"
+            class="block mt-1 px-2 py-1.5 text-sm border border-purple-300 rounded bg-white font-normal"
+            @change="autoPlan = null"
+          >
             <option value="">All unseated groups</option>
-            <option v-for="g in groupsWithUnseated" :key="g.name" :value="g.name">{{ g.name }} ({{ g.seats }} seats)</option>
+            <option v-for="g in groupsWithUnseated" :key="g.name" :value="g.name">
+              {{ g.name }} ({{ g.seats }} seats)
+            </option>
           </select>
         </label>
-        <button type="button" class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800" @click="planAutoSeat(autoGroup)">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800"
+          @click="planAutoSeat(autoGroup)"
+        >
           Preview
         </button>
-        <button type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900" @click="autoOpen = false">Close</button>
+        <button type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900" @click="autoOpen = false">
+          Close
+        </button>
       </div>
       <p class="text-[11px] text-purple-900/80">
-        Keeps each group together on neighbouring tables, never splits a couple, and fills tables that already have free seats. Nothing is saved until you apply it, and you can undo afterwards.
+        Keeps each group together on neighbouring tables, never splits a couple, and fills tables that already have free
+        seats. Nothing is saved until you apply it, and you can undo afterwards.
       </p>
       <div v-if="autoPlan" class="text-sm space-y-2">
         <p>
-          Will seat <strong>{{ autoPlan.parties }}</strong> parties (<strong>{{ autoPlan.seats }}</strong> guests) across
-          <strong>{{ autoPlan.tablesUsed }}</strong> tables.
+          Will seat <strong>{{ autoPlan.parties }}</strong> parties (<strong>{{ autoPlan.seats }}</strong> guests)
+          across <strong>{{ autoPlan.tablesUsed }}</strong> tables.
           <span v-if="autoPlan.unplaced.length" class="text-red-700">
             {{ autoPlan.unplaced.length }} part{{ autoPlan.unplaced.length > 1 ? "ies" : "y" }} won't fit.
           </span>
@@ -110,20 +130,40 @@
       </div>
     </div>
 
+    <!-- Confetti (decorative) -->
+    <canvas
+      ref="confettiCanvas"
+      class="fixed inset-0 w-full h-full pointer-events-none z-[70]"
+      aria-hidden="true"
+    ></canvas>
+
     <!-- Toasts -->
-    <TransitionGroup name="sp-toast" tag="div" class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 pointer-events-none">
+    <TransitionGroup
+      name="sp-toast"
+      tag="div"
+      class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 pointer-events-none"
+    >
       <div
         v-for="t in toasts"
         :key="t.id"
         class="pointer-events-auto flex items-center gap-3 max-w-sm px-4 py-2.5 rounded-xl text-sm shadow-lg"
-        :class="t.kind === 'error' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'"
+        :class="
+          t.kind === 'error'
+            ? 'bg-red-600 text-white'
+            : t.kind === 'party'
+              ? 'bg-gradient-to-r from-purple-800 to-purple-600 text-white font-medium'
+              : 'bg-slate-900 text-white'
+        "
       >
         <span>{{ t.text }}</span>
         <button
           v-if="t.action"
           type="button"
           class="shrink-0 font-semibold text-amber-300 hover:text-amber-200 underline underline-offset-2"
-          @click="t.action.fn(); dismiss(t.id)"
+          @click="
+            t.action.fn();
+            dismiss(t.id);
+          "
         >
           {{ t.action.label }}
         </button>
@@ -141,7 +181,11 @@
           <h3 class="text-base font-semibold text-slate-900">{{ dialog.title }}</h3>
           <p class="text-sm text-slate-600 leading-relaxed">{{ dialog.body }}</p>
           <div class="flex justify-end gap-2 pt-1">
-            <button type="button" class="px-3 py-1.5 text-sm rounded-lg text-slate-600 hover:bg-slate-100" @click="resolveDialog(false)">
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm rounded-lg text-slate-600 hover:bg-slate-100"
+              @click="resolveDialog(false)"
+            >
               Cancel
             </button>
             <button
@@ -168,7 +212,10 @@
             class="w-full px-3 py-2 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
           <div class="flex gap-2">
-            <select v-model="groupFilter" class="flex-1 min-w-0 px-2 py-1.5 text-xs border border-slate-300 rounded bg-white">
+            <select
+              v-model="groupFilter"
+              class="flex-1 min-w-0 px-2 py-1.5 text-xs border border-slate-300 rounded bg-white"
+            >
               <option value="">All groups</option>
               <option v-for="g in groupNames" :key="g" :value="g">{{ g }}</option>
             </select>
@@ -196,8 +243,13 @@
           </p>
         </div>
 
-        <div v-if="armedGuest" class="px-3 py-2 text-xs bg-amber-50 border-b border-amber-200 text-amber-900 flex items-center justify-between gap-2">
-          <span>Now click a table to seat <strong>{{ armedGuest.leadName }}</strong></span>
+        <div
+          v-if="armedGuest"
+          class="px-3 py-2 text-xs bg-amber-50 border-b border-amber-200 text-amber-900 flex items-center justify-between gap-2"
+        >
+          <span
+            >Now click a table to seat <strong>{{ armedGuest.leadName }}</strong></span
+          >
           <button type="button" class="underline" @click="armedId = null">Cancel</button>
         </div>
 
@@ -212,13 +264,17 @@
             class="px-3 py-2 cursor-grab active:cursor-grabbing select-none hover:bg-purple-50"
             :class="armedId === g.id ? 'bg-amber-50 ring-1 ring-inset ring-amber-400' : ''"
             @dragstart="onDragStart($event, g)"
-            @dragend="dragId = null; hoverTable = null"
+            @dragend="
+              dragId = null;
+              hoverTable = null;
+            "
             @click="armedId = armedId === g.id ? null : g.id"
           >
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <p class="text-sm font-medium truncate">
-                  {{ g.leadName }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
+                  {{ g.leadName
+                  }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
                 </p>
                 <p class="text-[11px] text-slate-500 truncate">{{ g.groupName || "No group" }}</p>
               </div>
@@ -241,7 +297,8 @@
                   title="Show this table"
                   @click.stop="selectedTable = g.tableNumber"
                 >
-                  Table {{ g.tableNumber }}<template v-if="labelOf(g.tableNumber)"> · {{ labelOf(g.tableNumber) }}</template>
+                  Table {{ g.tableNumber
+                  }}<template v-if="labelOf(g.tableNumber)"> · {{ labelOf(g.tableNumber) }}</template>
                 </button>
               </div>
             </div>
@@ -253,10 +310,16 @@
       <section class="space-y-3 min-w-0">
         <div class="bg-white rounded-lg border border-slate-200 shadow-xs p-2 overflow-x-auto">
           <div class="flex flex-wrap items-center gap-3 px-1 pb-2 text-[11px] text-slate-600">
-            <span class="inline-flex items-center gap-1"><i class="w-3 h-3 rounded-full border border-slate-400 bg-slate-100"></i>Empty</span>
-            <span class="inline-flex items-center gap-1"><i class="w-3 h-3 rounded-full border border-purple-500 bg-purple-200"></i>Filling</span>
+            <span class="inline-flex items-center gap-1"
+              ><i class="w-3 h-3 rounded-full border border-slate-400 bg-slate-100"></i>Empty</span
+            >
+            <span class="inline-flex items-center gap-1"
+              ><i class="w-3 h-3 rounded-full border border-purple-500 bg-purple-200"></i>Filling</span
+            >
             <span class="inline-flex items-center gap-1"><i class="w-3 h-3 rounded-full bg-purple-800"></i>Full</span>
-            <span class="inline-flex items-center gap-1"><i class="w-3 h-3 rounded-full border border-red-500 bg-red-200"></i>Over capacity</span>
+            <span class="inline-flex items-center gap-1"
+              ><i class="w-3 h-3 rounded-full border border-red-500 bg-red-200"></i>Over capacity</span
+            >
           </div>
 
           <svg
@@ -295,13 +358,16 @@
             <g
               v-for="t in tables"
               :key="t.number"
+              :data-table="t.number"
               class="cursor-pointer"
               @click="onTableClick(t.number)"
               @dragover.prevent="hoverTable = t.number"
               @dragleave="hoverTable === t.number && (hoverTable = null)"
               @drop.prevent="onDrop(t.number)"
             >
-              <title>Table {{ t.number }}{{ t.label ? ` · ${t.label}` : "" }} — {{ used(t) }}/{{ t.capacity }} seats</title>
+              <title>
+                Table {{ t.number }}{{ t.label ? ` · ${t.label}` : "" }} — {{ used(t) }}/{{ t.capacity }} seats
+              </title>
               <!-- hit area -->
               <rect
                 :x="t.x - (t.shape === 'round' ? 54 : (t.w || 0) / 2 + 6)"
@@ -391,8 +457,11 @@
         <div v-if="selected" class="bg-white rounded-lg border border-slate-200 shadow-xs p-3 space-y-3">
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold">
-              Table {{ selected.number }}<span v-if="selected.label" class="font-normal text-slate-600"> · {{ selected.label }}</span>
-              <span class="text-sm font-normal text-slate-500"> · {{ used(selected) }} of {{ selected.capacity }} seats taken</span>
+              Table {{ selected.number
+              }}<span v-if="selected.label" class="font-normal text-slate-600"> · {{ selected.label }}</span>
+              <span class="text-sm font-normal text-slate-500">
+                · {{ used(selected) }} of {{ selected.capacity }} seats taken</span
+              >
             </h3>
             <div class="flex items-center gap-2">
               <button
@@ -403,7 +472,11 @@
               >
                 Empty table
               </button>
-              <button type="button" class="text-xs px-2 py-1 text-slate-500 hover:text-slate-800" @click="selectedTable = null">
+              <button
+                type="button"
+                class="text-xs px-2 py-1 text-slate-500 hover:text-slate-800"
+                @click="selectedTable = null"
+              >
                 Close
               </button>
             </div>
@@ -445,7 +518,10 @@
           <div v-if="groupsWithUnseated.length" class="flex flex-wrap items-end gap-2">
             <label class="text-[11px] font-semibold text-slate-600 flex-1 min-w-[180px]">
               Seat a whole group here
-              <select v-model="groupToSeat" class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white">
+              <select
+                v-model="groupToSeat"
+                class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white"
+              >
                 <option value="">Choose a group…</option>
                 <option v-for="g in groupsWithUnseated" :key="g.name" :value="g.name">
                   {{ g.name }} · {{ g.parties }} unseated ({{ g.seats }} seats)
@@ -495,14 +571,21 @@
               class="py-1.5 flex items-center justify-between gap-2 text-sm cursor-grab active:cursor-grabbing"
               title="Drag onto another table to move them"
               @dragstart="onDragStart($event, g)"
-              @dragend="dragId = null; hoverTable = null"
+              @dragend="
+                dragId = null;
+                hoverTable = null;
+              "
             >
               <span class="truncate min-w-0">
-                {{ g.leadName }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
+                {{ g.leadName
+                }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
                 <span class="text-[11px] text-slate-500"> · {{ g.groupName || "No group" }}</span>
               </span>
               <span class="flex items-center gap-2 shrink-0">
-                <i v-if="isPending(g.id)" class="w-3 h-3 border-2 border-purple-200 border-t-purple-700 rounded-full animate-spin"></i>
+                <i
+                  v-if="isPending(g.id)"
+                  class="w-3 h-3 border-2 border-purple-200 border-t-purple-700 rounded-full animate-spin"
+                ></i>
                 <select
                   class="max-w-[9.5rem] px-1.5 py-1 text-xs border border-slate-300 rounded bg-white disabled:opacity-40"
                   :disabled="isPending(g.id)"
@@ -530,9 +613,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, shallowRef, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { adminAuthHeaders } from "~/utils/admin-auth";
-import { SEATING_TABLES as BASE_TABLES, SEATING_LANDMARKS, SEATING_VIEWBOX, type SeatingTable } from "~~/config/seating";
+import {
+  SEATING_TABLES as BASE_TABLES,
+  SEATING_LANDMARKS,
+  SEATING_VIEWBOX,
+  type SeatingTable,
+} from "~~/config/seating";
 
 interface TableView extends SeatingTable {
   label: string;
@@ -570,15 +658,15 @@ const hoverTable = ref<number | null>(null);
 const selectedTable = ref<number | null>(null);
 
 // ── Toasts ────────────────────────────────────────────────────────────────
-type Toast = { id: number; text: string; kind: "ok" | "error"; action?: { label: string; fn: () => void } };
+type Toast = { id: number; text: string; kind: "ok" | "error" | "party"; action?: { label: string; fn: () => void } };
 const toasts = ref<Toast[]>([]);
 let toastId = 0;
 const dismiss = (id: number) => (toasts.value = toasts.value.filter((t) => t.id !== id));
 
-function notify(text: string, kind: "ok" | "error" = "ok", action?: Toast["action"]) {
+function notify(text: string, kind: Toast["kind"] = "ok", action?: Toast["action"]) {
   const id = ++toastId;
   toasts.value = [...toasts.value, { id, text, kind, action }].slice(-4);
-  setTimeout(() => dismiss(id), kind === "error" ? 6500 : 4500);
+  setTimeout(() => dismiss(id), kind === "error" ? 6500 : kind === "party" ? 6000 : 4500);
 }
 
 // ── In-app confirmation dialog ────────────────────────────────────────────
@@ -600,6 +688,7 @@ function resolveDialog(v: boolean) {
 async function load() {
   loading.value = true;
   error.value = null;
+  celebrateReady = false; // groups that are already complete on load shouldn't trigger confetti
   try {
     const res: any = await $fetch(`/api/seating/state?_t=${Date.now()}`, { headers: adminAuthHeaders() });
     guests.value = res.guests || [];
@@ -610,6 +699,8 @@ async function load() {
     error.value = err?.data?.message || err?.message || "Could not load guests.";
   } finally {
     loading.value = false;
+    await nextTick();
+    celebrateReady = true;
   }
 }
 
@@ -747,6 +838,8 @@ async function applySeats(targets: { id: string; table: number | null }[], force
     }
   };
 
+  const dest = [...targets].reverse().find((t) => t.table != null)?.table;
+  if (dest != null) lastSeatedTable = dest;
   setLocal(targets);
   markPending(ids, 1);
   inflight.value++;
@@ -943,8 +1036,7 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 // ── Move people between tables (no unseating needed) ──────────────────────
-const tableText = (t: TableView, extra = "") =>
-  `Table ${t.number}${t.label ? ` · ${t.label}` : ""} · ${extra}`;
+const tableText = (t: TableView, extra = "") => `Table ${t.number}${t.label ? ` · ${t.label}` : ""} · ${extra}`;
 const moveOptions = computed(() =>
   tables.value
     .filter((t) => t.number !== selectedTable.value)
@@ -1045,7 +1137,9 @@ watch(
   { immediate: true },
 );
 const tableDirty = computed(
-  () => !!selected.value && (editLabel.value !== selected.value.label || Number(editCapacity.value) !== selected.value.capacity),
+  () =>
+    !!selected.value &&
+    (editLabel.value !== selected.value.label || Number(editCapacity.value) !== selected.value.capacity),
 );
 
 async function saveTable() {
@@ -1062,7 +1156,10 @@ async function saveTable() {
   const ok = await applyTableMeta(t.number, to);
   savingTable.value = false;
   if (!ok) return dropFromHistory(entry);
-  notify(entry.label, "ok", { label: "Undo", fn: () => undoStack.value[undoStack.value.length - 1] === entry && undo() });
+  notify(entry.label, "ok", {
+    label: "Undo",
+    fn: () => undoStack.value[undoStack.value.length - 1] === entry && undo(),
+  });
 }
 
 // ── Auto-seat by group ────────────────────────────────────────────────────
@@ -1100,7 +1197,9 @@ function planAutoSeat(onlyGroup: string) {
 
   for (const [name, parties] of groups) {
     // Tables this group already sits at (so stragglers join their own people)
-    const own = guests.value.filter((g) => g.tableNumber && (g.groupName || "No group") === name).map((g) => g.tableNumber!);
+    const own = guests.value
+      .filter((g) => g.tableNumber && (g.groupName || "No group") === name)
+      .map((g) => g.tableNumber!);
     let anchor: number | null = own.length ? own[own.length - 1] : null;
     let remaining = parties.reduce((s, g) => s + g.seats, 0);
 
@@ -1139,7 +1238,9 @@ function planAutoSeat(onlyGroup: string) {
 async function applyAutoSeat() {
   const plan = autoPlan.value;
   if (!plan || !plan.assignments.length) return;
-  if (await commitAssignments(plan.assignments, `Auto-seated ${plan.parties} parties across ${plan.tablesUsed} tables`)) {
+  if (
+    await commitAssignments(plan.assignments, `Auto-seated ${plan.parties} parties across ${plan.tablesUsed} tables`)
+  ) {
     autoPlan.value = null;
     autoOpen.value = false;
   }
@@ -1158,16 +1259,154 @@ async function clearTable(tableNumber: number) {
   if (ok) assign(list, null, `Emptied Table ${tableNumber}`);
 }
 
+// ── Celebrations 🎉 ───────────────────────────────────────────────────────
+const confettiCanvas = ref<HTMLCanvasElement | null>(null);
+const ALL_SEATED = "__all__";
+const celebrated = new Set<string>();
+let celebrateReady = false;
+let lastSeatedTable: number | null = null;
+
+type Particle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  w: number;
+  h: number;
+  rot: number;
+  vr: number;
+  color: string;
+  life: number;
+};
+const CONFETTI_COLORS = ["#6b21a8", "#a855f7", "#d8b4ee", "#d4af37", "#fce8b3", "#16a34a", "#86efac", "#ffffff"];
+let particles: Particle[] = [];
+let confettiRaf = 0;
+
+function fireConfetti(count: number, origins: { x: number; y: number }[]) {
+  const canvas = confettiCanvas.value;
+  if (!canvas || typeof window === "undefined") return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  for (const o of origins) {
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.1; // mostly upward fan
+      const speed = 5 + Math.random() * 9;
+      particles.push({
+        x: o.x * dpr,
+        y: o.y * dpr,
+        vx: Math.cos(angle) * speed * dpr,
+        vy: Math.sin(angle) * speed * dpr,
+        w: (5 + Math.random() * 6) * dpr,
+        h: (3 + Math.random() * 5) * dpr,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.35,
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        life: 110 + Math.random() * 70,
+      });
+    }
+  }
+  if (confettiRaf) return;
+
+  const tick = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter((p) => p.life > 0 && p.y < canvas.height + 40);
+    for (const p of particles) {
+      p.vy += 0.22 * dpr; // gravity
+      p.vx *= 0.992;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life--;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.min(1, p.life / 40);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (particles.length) {
+      confettiRaf = requestAnimationFrame(tick);
+    } else {
+      confettiRaf = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+  confettiRaf = requestAnimationFrame(tick);
+}
+
+/** Screen position of a table on the floor plan (falls back to the middle of the screen). */
+function tableScreenPos(n: number | null) {
+  const el = n != null ? (document.querySelector(`[data-table="${n}"]`) as SVGGraphicsElement | null) : null;
+  if (el) {
+    const r = el.getBoundingClientRect();
+    if (r.width) return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  return { x: window.innerWidth / 2, y: window.innerHeight * 0.55 };
+}
+
+// A group counts as "done" once every party in it has a table (groups of 2+ parties only).
+const groupProgress = computed(() => {
+  const map = new Map<string, { parties: number; seated: number }>();
+  for (const g of guests.value) {
+    if (!g.groupName) continue;
+    const e = map.get(g.groupName) || { parties: 0, seated: 0 };
+    e.parties++;
+    if (g.tableNumber) e.seated++;
+    map.set(g.groupName, e);
+  }
+  return map;
+});
+
+const everyoneSeated = computed(() => guests.value.length > 1 && guests.value.every((g) => g.tableNumber));
+
+watch([groupProgress, everyoneSeated], () => {
+  const complete = new Set<string>();
+  for (const [name, e] of groupProgress.value) if (e.parties >= 2 && e.seated === e.parties) complete.add(name);
+  if (everyoneSeated.value) complete.add(ALL_SEATED);
+
+  if (!celebrateReady) {
+    complete.forEach((n) => celebrated.add(n)); // already finished when the page loaded
+    return;
+  }
+  for (const n of [...celebrated]) if (!complete.has(n)) celebrated.delete(n); // un-finished → can celebrate again
+  const fresh = [...complete].filter((n) => !celebrated.has(n));
+  if (!fresh.length) return;
+  fresh.forEach((n) => celebrated.add(n));
+
+  if (fresh.includes(ALL_SEATED)) {
+    notify("🎉 Everyone has a seat! The whole guest list is done.", "party");
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    fireConfetti(90, [
+      { x: w * 0.12, y: h },
+      { x: w * 0.88, y: h },
+      { x: w / 2, y: h * 0.9 },
+    ]);
+    return;
+  }
+  notify(`🎉 ${fresh.join(" & ")}: everyone is seated!`, "party");
+  fireConfetti(70, [tableScreenPos(lastSeatedTable)]);
+});
+
 // ── Print ─────────────────────────────────────────────────────────────────
 function printList() {
-  const rows = tables.value.map((t) => {
-    const at = guests.value.filter((g) => g.tableNumber === t.number);
-    if (!at.length) return "";
-    const names = at
-      .map((g) => `<li>${esc(g.leadName)}${g.hasSpouse ? ` + ${esc(g.spouseName || "Partner")}` : ""}</li>`)
-      .join("");
-    return `<section><h2>Table ${t.number}${t.label ? ` · ${esc(t.label)}` : ""} <small>${used(t)}/${t.capacity}</small></h2><ul>${names}</ul></section>`;
-  }).join("");
+  const rows = tables.value
+    .map((t) => {
+      const at = guests.value.filter((g) => g.tableNumber === t.number);
+      if (!at.length) return "";
+      const names = at
+        .map((g) => `<li>${esc(g.leadName)}${g.hasSpouse ? ` + ${esc(g.spouseName || "Partner")}` : ""}</li>`)
+        .join("");
+      return `<section><h2>Table ${t.number}${t.label ? ` · ${esc(t.label)}` : ""} <small>${used(t)}/${t.capacity}</small></h2><ul>${names}</ul></section>`;
+    })
+    .join("");
   const unseated = unseatedGuests.value
     .map((g) => `<li>${esc(g.leadName)}${g.hasSpouse ? ` + ${esc(g.spouseName || "Partner")}` : ""}</li>`)
     .join("");
@@ -1190,6 +1429,7 @@ onMounted(() => {
   window.addEventListener("beforeunload", onBeforeUnload);
 });
 onBeforeUnmount(() => {
+  cancelAnimationFrame(confettiRaf);
   window.removeEventListener("keydown", onKey);
   window.removeEventListener("beforeunload", onBeforeUnload);
 });
@@ -1197,11 +1437,16 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .sp-shape {
-  transition: fill 0.35s ease, stroke 0.25s ease, stroke-width 0.2s ease;
+  transition:
+    fill 0.35s ease,
+    stroke 0.25s ease,
+    stroke-width 0.2s ease;
 }
 .sp-toast-enter-active,
 .sp-toast-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 .sp-toast-enter-from,
 .sp-toast-leave-to {
