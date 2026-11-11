@@ -23,10 +23,23 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
-  const cleanScanKey = rsvpRecordId.trim();
+  // Normalize input: extract code from full URL (e.g. https://thesweetunion.vercel.app/pass/5QYW6M or /pass/5QYW6M)
+  let rawKey = String(rsvpRecordId || "").trim();
+  if (rawKey.includes("/pass/")) {
+    const part = rawKey.split("/pass/")[1] || "";
+    rawKey = part.split(/[?#\/]/)[0].trim();
+  } else if (rawKey.startsWith("http://") || rawKey.startsWith("https://")) {
+    try {
+      const parsed = new URL(rawKey);
+      const segments = parsed.pathname.split("/").filter(Boolean);
+      rawKey = segments[segments.length - 1] || rawKey;
+    } catch {}
+  }
+
+  const cleanScanKey = rawKey.replace(/[^\w-]/g, "").trim();
   const upperScanKey = cleanScanKey.toUpperCase();
 
-  // Look up RSVP record by passCode (6-char) or id
+  // Look up RSVP record by passCode (6-char) or id or editToken
   let rsvpRes = await client.collection("rsvp_records").find({
     where: { passCode: { equals: upperScanKey } },
     limit: 1,
@@ -36,6 +49,14 @@ export default defineEventHandler(async (event) => {
   if (!rsvpRes.docs || rsvpRes.docs.length === 0) {
     rsvpRes = await client.collection("rsvp_records").find({
       where: { id: { equals: cleanScanKey } },
+      limit: 1,
+      depth: 1,
+    });
+  }
+
+  if (!rsvpRes.docs || rsvpRes.docs.length === 0) {
+    rsvpRes = await client.collection("rsvp_records").find({
+      where: { editToken: { equals: cleanScanKey } },
       limit: 1,
       depth: 1,
     });
@@ -80,17 +101,17 @@ export default defineEventHandler(async (event) => {
   // group is populated via depth:1
   const groupName = typeof rsvp.group === "object" ? (rsvp.group?.name ?? "") : "";
 
-  // Create the check-in record
+  // Create the check-in record using the true record ID
   const checkIn = await client.collection("check_ins").create({
-    rsvpRecord: rsvpRecordId,
+    rsvpRecord: rsvp.id,
     event: eventId || null,
     guestName,
     partySize,
     scannedBy: scannedBy || "",
   });
 
-  // Update RSVP record to mark as checked in
-  await client.collection("rsvp_records").update(rsvpRecordId, {
+  // Update RSVP record to mark as checked in using the true record ID
+  await client.collection("rsvp_records").update(rsvp.id, {
     checkIn: checkIn.id,
     checkedIn: true,
   });

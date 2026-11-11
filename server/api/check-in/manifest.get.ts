@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
 
   const manifest = attending.map((r: any) => ({
     id: r.id,
+    passCode: r.passCode || null,
     leadName: r.leadName,
     spouseName: r.spouseName,
     hasSpouse: r.hasSpouse,

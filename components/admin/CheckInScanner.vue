@@ -142,7 +142,7 @@ function switchToCamera() {
 }
 
 async function handleManualSubmit() {
-  const code = manualInput.value.trim().toLowerCase();
+  const code = manualInput.value.trim();
   if (!code) return;
   await handleScanResult(code);
 }
@@ -273,7 +273,7 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
             <input
               v-model="manualInput"
               class="ci-input ci-input--mono"
-              placeholder="Paste rsvp_record_id here…"
+              placeholder="Enter 6-char pass code (e.g. 5QYW6M) or paste QR URL…"
               @keydown.enter="handleManualSubmit"
             />
             <button
