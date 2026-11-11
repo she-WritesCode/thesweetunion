@@ -15,14 +15,36 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button
-          v-if="lastUndo"
-          type="button"
-          class="px-3 py-1.5 text-xs font-semibold rounded border border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100"
-          @click="undoLast"
+        <span
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-full transition-colors"
+          :class="inflight > 0 ? 'bg-amber-50 text-amber-800' : 'text-slate-500'"
+          aria-live="polite"
         >
-          ↶ Undo
-        </button>
+          <template v-if="inflight > 0">
+            <i class="w-3 h-3 border-2 border-amber-300 border-t-amber-700 rounded-full animate-spin"></i>Saving…
+          </template>
+          <template v-else-if="everSaved">✓ All changes saved</template>
+        </span>
+        <div class="inline-flex rounded border border-slate-300 overflow-hidden bg-white">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+            :disabled="!undoStack.length"
+            :title="undoStack.length ? `Undo: ${undoStack[undoStack.length - 1].label}  (Ctrl/⌘+Z)` : 'Nothing to undo'"
+            @click="undo"
+          >
+            ↶ Undo<span v-if="undoStack.length" class="ml-1 text-slate-400 font-normal">{{ undoStack.length }}</span>
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-semibold border-l border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+            :disabled="!redoStack.length"
+            :title="redoStack.length ? `Redo: ${redoStack[redoStack.length - 1].label}  (Ctrl/⌘+Shift+Z)` : 'Nothing to redo'"
+            @click="redo"
+          >
+            ↷ Redo<span v-if="redoStack.length" class="ml-1 text-slate-400 font-normal">{{ redoStack.length }}</span>
+          </button>
+        </div>
         <button
           type="button"
           class="px-3 py-1.5 text-xs font-semibold rounded border border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100"
@@ -87,13 +109,53 @@
         </button>
       </div>
     </div>
-    <div
-      v-if="toast"
-      class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm font-medium shadow-lg"
-      :class="toast.kind === 'error' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'"
-    >
-      {{ toast.text }}
-    </div>
+
+    <!-- Toasts -->
+    <TransitionGroup name="sp-toast" tag="div" class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 pointer-events-none">
+      <div
+        v-for="t in toasts"
+        :key="t.id"
+        class="pointer-events-auto flex items-center gap-3 max-w-sm px-4 py-2.5 rounded-xl text-sm shadow-lg"
+        :class="t.kind === 'error' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'"
+      >
+        <span>{{ t.text }}</span>
+        <button
+          v-if="t.action"
+          type="button"
+          class="shrink-0 font-semibold text-amber-300 hover:text-amber-200 underline underline-offset-2"
+          @click="t.action.fn(); dismiss(t.id)"
+        >
+          {{ t.action.label }}
+        </button>
+      </div>
+    </TransitionGroup>
+
+    <!-- In-app confirmation (replaces the browser pop-up) -->
+    <Transition name="sp-dialog">
+      <div
+        v-if="dialog"
+        class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40"
+        @click.self="resolveDialog(false)"
+      >
+        <div class="w-full max-w-sm p-5 bg-white rounded-2xl shadow-2xl space-y-3" role="alertdialog" aria-modal="true">
+          <h3 class="text-base font-semibold text-slate-900">{{ dialog.title }}</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">{{ dialog.body }}</p>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" class="px-3 py-1.5 text-sm rounded-lg text-slate-600 hover:bg-slate-100" @click="resolveDialog(false)">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="px-3.5 py-1.5 text-sm font-semibold rounded-lg text-white"
+              :class="dialog.tone === 'danger' ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-900 hover:bg-purple-800'"
+              @click="resolveDialog(true)"
+            >
+              {{ dialog.confirmText }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <div class="grid gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
       <!-- Guest list -->
@@ -161,6 +223,11 @@
                 <p class="text-[11px] text-slate-500 truncate">{{ g.groupName || "No group" }}</p>
               </div>
               <div class="flex flex-col items-end gap-1 shrink-0">
+                <i
+                  v-if="isPending(g.id)"
+                  class="w-3 h-3 border-2 border-purple-200 border-t-purple-700 rounded-full animate-spin"
+                  title="Saving…"
+                ></i>
                 <span
                   class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                   :class="g.seats === 2 ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-600'"
@@ -251,6 +318,7 @@
                   :cx="c.x"
                   :cy="c.y"
                   r="6"
+                  class="sp-shape"
                   :fill="i < used(t) ? '#3b0764' : '#fff'"
                   stroke="#334155"
                   stroke-width="2"
@@ -259,6 +327,8 @@
                   :cx="t.x"
                   :cy="t.y"
                   r="32"
+                  class="sp-shape"
+                  :class="pendingTables.has(t.number) ? 'animate-pulse' : ''"
                   :fill="fillFor(t).fill"
                   :stroke="selectedTable === t.number || hoverTable === t.number ? '#f59e0b' : fillFor(t).stroke"
                   :stroke-width="selectedTable === t.number || hoverTable === t.number ? 6 : 3"
@@ -271,6 +341,7 @@
                   :cx="c.x"
                   :cy="c.y"
                   r="7"
+                  class="sp-shape"
                   :fill="i < used(t) ? '#3b0764' : '#fff'"
                   stroke="#334155"
                   stroke-width="2"
@@ -281,6 +352,8 @@
                   :width="t.w"
                   height="36"
                   rx="4"
+                  class="sp-shape"
+                  :class="pendingTables.has(t.number) ? 'animate-pulse' : ''"
                   :fill="fillFor(t).fill"
                   :stroke="selectedTable === t.number || hoverTable === t.number ? '#f59e0b' : fillFor(t).stroke"
                   :stroke-width="selectedTable === t.number || hoverTable === t.number ? 7 : 3"
@@ -396,7 +469,14 @@
                 {{ g.leadName }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
                 <span class="text-[11px] text-slate-500"> · {{ g.groupName || "No group" }}</span>
               </span>
-              <button type="button" class="text-xs text-red-600 hover:underline shrink-0" @click="assign([g], null)">Unseat</button>
+              <button
+                type="button"
+                class="text-xs text-red-600 hover:underline shrink-0 disabled:opacity-40"
+                :disabled="isPending(g.id)"
+                @click="assign([g], null)"
+              >
+                {{ isPending(g.id) ? "Saving…" : "Unseat" }}
+              </button>
             </li>
           </ul>
         </div>
@@ -406,7 +486,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { adminAuthHeaders } from "~/utils/admin-auth";
 import { SEATING_TABLES as BASE_TABLES, SEATING_LANDMARKS, SEATING_VIEWBOX, type SeatingTable } from "~~/config/seating";
 
@@ -444,13 +524,33 @@ const armedId = ref<string | null>(null);
 const dragId = ref<string | null>(null);
 const hoverTable = ref<number | null>(null);
 const selectedTable = ref<number | null>(null);
-const toast = ref<{ text: string; kind: "ok" | "error" } | null>(null);
-let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
-function notify(text: string, kind: "ok" | "error" = "ok") {
-  toast.value = { text, kind };
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toast.value = null), 3500);
+// ── Toasts ────────────────────────────────────────────────────────────────
+type Toast = { id: number; text: string; kind: "ok" | "error"; action?: { label: string; fn: () => void } };
+const toasts = ref<Toast[]>([]);
+let toastId = 0;
+const dismiss = (id: number) => (toasts.value = toasts.value.filter((t) => t.id !== id));
+
+function notify(text: string, kind: "ok" | "error" = "ok", action?: Toast["action"]) {
+  const id = ++toastId;
+  toasts.value = [...toasts.value, { id, text, kind, action }].slice(-4);
+  setTimeout(() => dismiss(id), kind === "error" ? 6500 : 4500);
+}
+
+// ── In-app confirmation dialog ────────────────────────────────────────────
+const dialog = ref<null | { title: string; body: string; confirmText: string; tone: "danger" | "warn" }>(null);
+let dialogResolve: ((v: boolean) => void) | null = null;
+
+function askConfirm(opts: NonNullable<typeof dialog.value>): Promise<boolean> {
+  return new Promise((resolve) => {
+    dialogResolve = resolve;
+    dialog.value = opts;
+  });
+}
+function resolveDialog(v: boolean) {
+  dialogResolve?.(v);
+  dialogResolve = null;
+  dialog.value = null;
 }
 
 async function load() {
@@ -553,55 +653,248 @@ function onTableClick(tableNumber: number) {
 }
 
 type Assignment = { guests: Guest[]; tableNumber: number | null };
-const lastUndo = ref<{ guest: Guest; tableNumber: number | null }[] | null>(null);
+type Change = { id: string; from: number | null; to: number | null };
+type Meta = { label: string; capacity: number };
+type HistoryEntry =
+  | { kind: "seat"; label: string; changes: Change[] }
+  | { kind: "table"; label: string; number: number; from: Meta; to: Meta };
 
-async function submit(assignments: Assignment[], force = false): Promise<boolean> {
+// Session history: lives in memory for as long as this page stays open.
+const MAX_HISTORY = 300;
+// shallowRef keeps entries as plain objects so the identity checks below work.
+const undoStack = shallowRef<HistoryEntry[]>([]);
+const redoStack = shallowRef<HistoryEntry[]>([]);
+
+// Saving state — seating is applied instantly, then saved in the background.
+const inflight = ref(0);
+const everSaved = ref(false);
+const pendingIds = ref<Record<string, number>>({});
+const isPending = (id: string) => (pendingIds.value[id] || 0) > 0;
+const pendingTables = computed(
+  () => new Set(guests.value.filter((g) => g.tableNumber && isPending(g.id)).map((g) => g.tableNumber as number)),
+);
+function markPending(ids: string[], delta: 1 | -1) {
+  const next = { ...pendingIds.value };
+  for (const id of ids) {
+    next[id] = Math.max(0, (next[id] || 0) + delta);
+    if (!next[id]) delete next[id];
+  }
+  pendingIds.value = next;
+}
+
+// Saves run one after another so rapid actions (or undo/redo) can't race each other.
+let queue: Promise<unknown> = Promise.resolve();
+function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  const p = queue.then(fn);
+  queue = p.catch(() => undefined);
+  return p;
+}
+
+const guestById = (id: string) => guests.value.find((g) => g.id === id);
+
+/** Apply seating instantly, save in the background, roll back if the save fails. */
+async function applySeats(targets: { id: string; table: number | null }[], force: boolean): Promise<boolean> {
+  const ids = targets.map((t) => t.id);
+  const previous = targets.map((t) => ({ id: t.id, table: guestById(t.id)?.tableNumber ?? null }));
+  const setLocal = (list: { id: string; table: number | null }[]) => {
+    for (const x of list) {
+      const g = guestById(x.id);
+      if (g) g.tableNumber = x.table;
+    }
+  };
+
+  setLocal(targets);
+  markPending(ids, 1);
+  inflight.value++;
   try {
-    await $fetch("/api/seating/assign", {
-      method: "POST",
-      headers: adminAuthHeaders(),
-      body: {
-        assignments: assignments.map((a) => ({ guestIds: a.guests.map((g) => g.id), tableNumber: a.tableNumber })),
-        force,
-      },
-    });
-    for (const a of assignments) for (const g of a.guests) g.tableNumber = a.tableNumber;
+    const byTable = new Map<number | null, string[]>();
+    for (const t of targets) byTable.set(t.table, [...(byTable.get(t.table) || []), t.id]);
+    await enqueue(() =>
+      $fetch("/api/seating/assign", {
+        method: "POST",
+        headers: adminAuthHeaders(),
+        body: { assignments: [...byTable].map(([tableNumber, guestIds]) => ({ guestIds, tableNumber })), force },
+      }),
+    );
+    everSaved.value = true;
     return true;
   } catch (err: any) {
-    if (err?.statusCode === 409 || err?.status === 409) {
-      const msg = err?.data?.message || err?.message || "Table is full.";
-      if (!force && confirm(`${msg}\n\nSeat anyway?`)) return submit(assignments, true);
-      return false;
-    }
-    notify(err?.data?.message || err?.message || "Could not update seating.", "error");
+    setLocal(previous);
+    notify(err?.data?.message || err?.message || "Couldn't save that change, so nothing was changed.", "error");
     return false;
+  } finally {
+    markPending(ids, -1);
+    inflight.value--;
   }
 }
 
-/** Run assignments and remember how to undo them. */
-async function run(assignments: Assignment[], message: string) {
-  const prev = assignments.flatMap((a) => a.guests.map((guest) => ({ guest, tableNumber: guest.tableNumber })));
-  if (!(await submit(assignments))) return false;
-  lastUndo.value = prev;
-  notify(message);
+/** Seats that would not fit at a destination table (checked here, before anything is sent). */
+function overflow(changes: Change[]) {
+  const moving = new Set(changes.map((c) => c.id));
+  const needed = new Map<number, number>();
+  for (const c of changes) {
+    if (c.to != null) needed.set(c.to, (needed.get(c.to) || 0) + (guestById(c.id)?.seats || 1));
+  }
+  const out: { table: number; free: number; needed: number }[] = [];
+  for (const [n, need] of needed) {
+    const cap = tables.value.find((t) => t.number === n)?.capacity ?? 0;
+    const taken = guests.value
+      .filter((g) => g.tableNumber === n && !moving.has(g.id))
+      .reduce((sum, g) => sum + g.seats, 0);
+    if (need > cap - taken) out.push({ table: n, free: Math.max(0, cap - taken), needed: need });
+  }
+  return out;
+}
+
+function pushHistory(entry: HistoryEntry) {
+  undoStack.value = [...undoStack.value, entry].slice(-MAX_HISTORY);
+  redoStack.value = [];
+}
+function dropFromHistory(entry: HistoryEntry) {
+  undoStack.value = undoStack.value.filter((e) => e !== entry);
+  redoStack.value = redoStack.value.filter((e) => e !== entry);
+}
+
+/** One undoable seating action (single guest, a whole group, or an auto-seat). */
+async function commit(label: string, changes: Change[]): Promise<boolean> {
+  const real = changes.filter((c) => c.from !== c.to);
+  if (!real.length) return false;
+
+  let force = false;
+  const over = overflow(real)[0];
+  if (over) {
+    const ok = await askConfirm({
+      title: `Table ${over.table} is full`,
+      body: `It has ${over.free} free seat${over.free === 1 ? "" : "s"} and this needs ${over.needed}. You can still seat them, and the table will turn red so you can sort it out later.`,
+      confirmText: "Seat anyway",
+      tone: "warn",
+    });
+    if (!ok) return false;
+    force = true;
+  }
+
+  const entry: HistoryEntry = { kind: "seat", label, changes: real };
+  pushHistory(entry);
+  const saved = await applySeats(
+    real.map((c) => ({ id: c.id, table: c.to })),
+    force,
+  );
+  if (!saved) {
+    dropFromHistory(entry);
+    return false;
+  }
+  notify(label, "ok", { label: "Undo", fn: () => undoStack.value[undoStack.value.length - 1] === entry && undo() });
   return true;
 }
 
-function assign(list: Guest[], tableNumber: number | null) {
-  const names = list.map((g) => g.leadName).join(", ");
-  return run([{ guests: list, tableNumber }], tableNumber ? `${names} → Table ${tableNumber}` : `${names} unseated`);
+function describe(list: Guest[]) {
+  return list.length <= 2 ? list.map((g) => g.leadName).join(" & ") : `${list.length} parties`;
 }
 
-async function undoLast() {
-  if (!lastUndo.value) return;
-  const byTable = new Map<number | null, Guest[]>();
-  for (const { guest, tableNumber } of lastUndo.value) {
-    byTable.set(tableNumber, [...(byTable.get(tableNumber) || []), guest]);
+function assign(list: Guest[], tableNumber: number | null, label?: string) {
+  const text = label || (tableNumber ? `${describe(list)} → Table ${tableNumber}` : `${describe(list)} unseated`);
+  return commit(
+    text,
+    list.map((g) => ({ id: g.id, from: g.tableNumber, to: tableNumber })),
+  );
+}
+
+function commitAssignments(assignments: Assignment[], label: string) {
+  return commit(
+    label,
+    assignments.flatMap((a) => a.guests.map((g) => ({ id: g.id, from: g.tableNumber, to: a.tableNumber }))),
+  );
+}
+
+// Table name / seat-count changes are part of the same history.
+async function applyTableMeta(number: number, to: Meta): Promise<boolean> {
+  const t = tables.value.find((x) => x.number === number);
+  const previous: Meta = { label: t?.label || "", capacity: t?.capacity ?? 0 };
+  tableMeta.value = { ...tableMeta.value, [number]: to };
+  inflight.value++;
+  try {
+    await enqueue(() =>
+      $fetch("/api/seating/settings", {
+        method: "POST",
+        headers: adminAuthHeaders(),
+        body: { number, label: to.label, capacity: to.capacity },
+      }),
+    );
+    everSaved.value = true;
+    return true;
+  } catch (err: any) {
+    tableMeta.value = { ...tableMeta.value, [number]: previous };
+    notify(err?.data?.message || err?.message || "Could not save table.", "error");
+    return false;
+  } finally {
+    inflight.value--;
   }
-  const ok = await submit([...byTable].map(([tableNumber, gs]) => ({ guests: gs, tableNumber })), true);
-  if (ok) {
-    lastUndo.value = null;
-    notify("Undone");
+}
+
+function replay(entry: HistoryEntry, dir: "undo" | "redo"): Promise<boolean> {
+  if (entry.kind === "seat") {
+    // Restoring an earlier state is always allowed, even if it leaves a table over capacity.
+    return applySeats(
+      entry.changes.map((c) => ({ id: c.id, table: dir === "undo" ? c.from : c.to })),
+      true,
+    );
+  }
+  return applyTableMeta(entry.number, dir === "undo" ? entry.from : entry.to);
+}
+
+async function undo() {
+  const entry = undoStack.value[undoStack.value.length - 1];
+  if (!entry) return;
+  undoStack.value = undoStack.value.slice(0, -1);
+  redoStack.value = [...redoStack.value, entry];
+  if (await replay(entry, "undo")) {
+    notify(`Undid: ${entry.label}`, "ok", {
+      label: "Redo",
+      fn: () => redoStack.value[redoStack.value.length - 1] === entry && redo(),
+    });
+  } else {
+    redoStack.value = redoStack.value.filter((e) => e !== entry);
+    undoStack.value = [...undoStack.value, entry];
+  }
+}
+
+async function redo() {
+  const entry = redoStack.value[redoStack.value.length - 1];
+  if (!entry) return;
+  redoStack.value = redoStack.value.slice(0, -1);
+  undoStack.value = [...undoStack.value, entry];
+  if (await replay(entry, "redo")) {
+    notify(`Redid: ${entry.label}`);
+  } else {
+    undoStack.value = undoStack.value.filter((e) => e !== entry);
+    redoStack.value = [...redoStack.value, entry];
+  }
+}
+
+// Ctrl/⌘+Z to undo, Ctrl/⌘+Shift+Z (or Ctrl+Y) to redo — unless you're typing in a field.
+function onKey(e: KeyboardEvent) {
+  if (dialog.value) {
+    if (e.key === "Escape") resolveDialog(false);
+    return;
+  }
+  const el = e.target as HTMLElement | null;
+  if (el && (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) || el.isContentEditable)) return;
+  if (!(e.metaKey || e.ctrlKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === "z" && !e.shiftKey) {
+    e.preventDefault();
+    undo();
+  } else if ((k === "z" && e.shiftKey) || k === "y") {
+    e.preventDefault();
+    redo();
+  }
+}
+
+// Don't let the tab close while a save is still running.
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (inflight.value > 0) {
+    e.preventDefault();
+    e.returnValue = "";
   }
 }
 
@@ -637,8 +930,9 @@ async function seatGroupHere() {
   }
   if (!fit.length) return notify(`No room at Table ${t.number} for ${groupToSeat.value}.`, "error");
   const left = parties.length - fit.length;
-  await run(
-    [{ guests: fit, tableNumber: t.number }],
+  await assign(
+    fit,
+    t.number,
     `${fit.length} ${groupToSeat.value} part${fit.length > 1 ? "ies" : "y"} → Table ${t.number}` +
       (left ? ` (${left} didn't fit)` : ""),
   );
@@ -664,23 +958,18 @@ const tableDirty = computed(
 async function saveTable() {
   const t = selected.value;
   if (!t) return;
-  savingTable.value = true;
-  try {
-    const res: any = await $fetch("/api/seating/settings", {
-      method: "POST",
-      headers: adminAuthHeaders(),
-      body: { number: t.number, label: editLabel.value, capacity: editCapacity.value },
-    });
-    tableMeta.value = {
-      ...tableMeta.value,
-      [t.number]: { label: res.table.label || "", capacity: res.table.capacity },
-    };
-    notify(`Table ${t.number} saved`);
-  } catch (err: any) {
-    notify(err?.data?.message || err?.message || "Could not save table.", "error");
-  } finally {
-    savingTable.value = false;
+  const from: Meta = { label: t.label, capacity: t.capacity };
+  const to: Meta = { label: editLabel.value.trim(), capacity: Math.floor(Number(editCapacity.value)) };
+  if (!Number.isFinite(to.capacity) || to.capacity < 0 || to.capacity > 24) {
+    return notify("Seats must be between 0 and 24.", "error");
   }
+  const entry: HistoryEntry = { kind: "table", label: `Table ${t.number} updated`, number: t.number, from, to };
+  pushHistory(entry);
+  savingTable.value = true;
+  const ok = await applyTableMeta(t.number, to);
+  savingTable.value = false;
+  if (!ok) return dropFromHistory(entry);
+  notify(entry.label, "ok", { label: "Undo", fn: () => undoStack.value[undoStack.value.length - 1] === entry && undo() });
 }
 
 // ── Auto-seat by group ────────────────────────────────────────────────────
@@ -757,15 +1046,23 @@ function planAutoSeat(onlyGroup: string) {
 async function applyAutoSeat() {
   const plan = autoPlan.value;
   if (!plan || !plan.assignments.length) return;
-  if (await run(plan.assignments, `Auto-seated ${plan.parties} parties across ${plan.tablesUsed} tables`)) {
+  if (await commitAssignments(plan.assignments, `Auto-seated ${plan.parties} parties across ${plan.tablesUsed} tables`)) {
     autoPlan.value = null;
     autoOpen.value = false;
   }
 }
 
-function clearTable(tableNumber: number) {
+async function clearTable(tableNumber: number) {
   const list = guests.value.filter((g) => g.tableNumber === tableNumber);
-  if (list.length && confirm(`Remove all ${list.length} parties from Table ${tableNumber}?`)) assign(list, null);
+  if (!list.length) return;
+  const people = list.reduce((sum, g) => sum + g.seats, 0);
+  const ok = await askConfirm({
+    title: `Empty Table ${tableNumber}?`,
+    body: `${list.length} part${list.length > 1 ? "ies" : "y"} (${people} guest${people > 1 ? "s" : ""}) will go back to the unseated list. You can undo this afterwards.`,
+    confirmText: "Empty table",
+    tone: "danger",
+  });
+  if (ok) assign(list, null, `Emptied Table ${tableNumber}`);
 }
 
 // ── Print ─────────────────────────────────────────────────────────────────
@@ -794,5 +1091,47 @@ function printList() {
 }
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-onMounted(load);
+onMounted(() => {
+  load();
+  window.addEventListener("keydown", onKey);
+  window.addEventListener("beforeunload", onBeforeUnload);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKey);
+  window.removeEventListener("beforeunload", onBeforeUnload);
+});
 </script>
+
+<style scoped>
+.sp-shape {
+  transition: fill 0.35s ease, stroke 0.25s ease, stroke-width 0.2s ease;
+}
+.sp-toast-enter-active,
+.sp-toast-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.sp-toast-enter-from,
+.sp-toast-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.sp-toast-move {
+  transition: transform 0.25s ease;
+}
+.sp-dialog-enter-active,
+.sp-dialog-leave-active {
+  transition: opacity 0.2s ease;
+}
+.sp-dialog-enter-active > div,
+.sp-dialog-leave-active > div {
+  transition: transform 0.2s ease;
+}
+.sp-dialog-enter-from,
+.sp-dialog-leave-to {
+  opacity: 0;
+}
+.sp-dialog-enter-from > div,
+.sp-dialog-leave-to > div {
+  transform: scale(0.97);
+}
+</style>
