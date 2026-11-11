@@ -76,6 +76,37 @@
           Print seating list
         </button>
       </div>
+
+      <!-- Overall progress -->
+      <div class="basis-full">
+        <div
+          class="relative h-2.5 rounded-full bg-slate-100 overflow-hidden"
+          role="progressbar"
+          aria-label="Guests seated"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-valuenow="percentSeated"
+        >
+          <div
+            class="h-full rounded-full transition-all duration-700 ease-out"
+            :class="percentSeated === 100 ? 'bg-gradient-to-r from-amber-300 to-amber-500' : 'bg-gradient-to-r from-purple-400 to-purple-800'"
+            :style="{ width: percentSeated + '%' }"
+          ></div>
+          <i v-for="m in MILESTONES" :key="m" class="absolute top-0 h-full w-px bg-white/90" :style="{ left: m + '%' }"></i>
+        </div>
+        <div class="relative h-4 mt-0.5 text-[10px] text-slate-400">
+          <span class="absolute left-0">{{ percentSeated }}% seated</span>
+          <span
+            v-for="m in MILESTONES"
+            :key="m"
+            class="absolute -translate-x-1/2 transition-colors"
+            :class="percentSeated >= m ? 'text-purple-700 font-semibold' : ''"
+            :style="{ left: m + '%' }"
+          >
+            {{ m }}%
+          </span>
+        </div>
+      </div>
     </div>
 
     <div v-if="error" class="p-3 text-sm rounded-lg bg-red-50 border border-red-200 text-red-700">{{ error }}</div>
@@ -1258,6 +1289,32 @@ async function clearTable(tableNumber: number) {
   });
   if (ok) assign(list, null, `Emptied Table ${tableNumber}`);
 }
+
+// ── Progress milestones ───────────────────────────────────────────────────
+const MILESTONES = [25, 50, 75];
+const percentSeated = computed(() =>
+  totalSeats.value ? Math.floor((seatedSeats.value * 100) / totalSeats.value) : 0,
+);
+const MILESTONE_TEXT: Record<number, string> = {
+  25: "🎈 A quarter of your guests are seated.",
+  50: "🎉 Halfway there! Half the guest list has a seat.",
+  75: "✨ Three quarters done. The finish line is in sight!",
+};
+const reachedMilestones = new Set<number>();
+
+watch(percentSeated, (pct) => {
+  const passed = MILESTONES.filter((m) => pct >= m);
+  if (!celebrateReady) {
+    passed.forEach((m) => reachedMilestones.add(m)); // already past these when the page loaded
+    return;
+  }
+  for (const m of [...reachedMilestones]) if (!passed.includes(m)) reachedMilestones.delete(m); // dropped back (undo)
+  const fresh = passed.filter((m) => !reachedMilestones.has(m));
+  fresh.forEach((m) => reachedMilestones.add(m));
+  // If one action jumped over several (e.g. auto-seat), mention only the highest.
+  // 100% is celebrated by the "everyone is seated" finale below.
+  if (fresh.length) notify(MILESTONE_TEXT[fresh[fresh.length - 1]], "party");
+});
 
 // ── Celebrations 🎉 ───────────────────────────────────────────────────────
 const confettiCanvas = ref<HTMLCanvasElement | null>(null);
