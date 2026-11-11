@@ -462,21 +462,65 @@
             </button>
           </div>
 
+          <!-- Move everyone / swap -->
+          <div v-if="selectedGuests.length" class="flex flex-wrap items-end gap-2">
+            <label class="text-[11px] font-semibold text-slate-600 flex-1 min-w-[170px]">
+              Move everyone to…
+              <select
+                class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white"
+                @change="onMoveAll($event)"
+              >
+                <option value="">Choose a table…</option>
+                <option v-for="o in moveOptions" :key="o.number" :value="o.number">{{ o.text }}</option>
+              </select>
+            </label>
+            <label class="text-[11px] font-semibold text-slate-600 flex-1 min-w-[170px]">
+              Swap with…
+              <select
+                class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white"
+                @change="onSwap($event)"
+              >
+                <option value="">Choose a table…</option>
+                <option v-for="o in swapOptions" :key="o.number" :value="o.number">{{ o.text }}</option>
+              </select>
+            </label>
+          </div>
+
           <p v-if="!selectedGuests.length" class="text-sm text-slate-500">No one is seated here yet.</p>
           <ul v-else class="divide-y divide-slate-100">
-            <li v-for="g in selectedGuests" :key="g.id" class="py-1.5 flex items-center justify-between gap-2 text-sm">
-              <span class="truncate">
+            <li
+              v-for="g in selectedGuests"
+              :key="g.id"
+              draggable="true"
+              class="py-1.5 flex items-center justify-between gap-2 text-sm cursor-grab active:cursor-grabbing"
+              title="Drag onto another table to move them"
+              @dragstart="onDragStart($event, g)"
+              @dragend="dragId = null; hoverTable = null"
+            >
+              <span class="truncate min-w-0">
                 {{ g.leadName }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
                 <span class="text-[11px] text-slate-500"> · {{ g.groupName || "No group" }}</span>
               </span>
-              <button
-                type="button"
-                class="text-xs text-red-600 hover:underline shrink-0 disabled:opacity-40"
-                :disabled="isPending(g.id)"
-                @click="assign([g], null)"
-              >
-                {{ isPending(g.id) ? "Saving…" : "Unseat" }}
-              </button>
+              <span class="flex items-center gap-2 shrink-0">
+                <i v-if="isPending(g.id)" class="w-3 h-3 border-2 border-purple-200 border-t-purple-700 rounded-full animate-spin"></i>
+                <select
+                  class="max-w-[9.5rem] px-1.5 py-1 text-xs border border-slate-300 rounded bg-white disabled:opacity-40"
+                  :disabled="isPending(g.id)"
+                  aria-label="Move to another table"
+                  @change="onMoveOne($event, g)"
+                >
+                  <option value="">Move to…</option>
+                  <option v-for="o in moveOptions" :key="o.number" :value="o.number">{{ o.text }}</option>
+                </select>
+                <button
+                  type="button"
+                  class="text-xs text-red-600 hover:underline disabled:opacity-40"
+                  :disabled="isPending(g.id)"
+                  @click="assign([g], null)"
+                >
+                  Unseat
+                </button>
+              </span>
             </li>
           </ul>
         </div>
@@ -896,6 +940,55 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
     e.preventDefault();
     e.returnValue = "";
   }
+}
+
+// ── Move people between tables (no unseating needed) ──────────────────────
+const tableText = (t: TableView, extra = "") =>
+  `Table ${t.number}${t.label ? ` · ${t.label}` : ""} · ${extra}`;
+const moveOptions = computed(() =>
+  tables.value
+    .filter((t) => t.number !== selectedTable.value)
+    .map((t) => {
+      const free = t.capacity - used(t);
+      return { number: t.number, text: tableText(t, free > 0 ? `${free} free` : "full") };
+    }),
+);
+const swapOptions = computed(() =>
+  tables.value
+    .filter((t) => t.number !== selectedTable.value && used(t) > 0)
+    .map((t) => ({ number: t.number, text: tableText(t, `${used(t)} seated`) })),
+);
+const guestsAt = (n: number | null) => guests.value.filter((g) => g.tableNumber === n);
+
+function pickedTable(e: Event): number | null {
+  const el = e.target as HTMLSelectElement;
+  const n = Number(el.value);
+  el.value = ""; // reset so the same table can be chosen again later
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function onMoveOne(e: Event, g: Guest) {
+  const to = pickedTable(e);
+  if (to) assign([g], to);
+}
+
+async function onMoveAll(e: Event) {
+  const to = pickedTable(e);
+  const from = selectedTable.value;
+  if (!to || !from) return;
+  const list = guestsAt(from);
+  if (!list.length) return;
+  if (await assign(list, to, `Moved everyone from Table ${from} → Table ${to}`)) selectedTable.value = to;
+}
+
+async function onSwap(e: Event) {
+  const other = pickedTable(e);
+  const from = selectedTable.value;
+  if (!other || !from) return;
+  await commit(`Swapped Table ${from} ↔ Table ${other}`, [
+    ...guestsAt(from).map((g) => ({ id: g.id, from, to: other })),
+    ...guestsAt(other).map((g) => ({ id: g.id, from: other, to: from })),
+  ]);
 }
 
 // ── Seat a whole group at the selected table ──────────────────────────────
