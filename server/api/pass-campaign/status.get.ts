@@ -120,6 +120,7 @@ export default defineEventHandler(async (event) => {
           passCode: code,
           leadName: r.leadName || "Guest",
           leadPhone: r.leadPhone || "",
+          leadEmail: r.leadEmail || "",
           hasSpouse: Boolean(r.hasSpouse),
           spouseName: r.spouseName || "",
           group: r.group,
@@ -130,6 +131,8 @@ export default defineEventHandler(async (event) => {
           invitationSent: Boolean(r.invitationSent),
           invitationSentAt: r.invitationSentAt || null,
           invitationSentVia: r.invitationSentVia || null,
+          emailSent: Boolean(r.emailSent || (r.invitationSentVia && String(r.invitationSentVia).includes("email"))),
+          emailSentAt: r.emailSentAt || (String(r.invitationSentVia || "").includes("email") ? r.invitationSentAt : null),
           previousInvitationSentAt: r.previousInvitationSentAt || null,
           previousInvitationSentVia: r.previousInvitationSentVia || null,
         };
@@ -205,6 +208,8 @@ export default defineEventHandler(async (event) => {
       totalGuests: attendingGuests.length,
       sentCount: attendingGuests.filter((g) => g.invitationSent).length,
       remainingCount: attendingGuests.filter((g) => !g.invitationSent).length,
+      emailSentCount: attendingGuests.filter((g) => g.emailSent).length,
+      emailRemainingCount: attendingGuests.filter((g) => !g.emailSent && g.leadEmail).length,
       config: mergedConfig,
     };
   } catch (err: any) {

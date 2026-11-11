@@ -1,7 +1,90 @@
 <template>
   <div class="space-y-4 text-slate-800">
-    <!-- Top Bar: Sender Segmented Controls + Actions -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+    <!-- Master Channel Selector: Both vs WhatsApp vs Email -->
+    <div
+      class="p-2.5 bg-slate-100 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs"
+    >
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Campaign Channel:</span>
+        <div class="inline-flex rounded-md p-0.5 bg-white border border-slate-300 shadow-xs flex-wrap">
+          <button
+            type="button"
+            @click="activeChannel = 'both'"
+            class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
+            :class="
+              activeChannel === 'both'
+                ? 'bg-purple-900 text-white shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
+          >
+            <span>Both (WhatsApp + Email)</span>
+            <span
+              class="text-[10px] px-1.5 py-0.2 rounded-full"
+              :class="activeChannel === 'both' ? 'bg-purple-950 text-purple-200' : 'bg-slate-100 text-slate-600'"
+            >
+              Simultaneous
+            </span>
+          </button>
+          <button
+            type="button"
+            @click="activeChannel = 'whatsapp'"
+            class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
+            :class="
+              activeChannel === 'whatsapp'
+                ? 'bg-slate-900 text-white shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
+          >
+            <span>WhatsApp Only</span>
+            <span
+              class="text-[10px] px-1.5 py-0.2 rounded-full"
+              :class="activeChannel === 'whatsapp' ? 'bg-slate-800 text-emerald-300' : 'bg-slate-100 text-slate-600'"
+            >
+              {{ sentCount }} sent
+            </span>
+          </button>
+          <button
+            type="button"
+            @click="activeChannel = 'email'"
+            class="px-3 py-1.5 text-xs font-medium rounded transition flex items-center gap-1.5"
+            :class="
+              activeChannel === 'email'
+                ? 'bg-indigo-700 text-white shadow-xs font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            "
+          >
+            <span>Email Only</span>
+            <span
+              class="text-[10px] px-1.5 py-0.2 rounded-full"
+              :class="activeChannel === 'email' ? 'bg-indigo-900 text-indigo-200' : 'bg-slate-100 text-slate-600'"
+            >
+              {{ emailSentCount }} / {{ guestsWithEmailCount }} sent
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-600 flex items-center gap-2">
+        <template v-if="activeChannel === 'both'">
+          <span class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+          <span>Simultaneous dual dispatch: WhatsApp message + attached card AND complete email pass to inboxes.</span>
+        </template>
+        <template v-else-if="activeChannel === 'email'">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span>Delivers official digital pass card &amp; full venue itinerary directly to guest inboxes.</span>
+        </template>
+        <template v-else>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Automated WhatsApp messages dispatched via WAHA multi-sender sessions.</span>
+        </template>
+      </div>
+    </div>
+
+    <!-- Top Bar: Sender Segmented Controls + Actions (shown when in WhatsApp mode or general) -->
+    <div
+      v-if="activeChannel === 'whatsapp'"
+      class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-3"
+    >
       <!-- Senders Tabs -->
       <div class="flex flex-wrap items-center gap-1.5">
         <button
@@ -426,51 +509,98 @@
 
         <!-- Test Send Bar -->
         <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs font-medium text-slate-700">Test Send:</span>
-            <select
-              v-model="testSenderSession"
-              class="px-2 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
-              title="Select which WhatsApp session sends the test message"
-            >
-              <option v-for="s in config.senders" :key="s.id" :value="s.wahaSession">
-                From: {{ s.name }} ({{ s.wahaSession }})
-              </option>
-            </select>
-            <input
-              type="text"
-              v-model="testPhone"
-              placeholder="e.g. 08105733592 or 2348105733592"
-              class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-52 focus:border-slate-400 focus:outline-none"
-            />
-            <button
-              type="button"
-              @click="sendTestPass"
-              :disabled="testing || !testPhone"
-              class="px-3 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
-            >
-              <svg
-                v-if="testing"
-                class="w-3 h-3 animate-spin text-slate-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- WhatsApp Test -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-medium text-slate-700">Test WA:</span>
+              <select
+                v-model="testSenderSession"
+                class="px-2 py-1 text-xs border border-slate-200 rounded bg-white text-slate-800 focus:border-slate-400 focus:outline-none"
+                title="Select which WhatsApp session sends the test message"
               >
-                <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
-                <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
-              </svg>
-              <span>Send Test Pass</span>
-            </button>
+                <option v-for="s in config.senders" :key="s.id" :value="s.wahaSession">
+                  From: {{ s.name }} ({{ s.wahaSession }})
+                </option>
+              </select>
+              <input
+                type="text"
+                v-model="testPhone"
+                placeholder="Phone (e.g. 2348105733592)"
+                class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-44 focus:border-slate-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                @click="sendTestPass"
+                :disabled="testing || !testPhone"
+                class="px-2.5 py-1 text-xs font-medium bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-50 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <svg
+                  v-if="testing"
+                  class="w-3 h-3 animate-spin text-slate-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                </svg>
+                <span>Send Test WA</span>
+              </button>
+            </div>
+
+            <!-- Email Test -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-medium text-slate-700">Test Email:</span>
+              <input
+                type="email"
+                v-model="testEmail"
+                placeholder="e.g. you@example.com"
+                class="px-2.5 py-1 text-xs border border-slate-200 rounded font-mono bg-white text-slate-800 w-48 focus:border-slate-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                @click="sendTestEmail"
+                :disabled="testingEmail || !testEmail"
+                class="px-2.5 py-1 text-xs font-medium bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 inline-flex items-center gap-1.5 rounded transition"
+              >
+                <svg
+                  v-if="testingEmail"
+                  class="w-3 h-3 animate-spin text-indigo-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                </svg>
+                <span>Send Test Email</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Dedicated Dispatch Mode Bar: Full Passes vs Date Clarification Notice -->
+    <!-- Dedicated Dispatch Mode Bar: WhatsApp Full vs Clarification OR Email Mode -->
     <div
-      class="p-3 bg-slate-900 text-white rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm border border-slate-800"
+      class="p-3 text-white rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm border"
+      :class="activeChannel === 'email' ? 'bg-indigo-950 border-indigo-900' : 'bg-slate-900 border-slate-800'"
     >
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div v-if="activeChannel === 'email'" class="flex items-center gap-2.5 flex-wrap">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Campaign Mode:</span>
+        <span class="px-3 py-1.5 text-xs font-semibold rounded bg-indigo-700 text-white shadow-xs inline-flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
+          <span>Official Pass Card &amp; Venue Itinerary Email</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900 text-indigo-200">
+            Pending: {{ emailPendingCount }}
+          </span>
+        </span>
+      </div>
+
+      <div v-else class="flex items-center gap-2.5 flex-wrap">
         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Campaign Mode:</span>
         <div class="inline-flex rounded-md p-0.5 bg-slate-950 border border-slate-700">
           <button
@@ -507,8 +637,12 @@
       </div>
 
       <!-- Mode Explanation -->
-      <div class="text-xs text-slate-300 flex items-center gap-2">
-        <template v-if="campaignMode === 'clarification'">
+      <div class="text-xs flex items-center gap-2" :class="activeChannel === 'email' ? 'text-indigo-200' : 'text-slate-300'">
+        <template v-if="activeChannel === 'email'">
+          <span class="inline-block w-2 h-2 rounded-full bg-indigo-400"></span>
+          <span>Delivered directly from TheSweetUnion via Gmail SMTP with attached VIP access card.</span>
+        </template>
+        <template v-else-if="campaignMode === 'clarification'">
           <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
           <span>Short text note (Nov 21, 2026 clarification · text only). Targets earlier batch.</span>
         </template>
@@ -521,35 +655,47 @@
 
     <!-- Execution Bar / Progress Stats -->
     <div
-      class="p-3 border border-slate-200 rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3"
+      class="p-3 border rounded-lg bg-white flex flex-col md:flex-row md:items-center justify-between gap-3"
+      :class="activeChannel === 'email' ? 'border-indigo-200' : 'border-slate-200'"
     >
       <div class="space-y-1 flex-1">
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-semibold text-slate-900"> {{ sentCount }} / {{ totalGuests }} passes dispatched </span>
-            <span class="text-slate-400">·</span>
-            <span class="text-slate-600">{{ progressPercent }}% completed</span>
-            <template v-if="sentCount > 0 && !isDispatching">
+            <template v-if="activeChannel === 'email'">
+              <span class="font-semibold text-slate-900">
+                {{ emailSentCount }} / {{ guestsWithEmailCount }} emails delivered
+              </span>
               <span class="text-slate-400">·</span>
-              <button
-                type="button"
-                @click="confirmResetCampaign"
-                :disabled="resetting"
-                class="text-[11px] text-amber-700 hover:text-amber-800 font-medium underline inline-flex items-center gap-1"
-                title="Mark all sent passes as pending to re-send without wiping historical timestamps"
-              >
-                <svg
-                  v-if="resetting"
-                  class="w-3 h-3 animate-spin text-amber-600"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
+              <span class="text-indigo-700 font-semibold">{{ emailProgressPercent }}% completed</span>
+              <span class="text-slate-400">·</span>
+              <span class="text-slate-600">{{ emailPendingCount }} pending</span>
+            </template>
+            <template v-else>
+              <span class="font-semibold text-slate-900"> {{ sentCount }} / {{ totalGuests }} passes dispatched </span>
+              <span class="text-slate-400">·</span>
+              <span class="text-slate-600">{{ progressPercent }}% completed</span>
+              <template v-if="sentCount > 0 && !isDispatching">
+                <span class="text-slate-400">·</span>
+                <button
+                  type="button"
+                  @click="confirmResetCampaign"
+                  :disabled="resetting"
+                  class="text-[11px] text-amber-700 hover:text-amber-800 font-medium underline inline-flex items-center gap-1"
+                  title="Mark all sent passes as pending to re-send without wiping historical timestamps"
                 >
-                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
-                  <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
-                </svg>
-                <span>Reset for Re-send (Keep History)</span>
-              </button>
+                  <svg
+                    v-if="resetting"
+                    class="w-3 h-3 animate-spin text-amber-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                  </svg>
+                  <span>Reset for Re-send (Keep History)</span>
+                </button>
+              </template>
             </template>
           </div>
           <span class="text-[11px] text-slate-500 font-mono">
@@ -558,8 +704,9 @@
         </div>
         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
           <div
-            class="bg-slate-900 h-2 rounded-full transition-all duration-300"
-            :style="{ width: `${progressPercent}%` }"
+            class="h-2 rounded-full transition-all duration-300"
+            :class="activeChannel === 'email' ? 'bg-indigo-600' : 'bg-slate-900'"
+            :style="{ width: `${activeChannel === 'email' ? emailProgressPercent : progressPercent}%` }"
           ></div>
         </div>
       </div>
@@ -568,18 +715,47 @@
       <div class="flex flex-wrap items-center gap-2">
         <div v-if="!isDispatching" class="flex items-center gap-1.5">
           <label class="text-[11px] font-medium text-slate-600 hidden sm:inline">Pacing:</label>
-          <select
-            v-model="dispatchStrategy"
-            class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
-            title="Choose how the sending queue is paced across phones"
-          >
-            <option value="interleaved">Interleaved Pacing (1 Groom -> 1 Bride -> 1 My Phone)</option>
-            <option value="sequential">Sequential (Group by Group)</option>
-          </select>
+          <template v-if="activeChannel === 'email'">
+            <select
+              v-model="emailPaceSeconds"
+              class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
+              title="Delay between emails to prevent SMTP throttling"
+            >
+              <option :value="1.5">1.5s per email (~10 mins)</option>
+              <option :value="2">2s per email (Recommended)</option>
+              <option :value="3">3s per email (Gentle)</option>
+            </select>
+          </template>
+          <template v-else>
+            <select
+              v-model="dispatchStrategy"
+              class="px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-800 focus:outline-none focus:border-slate-400 font-medium"
+              title="Choose how the sending queue is paced across phones"
+            >
+              <option value="interleaved">Interleaved Pacing (1 Groom -> 1 Bride -> 1 My Phone)</option>
+              <option value="sequential">Sequential (Group by Group)</option>
+            </select>
+          </template>
         </div>
 
         <template v-if="!isDispatching">
+          <!-- Both Auto-Send -->
           <button
+            v-if="activeChannel === 'both'"
+            type="button"
+            @click="startBothAutoDispatch"
+            :disabled="pendingBothInView.length === 0"
+            class="px-3.5 py-1.5 text-xs font-medium rounded-md text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition bg-purple-900 hover:bg-purple-950 font-semibold"
+          >
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span>Start Auto-Send Both (WA + Email) ({{ pendingBothInView.length }})</span>
+          </button>
+
+          <!-- WhatsApp Auto-Send -->
+          <button
+            v-else-if="activeChannel === 'whatsapp'"
             type="button"
             @click="startAutoDispatch"
             :disabled="pendingGuestsInView.length === 0"
@@ -596,16 +772,47 @@
             <span v-if="campaignMode === 'clarification'"
               >Send Date Clarification ({{ pendingGuestsInView.length }})</span
             >
-            <span v-else>Start Auto-Send ({{ pendingGuestsInView.length }})</span>
+            <span v-else>Start Auto-Send WA ({{ pendingGuestsInView.length }})</span>
+          </button>
+
+          <!-- Email Auto-Send -->
+          <button
+            v-else
+            type="button"
+            @click="startEmailAutoDispatch"
+            :disabled="pendingEmailsInView.length === 0"
+            class="px-3.5 py-1.5 text-xs font-medium rounded-md text-white shadow-sm disabled:opacity-50 inline-flex items-center gap-1.5 transition bg-indigo-700 hover:bg-indigo-800"
+          >
+            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+            </svg>
+            <span>Start Auto-Send Emails ({{ pendingEmailsInView.length }})</span>
           </button>
         </template>
         <template v-else>
           <div
             v-if="currentSenderNotice"
-            class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5"
+            class="text-xs px-2.5 py-1 rounded-md font-medium flex items-center gap-1.5"
+            :class="
+              activeChannel === 'both'
+                ? 'text-purple-900 bg-purple-50 border border-purple-200'
+                : activeChannel === 'email'
+                ? 'text-indigo-800 bg-indigo-50 border border-indigo-200'
+                : 'text-emerald-800 bg-emerald-50 border border-emerald-200'
+            "
           >
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Sending via {{ currentSenderNotice }}</span>
+            <span
+              class="w-2 h-2 rounded-full animate-pulse"
+              :class="
+                activeChannel === 'both'
+                  ? 'bg-purple-600'
+                  : activeChannel === 'email'
+                  ? 'bg-indigo-500'
+                  : 'bg-emerald-500'
+              "
+            ></span>
+            <span>Sending: {{ currentSenderNotice }}</span>
           </div>
           <button
             type="button"
@@ -658,12 +865,26 @@
           v-model="statusFilter"
           class="px-2.5 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-700 focus:outline-none focus:border-slate-400 font-medium"
         >
-          <option value="all">All Guests ({{ totalGuests }})</option>
-          <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
-          <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
-          <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
-          <option value="pending">All Pending ({{ pendingTotalCount }})</option>
-          <option value="sent">All Marked Sent ({{ sentCount }})</option>
+          <template v-if="activeChannel === 'both'">
+            <option value="all">All Guests ({{ totalGuests }})</option>
+            <option value="both_pending">Both or Either Pending ({{ bothPendingCount }})</option>
+            <option value="both_sent">Both WA & Email Sent ({{ bothSentCount }})</option>
+            <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
+            <option value="never_sent">Never Sent WA (Fresh Pending) ({{ neverSentCount }})</option>
+          </template>
+          <template v-else-if="activeChannel === 'email'">
+            <option value="all">All Guests ({{ totalGuests }})</option>
+            <option value="email_pending">Email Pending ({{ emailRemainingCount }})</option>
+            <option value="email_sent">Email Sent ({{ emailSentCount }})</option>
+          </template>
+          <template v-else>
+            <option value="all">All Guests ({{ totalGuests }})</option>
+            <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
+            <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
+            <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
+            <option value="pending">All Pending ({{ pendingTotalCount }})</option>
+            <option value="sent">All Marked Sent ({{ sentCount }})</option>
+          </template>
         </select>
         <span class="text-xs text-slate-500">{{ displayedGuests.length }} of {{ filteredGuests.length }}</span>
       </div>
@@ -674,7 +895,25 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
-            <tr>
+            <!-- Table Headers based on Active Channel -->
+            <tr v-if="activeChannel === 'both'">
+              <th class="px-3.5 py-2.5">Guest</th>
+              <th class="px-3.5 py-2.5">Pass Code</th>
+              <th class="px-3.5 py-2.5">Contacts (WA & Email)</th>
+              <th class="px-3.5 py-2.5">Assigned Phone</th>
+              <th class="px-3.5 py-2.5">WhatsApp Status</th>
+              <th class="px-3.5 py-2.5">Email Status</th>
+              <th class="px-3.5 py-2.5 text-right">Actions</th>
+            </tr>
+            <tr v-else-if="activeChannel === 'email'">
+              <th class="px-3.5 py-2.5">Guest</th>
+              <th class="px-3.5 py-2.5">Pass Code</th>
+              <th class="px-3.5 py-2.5">Email Address</th>
+              <th class="px-3.5 py-2.5">Group</th>
+              <th class="px-3.5 py-2.5">Email Status</th>
+              <th class="px-3.5 py-2.5 text-right">Actions</th>
+            </tr>
+            <tr v-else>
               <th class="px-3.5 py-2.5">Guest</th>
               <th class="px-3.5 py-2.5">Pass Code</th>
               <th class="px-3.5 py-2.5">Phone Number</th>
@@ -718,139 +957,364 @@
 
               <!-- Pass Code -->
               <td class="px-3.5 py-2.5 font-mono font-semibold text-slate-800">
-                <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[11px] border border-slate-200/60">
-                  {{ guest.passCode || "—" }}
-                </span>
-              </td>
-
-              <!-- Phone -->
-              <td class="px-3.5 py-2.5 font-mono text-slate-600">
-                {{ formatPhoneDisplay(guest.leadPhone) }}
-              </td>
-
-              <!-- Group -->
-              <td class="px-3.5 py-2.5 text-slate-600">
-                {{ getGroupName(guest.group) }}
-              </td>
-
-              <!-- Assigned Sender -->
-              <td class="px-3.5 py-2.5">
-                <span
-                  v-if="guest.invitationSent && guest.invitationSentVia"
-                  class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
-                >
-                  <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
-                </span>
-                <span
-                  v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
-                  class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
-                  title="Directly assigned to My Phone because of Asoebi interaction"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span>My Phone (Asoebi)</span>
-                </span>
-                <span
-                  v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
-                  class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
-                >
-                  <span
-                    class="w-1.5 h-1.5 rounded-full shrink-0"
-                    :class="{
-                      'bg-emerald-500': getSenderStatus(resolveSenderForGuest(guest)) === 'WORKING',
-                      'bg-amber-400': getSenderStatus(resolveSenderForGuest(guest)) === 'SCAN_QR_CODE',
-                      'bg-rose-500': getSenderStatus(resolveSenderForGuest(guest)) === 'FAILED',
-                      'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest)),
-                    }"
-                  />
-                  <span>{{ getSenderName(resolveSenderForGuest(guest)) }}</span>
-                </span>
-                <span v-else class="text-[11px] text-slate-400 italic"> Unassigned </span>
-              </td>
-
-              <!-- Status -->
-              <td class="px-3.5 py-2.5">
-                <span
-                  v-if="isSentThisAfternoon(guest)"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  title="Sent this afternoon with the correct Nov 21 date. Does NOT need clarification."
-                >
-                  <svg
-                    class="w-3 h-3 text-emerald-600"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Sent (Correct Card)</span>
-                  <span v-if="guest.invitationSentAt" class="text-emerald-500 font-mono">
-                    ({{ formatDate(guest.invitationSentAt) }})
-                  </span>
-                </span>
-                <span
-                  v-else-if="needsDateClarification(guest)"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-300"
-                  :title="'Sent yesterday with previous date card. Needs quick date clarification note.'"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  <span>Sent Yesterday (Needs Clarification)</span>
-                </span>
-                <span
-                  v-else
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <span>Pending (Never Sent)</span>
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-3.5 py-2.5 text-right space-x-1.5">
-                <!-- Direct WhatsApp Click-to-Send Link -->
                 <a
-                  :href="buildWaLink(guest)"
+                  :href="`https://thesweetunion.vercel.app/pass/${guest.passCode || guest.id}`"
                   target="_blank"
                   rel="noopener"
-                  class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition"
-                  title="Open direct WhatsApp conversation"
+                  class="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-[11px] border border-slate-200/60 inline-flex items-center gap-1 text-slate-800 hover:text-slate-950 transition"
+                  title="View online pass"
                 >
-                  <span>Open WhatsApp</span>
-                  <svg
-                    class="w-3 h-3 text-slate-400"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
+                  <span>{{ guest.passCode || "—" }}</span>
+                  <svg class="w-2.5 h-2.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
                   </svg>
                 </a>
-
-                <!-- Automated Send via WAHA -->
-                <button
-                  type="button"
-                  @click="sendSinglePass(guest)"
-                  :disabled="sendingId === guest.id || isDispatching"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition"
-                >
-                  <svg
-                    v-if="sendingId === guest.id"
-                    class="w-3 h-3 animate-spin text-white"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
-                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
-                  </svg>
-                  <span>{{ guest.invitationSent ? "Resend" : "Send Pass" }}</span>
-                </button>
               </td>
+
+              <!-- CHANNEL MODE: BOTH -->
+              <template v-if="activeChannel === 'both'">
+                <!-- Contacts (WA & Email) -->
+                <td class="px-3.5 py-2.5 text-slate-600">
+                  <div class="space-y-0.5 font-mono text-[11px]">
+                    <div class="flex items-center gap-1 text-slate-700">
+                      <span class="text-[9px] font-sans px-1 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded font-semibold">WA</span>
+                      <span>{{ formatPhoneDisplay(guest.leadPhone) }}</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-slate-500 font-sans truncate max-w-[200px]" :title="guest.leadEmail">
+                      <span class="text-[9px] px-1 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200/60 rounded font-semibold">EMAIL</span>
+                      <span class="truncate">{{ guest.leadEmail || "—" }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Assigned Sender -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="guest.invitationSent && guest.invitationSentVia"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
+                  >
+                    <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
+                  </span>
+                  <span
+                    v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
+                    title="Directly assigned to My Phone because of Asoebi interaction"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span>My Phone (Asoebi)</span>
+                  </span>
+                  <span
+                    v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full shrink-0"
+                      :class="{
+                        'bg-emerald-500': getSenderStatus(resolveSenderForGuest(guest)) === 'WORKING',
+                        'bg-amber-400': getSenderStatus(resolveSenderForGuest(guest)) === 'SCAN_QR_CODE',
+                        'bg-rose-500': getSenderStatus(resolveSenderForGuest(guest)) === 'FAILED',
+                        'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest)),
+                      }"
+                    />
+                    <span>{{ getSenderName(resolveSenderForGuest(guest)) }}</span>
+                  </span>
+                  <span v-else class="text-[11px] text-slate-400 italic"> Unassigned </span>
+                </td>
+
+                <!-- WhatsApp Status -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="isSentThisAfternoon(guest)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  >
+                    <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Sent</span>
+                  </span>
+                  <span
+                    v-else-if="needsDateClarification(guest)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-300"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Sent (Old Date)</span>
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Pending</span>
+                  </span>
+                </td>
+
+                <!-- Email Status -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="guest.emailSent"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  >
+                    <svg class="w-3 h-3 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Delivered</span>
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Pending</span>
+                  </span>
+                </td>
+
+                <!-- Actions (Both Mode) -->
+                <td class="px-3.5 py-2.5 text-right space-x-1.5 whitespace-nowrap">
+                  <!-- Primary: Send Both -->
+                  <button
+                    type="button"
+                    @click="sendBothToGuest(guest)"
+                    :disabled="sendingBothId === guest.id || emailingId === guest.id || sendingId === guest.id || isDispatching"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-purple-900 text-white rounded hover:bg-purple-950 disabled:opacity-50 transition shadow-xs"
+                    title="Send both WhatsApp and Email simultaneously"
+                  >
+                    <svg v-if="sendingBothId === guest.id" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                    </svg>
+                    <span>{{ guest.invitationSent && guest.emailSent ? "Resend Both" : "Send Both" }}</span>
+                  </button>
+
+                  <!-- WA Only -->
+                  <button
+                    type="button"
+                    @click="sendSinglePass(guest)"
+                    :disabled="sendingId === guest.id || sendingBothId === guest.id || isDispatching"
+                    class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
+                    title="Send WhatsApp only"
+                  >
+                    <svg v-if="sendingId === guest.id" class="w-3 h-3 animate-spin text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                    </svg>
+                    <span>WA</span>
+                  </button>
+
+                  <!-- Email Only -->
+                  <button
+                    type="button"
+                    @click="sendSingleEmail(guest)"
+                    :disabled="emailingId === guest.id || sendingBothId === guest.id || isDispatching"
+                    class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition disabled:opacity-50"
+                    title="Send Email only"
+                  >
+                    <svg v-if="emailingId === guest.id" class="w-3 h-3 animate-spin text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                    </svg>
+                    <span>Email</span>
+                  </button>
+
+                  <!-- Direct WA link -->
+                  <a
+                    :href="buildWaLink(guest)"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center p-1 text-[11px] border border-slate-200 rounded hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition"
+                    title="Open direct WhatsApp conversation"
+                  >
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </td>
+              </template>
+
+              <!-- CHANNEL MODE: EMAIL -->
+              <template v-else-if="activeChannel === 'email'">
+                <!-- Email Address -->
+                <td class="px-3.5 py-2.5 font-mono text-slate-600">
+                  <span :title="guest.leadEmail">{{ guest.leadEmail || "—" }}</span>
+                </td>
+
+                <!-- Group -->
+                <td class="px-3.5 py-2.5 text-slate-600">
+                  {{ getGroupName(guest.group) }}
+                </td>
+
+                <!-- Email Status -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="guest.emailSent"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  >
+                    <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Delivered</span>
+                    <span v-if="guest.emailSentAt" class="text-emerald-500 font-mono">
+                      ({{ formatDate(guest.emailSentAt) }})
+                    </span>
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Pending</span>
+                  </span>
+                </td>
+
+                <!-- Actions (Email Mode) -->
+                <td class="px-3.5 py-2.5 text-right space-x-1.5 whitespace-nowrap">
+                  <button
+                    type="button"
+                    @click="sendSingleEmail(guest)"
+                    :disabled="emailingId === guest.id || isDispatching"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-indigo-700 text-white rounded hover:bg-indigo-800 disabled:opacity-50 transition"
+                  >
+                    <svg v-if="emailingId === guest.id" class="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                    </svg>
+                    <span>{{ guest.emailSent ? "Resend Email" : "Send Email Pass" }}</span>
+                  </button>
+                </td>
+              </template>
+
+              <!-- CHANNEL MODE: WHATSAPP -->
+              <template v-else>
+                <!-- Phone -->
+                <td class="px-3.5 py-2.5 font-mono text-slate-600">
+                  {{ formatPhoneDisplay(guest.leadPhone) }}
+                </td>
+
+                <!-- Group -->
+                <td class="px-3.5 py-2.5 text-slate-600">
+                  {{ getGroupName(guest.group) }}
+                </td>
+
+                <!-- Assigned Sender -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="guest.invitationSent && guest.invitationSentVia"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
+                  >
+                    <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
+                  </span>
+                  <span
+                    v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
+                    title="Directly assigned to My Phone because of Asoebi interaction"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span>My Phone (Asoebi)</span>
+                  </span>
+                  <span
+                    v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
+                    class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700"
+                  >
+                    <span
+                      class="w-1.5 h-1.5 rounded-full shrink-0"
+                      :class="{
+                        'bg-emerald-500': getSenderStatus(resolveSenderForGuest(guest)) === 'WORKING',
+                        'bg-amber-400': getSenderStatus(resolveSenderForGuest(guest)) === 'SCAN_QR_CODE',
+                        'bg-rose-500': getSenderStatus(resolveSenderForGuest(guest)) === 'FAILED',
+                        'bg-slate-300': !getSenderStatus(resolveSenderForGuest(guest)),
+                      }"
+                    />
+                    <span>{{ getSenderName(resolveSenderForGuest(guest)) }}</span>
+                  </span>
+                  <span v-else class="text-[11px] text-slate-400 italic"> Unassigned </span>
+                </td>
+
+                <!-- Status -->
+                <td class="px-3.5 py-2.5">
+                  <span
+                    v-if="isSentThisAfternoon(guest)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    title="Sent this afternoon with the correct Nov 21 date. Does NOT need clarification."
+                  >
+                    <svg
+                      class="w-3 h-3 text-emerald-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Sent (Correct Card)</span>
+                    <span v-if="guest.invitationSentAt" class="text-emerald-500 font-mono">
+                      ({{ formatDate(guest.invitationSentAt) }})
+                    </span>
+                  </span>
+                  <span
+                    v-else-if="needsDateClarification(guest)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-300"
+                    :title="'Sent yesterday with previous date card. Needs quick date clarification note.'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Sent Yesterday (Needs Clarification)</span>
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                    <span>Pending (Never Sent)</span>
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-3.5 py-2.5 text-right space-x-1.5 whitespace-nowrap">
+                  <!-- Direct WhatsApp Click-to-Send Link -->
+                  <a
+                    :href="buildWaLink(guest)"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border border-slate-200 rounded hover:bg-slate-50 text-slate-700 transition"
+                    title="Open direct WhatsApp conversation"
+                  >
+                    <span>Open WhatsApp</span>
+                    <svg
+                      class="w-3 h-3 text-slate-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+
+                  <!-- Automated Send via WAHA -->
+                  <button
+                    type="button"
+                    @click="sendSinglePass(guest)"
+                    :disabled="sendingId === guest.id || isDispatching"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition"
+                  >
+                    <svg
+                      v-if="sendingId === guest.id"
+                      class="w-3 h-3 animate-spin text-white"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
+                    </svg>
+                    <span>{{ guest.invitationSent ? "Resend" : "Send Pass" }}</span>
+                  </button>
+                </td>
+              </template>
             </tr>
           </tbody>
         </table>
@@ -934,9 +1398,18 @@ interface GuestRecord {
   invitationSent?: boolean;
   invitationSentAt?: string;
   invitationSentVia?: string;
+  emailSent?: boolean;
+  emailSentAt?: string;
   previousInvitationSentAt?: string;
   previousInvitationSentVia?: string;
 }
+
+const activeChannel = ref<"both" | "whatsapp" | "email">("both");
+const testEmail = ref("busolaokemoney@gmail.com");
+const testingEmail = ref(false);
+const emailingId = ref<string | null>(null);
+const sendingBothId = ref<string | null>(null);
+const emailPaceSeconds = ref(2);
 
 const loading = ref(false);
 const savingSettings = ref(false);
@@ -1082,7 +1555,18 @@ const previewRendered = computed(() => {
 
 const activeSenderTab = ref<string>("all");
 const searchQuery = ref("");
-const statusFilter = ref<"all" | "pending" | "sent" | "previously_sent" | "never_sent" | "sent_today">("all");
+const statusFilter = ref<
+  | "all"
+  | "pending"
+  | "sent"
+  | "previously_sent"
+  | "never_sent"
+  | "sent_today"
+  | "both_pending"
+  | "both_sent"
+  | "email_pending"
+  | "email_sent"
+>("all");
 const testPhone = ref("");
 const testSenderSession = ref<string>("default");
 
@@ -1142,6 +1626,21 @@ const guests = ref<GuestRecord[]>([]);
 
 const totalGuests = computed(() => guests.value.length);
 const sentCount = computed(() => guests.value.filter((g) => g.invitationSent).length);
+const emailSentCount = computed(() => guests.value.filter((g) => g.emailSent).length);
+const emailPendingCount = computed(() => guests.value.filter((g) => !g.emailSent && g.leadEmail).length);
+const guestsWithEmailCount = computed(() => guests.value.filter((g) => g.leadEmail).length);
+const emailProgressPercent = computed(() => {
+  if (guestsWithEmailCount.value === 0) return 0;
+  return Math.round((emailSentCount.value / guestsWithEmailCount.value) * 100);
+});
+
+const bothSentCount = computed(() => guests.value.filter((g) => g.invitationSent && g.emailSent).length);
+const bothPendingCount = computed(() => guests.value.filter((g) => !g.invitationSent || !g.emailSent).length);
+const bothProgressPercent = computed(() => {
+  if (totalGuests.value === 0) return 0;
+  return Math.round((bothSentCount.value / totalGuests.value) * 100);
+});
+
 const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
 const previouslySentCount = computed(() => guests.value.filter(needsDateClarification).length);
 const neverSentCount = computed(() => guests.value.filter(isNeverSent).length);
@@ -1284,6 +1783,14 @@ const filteredGuests = computed(() => {
     list = list.filter(isNeverSent);
   } else if (statusFilter.value === "sent_today") {
     list = list.filter(isSentThisAfternoon);
+  } else if (statusFilter.value === "both_pending") {
+    list = list.filter((g) => !g.invitationSent || !g.emailSent);
+  } else if (statusFilter.value === "both_sent") {
+    list = list.filter((g) => g.invitationSent && g.emailSent);
+  } else if (statusFilter.value === "email_pending") {
+    list = list.filter((g) => !g.emailSent && g.leadEmail);
+  } else if (statusFilter.value === "email_sent") {
+    list = list.filter((g) => g.emailSent);
   }
 
   // Search filter
@@ -1294,7 +1801,8 @@ const filteredGuests = computed(() => {
       const spouse = (g.spouseName || "").toLowerCase();
       const code = (g.passCode || "").toLowerCase();
       const phone = (g.leadPhone || "").toLowerCase();
-      return name.includes(q) || spouse.includes(q) || code.includes(q) || phone.includes(q);
+      const email = (g.leadEmail || "").toLowerCase();
+      return name.includes(q) || spouse.includes(q) || code.includes(q) || phone.includes(q) || email.includes(q);
     });
   }
 
@@ -1306,6 +1814,14 @@ const pendingGuestsInView = computed(() => {
     return filteredGuests.value.filter(needsDateClarification);
   }
   return filteredGuests.value.filter((g) => !g.invitationSent);
+});
+
+const pendingBothInView = computed(() => {
+  return filteredGuests.value.filter((g) => !g.invitationSent || !g.emailSent);
+});
+
+const pendingEmailsInView = computed(() => {
+  return filteredGuests.value.filter((g) => !g.emailSent && g.leadEmail);
 });
 
 const totalPages = computed(() => Math.ceil(filteredGuests.value.length / pageSize.value));
@@ -1492,6 +2008,228 @@ async function sendTestPass() {
   } finally {
     testing.value = false;
   }
+}
+
+async function sendTestEmail() {
+  if (!testEmail.value) return;
+  testingEmail.value = true;
+  try {
+    const res: any = await $fetch("/api/pass-campaign/test-email", {
+      method: "POST",
+      headers: adminAuthHeaders(),
+      body: { email: testEmail.value },
+    });
+    if (res.success) {
+      alert(`Test pass email delivered to ${testEmail.value}!`);
+    } else {
+      alert("Test email failed: " + (res.message || "Unknown error"));
+    }
+  } catch (err: any) {
+    alert("Test email failed: " + (err.data?.message || err.message));
+  } finally {
+    testingEmail.value = false;
+  }
+}
+
+async function sendSingleEmail(guest: GuestRecord) {
+  if (!guest.leadEmail) {
+    alert(`Guest "${guest.leadName}" has no email address on record.`);
+    return;
+  }
+  emailingId.value = guest.id;
+  try {
+    const res: any = await $fetch(`/api/invitations/send-email/${guest.id}`, {
+      method: "POST",
+      headers: adminAuthHeaders(),
+      body: { email: guest.leadEmail },
+    });
+    if (res.success) {
+      guest.emailSent = true;
+      guest.emailSentAt = new Date().toISOString();
+      guest.invitationSent = true;
+    } else {
+      alert("Failed to send email pass: " + (res.message || "Error"));
+    }
+  } catch (err: any) {
+    alert("Failed to send email: " + (err.data?.message || err.message));
+  } finally {
+    emailingId.value = null;
+  }
+}
+
+async function sendBothToGuest(guest: GuestRecord) {
+  sendingBothId.value = guest.id;
+  try {
+    // 1. WhatsApp
+    const senderId = resolveSenderForGuest(guest);
+    if (senderId !== "unassigned") {
+      const sender = config.value.senders.find((s) => s.id === senderId);
+      const wahaSession = sender?.wahaSession || "default";
+      try {
+        const waRes: any = await $fetch("/api/pass-campaign/send", {
+          method: "POST",
+          headers: adminAuthHeaders(),
+          body: {
+            rsvpId: guest.id,
+            session: wahaSession,
+            customTemplate: config.value.messageTemplate,
+            attachImage: config.value.attachImage ?? true,
+          },
+        });
+        if (waRes.success) {
+          guest.invitationSent = true;
+          guest.invitationSentAt = new Date().toISOString();
+          guest.invitationSentVia = `whatsapp:${wahaSession}`;
+        }
+      } catch (e: any) {
+        console.error("WhatsApp dispatch error:", e);
+      }
+    }
+
+    // 2. Email
+    if (guest.leadEmail) {
+      try {
+        const emRes: any = await $fetch(`/api/invitations/send-email/${guest.id}`, {
+          method: "POST",
+          headers: adminAuthHeaders(),
+          body: { email: guest.leadEmail },
+        });
+        if (emRes.success) {
+          guest.emailSent = true;
+          guest.emailSentAt = new Date().toISOString();
+          guest.invitationSent = true;
+        }
+      } catch (e: any) {
+        console.error("Email dispatch error:", e);
+      }
+    }
+  } finally {
+    sendingBothId.value = null;
+  }
+}
+
+async function startBothAutoDispatch() {
+  const targetList = pendingBothInView.value;
+  if (targetList.length === 0) {
+    alert("No pending guests for WhatsApp or Email in the current view.");
+    return;
+  }
+
+  isDispatching.value = true;
+  isPaused.value = false;
+
+  for (const guest of targetList) {
+    if (!isDispatching.value) break;
+
+    while (isPaused.value) {
+      await new Promise((r) => setTimeout(r, 500));
+      if (!isDispatching.value) break;
+    }
+    if (!isDispatching.value) break;
+
+    currentProcessingId.value = guest.id;
+    const senderId = resolveSenderForGuest(guest);
+    const sender = config.value.senders.find((s) => s.id === senderId);
+    const wahaSession = sender?.wahaSession || "default";
+
+    currentSenderNotice.value = `${guest.leadName} (WA: ${sender?.name || "WAHA"} + Email: ${guest.leadEmail || "None"})`;
+
+    // 1. WhatsApp
+    if (senderId !== "unassigned") {
+      try {
+        const waRes: any = await $fetch("/api/pass-campaign/send", {
+          method: "POST",
+          headers: adminAuthHeaders(),
+          body: {
+            rsvpId: guest.id,
+            session: wahaSession,
+            customTemplate: config.value.messageTemplate,
+            attachImage: config.value.attachImage ?? true,
+          },
+        });
+        if (waRes.success) {
+          guest.invitationSent = true;
+          guest.invitationSentAt = new Date().toISOString();
+          guest.invitationSentVia = `whatsapp:${wahaSession}`;
+        }
+      } catch (e) {
+        console.error(`WhatsApp auto send error for ${guest.leadName}:`, e);
+      }
+    }
+
+    // 2. Email
+    if (guest.leadEmail) {
+      try {
+        const emRes: any = await $fetch(`/api/invitations/send-email/${guest.id}`, {
+          method: "POST",
+          headers: adminAuthHeaders(),
+          body: { email: guest.leadEmail },
+        });
+        if (emRes.success) {
+          guest.emailSent = true;
+          guest.emailSentAt = new Date().toISOString();
+          guest.invitationSent = true;
+        }
+      } catch (e) {
+        console.error(`Email auto send error for ${guest.leadName}:`, e);
+      }
+    }
+
+    const delay = (config.value.paceSeconds || 8) * 1000;
+    await new Promise((r) => setTimeout(r, delay));
+  }
+
+  currentProcessingId.value = null;
+  currentSenderNotice.value = "";
+  isDispatching.value = false;
+  isPaused.value = false;
+}
+
+async function startEmailAutoDispatch() {
+  const targetList = pendingEmailsInView.value;
+  if (targetList.length === 0) {
+    alert("No pending guests with email addresses in the current view.");
+    return;
+  }
+
+  isDispatching.value = true;
+  isPaused.value = false;
+
+  for (const guest of targetList) {
+    if (!isDispatching.value) break;
+
+    while (isPaused.value) {
+      await new Promise((r) => setTimeout(r, 500));
+      if (!isDispatching.value) break;
+    }
+    if (!isDispatching.value) break;
+
+    currentProcessingId.value = guest.id;
+    currentSenderNotice.value = `Email: ${guest.leadName} (${guest.leadEmail})`;
+
+    try {
+      const res: any = await $fetch(`/api/invitations/send-email/${guest.id}`, {
+        method: "POST",
+        headers: adminAuthHeaders(),
+        body: { email: guest.leadEmail },
+      });
+      if (res.success) {
+        guest.emailSent = true;
+        guest.emailSentAt = new Date().toISOString();
+        guest.invitationSent = true;
+      }
+    } catch (e) {
+      console.error(`Failed to send email pass to ${guest.leadName}:`, e);
+    }
+
+    const delay = Math.max(1500, (emailPaceSeconds.value || 2) * 1000);
+    await new Promise((r) => setTimeout(r, delay));
+  }
+
+  currentProcessingId.value = null;
+  currentSenderNotice.value = "";
+  isDispatching.value = false;
+  isPaused.value = false;
 }
 
 async function sendSinglePass(guest: GuestRecord) {

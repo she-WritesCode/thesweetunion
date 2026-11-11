@@ -135,10 +135,15 @@ Adun & Uche`;
     attachments,
   });
 
+  const nowIso = new Date().toISOString();
   const updateFields: any = {
     invitationSent: true,
-    invitationSentAt: new Date().toISOString(),
-    invitationSentVia: "email",
+    emailSent: true,
+    emailSentAt: nowIso,
+    invitationSentAt: rsvp.invitationSentAt || nowIso,
+    invitationSentVia: rsvp.invitationSentVia
+      ? (String(rsvp.invitationSentVia).includes("email") ? rsvp.invitationSentVia : `${rsvp.invitationSentVia}+email`)
+      : "email",
   };
   if (email && typeof email === "string" && email.trim() && email.trim() !== rsvp.leadEmail) {
     updateFields.leadEmail = email.trim();
