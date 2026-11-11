@@ -73,34 +73,41 @@ async function handleDownload() {
   }
 }
 
-function formatDate(dateStr: string) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+// Venue details are intentionally hardcoded here (same as the invitation email)
+// so they stay out of the public events collection.
+const itinerary = [
+  {
+    key: "ceremony",
+    label: "Church Ceremony",
+    whenText: "Saturday, Nov 21, 2026 @ 09:00 AM",
+    start: "2026-11-21T09:00:00+01:00",
+    venueName: "RCCG Victory Center",
+    venueAddress: "No 58 Iju Road, Agege, Lagos",
+    note: "Open to all friends & family",
+    passRequired: false,
+  },
+  {
+    key: "reception",
+    label: "Reception",
+    whenText: "Saturday, Nov 21, 2026 @ 01:00 PM",
+    start: "2026-11-21T13:00:00+01:00",
+    venueName: "Ronnie Dee Event Centre",
+    venueAddress: "67 Iju Rd, Pen Cinema Zone, beside Eterna Petrol Station, Agege, Lagos 101232, Lagos",
+    note: "Strictly by digital access card or pass code",
+    passRequired: true,
+  },
+];
 
-function getGoogleCalendarUrl(event: any) {
-  const title = encodeURIComponent(`${event.name} · ${coupleName.value}'s Wedding`);
+function getGoogleCalendarUrl(ev: (typeof itinerary)[number]) {
+  const title = encodeURIComponent(`${ev.label} · ${coupleName.value}'s Wedding`);
   const details = encodeURIComponent(
-    `Official wedding celebration for ${coupleName.value} (${hashtag.value}).\nVenue: ${event.venueName}, ${event.venueAddress}\nDress Code: ${event.dressCode || "Formal"}\nPass Code: ${passId.value.toUpperCase()}`,
+    `Official wedding celebration for ${coupleName.value} (${hashtag.value}).\nVenue: ${ev.venueName}, ${ev.venueAddress}\nDress Code: Mauve & Gold\nPass Code: ${passId.value.toUpperCase()}`,
   );
-  const location = encodeURIComponent(`${event.venueName}, ${event.venueAddress}`);
-
-  let datesParam = "";
-  if (event.date) {
-    const start = new Date(event.date);
-    const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
-    const formatIso = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    datesParam = `&dates=${formatIso(start)}/${formatIso(end)}`;
-  }
-
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}${datesParam}`;
+  const location = encodeURIComponent(`${ev.venueName}, ${ev.venueAddress}`);
+  const start = new Date(ev.start);
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${fmt(start)}/${fmt(end)}`;
 }
 </script>
 
@@ -239,23 +246,23 @@ function getGoogleCalendarUrl(event: any) {
         </div>
 
         <!-- Venue Itinerary & Entry Guidelines -->
-        <div v-if="pass.events && pass.events.length" class="w-full max-w-md border-t border-[#D4AF37]/15 pt-6 mb-6">
+        <div class="w-full max-w-md border-t border-[#D4AF37]/15 pt-6 mb-6">
           <div class="text-center mb-5">
             <span class="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37]">
-              Venues & Event Itinerary
+              Venue Details
             </span>
           </div>
 
           <div class="space-y-4">
             <div
-              v-for="(ev, idx) in pass.events"
-              :key="ev.id || idx"
+              v-for="ev in itinerary"
+              :key="ev.key"
               class="p-4 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 space-y-2 text-left"
             >
               <div class="flex items-center justify-between gap-2 flex-wrap">
-                <h3 class="font-cinzel text-sm font-bold text-[#FAF5F8] tracking-wide">{{ ev.name }}</h3>
+                <h3 class="font-cinzel text-sm font-bold text-[#FAF5F8] tracking-wide uppercase">{{ ev.label }}</h3>
                 <span
-                  v-if="ev.name.toLowerCase().includes('reception')"
+                  v-if="ev.passRequired"
                   class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#FCE8B3] border border-[#D4AF37]/40"
                 >
                   Pass Required
@@ -268,20 +275,13 @@ function getGoogleCalendarUrl(event: any) {
                 </span>
               </div>
 
-              <p v-if="ev.date" class="text-[11px] font-mono text-[#D4AF37] flex items-center gap-1.5">
-                <svg class="w-3 h-3 text-[#D4AF37]/80 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span>{{ formatDate(ev.date) }}</span>
-              </p>
+              <p class="text-[12px] font-mono text-[#D4AF37]">{{ ev.whenText }}</p>
 
-              <div v-if="ev.venueName" class="text-[11px] text-[#FAF5F8]/70 leading-relaxed">
-                <span class="font-medium text-[#FAF5F8]">{{ ev.venueName }}</span>
-                <span v-if="ev.venueAddress" class="text-[#FAF5F8]/50"> · {{ ev.venueAddress }}</span>
+              <div class="text-[12px] text-[#FAF5F8]/80 leading-relaxed">
+                <span class="font-semibold text-[#FAF5F8]">{{ ev.venueName }}</span>
+                <span class="text-[#FAF5F8]/60">, {{ ev.venueAddress }}</span>
               </div>
+              <p class="text-[11px] italic text-[#FAF5F8]/55">({{ ev.note }})</p>
 
               <div class="pt-1 flex items-center gap-4 text-[10px]">
                 <a
@@ -290,25 +290,14 @@ function getGoogleCalendarUrl(event: any) {
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-1 text-[#FCE8B3] hover:text-white transition font-medium underline underline-offset-2 decoration-[#D4AF37]/40"
                 >
-                  <svg class="w-2.5 h-2.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  <span>Calendar</span>
+                  <span>Add to Calendar</span>
                 </a>
-
                 <a
-                  v-if="ev.venueName || ev.venueAddress"
-                  :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((ev.venueName || '') + ' ' + (ev.venueAddress || ''))}`"
+                  :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venueName + ' ' + ev.venueAddress)}`"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-1 text-[#FCE8B3] hover:text-white transition font-medium underline underline-offset-2 decoration-[#D4AF37]/40"
                 >
-                  <svg class="w-2.5 h-2.5 text-[#D4AF37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                  </svg>
                   <span>Directions (Maps) ↗</span>
                 </a>
               </div>
@@ -319,16 +308,13 @@ function getGoogleCalendarUrl(event: any) {
         <!-- Attire & Dress Code Card -->
         <div class="w-full max-w-md p-4 mb-6 rounded-xl bg-[#20121B]/60 border border-[#D4AF37]/15 text-left space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Attire & Dress Code</span>
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">Dress Code</span>
             <div class="flex items-center gap-1.5">
               <span class="w-3 h-3 rounded-full bg-[#865172] border border-white/20" title="Mauve" />
               <span class="w-3 h-3 rounded-full bg-[#D4AF37] border border-white/20" title="Gold" />
             </div>
           </div>
-          <p class="text-xs font-semibold text-[#FAF5F8]">Strictly Formal / African Regal</p>
-          <p class="text-[11px] text-[#FAF5F8]/70 leading-relaxed">
-            Colors of the day: <strong>Mauve & Champagne Gold</strong>. We encourage you to dress regal, elegant, and ready to celebrate with us!
-          </p>
+          <p class="text-xs font-semibold text-[#FAF5F8]">Mauve &amp; Gold</p>
         </div>
 
         <!-- Note to Guests -->
