@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from "h3";
+import { defineEventHandler, readBody, createError, getHeader, getCookie } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { requireAdmin } from "~~/server/utils/require-admin";
 import { loadTableOverrides, MAX_TABLE_CAPACITY } from "~~/server/utils/seating";
@@ -22,8 +22,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Updating a global requires a signed-in admin (access.update = "user != null"),
+  // so forward the admin's own token along with the API key.
+  const token =
+    getHeader(event, "authorization")?.replace(/^Bearer\s+/i, "") ||
+    getCookie(event, "__dyrected_token") ||
+    getCookie(event, "dyrected_token");
+
   const config = useRuntimeConfig();
-  const client = createClient({ baseUrl: config.dyrectedUrl, apiKey: config.dyrectedApiKey });
+  const client = createClient({
+    baseUrl: config.dyrectedUrl,
+    apiKey: config.dyrectedApiKey,
+    token: token || undefined,
+  });
 
   const rows = await loadTableOverrides(client);
   const existing = rows.find((r) => r.number === number);
@@ -43,6 +54,14 @@ export default defineEventHandler(async (event) => {
       ...(Number.isFinite(r.capacity) ? { capacity: r.capacity } : {}),
     }));
 
-  await client.global("seating_settings").update({ tables: merged } as any);
+  try {
+    await client.global("seating_settings").update({ tables: merged } as any);
+  } catch (err: any) {
+    console.error("[seating/settings] update failed:", err);
+    throw createError({
+      statusCode: 500,
+      message: `Could not save table settings: ${err?.message || "unknown error"}`,
+    });
+  }
   return { success: true, table: next };
 });

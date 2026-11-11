@@ -29,7 +29,7 @@ export interface SeatingLandmark {
   tone?: "accent" | "plain";
 }
 
-export const SEATING_VIEWBOX = { w: 1920, h: 1200 };
+export const SEATING_VIEWBOX = { w: 1960, h: 1250 };
 export const ROUND_CAPACITY = 10;
 export const LONG_CAPACITY = 14;
 
