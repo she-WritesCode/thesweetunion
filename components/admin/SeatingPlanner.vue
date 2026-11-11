@@ -183,10 +183,10 @@
             >
               <!-- hit area -->
               <rect
-                :x="t.x - (t.shape === 'round' ? 66 : (t.w || 0) / 2 + 6)"
-                :y="t.y - (t.shape === 'round' ? 66 : 40)"
-                :width="t.shape === 'round' ? 132 : (t.w || 0) + 12"
-                :height="t.shape === 'round' ? 132 : 80"
+                :x="t.x - (t.shape === 'round' ? 54 : (t.w || 0) / 2 + 6)"
+                :y="t.y - (t.shape === 'round' ? 54 : 40)"
+                :width="t.shape === 'round' ? 108 : (t.w || 0) + 12"
+                :height="t.shape === 'round' ? 108 : 80"
                 fill="transparent"
               />
 
@@ -196,7 +196,7 @@
                   :key="i"
                   :cx="c.x"
                   :cy="c.y"
-                  r="8"
+                  r="6"
                   :fill="i < used(t) ? '#3b0764' : '#fff'"
                   stroke="#334155"
                   stroke-width="2"
@@ -204,10 +204,10 @@
                 <circle
                   :cx="t.x"
                   :cy="t.y"
-                  r="40"
+                  r="32"
                   :fill="fillFor(t).fill"
                   :stroke="selectedTable === t.number || hoverTable === t.number ? '#f59e0b' : fillFor(t).stroke"
-                  :stroke-width="selectedTable === t.number || hoverTable === t.number ? 8 : 3"
+                  :stroke-width="selectedTable === t.number || hoverTable === t.number ? 6 : 3"
                 />
               </template>
               <template v-else>
@@ -235,10 +235,10 @@
 
               <text
                 :x="t.x"
-                :y="t.y - 6"
+                :y="t.y - 5"
                 text-anchor="middle"
                 dominant-baseline="middle"
-                font-size="26"
+                font-size="22"
                 font-weight="700"
                 :fill="fillFor(t).text"
                 pointer-events="none"
@@ -247,10 +247,10 @@
               </text>
               <text
                 :x="t.x"
-                :y="t.y + 14"
+                :y="t.y + 12"
                 text-anchor="middle"
                 dominant-baseline="middle"
-                font-size="16"
+                font-size="13"
                 :fill="fillFor(t).text"
                 pointer-events="none"
               >
@@ -392,7 +392,7 @@ function chairs(t: SeatingTable) {
   if (t.shape === "round") {
     return Array.from({ length: t.capacity }, (_, i) => {
       const a = (i / t.capacity) * Math.PI * 2 - Math.PI / 2;
-      return { x: t.x + Math.cos(a) * 56, y: t.y + Math.sin(a) * 56 };
+      return { x: t.x + Math.cos(a) * 44, y: t.y + Math.sin(a) * 44 };
     });
   }
   const perSide = Math.ceil(t.capacity / 2);
