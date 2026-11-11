@@ -339,6 +339,13 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
           </div>
         </div>
 
+        <div v-if="lastResult.guest.tableNumber" class="ci-table">
+          <span class="ci-table__label">Seat at</span>
+          <span class="ci-table__num">Table {{ lastResult.guest.tableNumber }}</span>
+          <span v-if="lastResult.guest.tableLabel" class="ci-table__name">{{ lastResult.guest.tableLabel }}</span>
+        </div>
+        <div v-else class="ci-table ci-table--none">No table assigned yet</div>
+
         <div class="ci-confirmed__badges">
           <span v-if="lastResult.guest.hasSpouse" class="ci-badge ci-badge--seats">
             Admits 2 &nbsp;·&nbsp; 2 seats
@@ -777,5 +784,38 @@ const progressBarWidth = computed(() => `${Math.min(stats.value.percentage, 100)
 .ci-btn--full {
   width: 100%;
   justify-content: center;
+}
+.ci-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #faf5ff;
+  border: 2px solid #a855f7;
+}
+.ci-table__label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #7e22ce;
+  font-weight: 700;
+}
+.ci-table__num {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #3b0764;
+}
+.ci-table__name {
+  font-size: 13px;
+  color: #6b21a8;
+}
+.ci-table--none {
+  font-size: 13px;
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 </style>

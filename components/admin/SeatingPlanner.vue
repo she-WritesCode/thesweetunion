@@ -11,10 +11,26 @@
           <strong>{{ unseatedGuests.length }}</strong> parties still need a table
         </div>
         <div class="text-slate-500 text-xs">
-          {{ tablesInUse }} of {{ SEATING_TABLES.length }} tables in use · {{ freeSeats }} free seats
+          {{ tablesInUse }} of {{ tables.length }} tables in use · {{ freeSeats }} free seats
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <button
+          v-if="lastUndo"
+          type="button"
+          class="px-3 py-1.5 text-xs font-semibold rounded border border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100"
+          @click="undoLast"
+        >
+          ↶ Undo
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs font-semibold rounded border border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100"
+          :disabled="!unseatedGuests.length"
+          @click="autoOpen = !autoOpen; autoPlan = null"
+        >
+          ✨ Auto-seat
+        </button>
         <button
           type="button"
           class="px-3 py-1.5 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-slate-50"
@@ -34,6 +50,43 @@
     </div>
 
     <div v-if="error" class="p-3 text-sm rounded-lg bg-red-50 border border-red-200 text-red-700">{{ error }}</div>
+
+    <!-- Auto-seat panel -->
+    <div v-if="autoOpen" class="p-3 bg-purple-50 rounded-lg border border-purple-200 space-y-2">
+      <div class="flex flex-wrap items-end gap-2">
+        <label class="text-xs font-semibold text-purple-900">
+          Which guests?
+          <select v-model="autoGroup" class="block mt-1 px-2 py-1.5 text-sm border border-purple-300 rounded bg-white font-normal" @change="autoPlan = null">
+            <option value="">All unseated groups</option>
+            <option v-for="g in groupsWithUnseated" :key="g.name" :value="g.name">{{ g.name }} ({{ g.seats }} seats)</option>
+          </select>
+        </label>
+        <button type="button" class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800" @click="planAutoSeat(autoGroup)">
+          Preview
+        </button>
+        <button type="button" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900" @click="autoOpen = false">Close</button>
+      </div>
+      <p class="text-[11px] text-purple-900/80">
+        Keeps each group together on neighbouring tables, never splits a couple, and fills tables that already have free seats. Nothing is saved until you apply it, and you can undo afterwards.
+      </p>
+      <div v-if="autoPlan" class="text-sm space-y-2">
+        <p>
+          Will seat <strong>{{ autoPlan.parties }}</strong> parties (<strong>{{ autoPlan.seats }}</strong> guests) across
+          <strong>{{ autoPlan.tablesUsed }}</strong> tables.
+          <span v-if="autoPlan.unplaced.length" class="text-red-700">
+            {{ autoPlan.unplaced.length }} part{{ autoPlan.unplaced.length > 1 ? "ies" : "y" }} won't fit.
+          </span>
+        </p>
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-600 disabled:opacity-50"
+          :disabled="!autoPlan.assignments.length"
+          @click="applyAutoSeat"
+        >
+          Apply seating
+        </button>
+      </div>
+    </div>
     <div
       v-if="toast"
       class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-sm font-medium shadow-lg"
@@ -121,7 +174,7 @@
                   title="Show this table"
                   @click.stop="selectedTable = g.tableNumber"
                 >
-                  Table {{ g.tableNumber }}
+                  Table {{ g.tableNumber }}<template v-if="labelOf(g.tableNumber)"> · {{ labelOf(g.tableNumber) }}</template>
                 </button>
               </div>
             </div>
@@ -173,7 +226,7 @@
 
             <!-- Tables -->
             <g
-              v-for="t in SEATING_TABLES"
+              v-for="t in tables"
               :key="t.number"
               class="cursor-pointer"
               @click="onTableClick(t.number)"
@@ -181,6 +234,7 @@
               @dragleave="hoverTable === t.number && (hoverTable = null)"
               @drop.prevent="onDrop(t.number)"
             >
+              <title>Table {{ t.number }}{{ t.label ? ` · ${t.label}` : "" }} — {{ used(t) }}/{{ t.capacity }} seats</title>
               <!-- hit area -->
               <rect
                 :x="t.x - (t.shape === 'round' ? 54 : (t.w || 0) / 2 + 6)"
@@ -261,11 +315,11 @@
         </div>
 
         <!-- Selected table -->
-        <div v-if="selected" class="bg-white rounded-lg border border-slate-200 shadow-xs p-3">
-          <div class="flex items-center justify-between gap-2 mb-2">
+        <div v-if="selected" class="bg-white rounded-lg border border-slate-200 shadow-xs p-3 space-y-3">
+          <div class="flex items-center justify-between gap-2">
             <h3 class="font-semibold">
-              Table {{ selected.number }}
-              <span class="text-sm font-normal text-slate-500">· {{ used(selected) }} of {{ selected.capacity }} seats taken</span>
+              Table {{ selected.number }}<span v-if="selected.label" class="font-normal text-slate-600"> · {{ selected.label }}</span>
+              <span class="text-sm font-normal text-slate-500"> · {{ used(selected) }} of {{ selected.capacity }} seats taken</span>
             </h3>
             <div class="flex items-center gap-2">
               <button
@@ -281,6 +335,60 @@
               </button>
             </div>
           </div>
+
+          <!-- Name + seats -->
+          <div class="flex flex-wrap items-end gap-2 p-2 rounded bg-slate-50 border border-slate-200">
+            <label class="text-[11px] font-semibold text-slate-600 flex-1 min-w-[140px]">
+              Table name
+              <input
+                v-model="editLabel"
+                type="text"
+                maxlength="40"
+                placeholder="e.g. Family, VIP"
+                class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white"
+              />
+            </label>
+            <label class="text-[11px] font-semibold text-slate-600 w-20">
+              Seats
+              <input
+                v-model.number="editCapacity"
+                type="number"
+                min="0"
+                max="24"
+                class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white"
+              />
+            </label>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800 disabled:opacity-40"
+              :disabled="!tableDirty || savingTable"
+              @click="saveTable"
+            >
+              {{ savingTable ? "Saving…" : "Save" }}
+            </button>
+          </div>
+
+          <!-- Seat a whole group here -->
+          <div v-if="groupsWithUnseated.length" class="flex flex-wrap items-end gap-2">
+            <label class="text-[11px] font-semibold text-slate-600 flex-1 min-w-[180px]">
+              Seat a whole group here
+              <select v-model="groupToSeat" class="block w-full mt-1 px-2 py-1.5 text-sm font-normal border border-slate-300 rounded bg-white">
+                <option value="">Choose a group…</option>
+                <option v-for="g in groupsWithUnseated" :key="g.name" :value="g.name">
+                  {{ g.name }} · {{ g.parties }} unseated ({{ g.seats }} seats)
+                </option>
+              </select>
+            </label>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-xs font-semibold rounded border border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100 disabled:opacity-40"
+              :disabled="!groupToSeat || selectedFree <= 0"
+              @click="seatGroupHere"
+            >
+              Seat them ({{ Math.max(0, selectedFree) }} free)
+            </button>
+          </div>
+
           <p v-if="!selectedGuests.length" class="text-sm text-slate-500">No one is seated here yet.</p>
           <ul v-else class="divide-y divide-slate-100">
             <li v-for="g in selectedGuests" :key="g.id" class="py-1.5 flex items-center justify-between gap-2 text-sm">
@@ -298,9 +406,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { adminAuthHeaders } from "~/utils/admin-auth";
-import { SEATING_TABLES, SEATING_LANDMARKS, SEATING_VIEWBOX, type SeatingTable } from "~~/config/seating";
+import { SEATING_TABLES as BASE_TABLES, SEATING_LANDMARKS, SEATING_VIEWBOX, type SeatingTable } from "~~/config/seating";
+
+interface TableView extends SeatingTable {
+  label: string;
+}
 
 interface Guest {
   id: string;
@@ -314,6 +426,15 @@ interface Guest {
 }
 
 const guests = ref<Guest[]>([]);
+const tableMeta = ref<Record<number, { label: string; capacity: number }>>({});
+const tables = computed<TableView[]>(() =>
+  BASE_TABLES.map((t) => ({
+    ...t,
+    capacity: tableMeta.value[t.number]?.capacity ?? t.capacity,
+    label: tableMeta.value[t.number]?.label ?? "",
+  })),
+);
+const labelOf = (n: number | null) => (n ? tables.value.find((t) => t.number === n)?.label || "" : "");
 const loading = ref(false);
 const error = ref<string | null>(null);
 const search = ref("");
@@ -338,6 +459,9 @@ async function load() {
   try {
     const res: any = await $fetch(`/api/seating/state?_t=${Date.now()}`, { headers: adminAuthHeaders() });
     guests.value = res.guests || [];
+    const meta: Record<number, { label: string; capacity: number }> = {};
+    for (const t of res.tables || []) meta[t.number] = { label: t.label || "", capacity: t.capacity };
+    tableMeta.value = meta;
   } catch (err: any) {
     error.value = err?.data?.message || err?.message || "Could not load guests.";
   } finally {
@@ -358,8 +482,8 @@ const used = (t: SeatingTable) => seatsByTable.value.get(t.number) || 0;
 const totalSeats = computed(() => guests.value.reduce((s, g) => s + g.seats, 0));
 const seatedSeats = computed(() => guests.value.filter((g) => g.tableNumber).reduce((s, g) => s + g.seats, 0));
 const unseatedGuests = computed(() => guests.value.filter((g) => !g.tableNumber));
-const tablesInUse = computed(() => SEATING_TABLES.filter((t) => used(t) > 0).length);
-const freeSeats = computed(() => SEATING_TABLES.reduce((s, t) => s + Math.max(0, t.capacity - used(t)), 0));
+const tablesInUse = computed(() => tables.value.filter((t) => used(t) > 0).length);
+const freeSeats = computed(() => tables.value.reduce((s, t) => s + Math.max(0, t.capacity - used(t)), 0));
 
 const groupNames = computed(() =>
   Array.from(new Set(guests.value.map((g) => g.groupName).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -376,7 +500,7 @@ const visibleGuests = computed(() => {
 });
 
 const armedGuest = computed(() => guests.value.find((g) => g.id === armedId.value) || null);
-const selected = computed(() => SEATING_TABLES.find((t) => t.number === selectedTable.value) || null);
+const selected = computed(() => tables.value.find((t) => t.number === selectedTable.value) || null);
 const selectedGuests = computed(() => guests.value.filter((g) => g.tableNumber === selectedTable.value));
 
 // ── Table rendering ───────────────────────────────────────────────────────
@@ -390,16 +514,18 @@ function fillFor(t: SeatingTable) {
 
 function chairs(t: SeatingTable) {
   if (t.shape === "round") {
-    return Array.from({ length: t.capacity }, (_, i) => {
-      const a = (i / t.capacity) * Math.PI * 2 - Math.PI / 2;
+    const n = Math.min(t.capacity, 24);
+    return Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
       return { x: t.x + Math.cos(a) * 44, y: t.y + Math.sin(a) * 44 };
     });
   }
-  const perSide = Math.ceil(t.capacity / 2);
+  const cap = Math.min(t.capacity, 24);
+  const perSide = Math.max(1, Math.ceil(cap / 2));
   const w = t.w || 108;
   const xs = (i: number) => t.x - w / 2 + ((i + 0.5) * w) / perSide;
   const top = Array.from({ length: perSide }, (_, i) => ({ x: xs(i), y: t.y - 28 }));
-  const bottom = Array.from({ length: t.capacity - perSide }, (_, i) => ({ x: xs(i), y: t.y + 28 }));
+  const bottom = Array.from({ length: Math.max(0, cap - perSide) }, (_, i) => ({ x: xs(i), y: t.y + 28 }));
   return [...top, ...bottom];
 }
 
@@ -426,27 +552,214 @@ function onTableClick(tableNumber: number) {
   selectedTable.value = tableNumber;
 }
 
-async function assign(list: Guest[], tableNumber: number | null, force = false) {
-  const ids = list.map((g) => g.id);
+type Assignment = { guests: Guest[]; tableNumber: number | null };
+const lastUndo = ref<{ guest: Guest; tableNumber: number | null }[] | null>(null);
+
+async function submit(assignments: Assignment[], force = false): Promise<boolean> {
   try {
     await $fetch("/api/seating/assign", {
       method: "POST",
       headers: adminAuthHeaders(),
-      body: { guestIds: ids, tableNumber, force },
+      body: {
+        assignments: assignments.map((a) => ({ guestIds: a.guests.map((g) => g.id), tableNumber: a.tableNumber })),
+        force,
+      },
     });
-    for (const g of guests.value) if (ids.includes(g.id)) g.tableNumber = tableNumber;
-    notify(
-      tableNumber
-        ? `${list.map((g) => g.leadName).join(", ")} → Table ${tableNumber}`
-        : `${list.map((g) => g.leadName).join(", ")} unseated`,
-    );
+    for (const a of assignments) for (const g of a.guests) g.tableNumber = a.tableNumber;
+    return true;
   } catch (err: any) {
     if (err?.statusCode === 409 || err?.status === 409) {
       const msg = err?.data?.message || err?.message || "Table is full.";
-      if (confirm(`${msg}\n\nSeat anyway?`)) return assign(list, tableNumber, true);
-      return;
+      if (!force && confirm(`${msg}\n\nSeat anyway?`)) return submit(assignments, true);
+      return false;
     }
     notify(err?.data?.message || err?.message || "Could not update seating.", "error");
+    return false;
+  }
+}
+
+/** Run assignments and remember how to undo them. */
+async function run(assignments: Assignment[], message: string) {
+  const prev = assignments.flatMap((a) => a.guests.map((guest) => ({ guest, tableNumber: guest.tableNumber })));
+  if (!(await submit(assignments))) return false;
+  lastUndo.value = prev;
+  notify(message);
+  return true;
+}
+
+function assign(list: Guest[], tableNumber: number | null) {
+  const names = list.map((g) => g.leadName).join(", ");
+  return run([{ guests: list, tableNumber }], tableNumber ? `${names} → Table ${tableNumber}` : `${names} unseated`);
+}
+
+async function undoLast() {
+  if (!lastUndo.value) return;
+  const byTable = new Map<number | null, Guest[]>();
+  for (const { guest, tableNumber } of lastUndo.value) {
+    byTable.set(tableNumber, [...(byTable.get(tableNumber) || []), guest]);
+  }
+  const ok = await submit([...byTable].map(([tableNumber, gs]) => ({ guests: gs, tableNumber })), true);
+  if (ok) {
+    lastUndo.value = null;
+    notify("Undone");
+  }
+}
+
+// ── Seat a whole group at the selected table ──────────────────────────────
+const groupToSeat = ref("");
+const groupsWithUnseated = computed(() => {
+  const map = new Map<string, { name: string; parties: number; seats: number }>();
+  for (const g of unseatedGuests.value) {
+    const name = g.groupName || "No group";
+    const e = map.get(name) || { name, parties: 0, seats: 0 };
+    e.parties++;
+    e.seats += g.seats;
+    map.set(name, e);
+  }
+  return [...map.values()].sort((a, b) => b.seats - a.seats);
+});
+
+const selectedFree = computed(() => (selected.value ? selected.value.capacity - used(selected.value) : 0));
+
+async function seatGroupHere() {
+  const t = selected.value;
+  if (!t || !groupToSeat.value) return;
+  const parties = unseatedGuests.value
+    .filter((g) => (g.groupName || "No group") === groupToSeat.value)
+    .sort((a, b) => b.seats - a.seats);
+  let free = selectedFree.value;
+  const fit: Guest[] = [];
+  for (const p of parties) {
+    if (p.seats <= free) {
+      fit.push(p);
+      free -= p.seats;
+    }
+  }
+  if (!fit.length) return notify(`No room at Table ${t.number} for ${groupToSeat.value}.`, "error");
+  const left = parties.length - fit.length;
+  await run(
+    [{ guests: fit, tableNumber: t.number }],
+    `${fit.length} ${groupToSeat.value} part${fit.length > 1 ? "ies" : "y"} → Table ${t.number}` +
+      (left ? ` (${left} didn't fit)` : ""),
+  );
+}
+
+// ── Table name / seat count editor ────────────────────────────────────────
+const editLabel = ref("");
+const editCapacity = ref<number>(0);
+const savingTable = ref(false);
+watch(
+  selected,
+  (t) => {
+    editLabel.value = t?.label || "";
+    editCapacity.value = t?.capacity ?? 0;
+    groupToSeat.value = "";
+  },
+  { immediate: true },
+);
+const tableDirty = computed(
+  () => !!selected.value && (editLabel.value !== selected.value.label || Number(editCapacity.value) !== selected.value.capacity),
+);
+
+async function saveTable() {
+  const t = selected.value;
+  if (!t) return;
+  savingTable.value = true;
+  try {
+    const res: any = await $fetch("/api/seating/settings", {
+      method: "POST",
+      headers: adminAuthHeaders(),
+      body: { number: t.number, label: editLabel.value, capacity: editCapacity.value },
+    });
+    tableMeta.value = {
+      ...tableMeta.value,
+      [t.number]: { label: res.table.label || "", capacity: res.table.capacity },
+    };
+    notify(`Table ${t.number} saved`);
+  } catch (err: any) {
+    notify(err?.data?.message || err?.message || "Could not save table.", "error");
+  } finally {
+    savingTable.value = false;
+  }
+}
+
+// ── Auto-seat by group ────────────────────────────────────────────────────
+const autoOpen = ref(false);
+const autoGroup = ref("");
+const autoPlan = ref<null | {
+  assignments: Assignment[];
+  parties: number;
+  seats: number;
+  tablesUsed: number;
+  unplaced: Guest[];
+}>(null);
+
+function planAutoSeat(onlyGroup: string) {
+  const free = new Map(tables.value.map((t) => [t.number, t.capacity - used(t)]));
+  const pos = new Map(tables.value.map((t) => [t.number, t]));
+  const dist = (a: number, b: number) => {
+    const A = pos.get(a)!;
+    const B = pos.get(b)!;
+    return Math.hypot(A.x - B.x, A.y - B.y);
+  };
+
+  const byGroup = new Map<string, Guest[]>();
+  for (const g of unseatedGuests.value) {
+    const name = g.groupName || "No group";
+    if (onlyGroup && name !== onlyGroup) continue;
+    byGroup.set(name, [...(byGroup.get(name) || []), g]);
+  }
+  const groups = [...byGroup.entries()].sort(
+    (a, b) => b[1].reduce((s, g) => s + g.seats, 0) - a[1].reduce((s, g) => s + g.seats, 0),
+  );
+
+  const placed = new Map<number, Guest[]>();
+  const unplaced: Guest[] = [];
+
+  for (const [name, parties] of groups) {
+    // Tables this group already sits at (so stragglers join their own people)
+    const own = guests.value.filter((g) => g.tableNumber && (g.groupName || "No group") === name).map((g) => g.tableNumber!);
+    let anchor: number | null = own.length ? own[own.length - 1] : null;
+    let remaining = parties.reduce((s, g) => s + g.seats, 0);
+
+    for (const party of [...parties].sort((a, b) => b.seats - a.seats)) {
+      const candidates = [...free].filter(([, f]) => f >= party.seats).map(([n]) => n);
+      if (!candidates.length) {
+        unplaced.push(party);
+        continue;
+      }
+      let pick: number;
+      if (anchor !== null) {
+        pick = candidates.sort((a, b) => dist(a, anchor!) - dist(b, anchor!) || a - b)[0];
+      } else {
+        const roomy = candidates.filter((n) => free.get(n)! >= remaining);
+        pick = roomy.length
+          ? roomy.sort((a, b) => free.get(a)! - free.get(b)! || a - b)[0] // tightest table that holds everyone
+          : candidates.sort((a, b) => free.get(b)! - free.get(a)! || a - b)[0]; // else the emptiest
+      }
+      free.set(pick, free.get(pick)! - party.seats);
+      placed.set(pick, [...(placed.get(pick) || []), party]);
+      remaining -= party.seats;
+      anchor = pick;
+    }
+  }
+
+  const assignments = [...placed].map(([tableNumber, gs]) => ({ guests: gs, tableNumber }));
+  autoPlan.value = {
+    assignments,
+    parties: assignments.reduce((s, a) => s + a.guests.length, 0),
+    seats: assignments.reduce((s, a) => s + a.guests.reduce((x, g) => x + g.seats, 0), 0),
+    tablesUsed: assignments.length,
+    unplaced,
+  };
+}
+
+async function applyAutoSeat() {
+  const plan = autoPlan.value;
+  if (!plan || !plan.assignments.length) return;
+  if (await run(plan.assignments, `Auto-seated ${plan.parties} parties across ${plan.tablesUsed} tables`)) {
+    autoPlan.value = null;
+    autoOpen.value = false;
   }
 }
 
@@ -457,13 +770,13 @@ function clearTable(tableNumber: number) {
 
 // ── Print ─────────────────────────────────────────────────────────────────
 function printList() {
-  const rows = SEATING_TABLES.map((t) => {
+  const rows = tables.value.map((t) => {
     const at = guests.value.filter((g) => g.tableNumber === t.number);
     if (!at.length) return "";
     const names = at
       .map((g) => `<li>${esc(g.leadName)}${g.hasSpouse ? ` + ${esc(g.spouseName || "Partner")}` : ""}</li>`)
       .join("");
-    return `<section><h2>Table ${t.number} <small>${used(t)}/${t.capacity}</small></h2><ul>${names}</ul></section>`;
+    return `<section><h2>Table ${t.number}${t.label ? ` · ${esc(t.label)}` : ""} <small>${used(t)}/${t.capacity}</small></h2><ul>${names}</ul></section>`;
   }).join("");
   const unseated = unseatedGuests.value
     .map((g) => `<li>${esc(g.leadName)}${g.hasSpouse ? ` + ${esc(g.spouseName || "Partner")}` : ""}</li>`)

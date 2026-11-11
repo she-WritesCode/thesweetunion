@@ -2,6 +2,7 @@ import { defineEventHandler, setHeader } from "h3";
 import { createClient } from "@dyrected/sdk";
 import { requireAdmin } from "~~/server/utils/require-admin";
 import { fetchAllDocs } from "~~/server/utils/fetch-all";
+import { loadTableMeta } from "~~/server/utils/seating";
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
@@ -10,7 +11,10 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const client = createClient({ baseUrl: config.dyrectedUrl, apiKey: config.dyrectedApiKey });
 
-  const records = await fetchAllDocs(client, "rsvp_records", { depth: 1 });
+  const [records, tables] = await Promise.all([
+    fetchAllDocs(client, "rsvp_records", { depth: 1 }),
+    loadTableMeta(client),
+  ]);
 
   // Attending is filtered in JS (boolean WHERE filters fail on Postgres).
   const guests = records
@@ -31,5 +35,5 @@ export default defineEventHandler(async (event) => {
     })
     .sort((a: any, b: any) => a.leadName.localeCompare(b.leadName));
 
-  return { success: true, guests };
+  return { success: true, guests, tables };
 });

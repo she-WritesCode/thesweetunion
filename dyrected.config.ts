@@ -39,6 +39,7 @@ import { checkIns } from "./dyrected/collections/check-ins.ts";
 // Globals
 import { siteSettings } from "./dyrected/globals/site-settings.ts";
 import { asoebiSettings } from "./dyrected/globals/asoebi-settings.ts";
+import { seatingSettings } from "./dyrected/globals/seating-settings.ts";
 
 const dbAdapter = new PostgresAdapter({
   url: process.env.DATABASE_URL || "postgres://localhost:5432/sweetunion",
@@ -56,7 +57,7 @@ export default defineConfig({
     send: ({ to, subject, html }: any) => sendEmail({ to, subject, html: html || "" }),
   },
   collections: [admins, media, wishlistItems, reservations, rsvpGroups, rsvpRecords, events, checkIns],
-  globals: [siteSettings, asoebiSettings],
+  globals: [siteSettings, asoebiSettings, seatingSettings],
   admin: {
     branding: { logoText: "TheSweetUnion" },
     navigation: [

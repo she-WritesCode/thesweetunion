@@ -1,5 +1,6 @@
 import { defineEventHandler, getRouterParam, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { loadTableMeta } from "~~/server/utils/seating";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -238,8 +239,22 @@ export default defineEventHandler(async (event) => {
   const leadName = rsvp.leadName || "Guest";
   const guestName = hasSpouse && spouseName ? `${leadName} + ${spouseName}` : leadName;
 
+  // Reception table (assigned from the admin Seating Planner)
+  const tableNum = Number(rsvp.tableNumber);
+  let tableNumber: number | null = Number.isFinite(tableNum) && tableNum > 0 ? tableNum : null;
+  let tableLabel = "";
+  if (tableNumber && rsvp.attending) {
+    try {
+      tableLabel = (await loadTableMeta(client)).find((t) => t.number === tableNumber)?.label || "";
+    } catch {}
+  } else {
+    tableNumber = null;
+  }
+
   return {
     id: rsvp.id,
+    tableNumber,
+    tableLabel,
     passCode: (rsvp.passCode || rsvp.id).toUpperCase(),
     leadName,
     hasSpouse,

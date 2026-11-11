@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { createClient } from "@dyrected/sdk";
+import { loadTableMeta } from "~~/server/utils/seating";
 
 type Client = ReturnType<typeof createClient>;
 
@@ -135,10 +136,21 @@ export default defineEventHandler(async (event) => {
     console.warn("[check-in/scan] Could not link checkIn to rsvp_records:", err);
   }
 
+  const tableNum = Number(rsvp.tableNumber);
+  const tableNumber = Number.isFinite(tableNum) && tableNum > 0 ? tableNum : null;
+  let tableLabel = "";
+  if (tableNumber) {
+    try {
+      tableLabel = (await loadTableMeta(client)).find((t) => t.number === tableNumber)?.label || "";
+    } catch {}
+  }
+
   return {
     success: true,
     checkIn,
     guest: {
+      tableNumber,
+      tableLabel,
       id: rsvp.id,
       leadName: rsvp.leadName,
       spouseName: rsvp.hasSpouse ? rsvp.spouseName : null,

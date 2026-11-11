@@ -245,6 +245,14 @@ export interface Asoebi_settingsGlobal {
   automatedCampaign?: Record<string, unknown>;
 }
 
+export interface Seating_settingsGlobal {
+  tables?: Array<{
+    number: number;
+    label?: string;
+    capacity?: number;
+  }>;
+}
+
 export interface DyrectedSchema {
   collections: {
     admins: Admins;
@@ -259,6 +267,7 @@ export interface DyrectedSchema {
   globals: {
     site_settings: Site_settingsGlobal;
     asoebi_settings: Asoebi_settingsGlobal;
+    seating_settings: Seating_settingsGlobal;
   };
 }
 

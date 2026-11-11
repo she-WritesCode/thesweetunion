@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
     partySize: r.hasSpouse ? 2 : 1,
     groupId: r.group?.id ?? r.group,
     groupName: r.group?.name ?? null,
+    tableNumber: Number(r.tableNumber) > 0 ? Number(r.tableNumber) : null,
     checkedIn: r.checkedIn || false,
     checkInId: r.checkIn?.id ?? r.checkIn ?? null,
   }));

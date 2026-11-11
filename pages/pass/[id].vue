@@ -230,6 +230,16 @@ function getGoogleCalendarUrl(ev: (typeof itinerary)[number]) {
           </NuxtLink>
         </div>
 
+        <!-- Reception table (shown once the couple's planner has assigned one) -->
+        <div
+          v-if="pass.tableNumber"
+          class="w-full max-w-md mb-6 p-4 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#865172]/20 border border-[#D4AF37]/40 text-center"
+        >
+          <p class="text-[10px] font-bold uppercase tracking-[0.25em] text-[#D4AF37] mb-1">Your Reception Table</p>
+          <p class="font-cinzel text-4xl font-bold text-[#FCE8B3] leading-none">Table {{ pass.tableNumber }}</p>
+          <p v-if="pass.tableLabel" class="mt-1.5 text-xs text-[#FAF5F8]/75">{{ pass.tableLabel }}</p>
+        </div>
+
         <!-- Important Reception Access Alert -->
         <div class="w-full max-w-md p-3.5 mb-6 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-start gap-3 text-left">
           <div class="p-1 rounded-md bg-[#D4AF37]/20 text-[#FCE8B3] shrink-0 mt-0.5">
