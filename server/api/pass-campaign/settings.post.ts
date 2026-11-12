@@ -23,7 +23,9 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
+    const existing = ((await client.global("site_settings").get({ depth: 0 }).catch(() => ({}))) || {}) as Record<string, any>;
     await client.global("site_settings").update({
+      ...existing,
       passCampaignConfig: body,
     });
 
