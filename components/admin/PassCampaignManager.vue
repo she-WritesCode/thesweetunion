@@ -262,7 +262,7 @@
         <div class="flex items-center gap-2">
           <button
             type="button"
-            @click="saveSettings"
+            @click="saveSettings()"
             :disabled="savingSettings"
             class="px-3 py-1 text-xs font-medium bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1 shadow-xs transition"
           >
@@ -546,6 +546,18 @@
             >
               Assign evenly &amp; save
             </button>
+            <button
+              type="button"
+              @click="assignAndStartSending"
+              :disabled="savingSettings || isDispatching"
+              class="px-3 py-1.5 text-xs font-medium rounded bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50"
+            >
+              Assign &amp; start sending
+            </button>
+          </div>
+          <div v-if="noPhoneUnsentGuests.length" class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+            <strong>{{ noPhoneUnsentGuests.length }} guest(s) have no phone number</strong> and can't get WhatsApp:
+            {{ noPhoneUnsentGuests.map((g) => g.leadName).join(", ") }}
           </div>
           <p class="text-[10px] text-slate-500">
             Overrides any previous guest-level assignment (including My Phone). Guests already sent via WhatsApp are untouched.
@@ -1382,7 +1394,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { adminAuthHeaders } from "~/utils/admin-auth";
 
 interface WahaSessionInfo {
@@ -1722,26 +1734,49 @@ function toggleBulkSender(id: string) {
   else bulkAssignSenderIds.value.splice(i, 1);
 }
 
-async function assignUnsentToSenders() {
+const noPhoneUnsentGuests = computed(() => guests.value.filter((g) => !g.invitationSent && !g.leadPhone));
+
+/** Returns true when assignments were applied and saved. */
+async function applyBulkAssignment(silent: boolean): Promise<boolean> {
   const ids = bulkAssignSenderIds.value;
   const targets = bulkAssignTargets.value;
   if (ids.length === 0) {
     alert("Select at least one WhatsApp number to assign to.");
-    return;
+    return false;
   }
   if (targets.length === 0) {
     alert("No guests match: everyone with a phone has already received WhatsApp.");
-    return;
+    return false;
   }
+  const notReady = ids.filter((id) => getSenderStatus(id) !== "WORKING").map((id) => getSenderName(id));
   const names = ids.map((id) => getSenderName(id)).join(", ");
-  if (!confirm(`Assign ${targets.length} guest(s) who haven't received WhatsApp evenly across: ${names}?`)) return;
+  const warn = notReady.length ? `\n\nWarning: not connected (not WORKING): ${notReady.join(", ")}` : "";
+  const verb = silent ? "Assign AND start sending to" : "Assign";
+  if (!confirm(`${verb} ${targets.length} guest(s) who haven't received WhatsApp, evenly across: ${names}?${warn}`)) {
+    return false;
+  }
 
   const map = { ...(config.value.guestSenderMap || {}) };
   targets.forEach((g, i) => {
     map[g.id] = ids[i % ids.length];
   });
   config.value.guestSenderMap = map;
-  await saveSettings();
+  return await saveSettings(silent);
+}
+
+async function assignUnsentToSenders() {
+  await applyBulkAssignment(false);
+}
+
+async function assignAndStartSending() {
+  if (isDispatching.value) return;
+  if (!(await applyBulkAssignment(true))) return;
+  activeChannel.value = "whatsapp";
+  campaignMode.value = "pass";
+  statusFilter.value = bulkAssignScope.value === "email_sent_only" ? "email_sent_wa_pending" : "wa_pending_with_phone";
+  activeSenderTab.value = "all";
+  await nextTick();
+  await startAutoDispatch();
 }
 
 function assignGroupsRoundRobin() {
@@ -2010,7 +2045,7 @@ async function fetchData() {
   }
 }
 
-async function saveSettings() {
+async function saveSettings(silent = false): Promise<boolean> {
   savingSettings.value = true;
   try {
     await $fetch("/api/pass-campaign/settings", {
@@ -2024,9 +2059,11 @@ async function saveSettings() {
         messageTemplate: config.value.messageTemplate,
       },
     });
-    alert("Campaign settings and message template saved successfully!");
+    if (!silent) alert("Campaign settings and message template saved successfully!");
+    return true;
   } catch (err: any) {
     alert("Failed to save settings: " + (err.data?.message || err.message));
+    return false;
   } finally {
     savingSettings.value = false;
   }
