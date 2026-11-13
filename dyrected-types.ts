@@ -221,6 +221,7 @@ export interface Site_settingsGlobal {
     question: string;
     answer: string;
   }>;
+  rsvpClosed?: boolean;
   rsvpCutoffDate: string;
   rsvpCutoffTime?: string;
   bankName?: string;
