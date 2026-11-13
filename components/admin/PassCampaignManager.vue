@@ -507,6 +507,51 @@
           </div>
         </div>
 
+        <!-- Bulk assign unsent guests -->
+        <div class="p-3 bg-white border border-slate-200 rounded space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-slate-700">Assign Guests Who Haven't Received WhatsApp</label>
+            <span class="text-[10px] text-slate-500">{{ bulkAssignTargets.length }} guest(s) will be assigned</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <label
+              v-for="s in config.senders"
+              :key="s.id"
+              class="inline-flex items-center gap-1.5 px-2 py-1 border border-slate-200 rounded text-xs cursor-pointer"
+              :class="bulkAssignSenderIds.includes(s.id) ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-700'"
+            >
+              <input
+                type="checkbox"
+                class="hidden"
+                :checked="bulkAssignSenderIds.includes(s.id)"
+                @change="toggleBulkSender(s.id)"
+              />
+              <span>{{ s.name }}</span>
+              <span class="text-[10px] opacity-70">({{ s.status || "DISCONNECTED" }})</span>
+            </label>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <select
+              v-model="bulkAssignScope"
+              class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800"
+            >
+              <option value="all_unsent">All guests with no WhatsApp yet ({{ waPendingWithPhoneCount }})</option>
+              <option value="email_sent_only">Only those who got email but no WhatsApp ({{ emailSentWaPendingCount }})</option>
+            </select>
+            <button
+              type="button"
+              @click="assignUnsentToSenders"
+              :disabled="savingSettings"
+              class="px-3 py-1.5 text-xs font-medium rounded bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
+            >
+              Assign evenly &amp; save
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500">
+            Overrides any previous guest-level assignment (including My Phone). Guests already sent via WhatsApp are untouched.
+          </p>
+        </div>
+
         <!-- Test Send Bar -->
         <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-3">
@@ -868,6 +913,7 @@
           <template v-if="activeChannel === 'both'">
             <option value="all">All Guests ({{ totalGuests }})</option>
             <option value="both_pending">Both or Either Pending ({{ bothPendingCount }})</option>
+            <option value="email_sent_wa_pending">Email Sent, WhatsApp Pending ({{ emailSentWaPendingCount }})</option>
             <option value="both_sent">Both WA & Email Sent ({{ bothSentCount }})</option>
             <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
             <option value="never_sent">Never Sent WA (Fresh Pending) ({{ neverSentCount }})</option>
@@ -883,6 +929,8 @@
             <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
             <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
             <option value="pending">All Pending ({{ pendingTotalCount }})</option>
+            <option value="email_sent_wa_pending">Email Sent, WhatsApp Pending ({{ emailSentWaPendingCount }})</option>
+            <option value="wa_pending_with_phone">WhatsApp Pending, Has Phone ({{ waPendingWithPhoneCount }})</option>
             <option value="sent">All Marked Sent ({{ sentCount }})</option>
           </template>
         </select>
@@ -948,7 +996,7 @@
                   <span
                     v-if="guest.asoebiSent"
                     class="text-[10px] px-1.5 py-0.2 bg-purple-50 text-purple-700 border border-purple-200/60 rounded font-medium inline-flex items-center gap-1"
-                    title="Sent Asoebi message · Assigned to My Phone"
+                    title="Sent Asoebi message"
                   >
                     <span>Asoebi</span>
                   </span>
@@ -996,14 +1044,6 @@
                     class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
                   >
                     <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
-                  </span>
-                  <span
-                    v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
-                    class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
-                    title="Directly assigned to My Phone because of Asoebi interaction"
-                  >
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span>My Phone (Asoebi)</span>
                   </span>
                   <span
                     v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
@@ -1203,14 +1243,6 @@
                     class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
                   >
                     <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
-                  </span>
-                  <span
-                    v-else-if="resolveSenderForGuest(guest) === 'busola' && guest.asoebiSent"
-                    class="inline-flex items-center gap-1 text-[11px] font-medium text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded"
-                    title="Directly assigned to My Phone because of Asoebi interaction"
-                  >
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span>My Phone (Asoebi)</span>
                   </span>
                   <span
                     v-else-if="resolveSenderForGuest(guest) !== 'unassigned'"
@@ -1566,6 +1598,8 @@ const statusFilter = ref<
   | "both_sent"
   | "email_pending"
   | "email_sent"
+  | "email_sent_wa_pending"
+  | "wa_pending_with_phone"
 >("all");
 const testPhone = ref("");
 const testSenderSession = ref<string>("default");
@@ -1641,6 +1675,8 @@ const bothProgressPercent = computed(() => {
   return Math.round((bothSentCount.value / totalGuests.value) * 100);
 });
 
+const emailSentWaPendingCount = computed(() => guests.value.filter((g) => g.emailSent && !g.invitationSent).length);
+const waPendingWithPhoneCount = computed(() => guests.value.filter((g) => !g.invitationSent && g.leadPhone).length);
 const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
 const previouslySentCount = computed(() => guests.value.filter(needsDateClarification).length);
 const neverSentCount = computed(() => guests.value.filter(isNeverSent).length);
@@ -1665,6 +1701,47 @@ function unassignAllGroups() {
   if (confirm("Are you sure you want to unassign all groups?")) {
     config.value.groupSenderMap = {};
   }
+}
+
+// ── Bulk-assign every guest who hasn't received WhatsApp yet ──
+const bulkAssignSenderIds = ref<string[]>([]);
+const bulkAssignScope = ref<"all_unsent" | "email_sent_only">("all_unsent");
+
+const bulkAssignTargets = computed(() =>
+  guests.value.filter(
+    (g) =>
+      !g.invitationSent &&
+      g.leadPhone &&
+      (bulkAssignScope.value === "all_unsent" || g.emailSent),
+  ),
+);
+
+function toggleBulkSender(id: string) {
+  const i = bulkAssignSenderIds.value.indexOf(id);
+  if (i === -1) bulkAssignSenderIds.value.push(id);
+  else bulkAssignSenderIds.value.splice(i, 1);
+}
+
+async function assignUnsentToSenders() {
+  const ids = bulkAssignSenderIds.value;
+  const targets = bulkAssignTargets.value;
+  if (ids.length === 0) {
+    alert("Select at least one WhatsApp number to assign to.");
+    return;
+  }
+  if (targets.length === 0) {
+    alert("No guests match: everyone with a phone has already received WhatsApp.");
+    return;
+  }
+  const names = ids.map((id) => getSenderName(id)).join(", ");
+  if (!confirm(`Assign ${targets.length} guest(s) who haven't received WhatsApp evenly across: ${names}?`)) return;
+
+  const map = { ...(config.value.guestSenderMap || {}) };
+  targets.forEach((g, i) => {
+    map[g.id] = ids[i % ids.length];
+  });
+  config.value.guestSenderMap = map;
+  await saveSettings();
 }
 
 function assignGroupsRoundRobin() {
@@ -1702,11 +1779,7 @@ function resolveSenderForGuest(guest: GuestRecord): string {
   if (config.value.guestSenderMap && config.value.guestSenderMap[guest.id]) {
     return config.value.guestSenderMap[guest.id];
   }
-  // 2. All who received messages for Asoebi are assigned to My Phone ("busola")
-  if (guest.asoebiSent) {
-    return "busola";
-  }
-  // 3. Fallback to group routing
+  // 2. Fallback to group routing
   const groupId = typeof guest.group === "object" && guest.group ? guest.group.id : guest.group;
   if (groupId && config.value.groupSenderMap[groupId]) {
     return config.value.groupSenderMap[groupId];
@@ -1791,6 +1864,10 @@ const filteredGuests = computed(() => {
     list = list.filter((g) => !g.emailSent && g.leadEmail);
   } else if (statusFilter.value === "email_sent") {
     list = list.filter((g) => g.emailSent);
+  } else if (statusFilter.value === "email_sent_wa_pending") {
+    list = list.filter((g) => g.emailSent && !g.invitationSent);
+  } else if (statusFilter.value === "wa_pending_with_phone") {
+    list = list.filter((g) => !g.invitationSent && g.leadPhone);
   }
 
   // Search filter

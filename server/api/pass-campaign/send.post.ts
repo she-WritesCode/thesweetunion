@@ -68,14 +68,7 @@ export default defineEventHandler(async (event) => {
           targetSession = match.wahaSession;
         }
       }
-      // 2. If guest was sent asoebi, route to "busola" (My Phone)
-      else if (rsvp.asoebiSent === true || rsvp.asoebiSent === "true" || rsvp.asoebiSent === 1) {
-        const busolaMatch = (passConfig.senders || []).find((s: any) => s.id === "busola" || s.wahaSession === "default");
-        if (busolaMatch?.wahaSession) {
-          targetSession = busolaMatch.wahaSession;
-        }
-      }
-      // 3. Otherwise use group sender mapping
+      // 2. Otherwise use group sender mapping
       else {
         const groupId = typeof rsvp.group === "object" ? rsvp.group?.id : rsvp.group;
         if (groupId && passConfig.groupSenderMap?.[groupId]) {
