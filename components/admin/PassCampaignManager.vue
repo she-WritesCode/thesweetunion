@@ -533,10 +533,11 @@
           <div class="flex flex-wrap items-center gap-3">
             <select
               v-model="bulkAssignScope"
-              class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800"
+              class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 font-medium"
             >
-              <option value="all_unsent">All guests with no WhatsApp yet ({{ waPendingWithPhoneCount }})</option>
-              <option value="email_sent_only">Only those who got email but no WhatsApp ({{ emailSentWaPendingCount }})</option>
+              <option value="all_unsent">All without WhatsApp (email-sent + never-sent: {{ waPendingWithPhoneCount }})</option>
+              <option value="email_sent_only">Email-sent only (no WhatsApp yet: {{ emailSentWaPendingCount }})</option>
+              <option value="never_sent_only">Not sent at all (no email, no WA: {{ neverSentAtAllCount }})</option>
             </select>
             <button
               type="button"
@@ -927,23 +928,23 @@
             <option value="both_pending">Both or Either Pending ({{ bothPendingCount }})</option>
             <option value="email_sent_wa_pending">Email Sent, WhatsApp Pending ({{ emailSentWaPendingCount }})</option>
             <option value="both_sent">Both WA & Email Sent ({{ bothSentCount }})</option>
+            <option value="never_sent_at_all">Never Sent at All (Fresh Pending) ({{ neverSentAtAllCount }})</option>
             <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
-            <option value="never_sent">Never Sent WA (Fresh Pending) ({{ neverSentCount }})</option>
           </template>
           <template v-else-if="activeChannel === 'email'">
             <option value="all">All Guests ({{ totalGuests }})</option>
-            <option value="email_pending">Email Pending ({{ emailRemainingCount }})</option>
+            <option value="email_pending">Email Pending ({{ emailPendingCount }})</option>
             <option value="email_sent">Email Sent ({{ emailSentCount }})</option>
           </template>
           <template v-else>
             <option value="all">All Guests ({{ totalGuests }})</option>
-            <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
-            <option value="never_sent">Never Sent (Fresh Pass Pending) ({{ neverSentCount }})</option>
-            <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
-            <option value="pending">All Pending ({{ pendingTotalCount }})</option>
+            <option value="pending">All Pending WhatsApp ({{ pendingTotalCount }})</option>
             <option value="email_sent_wa_pending">Email Sent, WhatsApp Pending ({{ emailSentWaPendingCount }})</option>
+            <option value="never_sent_at_all">Never Sent at All (Fresh Pending) ({{ neverSentAtAllCount }})</option>
             <option value="wa_pending_with_phone">WhatsApp Pending, Has Phone ({{ waPendingWithPhoneCount }})</option>
-            <option value="sent">All Marked Sent ({{ sentCount }})</option>
+            <option value="sent_today">Sent Today After Fix (Correct Card) ({{ sentThisAfternoonCount }})</option>
+            <option value="previously_sent">Sent Yesterday (Needs Date Clarification) ({{ previouslySentCount }})</option>
+            <option value="sent">All Marked WA Sent ({{ sentCount }})</option>
           </template>
         </select>
         <span class="text-xs text-slate-500">{{ displayedGuests.length }} of {{ filteredGuests.length }}</span>
@@ -1052,7 +1053,7 @@
                 <!-- Assigned Sender -->
                 <td class="px-3.5 py-2.5">
                   <span
-                    v-if="guest.invitationSent && guest.invitationSentVia"
+                    v-if="isWaSent(guest) && guest.invitationSentVia"
                     class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
                   >
                     <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
@@ -1136,7 +1137,7 @@
                       <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
                       <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
                     </svg>
-                    <span>{{ guest.invitationSent && guest.emailSent ? "Resend Both" : "Send Both" }}</span>
+                    <span>{{ isWaSent(guest) && isEmailSent(guest) ? "Resend Both" : "Send Both" }}</span>
                   </button>
 
                   <!-- WA Only -->
@@ -1251,7 +1252,7 @@
                 <!-- Assigned Sender -->
                 <td class="px-3.5 py-2.5">
                   <span
-                    v-if="guest.invitationSent && guest.invitationSentVia"
+                    v-if="isWaSent(guest) && guest.invitationSentVia"
                     class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded"
                   >
                     <span>{{ formatSentVia(guest.invitationSentVia) }}</span>
@@ -1302,6 +1303,14 @@
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     <span>Sent Yesterday (Needs Clarification)</span>
+                  </span>
+                  <span
+                    v-else-if="isEmailSent(guest)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"
+                    title="Email pass delivered; WhatsApp pass pending"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    <span>Pending WA (Email Sent)</span>
                   </span>
                   <span
                     v-else
@@ -1355,7 +1364,7 @@
                       <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25" />
                       <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" class="opacity-75" />
                     </svg>
-                    <span>{{ guest.invitationSent ? "Resend" : "Send Pass" }}</span>
+                    <span>{{ isWaSent(guest) ? "Resend" : "Send Pass" }}</span>
                   </button>
                 </td>
               </template>
@@ -1605,6 +1614,7 @@ const statusFilter = ref<
   | "sent"
   | "previously_sent"
   | "never_sent"
+  | "never_sent_at_all"
   | "sent_today"
   | "both_pending"
   | "both_sent"
@@ -1618,11 +1628,22 @@ const testSenderSession = ref<string>("default");
 
 const DATE_FIX_CUTOFF_ISO = "2026-11-09T12:00:00.000Z";
 
+function isWaSent(guest: GuestRecord): boolean {
+  if (!guest.invitationSent) return false;
+  const via = String(guest.invitationSentVia || "").toLowerCase();
+  return via.includes("whatsapp") || via.includes("wa");
+}
+
+function isEmailSent(guest: GuestRecord): boolean {
+  return Boolean(guest.emailSent || String(guest.invitationSentVia || "").toLowerCase().includes("email"));
+}
+
 function isSentThisAfternoon(guest: GuestRecord): boolean {
-  return Boolean(guest.invitationSentAt && guest.invitationSentAt >= DATE_FIX_CUTOFF_ISO);
+  return Boolean(isWaSent(guest) && guest.invitationSentAt && guest.invitationSentAt >= DATE_FIX_CUTOFF_ISO);
 }
 
 function needsDateClarification(guest: GuestRecord): boolean {
+  if (!isWaSent(guest)) return false;
   if (isSentThisAfternoon(guest)) return false;
   const hadOldSend =
     (guest.previousInvitationSentAt && guest.previousInvitationSentAt < DATE_FIX_CUTOFF_ISO) ||
@@ -1631,7 +1652,7 @@ function needsDateClarification(guest: GuestRecord): boolean {
 }
 
 function isNeverSent(guest: GuestRecord): boolean {
-  return !guest.invitationSentAt && !guest.previousInvitationSentAt;
+  return !isWaSent(guest);
 }
 
 const sendingId = ref<string | null>(null);
@@ -1647,6 +1668,8 @@ function formatSentVia(via?: string): string {
   if (via.includes("Groom") || via.includes("groom")) return "Sent: Groom";
   if (via.includes("Bride") || via.includes("bride")) return "Sent: Bride";
   if (via.includes("default") || via.includes("busola")) return "Sent: My Phone";
+  if (via === "whatsapp+email") return "WA + Email";
+  if (via === "whatsapp") return "WhatsApp";
   return via.replace("whatsapp:", "Sent: ");
 }
 
@@ -1671,25 +1694,26 @@ const rsvpGroups = ref<RSVPGroup[]>([]);
 const guests = ref<GuestRecord[]>([]);
 
 const totalGuests = computed(() => guests.value.length);
-const sentCount = computed(() => guests.value.filter((g) => g.invitationSent).length);
-const emailSentCount = computed(() => guests.value.filter((g) => g.emailSent).length);
-const emailPendingCount = computed(() => guests.value.filter((g) => !g.emailSent && g.leadEmail).length);
+const sentCount = computed(() => guests.value.filter(isWaSent).length);
+const emailSentCount = computed(() => guests.value.filter(isEmailSent).length);
+const emailPendingCount = computed(() => guests.value.filter((g) => !isEmailSent(g) && g.leadEmail).length);
 const guestsWithEmailCount = computed(() => guests.value.filter((g) => g.leadEmail).length);
 const emailProgressPercent = computed(() => {
   if (guestsWithEmailCount.value === 0) return 0;
   return Math.round((emailSentCount.value / guestsWithEmailCount.value) * 100);
 });
 
-const bothSentCount = computed(() => guests.value.filter((g) => g.invitationSent && g.emailSent).length);
-const bothPendingCount = computed(() => guests.value.filter((g) => !g.invitationSent || !g.emailSent).length);
+const bothSentCount = computed(() => guests.value.filter((g) => isWaSent(g) && isEmailSent(g)).length);
+const bothPendingCount = computed(() => guests.value.filter((g) => !isWaSent(g) || !isEmailSent(g)).length);
 const bothProgressPercent = computed(() => {
   if (totalGuests.value === 0) return 0;
   return Math.round((bothSentCount.value / totalGuests.value) * 100);
 });
 
-const emailSentWaPendingCount = computed(() => guests.value.filter((g) => g.emailSent && !g.invitationSent).length);
-const waPendingWithPhoneCount = computed(() => guests.value.filter((g) => !g.invitationSent && g.leadPhone).length);
-const pendingTotalCount = computed(() => guests.value.filter((g) => !g.invitationSent).length);
+const emailSentWaPendingCount = computed(() => guests.value.filter((g) => isEmailSent(g) && !isWaSent(g)).length);
+const waPendingWithPhoneCount = computed(() => guests.value.filter((g) => !isWaSent(g) && g.leadPhone).length);
+const neverSentAtAllCount = computed(() => guests.value.filter((g) => !isWaSent(g) && !isEmailSent(g)).length);
+const pendingTotalCount = computed(() => guests.value.filter((g) => !isWaSent(g)).length);
 const previouslySentCount = computed(() => guests.value.filter(needsDateClarification).length);
 const neverSentCount = computed(() => guests.value.filter(isNeverSent).length);
 const sentThisAfternoonCount = computed(() => guests.value.filter(isSentThisAfternoon).length);
@@ -1706,7 +1730,7 @@ const activeSenderLabel = computed(() => {
 });
 
 const unassignedPendingCount = computed(() => {
-  return guests.value.filter((g) => !g.invitationSent && resolveSenderForGuest(g) === "unassigned").length;
+  return guests.value.filter((g) => !isWaSent(g) && resolveSenderForGuest(g) === "unassigned").length;
 });
 
 function unassignAllGroups() {
@@ -1717,15 +1741,16 @@ function unassignAllGroups() {
 
 // ── Bulk-assign every guest who hasn't received WhatsApp yet ──
 const bulkAssignSenderIds = ref<string[]>([]);
-const bulkAssignScope = ref<"all_unsent" | "email_sent_only">("all_unsent");
+const bulkAssignScope = ref<"all_unsent" | "email_sent_only" | "never_sent_only">("all_unsent");
 
 const bulkAssignTargets = computed(() =>
-  guests.value.filter(
-    (g) =>
-      !g.invitationSent &&
-      g.leadPhone &&
-      (bulkAssignScope.value === "all_unsent" || g.emailSent),
-  ),
+  guests.value.filter((g) => {
+    if (isWaSent(g)) return false;
+    if (!g.leadPhone) return false;
+    if (bulkAssignScope.value === "email_sent_only") return isEmailSent(g);
+    if (bulkAssignScope.value === "never_sent_only") return !isEmailSent(g);
+    return true; // all_unsent (both email-sent and never-sent)
+  }),
 );
 
 function toggleBulkSender(id: string) {
@@ -1734,7 +1759,7 @@ function toggleBulkSender(id: string) {
   else bulkAssignSenderIds.value.splice(i, 1);
 }
 
-const noPhoneUnsentGuests = computed(() => guests.value.filter((g) => !g.invitationSent && !g.leadPhone));
+const noPhoneUnsentGuests = computed(() => guests.value.filter((g) => !isWaSent(g) && !g.leadPhone));
 
 /** Returns true when assignments were applied and saved. */
 async function applyBulkAssignment(silent: boolean): Promise<boolean> {
@@ -1773,7 +1798,13 @@ async function assignAndStartSending() {
   if (!(await applyBulkAssignment(true))) return;
   activeChannel.value = "whatsapp";
   campaignMode.value = "pass";
-  statusFilter.value = bulkAssignScope.value === "email_sent_only" ? "email_sent_wa_pending" : "wa_pending_with_phone";
+  if (bulkAssignScope.value === "email_sent_only") {
+    statusFilter.value = "email_sent_wa_pending";
+  } else if (bulkAssignScope.value === "never_sent_only") {
+    statusFilter.value = "never_sent_at_all";
+  } else {
+    statusFilter.value = "wa_pending_with_phone";
+  }
   activeSenderTab.value = "all";
   await nextTick();
   await startAutoDispatch();
@@ -1803,7 +1834,7 @@ function getGroupGuestCount(groupId: string): number {
 
 function senderPendingCount(senderId: string): number {
   return guests.value.filter((g) => {
-    if (g.invitationSent) return false;
+    if (isWaSent(g)) return false;
     const assigned = resolveSenderForGuest(g);
     return assigned === senderId;
   }).length;
@@ -1882,27 +1913,29 @@ const filteredGuests = computed(() => {
 
   // Status filter
   if (statusFilter.value === "pending") {
-    list = list.filter((g) => !g.invitationSent);
+    list = list.filter((g) => !isWaSent(g));
   } else if (statusFilter.value === "sent") {
-    list = list.filter((g) => g.invitationSent);
+    list = list.filter((g) => isWaSent(g));
   } else if (statusFilter.value === "previously_sent") {
     list = list.filter(needsDateClarification);
   } else if (statusFilter.value === "never_sent") {
     list = list.filter(isNeverSent);
+  } else if (statusFilter.value === "never_sent_at_all") {
+    list = list.filter((g) => !isWaSent(g) && !isEmailSent(g));
   } else if (statusFilter.value === "sent_today") {
     list = list.filter(isSentThisAfternoon);
   } else if (statusFilter.value === "both_pending") {
-    list = list.filter((g) => !g.invitationSent || !g.emailSent);
+    list = list.filter((g) => !isWaSent(g) || !isEmailSent(g));
   } else if (statusFilter.value === "both_sent") {
-    list = list.filter((g) => g.invitationSent && g.emailSent);
+    list = list.filter((g) => isWaSent(g) && isEmailSent(g));
   } else if (statusFilter.value === "email_pending") {
-    list = list.filter((g) => !g.emailSent && g.leadEmail);
+    list = list.filter((g) => !isEmailSent(g) && g.leadEmail);
   } else if (statusFilter.value === "email_sent") {
-    list = list.filter((g) => g.emailSent);
+    list = list.filter((g) => isEmailSent(g));
   } else if (statusFilter.value === "email_sent_wa_pending") {
-    list = list.filter((g) => g.emailSent && !g.invitationSent);
+    list = list.filter((g) => isEmailSent(g) && !isWaSent(g));
   } else if (statusFilter.value === "wa_pending_with_phone") {
-    list = list.filter((g) => !g.invitationSent && g.leadPhone);
+    list = list.filter((g) => !isWaSent(g) && g.leadPhone);
   }
 
   // Search filter
@@ -1925,15 +1958,15 @@ const pendingGuestsInView = computed(() => {
   if (campaignMode.value === "clarification" || statusFilter.value === "previously_sent") {
     return filteredGuests.value.filter(needsDateClarification);
   }
-  return filteredGuests.value.filter((g) => !g.invitationSent);
+  return filteredGuests.value.filter((g) => !isWaSent(g));
 });
 
 const pendingBothInView = computed(() => {
-  return filteredGuests.value.filter((g) => !g.invitationSent || !g.emailSent);
+  return filteredGuests.value.filter((g) => !isWaSent(g) || !isEmailSent(g));
 });
 
 const pendingEmailsInView = computed(() => {
-  return filteredGuests.value.filter((g) => !g.emailSent && g.leadEmail);
+  return filteredGuests.value.filter((g) => !isEmailSent(g) && g.leadEmail);
 });
 
 const totalPages = computed(() => Math.ceil(filteredGuests.value.length / pageSize.value));
@@ -2161,6 +2194,7 @@ async function sendSingleEmail(guest: GuestRecord) {
       guest.emailSent = true;
       guest.emailSentAt = new Date().toISOString();
       guest.invitationSent = true;
+      guest.invitationSentVia = isWaSent(guest) ? `${guest.invitationSentVia || "whatsapp"}+email` : "email";
     } else {
       alert("Failed to send email pass: " + (res.message || "Error"));
     }
@@ -2193,7 +2227,7 @@ async function sendBothToGuest(guest: GuestRecord) {
         if (waRes.success) {
           guest.invitationSent = true;
           guest.invitationSentAt = new Date().toISOString();
-          guest.invitationSentVia = `whatsapp:${wahaSession}`;
+          guest.invitationSentVia = isEmailSent(guest) ? "whatsapp+email" : `whatsapp:${wahaSession}`;
         }
       } catch (e: any) {
         console.error("WhatsApp dispatch error:", e);
@@ -2212,6 +2246,7 @@ async function sendBothToGuest(guest: GuestRecord) {
           guest.emailSent = true;
           guest.emailSentAt = new Date().toISOString();
           guest.invitationSent = true;
+          guest.invitationSentVia = isWaSent(guest) ? `${guest.invitationSentVia || "whatsapp"}+email` : "email";
         }
       } catch (e: any) {
         console.error("Email dispatch error:", e);
@@ -2264,7 +2299,7 @@ async function startBothAutoDispatch() {
         if (waRes.success) {
           guest.invitationSent = true;
           guest.invitationSentAt = new Date().toISOString();
-          guest.invitationSentVia = `whatsapp:${wahaSession}`;
+          guest.invitationSentVia = isEmailSent(guest) ? "whatsapp+email" : `whatsapp:${wahaSession}`;
         }
       } catch (e) {
         console.error(`WhatsApp auto send error for ${guest.leadName}:`, e);
@@ -2283,6 +2318,7 @@ async function startBothAutoDispatch() {
           guest.emailSent = true;
           guest.emailSentAt = new Date().toISOString();
           guest.invitationSent = true;
+          guest.invitationSentVia = isWaSent(guest) ? `${guest.invitationSentVia || "whatsapp"}+email` : "email";
         }
       } catch (e) {
         console.error(`Email auto send error for ${guest.leadName}:`, e);
@@ -2331,6 +2367,7 @@ async function startEmailAutoDispatch() {
         guest.emailSent = true;
         guest.emailSentAt = new Date().toISOString();
         guest.invitationSent = true;
+        guest.invitationSentVia = isWaSent(guest) ? `${guest.invitationSentVia || "whatsapp"}+email` : "email";
       }
     } catch (e) {
       console.error(`Failed to send email pass to ${guest.leadName}:`, e);
@@ -2373,7 +2410,7 @@ async function sendSinglePass(guest: GuestRecord) {
     if (res.success) {
       guest.invitationSent = true;
       guest.invitationSentAt = new Date().toISOString();
-      guest.invitationSentVia = "whatsapp";
+      guest.invitationSentVia = isEmailSent(guest) ? "whatsapp+email" : `whatsapp:${wahaSession}`;
     } else {
       alert("Failed to dispatch pass: " + (res.message || "Error"));
     }
@@ -2462,7 +2499,7 @@ async function startAutoDispatch() {
       if (res.success) {
         guest.invitationSent = true;
         guest.invitationSentAt = new Date().toISOString();
-        guest.invitationSentVia = `whatsapp:${wahaSession}`;
+        guest.invitationSentVia = isEmailSent(guest) ? "whatsapp+email" : `whatsapp:${wahaSession}`;
       }
     } catch (e) {
       console.error(`Failed to send to ${guest.leadName}:`, e);

@@ -188,10 +188,12 @@ Adun & Uche`;
 
   // Stamp record as sent
   const nowIso = new Date().toISOString();
+  const alreadyEmail = Boolean(rsvp.emailSent || String(rsvp.invitationSentVia || "").includes("email"));
   await client.collection("rsvp_records").update(targetId, {
     invitationSent: true,
     invitationSentAt: nowIso,
-    invitationSentVia: "whatsapp",
+    invitationSentVia: alreadyEmail ? "whatsapp+email" : "whatsapp",
+    emailSent: alreadyEmail ? true : Boolean(rsvp.emailSent),
   });
 
   return {
