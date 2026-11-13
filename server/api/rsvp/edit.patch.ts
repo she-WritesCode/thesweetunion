@@ -35,6 +35,8 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
+  await assertRsvpOpen(client);
+
   // Find record by editToken
   const search = await client.collection("rsvp_records").find({
     where: { editToken: { equals: editToken } },

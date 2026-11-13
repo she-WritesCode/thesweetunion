@@ -8,6 +8,7 @@ import {
   defineSelectField,
   defineArrayField,
   defineJsonField,
+  defineBooleanField,
 } from "@dyrected/core";
 
 export const siteSettings = defineGlobal({
@@ -175,6 +176,15 @@ export const siteSettings = defineGlobal({
     ...defineTab({
       label: "RSVP",
       fields: [
+        defineBooleanField({
+          name: "rsvpClosed",
+          label: "Close All RSVPs",
+          defaultValue: false,
+          admin: {
+            description:
+              "Turn on to immediately stop ALL RSVPs: new submissions, edits and cancellations are blocked for every group. Turn off to reopen.",
+          },
+        }),
         defineDateField({
           name: "rsvpCutoffDate",
           label: "RSVP Cutoff Date",

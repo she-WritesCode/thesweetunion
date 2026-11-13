@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
   });
 
   // Find record
+  await assertRsvpOpen(client);
+
   const search = await client.collection("rsvp_records").find({
     where: { editToken: { equals: token } },
     limit: 1,

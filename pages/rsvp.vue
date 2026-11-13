@@ -709,8 +709,18 @@ const getStepProgress = computed(() => {
   return (idx / (steps.length - 1)) * 100;
 });
 
+const rsvpClosed = computed(() => {
+  const v = (siteSettings.value as any)?.rsvpClosed;
+  return v === true || v === "true";
+});
+
 const isFormActive = computed(() => {
-  return (!existingRSVP.value || isEditing.value) && !invalidLinkError.value && !groupFullError.value;
+  return (
+    !rsvpClosed.value &&
+    (!existingRSVP.value || isEditing.value) &&
+    !invalidLinkError.value &&
+    !groupFullError.value
+  );
 });
 
 watch(successModal, (value) => {
@@ -735,7 +745,7 @@ onUnmounted(() => {
       <div class="rsvp-content">
         <!-- 1. INVALID DIRECT LINK BLOCKER -->
         <div
-          v-if="invalidLinkError && !existingRSVP"
+          v-if="invalidLinkError && !existingRSVP && !rsvpClosed"
           class="rsvp-blocker motion-reveal motion-reveal--scale-in motion-reveal--ready"
         >
           <div class="rsvp-blocker__icon">✉️</div>
@@ -750,9 +760,21 @@ onUnmounted(() => {
           </p>
         </div>
 
+        <!-- 1b. RSVPS CLOSED BLOCKER -->
+        <div
+          v-if="rsvpClosed && !existingRSVP"
+          class="rsvp-blocker motion-reveal motion-reveal--scale-in motion-reveal--ready"
+        >
+          <div class="rsvp-blocker__icon">🔒</div>
+          <h2 class="rsvp-blocker__title">RSVPs are now closed.</h2>
+          <p class="rsvp-blocker__body">
+            We're no longer accepting RSVPs. If you have any questions, please contact Uche or Adun directly.
+          </p>
+        </div>
+
         <!-- 2. CAPACITY ALLOCATION BLOCKER -->
         <div
-          v-if="groupFullError"
+          v-if="groupFullError && !rsvpClosed"
           class="rsvp-blocker rsvp-blocker--error motion-reveal motion-reveal--scale-in motion-reveal--ready"
         >
           <div class="rsvp-blocker__icon">⚠️</div>
@@ -777,7 +799,7 @@ onUnmounted(() => {
 
         <!-- 3. CONFIRMED RSVP SUMMARY -->
         <div
-          v-if="existingRSVP && !isEditing && !groupFullError"
+          v-if="existingRSVP && (!isEditing || rsvpClosed) && (!groupFullError || rsvpClosed)"
           class="rsvp-summary motion-reveal motion-reveal--fade-up motion-reveal--ready"
         >
           <div class="rsvp-summary__header">
@@ -896,7 +918,11 @@ onUnmounted(() => {
             wedding date.
           </div>
 
-          <div class="rsvp-summary__actions">
+          <p v-if="rsvpClosed" class="rsvp-summary__invite-note">
+            🔒 RSVPs are now closed, so this response can no longer be changed. Please contact the couple if you need help.
+          </p>
+
+          <div v-else class="rsvp-summary__actions">
             <button
               @click="
                 isEditing = true;

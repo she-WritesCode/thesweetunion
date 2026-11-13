@@ -41,6 +41,8 @@ export default defineEventHandler(async (event) => {
     apiKey: config.dyrectedApiKey,
   });
 
+  await assertRsvpOpen(client);
+
   // Resolve group slug to ID
   const groupSearch = await client.collection("rsvp_groups").find({
     where: { slug: { equals: groupSlug } },
