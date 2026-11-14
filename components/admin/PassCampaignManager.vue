@@ -536,6 +536,7 @@
               class="px-2 py-1 border border-slate-200 rounded text-xs bg-white text-slate-800 font-medium"
             >
               <option value="all_unsent">All without WhatsApp (email-sent + never-sent: {{ waPendingWithPhoneCount }})</option>
+              <option value="asoebi_before_today">Asoebi sent before today ({{ asoebiSentBeforeTodayCount }})</option>
               <option value="email_sent_only">Email-sent only (no WhatsApp yet: {{ emailSentWaPendingCount }})</option>
               <option value="never_sent_only">Not sent at all (no email, no WA: {{ neverSentAtAllCount }})</option>
             </select>
@@ -827,7 +828,10 @@
             <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            <span v-if="campaignMode === 'clarification'"
+            <span v-if="statusFilter === 'asoebi_sent_before_today'"
+              >Resend WA to Asoebi Guests ({{ pendingGuestsInView.length }})</span
+            >
+            <span v-else-if="campaignMode === 'clarification'"
               >Send Date Clarification ({{ pendingGuestsInView.length }})</span
             >
             <span v-else>Start Auto-Send WA ({{ pendingGuestsInView.length }})</span>
@@ -939,6 +943,7 @@
           <template v-else>
             <option value="all">All Guests ({{ totalGuests }})</option>
             <option value="pending">All Pending WhatsApp ({{ pendingTotalCount }})</option>
+            <option value="asoebi_sent_before_today">Asoebi Sent Before Today ({{ asoebiSentBeforeTodayCount }})</option>
             <option value="email_sent_wa_pending">Email Sent, WhatsApp Pending ({{ emailSentWaPendingCount }})</option>
             <option value="never_sent_at_all">Never Sent at All (Fresh Pending) ({{ neverSentAtAllCount }})</option>
             <option value="wa_pending_with_phone">WhatsApp Pending, Has Phone ({{ waPendingWithPhoneCount }})</option>
@@ -1622,11 +1627,27 @@ const statusFilter = ref<
   | "email_sent"
   | "email_sent_wa_pending"
   | "wa_pending_with_phone"
+  | "asoebi_sent_before_today"
 >("all");
 const testPhone = ref("");
 const testSenderSession = ref<string>("default");
 
 const DATE_FIX_CUTOFF_ISO = "2026-11-09T12:00:00.000Z";
+const TODAY_START_ISO = "2026-11-14T00:00:00.000Z";
+
+function isAsoebiGuest(guest: GuestRecord): boolean {
+  return Boolean(
+    guest.asoebiSent === true ||
+    guest.wantsAsoebi === true ||
+    (guest as any).source === "asoebi"
+  );
+}
+
+function isAsoebiSentBeforeToday(guest: GuestRecord): boolean {
+  if (!isAsoebiGuest(guest)) return false;
+  if (!guest.invitationSentAt) return false;
+  return guest.invitationSentAt < TODAY_START_ISO;
+}
 
 function isWaSent(guest: GuestRecord): boolean {
   if (!guest.invitationSent) return false;
@@ -1717,6 +1738,7 @@ const pendingTotalCount = computed(() => guests.value.filter((g) => !isWaSent(g)
 const previouslySentCount = computed(() => guests.value.filter(needsDateClarification).length);
 const neverSentCount = computed(() => guests.value.filter(isNeverSent).length);
 const sentThisAfternoonCount = computed(() => guests.value.filter(isSentThisAfternoon).length);
+const asoebiSentBeforeTodayCount = computed(() => guests.value.filter(isAsoebiSentBeforeToday).length);
 const progressPercent = computed(() => {
   if (totalGuests.value === 0) return 0;
   return Math.round((sentCount.value / totalGuests.value) * 100);
@@ -1741,12 +1763,15 @@ function unassignAllGroups() {
 
 // ── Bulk-assign every guest who hasn't received WhatsApp yet ──
 const bulkAssignSenderIds = ref<string[]>([]);
-const bulkAssignScope = ref<"all_unsent" | "email_sent_only" | "never_sent_only">("all_unsent");
+const bulkAssignScope = ref<"all_unsent" | "email_sent_only" | "never_sent_only" | "asoebi_before_today">("all_unsent");
 
 const bulkAssignTargets = computed(() =>
   guests.value.filter((g) => {
-    if (isWaSent(g)) return false;
     if (!g.leadPhone) return false;
+    if (bulkAssignScope.value === "asoebi_before_today") {
+      return isAsoebiSentBeforeToday(g);
+    }
+    if (isWaSent(g)) return false;
     if (bulkAssignScope.value === "email_sent_only") return isEmailSent(g);
     if (bulkAssignScope.value === "never_sent_only") return !isEmailSent(g);
     return true; // all_unsent (both email-sent and never-sent)
@@ -1770,14 +1795,15 @@ async function applyBulkAssignment(silent: boolean): Promise<boolean> {
     return false;
   }
   if (targets.length === 0) {
-    alert("No guests match: everyone with a phone has already received WhatsApp.");
+    alert("No guests match the selected scope.");
     return false;
   }
   const notReady = ids.filter((id) => getSenderStatus(id) !== "WORKING").map((id) => getSenderName(id));
   const names = ids.map((id) => getSenderName(id)).join(", ");
   const warn = notReady.length ? `\n\nWarning: not connected (not WORKING): ${notReady.join(", ")}` : "";
   const verb = silent ? "Assign AND start sending to" : "Assign";
-  if (!confirm(`${verb} ${targets.length} guest(s) who haven't received WhatsApp, evenly across: ${names}?${warn}`)) {
+  const desc = bulkAssignScope.value === "asoebi_before_today" ? "Asoebi guest(s) sent before today" : "guest(s) who haven't received WhatsApp";
+  if (!confirm(`${verb} ${targets.length} ${desc}, evenly across: ${names}?${warn}`)) {
     return false;
   }
 
@@ -1798,7 +1824,9 @@ async function assignAndStartSending() {
   if (!(await applyBulkAssignment(true))) return;
   activeChannel.value = "whatsapp";
   campaignMode.value = "pass";
-  if (bulkAssignScope.value === "email_sent_only") {
+  if (bulkAssignScope.value === "asoebi_before_today") {
+    statusFilter.value = "asoebi_sent_before_today";
+  } else if (bulkAssignScope.value === "email_sent_only") {
     statusFilter.value = "email_sent_wa_pending";
   } else if (bulkAssignScope.value === "never_sent_only") {
     statusFilter.value = "never_sent_at_all";
@@ -1936,6 +1964,8 @@ const filteredGuests = computed(() => {
     list = list.filter((g) => isEmailSent(g) && !isWaSent(g));
   } else if (statusFilter.value === "wa_pending_with_phone") {
     list = list.filter((g) => !isWaSent(g) && g.leadPhone);
+  } else if (statusFilter.value === "asoebi_sent_before_today") {
+    list = list.filter(isAsoebiSentBeforeToday);
   }
 
   // Search filter
@@ -1955,6 +1985,9 @@ const filteredGuests = computed(() => {
 });
 
 const pendingGuestsInView = computed(() => {
+  if (statusFilter.value === "asoebi_sent_before_today") {
+    return filteredGuests.value;
+  }
   if (campaignMode.value === "clarification" || statusFilter.value === "previously_sent") {
     return filteredGuests.value.filter(needsDateClarification);
   }
