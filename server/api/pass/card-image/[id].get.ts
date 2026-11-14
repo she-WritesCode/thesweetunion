@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import QRCode from "qrcode";
 import { Resvg } from "@resvg/resvg-js";
 import { ensureServerFonts } from "~~/server/utils/og-fonts";
+import { computeCacheKey, getCachedImage, saveCachedImage, getCachedSiteSettings } from "~~/server/utils/image-cache";
 
 let cachedFontFiles: string[] = [];
 
@@ -15,6 +16,26 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
   const isDownload = query.download === "true" || query.download === "1";
+
+  // 1. Instant Cache Check (Memory + /tmp disk + ETag)
+  const cacheKey = computeCacheKey("card-image", id, query);
+  const cached = getCachedImage(event, cacheKey);
+  if (cached) {
+    setHeader(event, "Content-Type", "image/png");
+    setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable");
+    setHeader(event, "ETag", `"${cached.etag}"`);
+    setHeader(event, "Content-Length", cached.buffer.length);
+
+    if (isDownload) {
+      const safeFilename = `wedding-pass-${((query.name as string) || id).replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+      setHeader(event, "Content-Disposition", `attachment; filename="${safeFilename}"`);
+    }
+
+    if (cached.is304) {
+      return null;
+    }
+    return cached.buffer;
+  }
 
   const config = useRuntimeConfig();
   let appUrl = ((config.public as any).appUrl || "https://thesweetunion.vercel.app").replace(/\/+$/, "");
@@ -34,31 +55,36 @@ export default defineEventHandler(async (event) => {
     const cleanId = id.trim();
     const upperCode = cleanId.toUpperCase();
 
-    const [rsvpRes, sRes] = await Promise.all([
-      client.collection("rsvp_records").find({
+    // Fetch site settings from memory cache (10 min TTL)
+    settingsRes = await getCachedSiteSettings(client);
+
+    // Only query DB for guest if key details are not already provided in query parameters
+    if (!query.name || !query.events) {
+      const rsvpRes = await client.collection("rsvp_records").find({
         where: { passCode: { equals: upperCode } },
         limit: 1,
-        depth: 2,
-      }).then(async (res) => {
-        if (res.docs && res.docs.length > 0) return res;
-        return client.collection("rsvp_records").find({
+        depth: 1,
+      });
+      rsvp = rsvpRes.docs?.[0];
+
+      if (!rsvp) {
+        const rsvpResId = await client.collection("rsvp_records").find({
           where: { id: { equals: cleanId } },
           limit: 1,
-          depth: 2,
-        }).then(async (res2) => {
-          if (res2.docs && res2.docs.length > 0) return res2;
-          return client.collection("rsvp_records").find({
-            where: { editToken: { equals: cleanId } },
-            limit: 1,
-            depth: 2,
-          });
+          depth: 1,
         });
-      }),
-      client.global("site_settings").get().catch(() => null) as Promise<any>,
-    ]);
+        rsvp = rsvpResId.docs?.[0];
+      }
 
-    rsvp = rsvpRes?.docs?.[0];
-    settingsRes = sRes;
+      if (!rsvp && cleanId.length > 20) {
+        const rsvpResToken = await client.collection("rsvp_records").find({
+          where: { editToken: { equals: cleanId } },
+          limit: 1,
+          depth: 1,
+        });
+        rsvp = rsvpResToken.docs?.[0];
+      }
+    }
   } catch (err) {
     console.warn("DB lookup in card-image endpoint bypassed or failed, using parameters:", err);
   }
@@ -311,10 +337,14 @@ export default defineEventHandler(async (event) => {
   const pngData = resvg.render();
   const pngBuffer = pngData.asPng();
 
+  // Save to in-memory and disk cache
+  const etag = saveCachedImage(cacheKey, pngBuffer);
+
   const safeFilename = `wedding-pass-${leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
 
   setHeader(event, "Content-Type", "image/png");
-  setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=604800");
+  setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable");
+  setHeader(event, "ETag", `"${etag}"`);
   setHeader(event, "Content-Length", pngBuffer.length);
 
   if (isDownload) {

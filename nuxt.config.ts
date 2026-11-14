@@ -102,21 +102,13 @@ export default defineNuxtConfig({
 
   routeRules: {
     "/api/pass/og-image/**": {
-      cache: {
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        swr: true,
-      },
       headers: {
-        "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+        "Cache-Control": "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable",
       },
     },
     "/api/pass/card-image/**": {
-      cache: {
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        swr: true,
-      },
       headers: {
-        "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+        "Cache-Control": "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable",
       },
     },
   },

@@ -3,6 +3,7 @@ import { createClient } from "@dyrected/sdk";
 import QRCode from "qrcode";
 import { Resvg } from "@resvg/resvg-js";
 import { ensureServerFonts } from "~~/server/utils/og-fonts";
+import { computeCacheKey, getCachedImage, saveCachedImage, getCachedSiteSettings } from "~~/server/utils/image-cache";
 
 // Module-level font extraction cache
 let cachedFontFiles: string[] = [];
@@ -10,9 +11,24 @@ let cachedFontFiles: string[] = [];
 export default defineEventHandler(async (event) => {
     const rawId = getRouterParam(event, "id") || "";
     // Strip .png if present in URL (e.g. /api/pass/og-image/ieyhqr.png)
-    const id = rawId.replace(/\.png$/i, "");
+    const id = rawId.replace(/\.png$/i, "").trim();
     if (!id) {
       throw createError({ statusCode: 400, message: "Missing pass ID" });
+    }
+
+    // 1. Instant Cache Check (Memory + /tmp disk + ETag)
+    const cacheKey = computeCacheKey("og-image", id);
+    const cached = getCachedImage(event, cacheKey);
+    if (cached) {
+      setHeader(event, "Content-Type", "image/png");
+      setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable");
+      setHeader(event, "ETag", `"${cached.etag}"`);
+      setHeader(event, "Content-Length", cached.buffer.length);
+
+      if (cached.is304) {
+        return null;
+      }
+      return cached.buffer;
     }
 
     const config = useRuntimeConfig();
@@ -25,32 +41,38 @@ export default defineEventHandler(async (event) => {
       apiKey: config.dyrectedApiKey,
     });
 
-    const cleanId = id.trim();
+    const cleanId = id;
     const upperCode = cleanId.toUpperCase();
 
-    // Parallel fetch: RSVP record (depth: 2 populates events and group) + site settings
-    const [rsvpRes, settingsRes] = await Promise.all([
-      client.collection("rsvp_records").find({
-        where: { passCode: { equals: upperCode } },
+    // Fetch site settings from memory cache
+    const settingsRes = await getCachedSiteSettings(client);
+
+    // Fetch RSVP record with depth: 1 (fast)
+    let rsvp: any = null;
+    const rsvpRes = await client.collection("rsvp_records").find({
+      where: { passCode: { equals: upperCode } },
+      limit: 1,
+      depth: 1,
+    });
+    rsvp = rsvpRes.docs?.[0];
+
+    if (!rsvp) {
+      const rsvpResId = await client.collection("rsvp_records").find({
+        where: { id: { equals: cleanId } },
         limit: 1,
-        depth: 2,
-      }).then(async (res) => {
-        if (res.docs && res.docs.length > 0) return res;
-        return client.collection("rsvp_records").find({
-          where: { id: { equals: cleanId } },
-          limit: 1,
-          depth: 2,
-        }).then(async (res2) => {
-          if (res2.docs && res2.docs.length > 0) return res2;
-          return client.collection("rsvp_records").find({
-            where: { editToken: { equals: cleanId } },
-            limit: 1,
-            depth: 2,
-          });
-        });
-      }),
-      client.global("site_settings").get().catch(() => null) as Promise<any>,
-    ]);
+        depth: 1,
+      });
+      rsvp = rsvpResId.docs?.[0];
+    }
+
+    if (!rsvp && cleanId.length > 20) {
+      const rsvpResToken = await client.collection("rsvp_records").find({
+        where: { editToken: { equals: cleanId } },
+        limit: 1,
+        depth: 1,
+      });
+      rsvp = rsvpResToken.docs?.[0];
+    }
 
     const rsvp = rsvpRes?.docs?.[0];
     const leadName = rsvp?.leadName || "Honoured Guest";
@@ -357,8 +379,12 @@ export default defineEventHandler(async (event) => {
     const pngData = resvg.render();
     const pngBuffer = pngData.asPng();
 
+    // Save to in-memory and disk cache
+    const etag = saveCachedImage(cacheKey, pngBuffer);
+
     setHeader(event, "Content-Type", "image/png");
-    setHeader(event, "Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400");
+    setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable");
+    setHeader(event, "ETag", `"${etag}"`);
     setHeader(event, "Content-Length", pngBuffer.length);
 
     return pngBuffer;

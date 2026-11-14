@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, watch } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -30,6 +30,8 @@ const props = withDefaults(
   },
 );
 
+const imageLoading = ref(true);
+
 const cardImageUrl = computed(() => {
   const id = props.rsvpId || "guest";
   const params = new URLSearchParams();
@@ -47,6 +49,10 @@ const cardImageUrl = computed(() => {
   if (props.weddingDateText) params.set("date", props.weddingDateText);
 
   return `/api/pass/card-image/${id}.png?${params.toString()}`;
+});
+
+watch(cardImageUrl, () => {
+  imageLoading.value = true;
 });
 
 async function captureCardImage(): Promise<string> {
@@ -77,11 +83,25 @@ defineExpose({
 
 <template>
   <div class="acp-card-container">
+    <!-- Skeleton loader placeholder while generating / downloading -->
+    <div v-show="imageLoading" class="acp-card-skeleton">
+      <div class="acp-skeleton-shimmer"></div>
+      <div class="acp-skeleton-content">
+        <div class="acp-skeleton-crest"></div>
+        <div class="acp-skeleton-line short"></div>
+        <div class="acp-skeleton-box"></div>
+        <div class="acp-skeleton-line"></div>
+      </div>
+    </div>
+
     <img
       :src="cardImageUrl"
       :alt="`Access Pass for ${guestName}`"
       class="acp-card-image"
+      :class="{ 'is-loading': imageLoading }"
       loading="eager"
+      @load="imageLoading = false"
+      @error="imageLoading = false"
     />
   </div>
 </template>
@@ -91,9 +111,79 @@ defineExpose({
   width: 100%;
   max-width: 320px;
   margin: 0 auto;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  aspect-ratio: 600 / 860;
+}
+
+.acp-card-skeleton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4a253b 0%, #301726 100%);
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  box-shadow:
+    0 14px 40px -6px rgba(0, 0, 0, 0.4),
+    0 4px 14px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.acp-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.8s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.acp-skeleton-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 75%;
+}
+
+.acp-skeleton-crest {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212, 175, 55, 0.3);
+}
+
+.acp-skeleton-line {
+  height: 12px;
+  width: 80%;
+  border-radius: 4px;
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.acp-skeleton-line.short {
+  width: 50%;
+}
+
+.acp-skeleton-box {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.05);
 }
 
 .acp-card-image {
@@ -105,5 +195,10 @@ defineExpose({
     0 14px 40px -6px rgba(0, 0, 0, 0.4),
     0 4px 14px rgba(0, 0, 0, 0.25);
   border-radius: 0;
+  transition: opacity 0.25s ease-in;
+}
+
+.acp-card-image.is-loading {
+  opacity: 0;
 }
 </style>
