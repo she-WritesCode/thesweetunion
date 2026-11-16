@@ -269,19 +269,73 @@
               </button>
             </div>
           </div>
+          <div class="flex items-center justify-between pt-1 text-xs text-slate-500">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                class="rounded border-slate-300 text-purple-900 focus:ring-purple-300 h-3.5 w-3.5 cursor-pointer"
+                :checked="isAllVisibleSelected"
+                :indeterminate="isSomeVisibleSelected && !isAllVisibleSelected"
+                @change="selectAllVisible"
+              />
+              <span class="text-[11px] font-medium text-slate-600">Select all ({{ visibleGuests.length }})</span>
+            </label>
+            <button
+              v-if="selectedGuestIds.length"
+              type="button"
+              class="text-[11px] text-purple-900 font-semibold hover:underline"
+              @click="clearGuestSelection"
+            >
+              Clear ({{ selectedGuestIds.length }})
+            </button>
+          </div>
           <p class="text-[11px] text-slate-500 leading-snug">
-            Drag a guest onto a table, or click a guest and then click a table. Couples are seated together.
+            Select one or multiple guests, then click a table on the map to seat them together.
           </p>
         </div>
 
+        <!-- Multi-select / armed banner -->
         <div
-          v-if="armedGuest"
-          class="px-3 py-2 text-xs bg-amber-50 border-b border-amber-200 text-amber-900 flex items-center justify-between gap-2"
+          v-if="selectedGuestsList.length"
+          class="px-3 py-2.5 text-xs bg-amber-50 border-b border-amber-200 text-amber-950 space-y-2 shrink-0"
         >
-          <span
-            >Now click a table to seat <strong>{{ armedGuest.leadName }}</strong></span
-          >
-          <button type="button" class="underline" @click="armedId = null">Cancel</button>
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-amber-900">{{ selectedGuestsList.length }}</span>
+              part{{ selectedGuestsList.length > 1 ? "ies" : "y" }}
+              (<span class="font-bold text-amber-900">{{ selectedSeatsCount }}</span>
+              seat{{ selectedSeatsCount > 1 ? "s" : "" }}) selected
+            </div>
+            <button
+              type="button"
+              class="underline text-slate-600 hover:text-slate-900 text-[11px]"
+              @click="clearGuestSelection"
+            >
+              Deselect
+            </button>
+          </div>
+          <p class="text-[11px] text-amber-900/90 leading-tight">
+            👉 <strong>Click any table on the map</strong> to seat them, or assign below:
+          </p>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <select
+              class="flex-1 min-w-[140px] px-2 py-1 text-xs border border-amber-300 rounded bg-white text-slate-800 font-normal focus:outline-none"
+              @change="onAssignSelectedToTable($event)"
+            >
+              <option value="">Seat at table…</option>
+              <option v-for="t in tables" :key="t.number" :value="t.number">
+                Table {{ t.number }}{{ t.label ? ` · ${t.label}` : "" }} ({{ Math.max(0, t.capacity - used(t)) }} free)
+              </option>
+            </select>
+            <button
+              v-if="selectedGuestsList.some((g) => g.tableNumber)"
+              type="button"
+              class="px-2 py-1 text-xs font-medium rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+              @click="unseatSelected"
+            >
+              Unseat
+            </button>
+          </div>
         </div>
 
         <ul class="overflow-y-auto divide-y divide-slate-100">
@@ -292,17 +346,23 @@
             v-for="g in visibleGuests"
             :key="g.id"
             draggable="true"
-            class="px-3 py-2 cursor-grab active:cursor-grabbing select-none hover:bg-purple-50"
-            :class="armedId === g.id ? 'bg-amber-50 ring-1 ring-inset ring-amber-400' : ''"
+            class="px-3 py-2 cursor-grab active:cursor-grabbing select-none hover:bg-purple-50 transition-colors"
+            :class="isGuestSelected(g.id) ? 'bg-amber-50 ring-1 ring-inset ring-amber-400' : ''"
             @dragstart="onDragStart($event, g)"
             @dragend="
               dragId = null;
               hoverTable = null;
             "
-            @click="armedId = armedId === g.id ? null : g.id"
+            @click="toggleGuestSelection(g.id, $event)"
           >
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
+            <div class="flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                class="mt-1 rounded border-slate-300 text-purple-900 focus:ring-purple-300 h-3.5 w-3.5 shrink-0 cursor-pointer"
+                :checked="isGuestSelected(g.id)"
+                @click.stop="toggleGuestSelection(g.id, $event)"
+              />
+              <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium truncate">
                   {{ g.leadName
                   }}<span v-if="g.hasSpouse" class="text-slate-500"> + {{ g.spouseName || "Partner" }}</span>
@@ -683,7 +743,8 @@ const error = ref<string | null>(null);
 const search = ref("");
 const groupFilter = ref("");
 const view = ref<"unseated" | "all">("unseated");
-const armedId = ref<string | null>(null);
+const selectedGuestIds = ref<string[]>([]);
+let lastSelectedId: string | null = null;
 const dragId = ref<string | null>(null);
 const hoverTable = ref<number | null>(null);
 const selectedTable = ref<number | null>(null);
@@ -719,6 +780,7 @@ function resolveDialog(v: boolean) {
 async function load() {
   loading.value = true;
   error.value = null;
+  clearGuestSelection();
   celebrateReady = false; // groups that are already complete on load shouldn't trigger confetti
   try {
     const res: any = await $fetch(`/api/seating/state?_t=${Date.now()}`, { headers: adminAuthHeaders() });
@@ -765,7 +827,92 @@ const visibleGuests = computed(() => {
   });
 });
 
-const armedGuest = computed(() => guests.value.find((g) => g.id === armedId.value) || null);
+const selectedGuestsList = computed(() => {
+  const set = new Set(selectedGuestIds.value);
+  return guests.value.filter((g) => set.has(g.id));
+});
+
+const selectedSeatsCount = computed(() =>
+  selectedGuestsList.value.reduce((sum, g) => sum + g.seats, 0)
+);
+
+const isAllVisibleSelected = computed(() => {
+  if (!visibleGuests.value.length) return false;
+  const set = new Set(selectedGuestIds.value);
+  return visibleGuests.value.every((g) => set.has(g.id));
+});
+
+const isSomeVisibleSelected = computed(() => {
+  const set = new Set(selectedGuestIds.value);
+  return visibleGuests.value.some((g) => set.has(g.id));
+});
+
+function isGuestSelected(id: string) {
+  return selectedGuestIds.value.includes(id);
+}
+
+function clearGuestSelection() {
+  selectedGuestIds.value = [];
+  lastSelectedId = null;
+}
+
+function toggleGuestSelection(id: string, event?: MouseEvent) {
+  const isShift = !!event?.shiftKey;
+  const currentSet = new Set(selectedGuestIds.value);
+
+  if (isShift && lastSelectedId) {
+    const list = visibleGuests.value;
+    const fromIdx = list.findIndex((g) => g.id === lastSelectedId);
+    const toIdx = list.findIndex((g) => g.id === id);
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const [start, end] = fromIdx < toIdx ? [fromIdx, toIdx] : [toIdx, fromIdx];
+      for (let i = start; i <= end; i++) {
+        currentSet.add(list[i].id);
+      }
+      selectedGuestIds.value = Array.from(currentSet);
+      lastSelectedId = id;
+      return;
+    }
+  }
+
+  if (currentSet.has(id)) {
+    currentSet.delete(id);
+  } else {
+    currentSet.add(id);
+  }
+  selectedGuestIds.value = Array.from(currentSet);
+  lastSelectedId = id;
+}
+
+function selectAllVisible() {
+  const currentSet = new Set(selectedGuestIds.value);
+  const allSelected = visibleGuests.value.every((g) => currentSet.has(g.id));
+  if (allSelected) {
+    for (const g of visibleGuests.value) currentSet.delete(g.id);
+  } else {
+    for (const g of visibleGuests.value) currentSet.add(g.id);
+  }
+  selectedGuestIds.value = Array.from(currentSet);
+}
+
+function onAssignSelectedToTable(e: Event) {
+  const el = e.target as HTMLSelectElement | null;
+  const val = el?.value;
+  if (!val) return;
+  const tableNum = Number(val);
+  const list = [...selectedGuestsList.value];
+  clearGuestSelection();
+  if (el) el.value = "";
+  assign(list, tableNum);
+}
+
+function unseatSelected() {
+  const list = selectedGuestsList.value.filter((g) => g.tableNumber != null);
+  if (!list.length) return;
+  clearGuestSelection();
+  assign(list, null);
+}
+
 const selected = computed(() => tables.value.find((t) => t.number === selectedTable.value) || null);
 const selectedGuests = computed(() => guests.value.filter((g) => g.tableNumber === selectedTable.value));
 
@@ -806,14 +953,22 @@ function onDrop(tableNumber: number) {
   const g = guests.value.find((x) => x.id === dragId.value);
   hoverTable.value = null;
   dragId.value = null;
-  if (g) assign([g], tableNumber);
+  if (!g) return;
+
+  if (selectedGuestIds.value.includes(g.id) && selectedGuestsList.value.length > 1) {
+    const list = [...selectedGuestsList.value];
+    clearGuestSelection();
+    assign(list, tableNumber);
+  } else {
+    assign([g], tableNumber);
+  }
 }
 
 function onTableClick(tableNumber: number) {
-  if (armedGuest.value) {
-    const g = armedGuest.value;
-    armedId.value = null;
-    assign([g], tableNumber);
+  if (selectedGuestsList.value.length > 0) {
+    const list = [...selectedGuestsList.value];
+    clearGuestSelection();
+    assign(list, tableNumber);
   }
   selectedTable.value = tableNumber;
 }
@@ -1043,6 +1198,10 @@ async function redo() {
 function onKey(e: KeyboardEvent) {
   if (dialog.value) {
     if (e.key === "Escape") resolveDialog(false);
+    return;
+  }
+  if (e.key === "Escape" && selectedGuestIds.value.length) {
+    clearGuestSelection();
     return;
   }
   const el = e.target as HTMLElement | null;

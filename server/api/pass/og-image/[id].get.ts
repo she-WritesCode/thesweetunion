@@ -74,7 +74,6 @@ export default defineEventHandler(async (event) => {
       rsvp = rsvpResToken.docs?.[0];
     }
 
-    const rsvp = rsvpRes?.docs?.[0];
     const leadName = rsvp?.leadName || "Honoured Guest";
     const hasSpouse = Boolean(rsvp?.hasSpouse);
     const spouseName = rsvp?.spouseName || "";
