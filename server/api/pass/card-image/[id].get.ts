@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const isDownload = query.download === "true" || query.download === "1";
 
   // 1. Instant Cache Check (Memory + /tmp disk + ETag)
-  const cacheKey = computeCacheKey("card-image", id, query);
+  const cacheKey = computeCacheKey("card-image-v2", id, query);
   const cached = getCachedImage(event, cacheKey);
   if (cached) {
     setHeader(event, "Content-Type", "image/png");
@@ -89,10 +89,22 @@ export default defineEventHandler(async (event) => {
     console.warn("DB lookup in card-image endpoint bypassed or failed, using parameters:", err);
   }
 
-  const leadName = (query.name as string) || rsvp?.leadName || "Honoured Guest";
+  const rawLeadName = ((query.name as string) || rsvp?.leadName || "Honoured Guest").trim();
   const hasSpouse = query.spouse !== undefined ? query.spouse === "true" || query.spouse === "1" : Boolean(rsvp?.hasSpouse);
-  const spouseName = (query.spouseName as string) || rsvp?.spouseName || "";
-  const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
+  const rawSpouseName = ((query.spouseName as string) || rsvp?.spouseName || "").trim();
+
+  let guestTitle = rawLeadName;
+  if (hasSpouse && rawSpouseName) {
+    const lowerLead = rawLeadName.toLowerCase();
+    const lowerSpouse = rawSpouseName.toLowerCase();
+    const alreadyHasSpouse =
+      lowerLead.includes(lowerSpouse) ||
+      /\s+([&+])\s+/.test(rawLeadName);
+
+    if (!alreadyHasSpouse) {
+      guestTitle = `${rawLeadName} + ${rawSpouseName}`;
+    }
+  }
   const passCode = ((query.code as string) || rsvp?.passCode || rsvp?.id || id).toUpperCase();
 
   // Populate events & group
@@ -145,9 +157,8 @@ export default defineEventHandler(async (event) => {
   function wrapGuestName(text: string, maxChars = 22): string[] {
     const trimmed = (text || "").trim();
     if (!trimmed) return ["Honoured Guest"];
-    if (trimmed.length <= maxChars) return [trimmed];
 
-    // If contains " & " or " + ", break at conjunction first
+    // If contains " & " or " + ", break at conjunction first so couples are cleanly separated
     const conjMatch = trimmed.match(/\s+([&+])\s+/);
     if (conjMatch && conjMatch.index !== undefined) {
       const conj = conjMatch[1];
@@ -160,6 +171,8 @@ export default defineEventHandler(async (event) => {
       }
       return [...lines1, ...lines2];
     }
+
+    if (trimmed.length <= maxChars) return [trimmed];
 
     const words = trimmed.split(/\s+/);
     const lines: string[] = [];
@@ -340,7 +353,7 @@ export default defineEventHandler(async (event) => {
   // Save to in-memory and disk cache
   const etag = saveCachedImage(cacheKey, pngBuffer);
 
-  const safeFilename = `wedding-pass-${leadName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
+  const safeFilename = `wedding-pass-${guestTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.png`;
 
   setHeader(event, "Content-Type", "image/png");
   setHeader(event, "Cache-Control", "public, max-age=604800, s-maxage=31536000, stale-while-revalidate=86400, immutable");

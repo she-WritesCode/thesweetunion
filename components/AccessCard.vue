@@ -38,7 +38,13 @@ const cardImageUrl = computed(() => {
   if (props.guestName) params.set("name", props.guestName);
   if (props.hasSpouse) {
     params.set("spouse", "true");
-    if (props.spouseName) params.set("spouseName", props.spouseName);
+    if (props.spouseName) {
+      const lowerGuest = (props.guestName || "").toLowerCase();
+      const lowerSpouse = props.spouseName.toLowerCase();
+      if (!lowerGuest.includes(lowerSpouse) && !/\s+([&+])\s+/.test(props.guestName || "")) {
+        params.set("spouseName", props.spouseName);
+      }
+    }
   }
   if (props.groupName) params.set("group", props.groupName);
   if (props.eventNames && props.eventNames.length > 0) {

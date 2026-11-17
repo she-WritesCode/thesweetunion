@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 1. Instant Cache Check (Memory + /tmp disk + ETag)
-    const cacheKey = computeCacheKey("og-image", id);
+    const cacheKey = computeCacheKey("og-image-v2", id);
     const cached = getCachedImage(event, cacheKey);
     if (cached) {
       setHeader(event, "Content-Type", "image/png");
@@ -74,10 +74,22 @@ export default defineEventHandler(async (event) => {
       rsvp = rsvpResToken.docs?.[0];
     }
 
-    const leadName = rsvp?.leadName || "Honoured Guest";
+    const rawLeadName = (rsvp?.leadName || "Honoured Guest").trim();
     const hasSpouse = Boolean(rsvp?.hasSpouse);
-    const spouseName = rsvp?.spouseName || "";
-    const guestTitle = hasSpouse && spouseName ? `${leadName} & ${spouseName}` : leadName;
+    const rawSpouseName = (rsvp?.spouseName || "").trim();
+
+    let guestTitle = rawLeadName;
+    if (hasSpouse && rawSpouseName) {
+      const lowerLead = rawLeadName.toLowerCase();
+      const lowerSpouse = rawSpouseName.toLowerCase();
+      const alreadyHasSpouse =
+        lowerLead.includes(lowerSpouse) ||
+        /\s+([&+])\s+/.test(rawLeadName);
+
+      if (!alreadyHasSpouse) {
+        guestTitle = `${rawLeadName} + ${rawSpouseName}`;
+      }
+    }
     const passCode = ((rsvp?.passCode || rsvp?.id || id) as string).toUpperCase();
 
     // Populate events & group from populated depth: 2
@@ -132,9 +144,8 @@ export default defineEventHandler(async (event) => {
     function wrapGuestName(text: string, maxChars = 22): string[] {
       const trimmed = (text || "").trim();
       if (!trimmed) return ["Honoured Guest"];
-      if (trimmed.length <= maxChars) return [trimmed];
 
-      // If contains " & " or " + ", split at conjunction first
+      // If contains " & " or " + ", split at conjunction first so couples are cleanly separated
       const conjMatch = trimmed.match(/\s+([&+])\s+/);
       if (conjMatch && conjMatch.index !== undefined) {
         const conj = conjMatch[1];
@@ -147,6 +158,8 @@ export default defineEventHandler(async (event) => {
         }
         return [...lines1, ...lines2];
       }
+
+      if (trimmed.length <= maxChars) return [trimmed];
 
       const words = trimmed.split(/\s+/);
       const lines: string[] = [];
