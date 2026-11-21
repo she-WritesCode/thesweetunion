@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useCachedDyrectedGlobal } from "~/composables/useCachedData";
 import { publicPageTransition } from "~/composables/useMotion";
 
@@ -16,13 +16,19 @@ const { data: siteSettings } = useCachedDyrectedGlobal("site_settings", { depth:
 const couplesPhoto = computed(() => (siteSettings.value as any)?.footerImage?.url || null);
 
 // The page shows "coming soon" until the PDF actually exists.
-const { data: pdfAvailable, pending } = await useAsyncData("program-pdf-available", async () => {
+// Checked in the browser: static files on Vercel are served by the CDN and
+// are not visible to the server-side render.
+const pdfAvailable = ref(false);
+const pending = ref(true);
+
+onMounted(async () => {
   try {
-    const res = await $fetch.raw(PROGRAM_PDF_URL, { method: "HEAD" });
-    const type = res.headers.get("content-type") || "";
-    return res.ok && type.includes("pdf");
+    const res = await fetch(PROGRAM_PDF_URL, { method: "HEAD", cache: "no-store" });
+    pdfAvailable.value = res.ok && (res.headers.get("content-type") || "").includes("pdf");
   } catch {
-    return false;
+    pdfAvailable.value = false;
+  } finally {
+    pending.value = false;
   }
 });
 </script>
