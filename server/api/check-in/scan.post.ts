@@ -10,7 +10,7 @@ async function findOne(client: Client, slug: string, id: string) {
 }
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event);
+  await requireAdmin(event, { allowUsher: true });
   const body = await readBody(event);
   const { rsvpRecordId, eventId, scannedBy } = body;
 

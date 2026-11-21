@@ -2,7 +2,7 @@ import { defineEventHandler } from "h3";
 import { createClient } from "@dyrected/sdk";
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event);
+  await requireAdmin(event, { allowUsher: true });
   const config = useRuntimeConfig();
   const client = createClient({
     baseUrl: config.dyrectedUrl,

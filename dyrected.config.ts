@@ -1,4 +1,4 @@
-import { defineConfig, definePage } from "@dyrected/core";
+import { defineConfig, definePage, defineWorkspace } from "@dyrected/core";
 import { PostgresAdapter } from "@dyrected/db-postgres";
 import { CloudinaryStorageAdapter } from "@dyrected/storage-cloudinary";
 import { sendEmail } from "./dyrected/mailer.ts";
@@ -45,6 +45,9 @@ const dbAdapter = new PostgresAdapter({
   url: process.env.DATABASE_URL || "postgres://localhost:5432/sweetunion",
 });
 
+/** Sidebar rule: everyone except ushers (no role = admin). */
+const NOT_USHER = "user.role != 'usher'";
+
 export default defineConfig({
   db: dbAdapter,
   storage: new CloudinaryStorageAdapter({
@@ -61,6 +64,23 @@ export default defineConfig({
   admin: {
     branding: { logoText: "TheSweetUnion" },
     navigation: [
+      // ---- Role gating -------------------------------------------------------
+      // Ushers (role "usher") only see Check-ins. Everything else is hidden from
+      // their sidebar. Accounts with no role count as admin. This is a UI gate;
+      // the check-in API routes and admin-only API routes enforce it server-side
+      // (server/utils/require-admin.ts).
+      defineWorkspace({ collection: "admins", group: "Collections", access: NOT_USHER }),
+      defineWorkspace({ collection: "media", group: "Content", access: NOT_USHER }),
+      defineWorkspace({ collection: "wishlist_items", group: "Wishlist", access: NOT_USHER }),
+      defineWorkspace({ collection: "reservations", group: "Wishlist", access: NOT_USHER }),
+      defineWorkspace({ collection: "rsvp_groups", group: "RSVP", access: NOT_USHER }),
+      defineWorkspace({ collection: "rsvp_records", group: "RSVP", access: NOT_USHER }),
+      defineWorkspace({ collection: "events", group: "RSVP", access: NOT_USHER }),
+      defineWorkspace({ collection: "check_ins", group: "RSVP", access: "user != null" }),
+      defineWorkspace({ global: "site_settings", group: "Configuration", access: NOT_USHER }),
+      defineWorkspace({ global: "asoebi_settings", group: "Configuration", access: NOT_USHER }),
+      defineWorkspace({ global: "seating_settings", group: "Configuration", access: NOT_USHER }),
+      defineWorkspace({ trash: true, access: NOT_USHER }),
       definePage({
         slug: "asoebi-campaign",
         label: "Aso Ebi Campaign",
@@ -68,6 +88,7 @@ export default defineConfig({
         group: "RSVP",
         collection: "rsvp_records",
         component: "AsoebiCampaignPage",
+        access: NOT_USHER,
       }),
       definePage({
         slug: "pass-campaign",
@@ -76,6 +97,7 @@ export default defineConfig({
         group: "RSVP",
         collection: "rsvp_records",
         component: "PassCampaignPage",
+        access: NOT_USHER,
       }),
       definePage({
         slug: "seating-planner",
@@ -84,6 +106,7 @@ export default defineConfig({
         group: "RSVP",
         collection: "rsvp_records",
         component: "SeatingPlannerPage",
+        access: NOT_USHER,
       }),
     ],
   },

@@ -46,6 +46,7 @@ export type UrlField = UrlFieldValue | string;
 export interface Admins {
   id: string;
   name?: string;
+  role?: "admin" | "usher";
   createdBy?: Admins | string;
   updatedBy?: Admins | string;
   email: string;
